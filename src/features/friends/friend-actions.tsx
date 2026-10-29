@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, UserPlus } from "lucide-react";
+import { Users, ChevronDown, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,9 +17,13 @@ import { friendStatus, type FriendAction } from "./model";
 export function FriendActions({
   person,
   onComplete,
+  onStatusChange,
+  compact = false,
 }: {
   person: Person;
   onComplete?: (message: string) => void;
+  onStatusChange?: (message: string) => void;
+  compact?: boolean;
 }) {
   const { state, bootstrap, changeFriend } = usePreview();
   const relationship = friendStatus(
@@ -52,11 +56,14 @@ export function FriendActions({
         decline: `Friend request from ${person.name} declined.`,
         cancel: `Friend request to ${person.name} cancelled.`,
         remove: `${person.name} removed from friends.`,
+        block: `${person.name} blocked in this preview.`,
+        unblock: `${person.name} unblocked in this preview.`,
       };
       setError("");
       setStatus(messages[action]);
       setConfirming(false);
       onComplete?.(messages[action]);
+      onStatusChange?.(messages[action]);
     } catch (error) {
       setError(previewMessage(error));
     }
@@ -71,9 +78,15 @@ export function FriendActions({
         aria-label={`Friendship with ${person.name}`}
       >
         {relationship === "none" && (
-          <Button variant="outline" onClick={() => act("send")}>
+          <Button
+            variant="outline"
+            size={compact ? "icon" : "default"}
+            aria-label={compact ? "Add friend" : undefined}
+            title={compact ? "Add friend" : undefined}
+            onClick={() => act("send")}
+          >
             <UserPlus aria-hidden="true" strokeWidth={1.5} />
-            Add friend
+            <span className={compact ? "sr-only" : undefined}>Add friend</span>
           </Button>
         )}
         {relationship === "incoming" && (
@@ -86,8 +99,10 @@ export function FriendActions({
         )}
         {relationship === "outgoing" && (
           <>
-            <span className="margin-friend-label">Request sent</span>
-            <Button variant="ghost" onClick={() => act("cancel")}>
+            <span className="margin-friend-label margin-friend-request-status">
+              Request sent
+            </span>
+            <Button variant="outline" onClick={() => act("cancel")}>
               Cancel request
             </Button>
           </>
@@ -97,7 +112,17 @@ export function FriendActions({
             Friend requests unavailable
           </span>
         )}
-        {relationship === "friends" && (
+        {relationship === "friends" && compact && (
+          <span
+            className="margin-profile-friend-status"
+            role="img"
+            aria-label={`Friends with ${person.name}`}
+            title="Friends"
+          >
+            <Users aria-hidden="true" strokeWidth={1.5} />
+          </span>
+        )}
+        {relationship === "friends" && !compact && (
           <Dialog open={confirming} onOpenChange={setConfirming}>
             <DialogTrigger asChild>
               <Button
@@ -105,7 +130,11 @@ export function FriendActions({
                 variant="outline"
                 aria-label={`Manage friendship with ${person.name}`}
               >
-                <Check aria-hidden="true" strokeWidth={1.5} />
+                <Users
+                  className="margin-friends-icon"
+                  aria-hidden="true"
+                  strokeWidth={1.5}
+                />
                 Friends
                 <ChevronDown aria-hidden="true" strokeWidth={1.5} />
               </Button>
@@ -133,7 +162,7 @@ export function FriendActions({
                   variant="ghost"
                   onClick={() => setConfirming(false)}
                 >
-                  Keep friend
+                  Cancel
                 </Button>
                 <Button onClick={() => act("remove")}>Remove friend</Button>
               </div>
@@ -146,7 +175,7 @@ export function FriendActions({
           </Dialog>
         )}
       </div>
-      {!onComplete && (
+      {!onComplete && !onStatusChange && (
         <p role="status" className="margin-field-hint">
           {status}
         </p>

@@ -22,6 +22,7 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PersonLink } from "@/components/shared/person-link";
 import { PostAuthor, PostContent, PostFooter } from "./post-content";
 import { CommentForm } from "./comment-form";
 import { ConversationComments } from "./conversation-comments";
@@ -438,7 +439,8 @@ export function ConversationDialog({
             event.preventDefault();
             requestClose();
           }}
-          onInteractOutside={(event) => {
+          onFocusOutside={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => {
             event.preventDefault();
             const photo = (event.target as Element).closest?.(
               "[data-post-photo-trigger], [data-post-photo-viewer]",
@@ -565,7 +567,11 @@ export function ConversationDialog({
                   )}
                 </div>
                 <div>
-                  <strong>{post.author.name}</strong>
+                  <strong>
+                    <PersonLink person={post.author}>
+                      {post.author.name}
+                    </PersonLink>
+                  </strong>
                   <p>{post.paragraphs[0]}</p>
                 </div>
               </div>

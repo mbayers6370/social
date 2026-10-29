@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 test.beforeEach(() =>
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION === "1",
@@ -23,7 +23,7 @@ test("uses the responsive navigation and manages local friendships across screen
       bottom.getByRole("button", { name: /^Notifications,/ }),
     ).toHaveCount(0);
     await expect(bottom.getByRole("link")).toHaveCount(3);
-    await expect(bottom.getByRole("button", { name: "New post" })).toHaveCount(
+    await expect(bottom.getByRole("button", { name: "New Post" })).toHaveCount(
       0,
     );
   } else {
@@ -44,9 +44,16 @@ test("uses the responsive navigation and manages local friendships across screen
     await bottom.getByRole("link", { name: "Profile", exact: true }).click();
   else {
     await header.getByRole("button", { name: "Profile menu" }).click();
-    await header.getByRole("link", { name: "View profile" }).click();
+    await page
+      .getByRole("navigation", { name: "Profile menu", exact: true })
+      .getByRole("link", { name: "View profile" })
+      .click();
   }
-  await page.getByRole("link", { name: "Friends", exact: true }).click();
+  await header.getByRole("button", { name: "Profile menu" }).click();
+  await page
+    .getByRole("navigation", { name: "Profile menu", exact: true })
+    .getByRole("link", { name: "Friends", exact: true })
+    .click();
   await page.getByRole("button", { name: /Requests/ }).click();
   await page
     .getByRole("button", { name: "Accept request", exact: true })
@@ -60,9 +67,7 @@ test("uses the responsive navigation and manages local friendships across screen
   });
   await manage.click();
   const confirm = page.getByRole("alertdialog");
-  await expect(
-    confirm.getByRole("button", { name: "Keep friend" }),
-  ).toBeFocused();
+  await expect(confirm.getByRole("button", { name: "Cancel" })).toBeFocused();
   await confirm
     .getByRole("button", { name: "Remove friend", exact: true })
     .click();

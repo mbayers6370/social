@@ -88,14 +88,19 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
         className="margin-profile-posts"
         aria-labelledby="recent-posts-title"
       >
-        <div className="margin-profile-posts-card margin-profile-section-card">
+        <div
+          className="margin-profile-posts-card margin-profile-section-card"
+          data-empty={
+            !visible || (!recent.length && !profilePosts.length) || undefined
+          }
+        >
           <header className="margin-section-heading">
             <SectionTitle
               id="recent-posts-title"
               tabIndex={-1}
               motif={<SectionMotif icon={Newspaper} />}
             >
-              Recent posts
+              Recent Posts
             </SectionTitle>
             {own && <NewPostButton />}
           </header>
@@ -151,6 +156,7 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
         )}
         <ProfileSection
           className="margin-profile-gallery"
+          data-empty={!visible || !gallery.length || undefined}
           aria-labelledby="profile-gallery-title"
         >
           <header className="margin-section-heading">
@@ -160,11 +166,22 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
             >
               Gallery
             </SectionTitle>
-            <Link href={galleryHref} className="margin-section-link">
-              View More
-              <ChevronRight aria-hidden="true" strokeWidth={1.5} />
-            </Link>
+            {visible && (
+              <Link href={galleryHref} className="margin-section-link">
+                View More
+                <ChevronRight aria-hidden="true" strokeWidth={1.5} />
+              </Link>
+            )}
           </header>
+          {!visible ? (
+            <p className="margin-empty-copy">Photos are shared with friends.</p>
+          ) : !gallery.length ? (
+            <p className="margin-empty-copy">
+              {own
+                ? "Your photographs will appear here."
+                : "No photographs here yet."}
+            </p>
+          ) : null}
           {visible && gallery.length > 0 && (
             <Link
               href={galleryHref}

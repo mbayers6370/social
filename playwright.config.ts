@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { resolve } from "node:path";
 
 const production = process.env.PLAYWRIGHT_PRODUCTION === "1";
-const runningLocalUrl = process.env.PLAYWRIGHT_BASE_URL;
+const runningLocalUrl = process.env.PLAYWRIGHT_BASE_URL || undefined;
 if (runningLocalUrl) {
   const target = new URL(runningLocalUrl);
   if (
@@ -19,6 +20,8 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
+  // Caret hiding mutates inline styles and can race React hydration.
+  expect: { toHaveScreenshot: { caret: "initial" } },
   use: {
     baseURL: runningLocalUrl ?? "http://127.0.0.1:3100",
     trace: "retain-on-failure",
@@ -39,6 +42,12 @@ export default defineConfig({
         url: "http://127.0.0.1:3100/api/health",
         reuseExistingServer: false,
         env: {
+          ...(!production
+            ? {
+                NODE_OPTIONS:
+                  `${process.env.NODE_OPTIONS ?? ""} --import ${JSON.stringify(resolve("tests/e2e/server-clock.mjs"))}`.trim(),
+              }
+            : {}),
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "",
           CLERK_SECRET_KEY: "",
           NEXT_PUBLIC_SENTRY_DSN: "",

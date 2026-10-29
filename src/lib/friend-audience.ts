@@ -2,6 +2,7 @@ export type Friendship = {
   people: [string, string];
   status: "accepted" | "pending" | "blocked";
   requestedBy?: string;
+  blockedBy?: string;
 };
 
 /** Call with identities/relationships loaded by the server for real user data. */

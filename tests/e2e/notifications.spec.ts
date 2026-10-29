@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 test.beforeEach(() =>
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION === "1",

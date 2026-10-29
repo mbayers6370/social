@@ -54,7 +54,7 @@ export function PreviewDataControls() {
   }
   return (
     <div className="margin-setting-summary">
-      <h3>Your data</h3>
+      <h3>Your Data</h3>
       <div className="margin-settings-actions">
         <div className="margin-setting-action">
           <p className="margin-field-hint">

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("public provider marks are served as SVG and decode without a session", async ({
   page,
@@ -80,6 +80,7 @@ test("public shell is responsive, keyboard accessible, and uses a fresh CSP nonc
   );
   expect(errors).toEqual([]);
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("home.png"),
     fullPage: true,
   });
@@ -152,7 +153,9 @@ test("production hides the workbench and excludes development CSP permissions", 
     const previewHtml = await (await request.get(`/${query}`)).text();
     expect(previewHtml).not.toContain("Ines Alvarez");
     expect(previewHtml).not.toContain("Meet at the lot");
-    expect(previewHtml).toContain("A little less.A little closer.");
+    expect(previewHtml).toMatch(
+      /<h1[^>]*>A little less\.<br\s*\/?\s*>A little closer\.<\/h1>/,
+    );
   }
   const csp = (await request.get("/")).headers()["content-security-policy"];
   expect(csp).not.toContain("'unsafe-eval'");

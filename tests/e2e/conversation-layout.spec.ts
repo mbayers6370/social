@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }, testInfo) => {
   test.skip(
@@ -44,7 +44,10 @@ test("mutes the selected post surface without dimming its photographs", async ({
   expect(imageEffects.length).toBeGreaterThan(0);
   for (const effect of imageEffects)
     expect(effect).toEqual({ opacity: "1", filter: "none" });
-  await page.screenshot({ path: testInfo.outputPath("muted-post-pair.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("muted-post-pair.png"),
+  });
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(post).toHaveCSS("background-color", original.background);
@@ -56,7 +59,7 @@ test("keeps the editor reachable when a tall profile post flips into its convers
   await page
     .getByRole("button", { name: "Share a thought…", exact: true })
     .click();
-  const composer = page.getByRole("dialog", { name: "New post", exact: true });
+  const composer = page.getByRole("dialog", { name: "New Post", exact: true });
   const paragraph =
     "A longer entry still deserves enough room to read and reply. ".repeat(5);
   await composer
@@ -64,7 +67,9 @@ test("keeps the editor reachable when a tall profile post flips into its convers
     .fill(Array.from({ length: 8 }, () => paragraph.trim()).join("\n\n"));
   await composer.getByRole("button", { name: "Share with friends" }).click();
   await expect(composer).not.toBeVisible();
-  const post = page.locator(".margin-feed-post").first();
+  await expect(page).toHaveURL(/\?view=profile#post-local-/);
+  const post = page.locator(`#${new URL(page.url()).hash.slice(1)}`);
+  await expect(post).toContainText(paragraph.trim());
   const original = (await post.boundingBox())!;
   expect(original.height).toBeGreaterThan(900);
   await post.locator("[data-conversation-trigger]").scrollIntoViewIfNeeded();
@@ -103,6 +108,7 @@ test("keeps the editor reachable when a tall profile post flips into its convers
     dialog.getByRole("button", { name: "Post", exact: true }),
   ).toBeInViewport();
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("tall-profile-flip-editor.png"),
   });
   await input.fill("A reply from the bottom of a tall post.");

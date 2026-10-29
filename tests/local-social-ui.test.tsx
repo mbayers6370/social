@@ -7,7 +7,7 @@ import {
   act,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PreviewProvider, usePreview } from "@/features/local-preview/provider";
 import type { Bootstrap, FriendPost } from "@/features/local-preview/model";
 import { ProfileSearch } from "@/features/search/profile-search";
@@ -78,6 +78,13 @@ function Witness() {
   return <output data-testid="published">{JSON.stringify(state.posts)}</output>;
 }
 
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
+});
 afterEach(() => vi.unstubAllGlobals());
 function prepareGalleryDrag() {
   class Pointer extends MouseEvent {
@@ -189,7 +196,7 @@ it("opens the feed prompt and photo shortcut, preserves drafts and restores focu
   const photo = screen.getByRole("button", { name: "New photo post" });
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   await user.click(prompt);
-  const composer = await screen.findByRole("dialog", { name: "New post" });
+  const composer = await screen.findByRole("dialog", { name: "New Post" });
   const input = within(composer).getByRole("textbox", { name: "Your post" });
   await waitFor(() => expect(input).toHaveFocus());
   await user.type(input, "A thought to keep.");
@@ -201,7 +208,7 @@ it("opens the feed prompt and photo shortcut, preserves drafts and restores focu
     name: "Choose a photograph",
   });
   await user.click(within(picker).getByRole("button", { name: "Use Morning" }));
-  const photoComposer = screen.getByRole("dialog", { name: "New post" });
+  const photoComposer = screen.getByRole("dialog", { name: "New Post" });
   expect(
     within(photoComposer).getByRole("textbox", { name: "Your post" }),
   ).toHaveValue("A thought to keep.");
@@ -245,7 +252,7 @@ it.each(["post", "link"] as const)(
         <Witness />
       </PreviewProvider>,
     );
-    const dialog = screen.getByRole("dialog", { name: "Edit post" });
+    const dialog = screen.getByRole("dialog", { name: "Edit Post" });
     const composer = within(dialog);
     expect(
       composer.getAllByRole("button", { name: /^Remove photograph/ }),
@@ -298,7 +305,7 @@ it("retains both mode drafts after closing the composer and respects explicit ph
   );
   const prompt = screen.getByRole("button", { name: "Share a thought…" });
   await user.click(prompt);
-  let dialog = await screen.findByRole("dialog", { name: "New post" });
+  let dialog = await screen.findByRole("dialog", { name: "New Post" });
   await user.type(
     within(dialog).getByRole("textbox", { name: "Your post" }),
     "Keep these moments.",
@@ -321,7 +328,7 @@ it("retains both mode drafts after closing the composer and respects explicit ph
   );
   await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
   await user.click(prompt);
-  dialog = await screen.findByRole("dialog", { name: "New post" });
+  dialog = await screen.findByRole("dialog", { name: "New Post" });
   expect(within(dialog).getByRole("textbox", { name: "Link" })).toHaveValue(
     "https://example.com/draft",
   );
@@ -401,7 +408,7 @@ it("keeps profile editing visible, moves deletion into the editor and preserves 
     within(own).queryByRole("button", { name: "Delete post" }),
   ).not.toBeInTheDocument();
   await user.click(edit);
-  const dialog = await screen.findByRole("dialog", { name: "Edit post" });
+  const dialog = await screen.findByRole("dialog", { name: "Edit Post" });
   const input = within(dialog).getByRole("textbox", { name: "Your post" });
   expect(input).toHaveValue("My original thought.");
   expect(
@@ -418,7 +425,7 @@ it("keeps profile editing visible, moves deletion into the editor and preserves 
   expect(within(own).getByText("My revised thought.")).toBeVisible();
   expect(screen.queryByText("My original thought.")).not.toBeInTheDocument();
   await user.click(edit);
-  const reopened = await screen.findByRole("dialog", { name: "Edit post" });
+  const reopened = await screen.findByRole("dialog", { name: "Edit Post" });
   expect(
     within(reopened).getByRole("button", { name: "Delete post" }),
   ).not.toBeVisible();
@@ -440,7 +447,7 @@ it("keeps profile editing visible, moves deletion into the editor and preserves 
     within(confirmation).getByRole("button", { name: "Delete post" }),
   );
   await waitFor(() =>
-    expect(screen.getByRole("heading", { name: "Recent posts" })).toHaveFocus(),
+    expect(screen.getByRole("heading", { name: "Recent Posts" })).toHaveFocus(),
   );
   expect(screen.queryByText("My revised thought.")).not.toBeInTheDocument();
   expect(screen.getByText("Post deleted.")).toBeVisible();
@@ -501,7 +508,7 @@ it("keeps the feed photo shortcut within the daily image allowance", async () =>
     </PreviewProvider>,
   );
   await user.click(screen.getByRole("button", { name: "New photo post" }));
-  const composer = await screen.findByRole("dialog", { name: "New post" });
+  const composer = await screen.findByRole("dialog", { name: "New Post" });
   expect(
     screen.queryByRole("dialog", { name: "Choose a photograph" }),
   ).not.toBeInTheDocument();
@@ -532,7 +539,7 @@ it("offers today's Gallery photographs in the composer without charging the allo
     within(picker).getByLabelText("Photograph from your device"),
   ).toBeDisabled();
   await user.click(within(picker).getByRole("button", { name: "Use Morning" }));
-  const composer = screen.getByRole("dialog", { name: "New post" });
+  const composer = screen.getByRole("dialog", { name: "New Post" });
   await user.type(
     within(composer).getByRole("textbox", { name: "Your post" }),
     "One from my gallery.",
@@ -758,8 +765,10 @@ it("opens photographs without filenames, and arranges three featured slots with 
   await user.click(
     screen.getByRole("button", { name: "Select Evening, photograph 4 of 4" }),
   );
-  await user.click(screen.getByRole("button", { name: "Feature photograph" }));
-  expect(screen.getByRole("alert")).toHaveTextContent("up to three");
+  const feature = screen.getByRole("button", { name: "Feature photograph" });
+  expect(feature).toBeDisabled();
+  await user.click(feature);
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   const handle = screen.getByRole("button", { name: "Move Evening" });
   handle.focus();
   await user.keyboard("{ArrowLeft}");
@@ -906,7 +915,7 @@ it("opens a same-row insertion space and settles the desktop preview before comm
   expect(screen.getByRole("button", { name: "Move Morning" })).toHaveFocus();
 });
 
-it("does not drop a gallery photograph into a slot obscured by the sticky desktop header", async () => {
+it("does not drop a gallery photograph into a slot obscured by the editor header", async () => {
   const user = userEvent.setup();
   render(
     <PreviewProvider bootstrap={bootstrap()}>
@@ -916,8 +925,9 @@ it("does not drop a gallery photograph into a slot obscured by the sticky deskto
   );
   await user.click(screen.getByRole("button", { name: "Arrange gallery" }));
   prepareGalleryDrag();
-  document.querySelector<HTMLElement>(".margin-header")!.getBoundingClientRect =
-    () => new DOMRect(0, 0, 1280, 84);
+  document.querySelector<HTMLElement>(
+    ".margin-gallery-editor-scroll",
+  )!.getBoundingClientRect = () => new DOMRect(0, 84, 1280, 500);
   const first = screen
     .getByRole("button", { name: "Move Morning" })
     .closest<HTMLElement>("[data-gallery-photo]")!;
@@ -960,13 +970,64 @@ it("scrolls near the viewport edge and stops its drag loop when the gallery unmo
     clientY: window.innerHeight - 10,
   });
   act(() => frames[0](0));
-  expect(scroll).toHaveBeenCalledWith({ top: 12, behavior: "instant" });
+  expect(
+    document.querySelector<HTMLElement>(".margin-gallery-editor-scroll")!
+      .scrollTop,
+  ).toBe(12);
+  expect(scroll).not.toHaveBeenCalled();
   expect(request).toHaveBeenCalledTimes(2);
   unmount();
   expect(cancel).toHaveBeenCalledWith(2);
   expect(document.querySelector(".margin-gallery-floating")).toBeNull();
   act(() => frames[1](16));
   expect(request).toHaveBeenCalledTimes(2);
+});
+
+it("drops a photograph into an empty featured slot inside the editor", async () => {
+  const user = userEvent.setup();
+  render(
+    <PreviewProvider bootstrap={bootstrap()}>
+      <GalleryPage />
+    </PreviewProvider>,
+  );
+  await user.click(screen.getByRole("button", { name: "Arrange gallery" }));
+  await user.click(
+    screen.getByRole("button", { name: "Select Morning, photograph 1 of 4" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Unfeature" }));
+  expect(
+    screen.getByRole("button", { name: "Feature photograph" }),
+  ).toBeEnabled();
+  prepareGalleryDrag();
+  document.querySelector<HTMLElement>(
+    ".margin-gallery-editor-scroll",
+  )!.getBoundingClientRect = () => new DOMRect(0, 0, 600, 500);
+  document.querySelector<HTMLElement>(
+    "[data-gallery-empty-feature]",
+  )!.getBoundingClientRect = () => new DOMRect(400, 100, 100, 100);
+  const handle = screen.getByRole("button", { name: "Move Evening" });
+  fireEvent.pointerDown(handle, { clientX: 50, clientY: 270 });
+  fireEvent.pointerMove(handle, { clientX: 450, clientY: 150 });
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Feature Evening on the profile",
+  );
+  fireEvent.pointerUp(handle, { clientX: 450, clientY: 150 });
+  expect(
+    within(
+      screen.getByRole("region", { name: "Featured photographs" }),
+    ).getByRole("button", { name: "Select Evening, photograph 3 of 4" }),
+  ).toBeVisible();
+  expect(screen.getByRole("button", { name: "Move Evening" })).toHaveFocus();
+  expect(screen.getByRole("button", { name: "Unfeature" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await user.click(screen.getByRole("button", { name: "Done" }));
+  expect(
+    within(
+      screen.getByRole("region", { name: "Featured photographs" }),
+    ).getByRole("button", { name: "View Evening, photograph 3 of 4" }),
+  ).toBeVisible();
 });
 
 it("applies reading and motion settings across the local tab and restores them on unmount", async () => {

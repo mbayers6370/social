@@ -39,7 +39,7 @@
 .margin-welcome-cta {
   min-height: 48px;
   padding-inline: 22px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   font-size: var(--text-control);
   font-weight: 400;
 }

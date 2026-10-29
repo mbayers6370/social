@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 test.beforeEach(() =>
   test.skip(
@@ -66,7 +66,10 @@ test("navigation opens Messages and Profile with the correct current page", asyn
   await expect(
     navigation(page).getByRole("link", { name: "Messages", exact: true }),
   ).toHaveAttribute("aria-current", "page");
-  await page.screenshot({ path: testInfo.outputPath("messages.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("messages.png"),
+  });
   const mobile = page.viewportSize()!.width < 1024;
   if (mobile)
     await navigation(page)
@@ -74,7 +77,10 @@ test("navigation opens Messages and Profile with the correct current page", asyn
       .click();
   else {
     await page.getByRole("button", { name: "Profile menu" }).click();
-    await page.getByRole("link", { name: "View profile" }).click();
+    await page
+      .getByRole("navigation", { name: "Profile menu", exact: true })
+      .getByRole("link", { name: "View profile", exact: true })
+      .click();
   }
   await expect(
     page.getByRole("heading", { level: 1, name: "Ines Alvarez" }),
@@ -96,6 +102,7 @@ test("navigation opens Messages and Profile with the correct current page", asyn
     ),
   ).toBe(true);
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("profile.png"),
     fullPage: true,
   });
@@ -118,7 +125,12 @@ test("opens sample threads, validates and escapes local messages without sending
       mutations.push(request.url());
   });
   await page.goto("/?view=messages");
-  await page.getByRole("button", { name: /June Park/ }).click();
+  await page
+    .getByRole("button", {
+      name: "Open conversation with June Park",
+      exact: true,
+    })
+    .click();
   const thread = page.getByRole("region", {
     name: "Conversation with June Park",
     exact: true,
@@ -136,7 +148,9 @@ test("opens sample threads, validates and escapes local messages without sending
   await thread
     .getByRole("button", { name: "Add message to local preview" })
     .click();
-  await expect(thread.getByRole("status")).toContainText("Nothing was sent");
+  await expect(thread.getByRole("status")).toContainText(
+    "Added to the local preview",
+  );
   await expect(
     thread.locator(".margin-message-bubble").filter({
       hasText: "<script>window.compromised=true</script> Thank you, June!",
@@ -144,10 +158,18 @@ test("opens sample threads, validates and escapes local messages without sending
   ).toBeVisible();
   expect(await page.evaluate(() => "compromised" in window)).toBe(false);
   expect(mutations).toEqual([]);
-  await page.screenshot({ path: testInfo.outputPath("message-thread.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("message-thread.png"),
+  });
   if (page.viewportSize()!.width < 1024) {
     await thread.getByRole("button", { name: "Back to messages" }).click();
-    await expect(page.getByRole("button", { name: /June Park/ })).toBeFocused();
+    await expect(
+      page.getByRole("button", {
+        name: "Open conversation with June Park",
+        exact: true,
+      }),
+    ).toBeFocused();
   } else {
     const exportButton = thread.getByRole("button", {
       name: "Export conversation",
@@ -159,9 +181,14 @@ test("opens sample threads, validates and escapes local messages without sending
     await page.keyboard.press("Escape");
     await expect(exportButton).toBeFocused();
   }
-  await page.getByRole("button", { name: /Ines Alvarez/ }).click();
+  await page
+    .getByRole("button", {
+      name: "Open notebook",
+      exact: true,
+    })
+    .click();
   await expect(
-    page.getByRole("heading", { name: "Ines Alvarez", exact: true }),
+    page.getByRole("heading", { name: "Notebook", exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
@@ -173,13 +200,23 @@ test("preserves separate message drafts between sample threads and supports brow
   page,
 }) => {
   await page.goto("/?view=messages");
-  await page.getByRole("button", { name: /Ines Alvarez/ }).click();
   await page
-    .getByRole("textbox", { name: "Message to Ines Alvarez" })
+    .getByRole("button", {
+      name: "Open notebook",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Note to self" })
     .fill("Bring a thermos");
   if (page.viewportSize()!.width < 1024)
     await page.getByRole("button", { name: "Back to messages" }).click();
-  await page.getByRole("button", { name: /Theo Marchetti/ }).click();
+  await page
+    .getByRole("button", {
+      name: "Open conversation with Theo Marchetti",
+      exact: true,
+    })
+    .click();
   await expect(
     page.getByRole("textbox", { name: "Message to Theo Marchetti" }),
   ).toHaveValue("");
@@ -188,10 +225,46 @@ test("preserves separate message drafts between sample threads and supports brow
     .fill("Which book next?");
   if (page.viewportSize()!.width < 1024)
     await page.getByRole("button", { name: "Back to messages" }).click();
-  await page.getByRole("button", { name: /Ines Alvarez/ }).click();
+  await page
+    .getByRole("button", {
+      name: "Open notebook",
+      exact: true,
+    })
+    .click();
+  await expect(page.getByRole("textbox", { name: "Note to self" })).toHaveValue(
+    "Bring a thermos",
+  );
+  if (page.viewportSize()!.width < 1024)
+    await page.getByRole("button", { name: "Back to messages" }).click();
+  await page
+    .getByRole("button", {
+      name: "Open conversation with Theo Marchetti",
+      exact: true,
+    })
+    .click();
+  await page
+    .locator(".margin-thread-header")
+    .getByRole("link", { name: "View profile", exact: true })
+    .click();
   await expect(
-    page.getByRole("textbox", { name: "Message to Ines Alvarez" }),
-  ).toHaveValue("Bring a thermos");
+    page.getByRole("heading", {
+      name: "Theo Marchetti",
+      level: 1,
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.goBack();
+  await expect(
+    page.getByRole("textbox", { name: "Message to Theo Marchetti" }),
+  ).toHaveValue("Which book next?");
+  if (page.viewportSize()!.width < 1024)
+    await page.getByRole("button", { name: "Back to messages" }).click();
+  await page
+    .getByRole("button", { name: "Open notebook", exact: true })
+    .click();
+  await expect(page.getByRole("textbox", { name: "Note to self" })).toHaveValue(
+    "Bring a thermos",
+  );
   await page.goBack();
   await expect(page).not.toHaveURL(/thread=ines/);
 });
@@ -202,10 +275,12 @@ test("profile editing validates input, contains keyboard focus and updates only 
   await page.goto("/?view=profile");
   const menu = page.getByRole("button", { name: "Profile menu" });
   await menu.click();
-  const trigger = page.getByRole("button", {
-    name: "Edit profile",
-    exact: true,
-  });
+  const trigger = page
+    .getByRole("navigation", { name: "Profile menu", exact: true })
+    .getByRole("button", {
+      name: "Edit profile",
+      exact: true,
+    });
   await trigger.click();
   const dialog = page.getByRole("dialog", {
     name: "Edit profile",
@@ -331,12 +406,17 @@ test("screens fit a 320px viewport and a mobile thread keeps its composer access
   await navigation(page)
     .getByRole("link", { name: "Messages", exact: true })
     .click();
-  await page.getByRole("button", { name: /Ines Alvarez/ }).click();
+  await page
+    .getByRole("button", {
+      name: "Open notebook",
+      exact: true,
+    })
+    .click();
   await expect(
     page.getByRole("button", { name: "Back to messages" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("textbox", { name: "Message to Ines Alvarez" }),
+    page.getByRole("textbox", { name: "Note to self" }),
   ).toBeInViewport();
   expect(
     await page.evaluate(

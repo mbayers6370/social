@@ -20,14 +20,11 @@
   align-items: flex-start;
   gap: 10px;
 }
-.margin-comment > .margin-avatar {
-  margin-top: 8px;
-}
 .margin-comment-thread {
   min-width: 0;
 }
 .margin-replies-toggle {
-  margin-left: 39px;
+  margin-left: 54px;
   height: 44px;
   padding-inline: 8px;
   border-radius: 8px;
@@ -137,7 +134,7 @@
   position: absolute;
   bottom: 9px;
   right: 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   padding-inline: 20px;
   font-weight: 400;
 }
@@ -159,11 +156,8 @@
   .margin-comment {
     gap: 9px;
   }
-  .margin-comment > .margin-avatar {
-    margin-top: 10px;
-  }
   .margin-replies-toggle {
-    margin-left: 34px;
+    margin-left: 53px;
   }
   .margin-comment-meta strong {
     font-size: var(--text-control);

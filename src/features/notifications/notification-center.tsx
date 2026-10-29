@@ -31,6 +31,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Avatar } from "@/features/feed/post-content";
+import { PersonLink, profileHref } from "@/components/shared/person-link";
 import { relativeTime } from "@/features/feed/format";
 import { usePreview } from "@/features/local-preview/provider";
 import { createLocalId } from "@/lib/local-id";
@@ -311,6 +312,15 @@ export function NotificationCenter({
                 );
                 const read = preview.notifications.readIds.includes(row.id);
                 const TypeIcon = notificationIcons[row.kind];
+                const actor = available ? row.actors[0] : undefined;
+                const text = notificationText(row, available);
+                const nameIndex = actor ? text.indexOf(actor.name) : -1;
+                function openProfile(event: { preventDefault: () => void }) {
+                  event.preventDefault();
+                  if (!actor) return;
+                  preview.markNotificationRead(row.id);
+                  navigate(() => router.push(profileHref(actor.id)));
+                }
                 return (
                   <li
                     key={row.id}
@@ -318,11 +328,7 @@ export function NotificationCenter({
                     data-unread={!read}
                     data-kind={row.kind}
                   >
-                    <button
-                      type="button"
-                      className="margin-notification-row"
-                      onClick={() => select(row)}
-                    >
+                    <div className="margin-notification-row">
                       {!available ? (
                         <span className="margin-notification-symbol">
                           <Clock3
@@ -331,12 +337,14 @@ export function NotificationCenter({
                             strokeWidth={1.5}
                           />
                         </span>
-                      ) : row.actors[0] ? (
-                        <span
+                      ) : actor ? (
+                        <PersonLink
+                          person={actor}
                           className="margin-notification-avatar"
-                          aria-hidden="true"
+                          aria-label={`View ${actor.name}’s profile`}
+                          onNavigate={openProfile}
                         >
-                          <Avatar person={row.actors[0]} small />
+                          <Avatar person={actor} small />
                           <span className="margin-notification-type">
                             <TypeIcon
                               size={12}
@@ -344,7 +352,7 @@ export function NotificationCenter({
                               strokeWidth={2}
                             />
                           </span>
-                        </span>
+                        </PersonLink>
                       ) : (
                         <span className="margin-notification-symbol">
                           <ShieldCheck
@@ -357,7 +365,29 @@ export function NotificationCenter({
                       <span className="margin-notification-copy">
                         <span>
                           {!read && <span className="sr-only">Unread. </span>}
-                          {notificationText(row, available)}
+                          {actor && nameIndex >= 0 && (
+                            <>
+                              {text.slice(0, nameIndex)}
+                              <PersonLink
+                                person={actor}
+                                onNavigate={openProfile}
+                              >
+                                {actor.name}
+                              </PersonLink>{" "}
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            className="margin-notification-open"
+                            aria-label={text}
+                            onClick={() => select(row)}
+                          >
+                            {actor && nameIndex >= 0
+                              ? text
+                                  .slice(nameIndex + actor.name.length)
+                                  .trimStart()
+                              : text}
+                          </button>
                         </span>
                         <time dateTime={row.createdAt}>
                           {relativeTime(
@@ -372,7 +402,7 @@ export function NotificationCenter({
                         aria-hidden="true"
                         strokeWidth={1.5}
                       />
-                    </button>
+                    </div>
                     {row.kind === "friend_request" &&
                       available &&
                       row.actors[0] && (

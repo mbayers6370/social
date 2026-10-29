@@ -12,10 +12,10 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 .margin-search-results a:hover {
-  background: hsl(var(--secondary));
+  background: hsl(var(--accent));
 }
 .margin-search-results a > span:last-child {
   min-width: 0;

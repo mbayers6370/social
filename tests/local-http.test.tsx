@@ -5,6 +5,8 @@ import { createLocalId } from "@/lib/local-id";
 import { ConversationDialog } from "@/features/feed/conversation-dialog";
 import { previewPostState } from "@/features/feed/state";
 import { MessagesPreview } from "@/features/messages/messages-preview";
+import { PreviewProvider } from "@/features/local-preview/provider";
+import { notificationFixture } from "./helpers/notification-fixture";
 import type { FeedPost } from "@/features/feed/schema";
 
 vi.mock("next/navigation", () => ({
@@ -112,23 +114,25 @@ it("opens a mobile conversation, records its history marker, posts a comment and
 it("adds a local message when randomUUID is unavailable", async () => {
   const user = userEvent.setup();
   render(
-    <MessagesPreview
-      threads={[
-        {
-          id: "theo",
-          contact: { id: "theo", name: "Theo", initials: "TM", tone: "sage" },
-          unread: false,
-          messages: [
-            {
-              id: "first",
-              body: "Good morning",
-              direction: "incoming",
-              createdAt: "2026-10-27T16:00:00Z",
-            },
-          ],
-        },
-      ]}
-    />,
+    <PreviewProvider bootstrap={notificationFixture().bootstrap}>
+      <MessagesPreview
+        threads={[
+          {
+            id: "theo",
+            contact: { id: "theo", name: "Theo", initials: "TM", tone: "sage" },
+            unread: false,
+            messages: [
+              {
+                id: "first",
+                body: "Good morning",
+                direction: "incoming",
+                createdAt: "2026-10-27T16:00:00Z",
+              },
+            ],
+          },
+        ]}
+      />
+    </PreviewProvider>,
   );
   await user.type(
     screen.getByRole("textbox", { name: "Message to Theo" }),

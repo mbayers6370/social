@@ -72,7 +72,7 @@ it("rejects self, unknown people, spoofed actors, wrong-direction, duplicate and
     { personId: "theo", action: "send" },
     { personId: "nadia", action: "accept", actorId: "nadia" },
     { personId: "https://evil.test", action: "send" },
-    { personId: "nadia", action: "block" },
+    { personId: "nadia", action: "unblock" },
   ])
     expect(() => changeFriendship(state, "ines", payload)).toThrow();
   expect(() =>
@@ -126,4 +126,58 @@ it("rejects a friendship notification whose displayed actor differs from the act
       target: { kind: "profile", personId: "theo" },
     }).success,
   ).toBe(false);
+});
+
+it("blocks friends or nonfriends, removes requests, and unblocks without restoring access", () => {
+  for (const personId of ["theo", "nadia"]) {
+    const initial = initialLocalState(notificationFixture().bootstrap);
+    const blocked = changeFriendship(initial, "ines", {
+      personId,
+      action: "block",
+    });
+    expect(friendStatus("ines", personId, blocked.friendships)).toBe("blocked");
+    expect(canReadFriendsPost("ines", personId, blocked.friendships)).toBe(
+      false,
+    );
+    expect(canReadFriendsPost(personId, "ines", blocked.friendships)).toBe(
+      false,
+    );
+    expect(() =>
+      changeFriendship(blocked, personId, {
+        personId: "ines",
+        action: "unblock",
+      }),
+    ).toThrow();
+    const unblocked = changeFriendship(blocked, "ines", {
+      personId,
+      action: "unblock",
+    });
+    expect(friendStatus("ines", personId, unblocked.friendships)).toBe("none");
+    expect(canReadFriendsPost("ines", personId, unblocked.friendships)).toBe(
+      false,
+    );
+  }
+});
+it("removing your own block cannot remove someone else's or an unattributed legacy block", () => {
+  let state = initialLocalState(notificationFixture().bootstrap);
+  state = changeFriendship(state, "ines", {
+    personId: "theo",
+    action: "block",
+  });
+  state = changeFriendship(state, "theo", {
+    personId: "ines",
+    action: "block",
+  });
+  state = changeFriendship(state, "ines", {
+    personId: "theo",
+    action: "unblock",
+  });
+  expect(friendStatus("ines", "theo", state.friendships)).toBe("blocked");
+  state.friendships.push({ people: ["ines", "nadia"], status: "blocked" });
+  expect(() =>
+    changeFriendship(state, "ines", { personId: "nadia", action: "unblock" }),
+  ).toThrow();
+  expect(() =>
+    changeFriendship(state, "ines", { personId: "ines", action: "block" }),
+  ).toThrow();
 });

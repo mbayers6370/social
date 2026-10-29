@@ -96,7 +96,7 @@
   gap: 4px;
 }
 .margin-notification-item {
-  border-radius: 8px;
+  border-radius: var(--radius-control);
 }
 .margin-notification-item[data-unread="true"],
 .margin-notification-item[data-kind="friend_request"] {
@@ -107,8 +107,9 @@
   background: hsl(var(--accent));
 }
 .margin-notification-row {
+  position: relative;
   display: grid;
-  grid-template-columns: 2.25rem minmax(0, 1fr) 1rem;
+  grid-template-columns: 44px minmax(0, 1fr) 1rem;
   align-items: start;
   gap: 0.75rem;
   width: 100%;
@@ -117,6 +118,18 @@
   text-align: left;
   border-radius: inherit;
 }
+.margin-notification-open {
+  text-align: left;
+}
+.margin-notification-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-control);
+}
+.margin-notification-row .margin-person-link {
+  z-index: 1;
+}
 .margin-notification-avatar {
   --margin-avatar-size: 2rem;
   position: relative;
@@ -124,8 +137,8 @@
   align-items: center;
   justify-content: center;
   justify-self: center;
-  width: 2rem;
-  height: 2rem;
+  width: 44px;
+  height: 44px;
 }
 .margin-notification-type {
   position: absolute;
@@ -190,7 +203,7 @@
   transition: opacity 160ms ease;
 }
 .margin-notification-row:hover .margin-notification-chevron,
-.margin-notification-row:focus-visible .margin-notification-chevron {
+.margin-notification-row:focus-within .margin-notification-chevron {
   opacity: 1;
 }
 @media (hover: none) {

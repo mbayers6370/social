@@ -63,7 +63,11 @@ it("expands and collapses a reply group by keyboard, retaining reply context and
   expect(button).toHaveAttribute("aria-expanded", "true");
   const replies = screen.getByRole("list", { name: "Replies to Samuel" });
   expect(within(replies).getAllByRole("listitem")).toHaveLength(2);
-  expect(within(replies).getByText("In reply to Ines")).toBeVisible();
+  const parentLink = within(replies).getByText("Ines", {
+    selector: ".margin-reply-context a",
+  });
+  expect(parentLink).toHaveAttribute("href", "/?view=profile&person=ines");
+  expect(parentLink.parentElement).toHaveTextContent("In reply to Ines");
   expect(
     within(replies).getByText("<script>not executable</script>"),
   ).toBeVisible();

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   test.skip(
@@ -40,17 +40,37 @@ test("shows the reference feed in chronological order with mobile-first navigati
     "post-june-lunch",
     "post-samuel-lunch",
     "post-samuel-bookshelf",
+    "post-theo-rome",
+    "post-theo-football",
+    "post-mara-river",
+    "post-mara-street",
   ]);
   await expect(page.getByRole("heading", { name: "Feed" })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Today", exact: true }),
   ).toHaveCount(0);
-  await expect(page.getByText("Yesterday", { exact: true })).toBeAttached();
-  expect(
-    await page
-      .getByRole("heading", { name: "Yesterday", exact: true })
-      .evaluate((node) => getComputedStyle(node).fontWeight),
-  ).toBe("500");
+  const referenceTime = await page
+    .locator(".margin-date time")
+    .getAttribute("datetime");
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(referenceTime!));
+  const yesterday = new Date(Date.parse(`${today}T12:00:00Z`) - 86400_000)
+    .toISOString()
+    .slice(0, 10);
+  const heading = page
+    .locator(".margin-day-heading")
+    .filter({ has: page.locator('time[datetime="2026-10-27"]') });
+  if (today === "2026-10-27") await expect(heading).toHaveCount(0);
+  else {
+    await expect(heading).toHaveText(
+      yesterday === "2026-10-27" ? "Yesterday" : "Tuesday, 27 October",
+    );
+    await expect(heading).toHaveCSS("font-weight", "500");
+  }
   expect(
     await page
       .locator("#post-porch")
@@ -75,6 +95,7 @@ test("shows the reference feed in chronological order with mobile-first navigati
     ),
   ).toBe(true);
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("margin-feed.png"),
     fullPage: true,
   });
@@ -83,29 +104,29 @@ test("shows the reference feed in chronological order with mobile-first navigati
 test("opens the correct conversation, keeps Like at the top, and restores scroll and focus", async ({
   page,
 }, testInfo) => {
-  await page.goto("/?view=profile");
-  const post = page.locator("#post-fog");
+  const post = page.locator("#post-porch");
   const trigger = post.locator("[data-conversation-trigger]");
   await trigger.scrollIntoViewIfNeeded();
   const before = await page.evaluate(() => ({
     y: scrollY,
-    post: document.getElementById("post-fog")!.getBoundingClientRect().toJSON(),
+    post: document
+      .getElementById("post-porch")!
+      .getBoundingClientRect()
+      .toJSON(),
     next: document
-      .getElementById("post-profile-beach")!
+      .getElementById("post-notebook")!
       .getBoundingClientRect()
       .toJSON(),
   }));
-  const dialog = await openPost(page);
-  await expect(dialog).toHaveAccessibleName(
-    "Conversation on Ines Alvarez’s post",
-  );
+  const dialog = await openPost(page, "post-porch");
+  await expect(dialog).toHaveAccessibleName("Conversation on June Park’s post");
   await expect(
     dialog.getByRole("button", { name: "Like", exact: true }),
   ).toHaveAttribute("aria-pressed", "false");
   await expect(dialog.locator(".margin-conversation-header")).not.toContainText(
-    "48",
+    "12",
   );
-  await expect(dialog.locator("[data-like-count]")).toHaveText("48 likes");
+  await expect(dialog.locator("[data-like-count]")).toHaveText("12 likes");
   await expect(dialog.locator("[data-like-count]")).toHaveCount(1);
   await expect(
     dialog.getByRole("button", {
@@ -116,7 +137,7 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
       exact: true,
     }),
   ).toHaveCount(0);
-  const after = await page.locator("#post-profile-beach").boundingBox();
+  const after = await page.locator("#post-notebook").boundingBox();
   const scrollDelta = (await page.evaluate(() => scrollY)) - before.y;
   const growth =
     (await post.locator("..").boundingBox())!.height - before.post.height;
@@ -140,6 +161,7 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
     expect(panel!.height).toBeCloseTo(page.viewportSize()!.height, 0);
   }
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("margin-conversation.png"),
   });
   await page.keyboard.press("Escape");
@@ -220,7 +242,7 @@ test("handles an empty conversation, validates input, and preserves independent 
   await input.fill("An unfinished thought");
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
-  const other = await openPost(page, "post-fog");
+  const other = await openPost(page, "post-porch");
   await expect(
     other.getByRole("textbox", { name: "Add a comment" }),
   ).toHaveValue("");
@@ -296,7 +318,7 @@ test("keeps the active experience usable when switching between desktop and mobi
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  const dialog = await openPost(page);
+  const dialog = await openPost(page, "post-porch");
   await dialog.getByRole("button", { name: "Like", exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(
@@ -305,12 +327,17 @@ test("keeps the active experience usable when switching between desktop and mobi
   await expect(
     dialog.getByRole("button", { name: "Liked", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
-  await expect.poll(async () => (await dialog.boundingBox())?.width).toBe(390);
+  const contentWidth = await page.evaluate(
+    () => document.documentElement.clientWidth,
+  );
+  await expect
+    .poll(async () => (await dialog.boundingBox())?.width)
+    .toBe(contentWidth);
   await page.setViewportSize({ width: 1280, height: 700 });
   await expect
     .poll(async () => {
       const panel = await dialog.boundingBox();
-      const post = await page.locator("#post-fog").boundingBox();
+      const post = await page.locator("#post-porch").boundingBox();
       return Math.abs(panel!.height - post!.height);
     })
     .toBeLessThan(1);
@@ -329,15 +356,7 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
     "Desktop panels; mobile conversations remain full screen",
   );
   await page.setViewportSize({ width: 1280, height: 1400 });
-  for (const id of [
-    "post-fog",
-    "post-book",
-    "post-porch",
-    "post-notebook",
-    "post-tea",
-  ]) {
-    if (!(await page.locator(`#${id}`).count()))
-      await page.goto(id === "post-fog" ? "/?view=profile" : "/");
+  for (const id of ["post-book", "post-porch", "post-notebook", "post-tea"]) {
     const post = page.locator(`#${id}`);
     await post.scrollIntoViewIfNeeded();
     const original = (await post.boundingBox())!;
@@ -426,8 +445,9 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
       .getByRole("button", { name: "Post", exact: true })
       .boundingBox())!;
     expect(buttonBounds.y).toBeGreaterThan(textBounds.y + textBounds.height);
-    if (id === "post-fog" || id === "post-book")
+    if (id === "post-porch" || id === "post-book")
       await page.screenshot({
+        caret: "initial",
         path: testInfo.outputPath(`conversation-${id}.png`),
       });
     await dialog
@@ -444,10 +464,10 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
     }
   }
   await page.setViewportSize({ width: 1280, height: 500 });
-  const dialog = await openPost(page);
+  const dialog = await openPost(page, "post-porch");
   const headerHeight = (await page.locator(".margin-header").boundingBox())!
     .height;
-  const postHeight = (await page.locator("#post-fog").boundingBox())!.height;
+  const postHeight = (await page.locator("#post-porch").boundingBox())!.height;
   expect((await dialog.boundingBox())!.height).toBeCloseTo(postHeight, 1);
   expect(postHeight).toBeGreaterThanOrEqual(500 - headerHeight - 64);
   await expect(
@@ -462,11 +482,19 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
     .scrollIntoViewIfNeeded();
   await expect(input).toBeInViewport();
   expect((await input.boundingBox())!.height).toBe(44);
+  // Make overflow deliberate rather than depending on a fixture's comment count.
+  await input.fill(
+    "A longer thought to exercise scrolling in a short window. ".repeat(25),
+  );
+  await dialog.getByRole("button", { name: "Post", exact: true }).click();
+  const scroll = dialog.getByRole("region", { name: "Conversation content" });
+  await scroll.evaluate((node) => {
+    node.scrollTop = 0;
+  });
   await expect(dialog).toHaveAttribute("data-more-below", "true");
   const composerBounds = (await dialog
     .locator(".margin-conversation-composer")
     .boundingBox())!;
-  const scroll = dialog.getByRole("region", { name: "Conversation content" });
   await scroll.evaluate((node) => {
     node.scrollTop = node.scrollHeight;
   });
@@ -493,7 +521,7 @@ test("opens the local post composer and returns to the feed", async ({
   await page
     .getByRole("button", { name: "Share a thought…", exact: true })
     .click();
-  const dialog = page.getByRole("dialog", { name: "New post", exact: true });
+  const dialog = page.getByRole("dialog", { name: "New Post", exact: true });
   await expect(dialog).toBeVisible();
   await expect(
     dialog.getByRole("textbox", { name: "Your post" }),
@@ -577,7 +605,7 @@ test("conversation controls have padded hover targets and a soft comment focus b
   page,
   isMobile,
 }, testInfo) => {
-  const dialog = await openPost(page);
+  const dialog = await openPost(page, "post-porch");
   const like = dialog.getByRole("button", { name: "Like", exact: true });
   await expect(like).toBeVisible();
   const padding = await like.evaluate((node) => {
@@ -586,7 +614,10 @@ test("conversation controls have padded hover targets and a soft comment focus b
   });
   expect(Math.min(...padding)).toBeGreaterThanOrEqual(10);
   await like.hover();
-  await page.screenshot({ path: testInfo.outputPath("like-hover.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("like-hover.png"),
+  });
   if (!isMobile) {
     const close = dialog.getByRole("button", {
       name: "Close conversation",
@@ -605,7 +636,10 @@ test("conversation controls have padded hover targets and a soft comment focus b
       "0px",
     );
     await close.hover();
-    await page.screenshot({ path: testInfo.outputPath("close-hover.png") });
+    await page.screenshot({
+      caret: "initial",
+      path: testInfo.outputPath("close-hover.png"),
+    });
   } else {
     const back = dialog.getByRole("button", { name: "Back to post" });
     await expect(back).toHaveCSS("font-size", "13px");
@@ -613,7 +647,10 @@ test("conversation controls have padded hover targets and a soft comment focus b
   }
   const input = dialog.getByRole("textbox", { name: "Add a comment" });
   expect((await input.boundingBox())!.height).toBe(44);
-  await page.screenshot({ path: testInfo.outputPath("inline-comment.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("inline-comment.png"),
+  });
   await input.focus();
   const focus = await dialog
     .locator(".margin-comment-input")
@@ -631,6 +668,7 @@ test("conversation controls have padded hover targets and a soft comment focus b
   expect(focus.shadow).not.toBe("none");
   expect(focus.outline).toBe("none");
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("expanded-comment-focus.png"),
   });
 });
@@ -688,6 +726,7 @@ test("keeps the comment composer pinned with likes and expiry directly underneat
   }
   await page.setViewportSize(initialViewport);
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("pinned-comment-footer.png"),
   });
   await page.keyboard.press("Escape");
@@ -726,8 +765,13 @@ test("keeps navigation and conversation controls usable from small phones to wid
 
 test("reverses the opening animation when closing", async ({ page }) => {
   const dialog = await openPost(page, "post-book");
-  const frames = await dialog.evaluate((node) => {
+  const frames = await dialog.evaluate(async (node) => {
     const motion = node.getAnimations()[0];
+    // openPost waits for the entrance to finish. Seek back into that entrance
+    // so this actually tests reversing an in-progress animation.
+    motion.pause();
+    await motion.ready;
+    motion.currentTime = Number(motion.effect!.getTiming().duration) / 2;
     motion.playbackRate = 0.2;
     return (motion.effect as KeyframeEffect).getKeyframes();
   });
@@ -745,8 +789,16 @@ test("reverses the opening animation when closing", async ({ page }) => {
     "closing",
   );
   expect(
-    await dialog.evaluate((node) => node.getAnimations()[0].playbackRate),
+    await dialog.evaluate(async (node) => {
+      const motion = node.getAnimations()[0];
+      await motion.ready;
+      return motion.playbackRate;
+    }),
   ).toBeLessThan(0);
+  // The slow rate makes the reversal observable; finish at its normal speed.
+  await dialog.evaluate((node) => {
+    node.getAnimations()[0].playbackRate = -1;
+  });
   await expect(dialog).not.toBeVisible();
 });
 

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "./post-content";
 import { relativeTime } from "./format";
 import type { CommentThread } from "./comment-threads";
-import type { FeedComment } from "./schema";
+import type { FeedComment, Person } from "./schema";
+import { PersonLink } from "@/components/shared/person-link";
 
 type RowProps = {
   postId: string;
@@ -29,7 +30,7 @@ export function ConversationComments({
 }) {
   const authors = new Map(
     threads.flatMap(({ comment, replies }) =>
-      [comment, ...replies].map((item) => [item.id, item.author.name] as const),
+      [comment, ...replies].map((item) => [item.id, item.author] as const),
     ),
   );
   return (
@@ -58,7 +59,7 @@ function CommentThreadView({
   thread: CommentThread;
   expanded: boolean;
   onExpandedChange: (commentId: string, expanded: boolean) => void;
-  authors: Map<string, string>;
+  authors: Map<string, Person>;
 }) {
   const repliesId = useId();
   const count = thread.replies.length;
@@ -66,7 +67,7 @@ function CommentThreadView({
     <li className="margin-comment-thread">
       <CommentRow
         comment={thread.comment}
-        parentName={
+        parentAuthor={
           thread.comment.replyTo
             ? authors.get(thread.comment.replyTo)
             : undefined
@@ -97,7 +98,7 @@ function CommentThreadView({
               <li key={comment.id}>
                 <CommentRow
                   comment={comment}
-                  parentName={
+                  parentAuthor={
                     comment.replyTo ? authors.get(comment.replyTo) : undefined
                   }
                   {...rowProps}
@@ -113,21 +114,25 @@ function CommentThreadView({
 
 function CommentRow({
   comment,
-  parentName,
+  parentAuthor,
   postId,
   postAuthorId,
   referenceTime,
   onReply,
 }: RowProps & {
   comment: FeedComment;
-  parentName?: string;
+  parentAuthor?: Person;
 }) {
   return (
     <div className="margin-comment" id={`comment-${postId}-${comment.id}`}>
-      <Avatar person={comment.author} small />
+      <Avatar person={comment.author} small linked />
       <div className="margin-comment-main">
         <div className="margin-comment-meta">
-          <strong>{comment.author.name}</strong>
+          <strong>
+            <PersonLink person={comment.author}>
+              {comment.author.name}
+            </PersonLink>
+          </strong>
           {comment.author.id === postAuthorId ? (
             <span className="margin-author-label">Author</span>
           ) : (
@@ -146,7 +151,12 @@ function CommentRow({
         </div>
         {comment.replyTo && (
           <span className="margin-reply-context">
-            In reply to {parentName ?? "a comment"}
+            In reply to{" "}
+            {parentAuthor ? (
+              <PersonLink person={parentAuthor}>{parentAuthor.name}</PersonLink>
+            ) : (
+              "a comment"
+            )}
           </span>
         )}
         <p>{comment.body}</p>

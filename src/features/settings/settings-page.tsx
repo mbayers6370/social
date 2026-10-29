@@ -23,7 +23,7 @@ export function SettingsPage() {
       </header>
       <div className="margin-settings-columns">
         <section aria-labelledby="reading-settings">
-          <h2 id="reading-settings">Reading & motion</h2>
+          <h2 id="reading-settings">Reading & Motion</h2>
           <fieldset>
             <legend>Text size</legend>
             <p id="reading-help" className="margin-field-hint">
@@ -87,7 +87,7 @@ export function SettingsPage() {
           <NotificationPreferences />
         </section>
         <section aria-labelledby="privacy-settings">
-          <h2 id="privacy-settings">Privacy & account</h2>
+          <h2 id="privacy-settings">Privacy & Account</h2>
           <div className="margin-settings-groups">
             <Link href="/?view=profile" className="margin-setting-link">
               <span>
@@ -108,14 +108,14 @@ export function SettingsPage() {
               </p>
             </div>
             <div className="margin-setting-summary">
-              <h3>Photographs only</h3>
+              <h3>Photographs Only</h3>
               <p>
                 Still JPEG, PNG and WebP images. Video, animated images and
                 video embeds aren’t supported.
               </p>
             </div>
             <div className="margin-setting-summary">
-              <h3>Sign-in & security</h3>
+              <h3>Sign-In & Security</h3>
               <p className="margin-field-hint">
                 Passkeys, MFA and sessions will be managed through the connected
                 authentication service. Account controls aren’t available in
@@ -124,7 +124,7 @@ export function SettingsPage() {
             </div>
             <PreviewDataControls />
             <div className="margin-setting-summary">
-              <h3>Help & about margin</h3>
+              <h3>Help & About margin</h3>
               <p className="margin-field-hint">
                 The initial minimum signup age is {MINIMUM_AGE}. Registration
                 and real account controls are not open yet.

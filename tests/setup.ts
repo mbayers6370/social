@@ -69,5 +69,47 @@ vi.mock("@/assets/fixtures/park-2.jpg", () => ({
     height: 427,
   },
 }));
+vi.mock("@/assets/fixtures/Theo-profile.jpg", () => ({
+  default: {
+    src: "/_next/static/media/Theo-profile.test.jpg",
+    width: 640,
+    height: 960,
+  },
+}));
+vi.mock("@/assets/fixtures/Theo-Roma-Walk.jpg", () => ({
+  default: {
+    src: "/_next/static/media/Theo-Roma-Walk.test.jpg",
+    width: 640,
+    height: 960,
+  },
+}));
+vi.mock("@/assets/fixtures/Theo-football.jpg", () => ({
+  default: {
+    src: "/_next/static/media/Theo-football.test.jpg",
+    width: 640,
+    height: 360,
+  },
+}));
+vi.mock("@/assets/fixtures/mara-profile.jpg", () => ({
+  default: {
+    src: "/_next/static/media/mara-profile.test.jpg",
+    width: 640,
+    height: 427,
+  },
+}));
+vi.mock("@/assets/fixtures/mara-photography.jpg", () => ({
+  default: {
+    src: "/_next/static/media/mara-photography.test.jpg",
+    width: 640,
+    height: 427,
+  },
+}));
+vi.mock("@/assets/fixtures/mara-photography-2.jpg", () => ({
+  default: {
+    src: "/_next/static/media/mara-photography-2.test.jpg",
+    width: 640,
+    height: 853,
+  },
+}));
 
 afterEach(cleanup);

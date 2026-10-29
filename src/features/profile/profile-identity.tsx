@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FriendActions } from "@/features/friends/friend-actions";
-import { Settings2, Users } from "lucide-react";
+import { ProfileContactActions } from "./profile-contact-actions";
+import { Pencil, Settings2 } from "lucide-react";
 
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -75,21 +75,26 @@ export function ProfileIdentity({
       <p className="margin-profile-bio">{identity.bio}</p>
       {!readOnly ? (
         <div className="margin-profile-actions">
-          <Button className="margin-profile-owner-action" asChild>
-            <Link href="/?view=friends">
-              <Users aria-hidden="true" strokeWidth={1.5} />
-              Friends
-            </Link>
+          <Button
+            className="margin-profile-owner-action"
+            size="icon"
+            aria-label="Edit profile"
+            title="Edit profile"
+            onClick={(event) => {
+              trigger.current = event.currentTarget;
+              setEditing(true);
+            }}
+          >
+            <Pencil aria-hidden="true" strokeWidth={1.5} />
           </Button>
-          <Button className="margin-profile-owner-action" asChild>
-            <Link href="/?view=settings">
+          <Button className="margin-profile-owner-action" size="icon" asChild>
+            <Link href="/?view=settings" aria-label="Settings" title="Settings">
               <Settings2 aria-hidden="true" strokeWidth={1.5} />
-              Settings
             </Link>
           </Button>
         </div>
       ) : (
-        <FriendActions person={profile.person} />
+        <ProfileContactActions person={profile.person} />
       )}
       <p role="status" className="margin-status">
         {updated ? "Profile updated in this preview only." : ""}

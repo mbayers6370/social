@@ -11,6 +11,12 @@ import samuelPortrait from "@/assets/fixtures/Okafor-profile.jpg";
 import samuelBeach from "@/assets/fixtures/Okafor-post.jpg";
 import juneBirthday from "@/assets/fixtures/park-1.jpg";
 import juneFriends from "@/assets/fixtures/park-2.jpg";
+import theoPortrait from "@/assets/fixtures/Theo-profile.jpg";
+import theoRome from "@/assets/fixtures/Theo-Roma-Walk.jpg";
+import theoFootball from "@/assets/fixtures/Theo-football.jpg";
+import maraPortrait from "@/assets/fixtures/mara-profile.jpg";
+import maraRiver from "@/assets/fixtures/mara-photography.jpg";
+import maraStreet from "@/assets/fixtures/mara-photography-2.jpg";
 
 export function imageData(image: {
   src: string;
@@ -32,6 +38,7 @@ const theo: Person = {
   name: "Theo Marchetti",
   initials: "TM",
   tone: "sage",
+  photo: imageData(theoPortrait),
 };
 const june: Person = {
   id: "june",
@@ -52,6 +59,7 @@ const mara: Person = {
   name: "Mara Lindqvist",
   initials: "ML",
   tone: "sage",
+  photo: imageData(maraPortrait),
 };
 const referenceTime = "2026-10-27T17:42:00Z";
 
@@ -338,6 +346,86 @@ const posts: FeedPost[] = [
       "Calling that good enough for now.",
     ],
     likes: 6,
+    comments: [],
+  },
+  {
+    id: "post-theo-rome",
+    author: theo,
+    createdAt: "2026-10-19T17:00:00Z",
+    expiresAt: "2026-11-18T17:00:00Z",
+    paragraphs: [
+      "A slow walk through Rome. Stopped here for a while before finding somewhere for coffee.",
+    ],
+    media: [
+      {
+        description:
+          "People walking along a gravel path beneath tall umbrella pines, with a dome visible in the distance",
+        caption: "An afternoon walk in Rome.",
+        aspect: "portrait",
+        image: imageData(theoRome),
+      },
+    ],
+    likes: 5,
+    comments: [],
+  },
+  {
+    id: "post-theo-football",
+    author: theo,
+    createdAt: "2026-10-18T16:30:00Z",
+    expiresAt: "2026-11-17T16:30:00Z",
+    paragraphs: [
+      "Sunday football. We lost, but it was good to get everyone out again.",
+    ],
+    media: [
+      {
+        description:
+          "Two football players competing for the ball on a sunlit grass pitch",
+        caption: "Sunday football.",
+        aspect: "landscape",
+        image: imageData(theoFootball),
+      },
+    ],
+    likes: 8,
+    comments: [],
+  },
+  {
+    id: "post-mara-river",
+    author: mara,
+    createdAt: "2026-10-17T18:40:00Z",
+    expiresAt: "2026-11-16T18:40:00Z",
+    paragraphs: [
+      "Took the camera out after dinner. Stayed by the water until the lights came on.",
+    ],
+    media: [
+      {
+        description:
+          "A river at dusk with illuminated waterfront buildings and a church spire beneath a blue evening sky",
+        caption: "By the water after sunset.",
+        aspect: "landscape",
+        image: imageData(maraRiver),
+      },
+    ],
+    likes: 11,
+    comments: [],
+  },
+  {
+    id: "post-mara-street",
+    author: mara,
+    createdAt: "2026-10-16T14:15:00Z",
+    expiresAt: "2026-11-15T14:15:00Z",
+    paragraphs: [
+      "The light on this street made me stop. Almost walked past without looking up.",
+    ],
+    media: [
+      {
+        description:
+          "A narrow cobbled street between yellow buildings, looking up toward blue sky and white clouds",
+        caption: "Looking up on the way home.",
+        aspect: "portrait",
+        image: imageData(maraStreet),
+      },
+    ],
+    likes: 9,
     comments: [],
   },
 ];

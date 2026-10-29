@@ -41,10 +41,10 @@ it("keeps three mobile destinations with notifications and account utilities in 
   const header = screen.getByRole("banner");
   const bottom = screen.getByRole("navigation", { name: "Mobile navigation" });
   expect(
-    within(header).queryByRole("button", { name: "New post" }),
+    within(header).queryByRole("button", { name: "New Post" }),
   ).not.toBeInTheDocument();
   expect(
-    within(bottom).queryByRole("button", { name: "New post" }),
+    within(bottom).queryByRole("button", { name: "New Post" }),
   ).not.toBeInTheDocument();
   expect(
     within(header).getByRole("button", { name: "Notifications, 2 unread" }),
@@ -90,9 +90,7 @@ it("accepts a request, updates friends, confirms removal with safe focus and sup
   let dialog = screen.getByRole("alertdialog", {
     name: "Remove Nadia from friends?",
   });
-  expect(
-    within(dialog).getByRole("button", { name: "Keep friend" }),
-  ).toHaveFocus();
+  expect(within(dialog).getByRole("button", { name: "Cancel" })).toHaveFocus();
   await user.keyboard("{Escape}");
   await waitFor(() => expect(manage).toHaveFocus());
   expect(screen.getByRole("button", { name: "Friends 2" })).toBeInTheDocument();
@@ -210,22 +208,39 @@ it("revokes already-serialized feed, profile and gallery content immediately on 
       />
     </PreviewProvider>,
   );
+  const profileGallery = document.querySelector(
+    ".margin-profile-gallery",
+  ) as HTMLElement;
+  expect(
+    within(profileGallery).getByRole("link", { name: "View More" }),
+  ).toBeVisible();
   expect(screen.getByText("Something worth discussing.")).toBeVisible();
   expect(screen.getByText("Private recent thought")).toBeVisible();
   expect(screen.getAllByAltText("Private photograph").length).toBeGreaterThan(
     0,
   );
   await user.click(
-    screen.getByRole("button", { name: "Manage friendship with Theo" }),
+    screen.getByRole("button", { name: "More options for Theo" }),
   );
-  await user.click(screen.getByRole("button", { name: "Remove friend" }));
+  await user.click(screen.getByRole("menuitem", { name: "Unfriend" }));
+  await user.click(
+    within(screen.getByRole("alertdialog")).getByRole("button", {
+      name: "Unfriend",
+    }),
+  );
   expect(
     screen.queryByText("Something worth discussing."),
   ).not.toBeInTheDocument();
   expect(screen.queryByText("Private recent thought")).not.toBeInTheDocument();
   expect(screen.queryByAltText("Private photograph")).not.toBeInTheDocument();
   expect(
-    screen.getByRole("heading", { name: "Gallery unavailable" }),
+    within(profileGallery).queryByRole("link", { name: "View More" }),
+  ).not.toBeInTheDocument();
+  expect(
+    within(profileGallery).getByText("Photos are shared with friends."),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("heading", { name: "Gallery Unavailable" }),
   ).toBeVisible();
 });
 it("dismisses an open conversation immediately if its friend-only post loses access", async () => {

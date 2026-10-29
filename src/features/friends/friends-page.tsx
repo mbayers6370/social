@@ -45,7 +45,7 @@ export function FriendsPage() {
     section === "friends"
       ? [
           {
-            title: "Your friends",
+            title: "Your Friends",
             kind: "friends",
             empty:
               "No friends here yet. Find a profile to send your first request.",

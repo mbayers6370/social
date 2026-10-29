@@ -5,6 +5,17 @@
   margin: 0 auto;
   padding: var(--profile-top-gap) 0 80px;
 }
+.margin-profile-identity {
+  position: relative;
+}
+.margin-profile-identity:has(.margin-profile-popover) {
+  z-index: 2;
+}
+.margin-profile-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 .margin-profile-heading > .margin-avatar {
   --margin-avatar-size: 76px;
   font-size: var(--text-heading-md);
@@ -13,13 +24,13 @@
   min-width: 0;
 }
 .margin-profile h1 {
-  margin-top: 20px;
-  font: var(--text-display-md)/1.15 var(--font-serif);
+  margin-top: 0;
+  font: var(--text-heading-md)/1.15 var(--font-serif);
   letter-spacing: -0.035em;
   overflow-wrap: anywhere;
 }
 .margin-profile-handle {
-  margin-top: 12px;
+  margin-top: 4px;
   color: hsl(var(--muted-foreground));
   font-size: var(--text-control);
 }
@@ -37,15 +48,18 @@
   margin-top: 24px;
 }
 .margin-profile-actions > :is(button, a) {
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   font-weight: 400;
   padding-inline: 20px;
 }
-.margin-profile-owner-action {
+.margin-profile-actions > .margin-profile-owner-action {
+  width: 44px;
+  height: 44px;
+  padding: 0;
   background: hsl(var(--citron));
   color: hsl(var(--ink));
 }
-.margin-profile-owner-action:hover {
+.margin-profile-actions > .margin-profile-owner-action:hover {
   background: hsl(var(--citron) / 0.85);
 }
 .margin-profile-posts {
@@ -83,14 +97,40 @@
   margin-top: var(--space-section);
 }
 .margin-profile-section-card {
+  --profile-section-top: var(--space-group);
   min-width: 0;
-  padding: var(--space-group);
+  padding: var(--profile-section-top) var(--space-group) var(--space-group);
   border: 1px solid hsl(var(--border) / 0.65);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: hsl(var(--card));
 }
 .margin-profile-section-card > .margin-section-heading {
   align-items: center;
+  margin: calc(-1 * var(--profile-section-top)) calc(-1 * var(--space-group)) 0;
+  padding: 16px var(--space-group);
+  border-bottom: 1px solid hsl(var(--border) / 0.65);
+  border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0
+    0;
+  background: hsl(var(--surface-heading));
+}
+.margin-profile-posts-card > .margin-section-heading {
+  margin: 0;
+  padding: 16px var(--profile-post-inset);
+}
+.margin-profile-section-card[data-empty="true"] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.margin-profile-section-card[data-empty="true"] > .margin-section-heading {
+  margin: 0;
+  padding: 0 0 12px;
+  background: transparent;
+  border-radius: 0;
+}
+.margin-profile-section-card[data-empty="true"] > .margin-empty-copy {
+  margin-top: 12px;
+  padding-inline: 0;
 }
 .margin-profile-note {
   display: block;
@@ -166,7 +206,7 @@
     --profile-top-gap: 65px;
   }
   .margin-profile h1 {
-    font-size: var(--text-display-lg);
+    font-size: var(--text-display-md);
   }
   .margin-profile-post {
     grid-template-columns: 84px 1fr auto;
@@ -192,7 +232,7 @@
 }
 @media (min-width: 1024px) {
   .margin-profile-section-card {
-    padding-top: 16px;
+    --profile-section-top: 16px;
   }
   .margin-profile-posts-card > .margin-section-heading {
     padding-top: 16px;
@@ -312,4 +352,121 @@
 }
 .margin-gallery-preview[data-count="2"] img:first-child {
   grid-row: auto;
+}
+
+.margin-profile-contact {
+  margin-top: 24px;
+}
+.margin-profile-contact-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.margin-profile-contact-actions > [data-slot="button"] {
+  font-size: var(--text-control);
+  font-weight: 400;
+}
+/* Fixed-size controls never reserve space for the feedback line below them. */
+.margin-profile-contact-actions > .margin-friend-controls {
+  flex: 0 1 auto;
+}
+.margin-profile-friend-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid hsl(var(--blackened-olive));
+  border-radius: var(--radius-control);
+  background: hsl(var(--blackened-olive));
+  color: hsl(var(--citron));
+}
+.margin-profile-contact-actions svg,
+.margin-profile-options-list svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.margin-profile-overflow {
+  position: relative;
+  flex: 0 0 44px;
+}
+.margin-profile-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 45;
+  width: 224px;
+  max-width: calc(100vw - 48px);
+  padding: var(--menu-inset);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-menu);
+  background: hsl(var(--card));
+  box-shadow: 0 8px 24px hsl(var(--ink) / 0.12);
+}
+.margin-profile-options-list {
+  display: grid;
+  gap: 4px;
+}
+.margin-profile-options-list > :is(button, a) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  text-align: left;
+  font: 400 var(--text-body)/1.5 var(--font-body);
+}
+.margin-profile-options-list > :is(button, a):hover {
+  background: hsl(var(--accent));
+}
+.margin-profile-action-sheet {
+  inset: auto 0 0;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  max-height: calc(100dvh - var(--margin-safe-area-top) - 24px);
+  padding: 0 0 max(16px, env(safe-area-inset-bottom));
+  gap: 0;
+  border-radius: 16px 16px 0 0;
+}
+.margin-profile-sheet-title {
+  padding: 24px 24px 8px;
+}
+.margin-profile-sheet-description {
+  padding: 0 24px 16px;
+}
+.margin-profile-action-sheet .margin-profile-options-list {
+  padding-inline: var(--menu-inset);
+}
+.margin-profile-action-sheet .margin-profile-options-list > :is(button, a) {
+  padding-inline: 16px;
+  min-height: 52px;
+}
+.margin-profile-sheet-cancel {
+  margin: 16px 24px 0;
+}
+.margin-profile-report {
+  display: grid;
+  gap: 8px;
+}
+.margin-profile-report :is(select, textarea) {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius-control);
+  background: hsl(var(--card));
+}
+.margin-profile-report textarea {
+  resize: vertical;
+}
+
+.margin-profile-options-list > [data-destructive="true"] {
+  color: hsl(var(--destructive));
 }

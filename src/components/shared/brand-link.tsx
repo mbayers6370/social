@@ -5,12 +5,19 @@ import { BrandBrackets } from "./brand-brackets";
 export function BrandLink({
   href = "/",
   label = "margin home",
+  animate = false,
 }: {
   href?: string;
   label?: string;
+  animate?: boolean;
 }) {
   return (
-    <Link href={href} aria-label={label} className="margin-brand-link">
+    <Link
+      href={href}
+      aria-label={label}
+      className="margin-brand-link"
+      data-entrance={animate || undefined}
+    >
       <BrandBrackets>
         <span className="margin-brand-name">margin</span>
       </BrandBrackets>

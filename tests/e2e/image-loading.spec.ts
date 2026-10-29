@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.beforeEach(() =>
   test.skip(
@@ -15,7 +15,7 @@ test("initial photo markup is eager with only the lead feed photo at high priori
   const photos = [...html.matchAll(/<img\b[^>]*>/g)]
     .map(([tag]) => tag)
     .filter((tag) => tag.includes('class="margin-post-image"'));
-  expect(photos).toHaveLength(2);
+  expect(photos).toHaveLength(9);
   for (const photo of photos) expect(photo).toContain('loading="eager"');
   expect(
     photos.filter(
@@ -29,7 +29,7 @@ test("initial photo markup is eager with only the lead feed photo at high priori
     await expect(image).toHaveAttribute("loading", "eager");
 });
 
-test("photo viewer stays contained without dimension warnings when its width matches the source", async ({
+test("photo viewer preserves source proportions and stays contained without dimension warnings", async ({
   page,
 }, testInfo) => {
   const warnings: string[] = [];
@@ -37,16 +37,43 @@ test("photo viewer stays contained without dimension warnings when its width mat
     if (message.text().includes("has either width or height modified"))
       warnings.push(message.text());
   });
-  // A 738px viewport gives this viewer a 640px image area: exactly the
-  // source width, which previously triggered Next's dimension warning.
   await page.setViewportSize({ width: 738, height: 844 });
   await page.goto("/?view=profile");
   await page.locator("#post-fog [data-post-photo-trigger]").nth(2).click();
   const image = page.locator("[data-post-photo-viewer] img");
   await image.evaluate((node) => (node as HTMLImageElement).decode());
-  expect((await image.boundingBox())!.width).toBe(640);
+  await expect(image).toBeInViewport({ ratio: 1 });
+  const dimensions = await image.evaluate((node) => {
+    const photo = node as HTMLImageElement;
+    const bounds = photo.getBoundingClientRect();
+    return {
+      width: bounds.width,
+      height: bounds.height,
+      // Optimized thumbnails can round one source dimension to a whole pixel.
+      ratio:
+        Number(photo.getAttribute("width")) /
+        Number(photo.getAttribute("height")),
+    };
+  });
+  expect(dimensions.width).toBeGreaterThan(100);
+  expect(dimensions.width / dimensions.height).toBeCloseTo(dimensions.ratio, 2);
+  const viewer = (await page
+    .locator("[data-post-photo-viewer]")
+    .boundingBox())!;
+  const bounds = (await image.boundingBox())!;
+  expect(bounds.x).toBeGreaterThanOrEqual(viewer.x);
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(
+    viewer.x + viewer.width + 1,
+  );
+  expect(bounds.y).toBeGreaterThanOrEqual(viewer.y);
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(
+    viewer.y + viewer.height + 1,
+  );
   await expect(image).toHaveCSS("object-fit", "contain");
-  await page.screenshot({ path: testInfo.outputPath("contained-photo.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("contained-photo.png"),
+  });
   expect(warnings).toEqual([]);
 });
 

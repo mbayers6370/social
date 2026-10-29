@@ -51,8 +51,9 @@ html[data-motion="reduced"] .margin-music-equalizer rect {
 }
 .margin-music-results {
   display: grid;
+  gap: 4px;
   list-style: none;
-  padding: 0;
+  padding: 0 var(--menu-inset);
 }
 .margin-track-row,
 .margin-track-choice {
@@ -109,7 +110,7 @@ html[data-motion="reduced"] .margin-music-equalizer rect {
 }
 .margin-music-results > li {
   position: relative;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
 }
 .margin-song-card:hover .margin-track-chevron,
 .margin-song-card:focus-within .margin-track-chevron {
@@ -293,7 +294,7 @@ html[data-motion="reduced"] .margin-music-equalizer rect {
   padding: 8px 12px;
   min-height: 44px;
   max-width: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   background: hsl(var(--conversation));
   font-size: var(--text-control);
 }

@@ -8,6 +8,7 @@ import {
   type CSSProperties,
   type PointerEvent,
   type KeyboardEvent,
+  type RefObject,
 } from "react";
 import {
   moveGalleryEntries,
@@ -28,6 +29,10 @@ type Session = {
   settling: boolean;
   target: string | null;
   viewportTop: number;
+  viewportBottom: number;
+  scroller: HTMLDivElement | null;
+  scrollTop: number;
+  feature: boolean;
   boxes: Map<string, Box>;
   animation?: Animation;
 };
@@ -37,6 +42,7 @@ type Lift = {
   width: number;
   height: number;
   boxes: Map<string, Box>;
+  feature: boolean;
 };
 function release(session: Session) {
   if (session.handle.hasPointerCapture?.(session.pointer))
@@ -54,6 +60,8 @@ const reducedMotion = () =>
 export function useGalleryDrag(
   entries: GalleryEntry[],
   move: (id: string, target: string) => void,
+  scrollContainer?: RefObject<HTMLDivElement | null>,
+  featureDrop?: (id: string) => void,
 ) {
   const stage = useRef<HTMLDivElement>(null);
   const ghost = useRef<HTMLDivElement>(null);
@@ -62,8 +70,10 @@ export function useGalleryDrag(
   const pendingFocus = useRef<string | null>(null);
   const [lift, setLift] = useState<Lift | null>(null);
   const moveRef = useRef(move);
+  const featureRef = useRef(featureDrop);
   useLayoutEffect(() => {
     moveRef.current = move;
+    featureRef.current = featureDrop;
   });
   useLayoutEffect(() => {
     if (!pendingFocus.current) return;
@@ -86,40 +96,71 @@ export function useGalleryDrag(
     if (session) release(session);
     setLift(null);
   }, []);
-  function update(session: Session) {
-    if (active.current !== session || session.settling) return;
-    const tile =
-      session.y >= session.viewportTop
-        ? [...session.boxes].find(([, box]) => {
-            const x = session.x + window.scrollX;
-            const y = session.y + window.scrollY;
-            return (
-              x >= box.left &&
-              x <= box.left + box.width &&
-              y >= box.top &&
-              y <= box.top + box.height
-            );
-          })
-        : undefined;
-    // Hit-test the original slots, not moving photographs: the destination stays stable.
-    const target = tile?.[0] ?? null;
-    session.target = target;
-    setLift((current) =>
-      current && current.target !== target ? { ...current, target } : current,
-    );
-    if (ghost.current) {
-      const width = Math.min(
-        session.boxes.get(session.id)!.width,
-        session.touch ? 112 : 160,
+  const update = useCallback(
+    (session: Session) => {
+      if (active.current !== session || session.settling) return;
+      const tile =
+        session.y >= session.viewportTop && session.y <= session.viewportBottom
+          ? [...session.boxes].find(([, box]) => {
+              const x = session.x + window.scrollX;
+              const y =
+                session.y +
+                window.scrollY +
+                (session.scroller
+                  ? session.scroller.scrollTop - session.scrollTop
+                  : 0);
+              return (
+                x >= box.left &&
+                x <= box.left + box.width &&
+                y >= box.top &&
+                y <= box.top + box.height
+              );
+            })
+          : undefined;
+      // Hit-test the original slots, not moving photographs: the destination stays stable.
+      const target = tile?.[0] ?? null;
+      session.target = target;
+      session.feature =
+        !!featureRef.current &&
+        !target &&
+        !entries.find((entry) => entry.photoId === session.id)?.featured &&
+        session.y >= session.viewportTop &&
+        session.y <= session.viewportBottom &&
+        Array.from(
+          stage.current?.querySelectorAll<HTMLElement>(
+            "[data-gallery-empty-feature]",
+          ) ?? [],
+        ).some((slot) => {
+          const box = slot.getBoundingClientRect();
+          return (
+            box.width > 0 &&
+            session.x >= box.left &&
+            session.x <= box.right &&
+            session.y >= box.top &&
+            session.y <= box.bottom
+          );
+        });
+      setLift((current) =>
+        current &&
+        (current.target !== target || current.feature !== session.feature)
+          ? { ...current, target, feature: session.feature }
+          : current,
       );
-      const x = Math.max(
-        8,
-        Math.min(session.x - width / 2, window.innerWidth - width - 8),
-      );
-      const y = Math.max(8, session.y - width - (session.touch ? 24 : 16));
-      ghost.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    }
-  }
+      if (ghost.current) {
+        const width = Math.min(
+          session.boxes.get(session.id)!.width,
+          session.touch ? 112 : 160,
+        );
+        const x = Math.max(
+          8,
+          Math.min(session.x - width / 2, window.innerWidth - width - 8),
+        );
+        const y = Math.max(8, session.y - width - (session.touch ? 24 : 16));
+        ghost.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
+    },
+    [entries],
+  );
   function tick() {
     frame.current = null;
     const session = active.current;
@@ -128,17 +169,20 @@ export function useGalleryDrag(
     const speed =
       session.y < session.viewportTop + edge
         ? -12
-        : session.y > window.innerHeight - edge
+        : session.y > session.viewportBottom - edge
           ? 12
           : 0;
-    if (speed) window.scrollBy({ top: speed, behavior: "instant" });
+    if (speed) {
+      if (session.scroller) session.scroller.scrollTop += speed;
+      else window.scrollBy({ top: speed, behavior: "instant" });
+    }
     update(session);
     frame.current = requestAnimationFrame(tick);
   }
   useLayoutEffect(() => {
     const session = active.current;
     if (session?.moved && !session.settling) update(session);
-  }, [lift?.id]);
+  }, [lift?.id, update]);
   useEffect(() => {
     function cancel() {
       clear();
@@ -173,7 +217,10 @@ export function useGalleryDrag(
   function finish(session: Session) {
     if (active.current !== session) return;
     const target = session.target;
-    if (target && target !== session.id) {
+    if (session.feature) {
+      pendingFocus.current = session.id;
+      featureRef.current?.(session.id);
+    } else if (target && target !== session.id) {
       pendingFocus.current = session.id;
       moveRef.current(session.id, target);
     }
@@ -191,6 +238,7 @@ export function useGalleryDrag(
     ghost,
     lift,
     cancel: clear,
+    isActive: () => !!active.current,
     position(id: string): CSSProperties | undefined {
       if (!lift) return;
       const from = lift.boxes.get(id);
@@ -223,6 +271,8 @@ export function useGalleryDrag(
           if (!boxes.get(id)?.width) return;
           event.currentTarget.setPointerCapture(event.pointerId);
           const header = document.querySelector<HTMLElement>(".margin-header");
+          const scroller = scrollContainer?.current ?? null;
+          const bounds = scroller?.getBoundingClientRect();
           active.current = {
             id,
             pointer: event.pointerId,
@@ -235,10 +285,17 @@ export function useGalleryDrag(
             moved: false,
             settling: false,
             target: id,
-            viewportTop:
-              header && getComputedStyle(header).position === "sticky"
+            viewportTop: bounds?.height
+              ? bounds.top
+              : !scroller &&
+                  header &&
+                  getComputedStyle(header).position === "sticky"
                 ? Math.max(0, header.getBoundingClientRect().bottom)
                 : 0,
+            viewportBottom: bounds?.height ? bounds.bottom : window.innerHeight,
+            scroller,
+            scrollTop: scroller?.scrollTop ?? 0,
+            feature: false,
             boxes,
           };
         },
@@ -269,6 +326,7 @@ export function useGalleryDrag(
               width,
               height: (width * box.height) / (box.width || 1),
               boxes: session.boxes,
+              feature: false,
             });
             frame.current = requestAnimationFrame(tick);
           }
@@ -289,6 +347,10 @@ export function useGalleryDrag(
             return;
           }
           update(session);
+          if (session.feature) {
+            finish(session);
+            return;
+          }
           if (!session.target || session.target === id) {
             clear();
             return;
@@ -308,7 +370,7 @@ export function useGalleryDrag(
             [
               { transform: node.style.transform },
               {
-                transform: `translate3d(${to.left - window.scrollX}px, ${to.top - window.scrollY}px, 0) scale(${scale})`,
+                transform: `translate3d(${to.left - window.scrollX}px, ${to.top - window.scrollY - (session.scroller ? session.scroller.scrollTop - session.scrollTop : 0)}px, 0) scale(${scale})`,
               },
             ],
             {

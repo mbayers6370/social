@@ -136,6 +136,65 @@ export function ownedPhoto(state: LocalState, viewerId: string, id: string) {
   if (!photo) throw new PreviewError("That photograph is unavailable.");
   return photo;
 }
+
+/** Delete an owned image throughout the local preview, preserving post text and discussions. */
+export function deleteLocalPhoto(
+  state: LocalState,
+  viewerId: string,
+  id: string,
+): LocalState {
+  const photo = ownedPhoto(state, viewerId, id);
+  const matches = (media: PostMedia) => media.image.src === photo.image.src;
+  const ids = new Set(
+    state.photos
+      .filter((item) => item.ownerId === viewerId && matches(item))
+      .map((item) => item.id),
+  );
+  const removedPerPost = new Map<string, number>();
+  const posts = state.posts.map((post) => {
+    if (post.author.id !== viewerId || !post.media?.some(matches)) return post;
+    const media = post.media.filter((item) => !matches(item));
+    removedPerPost.set(post.id, post.media.length - media.length);
+    return { ...post, media: media.length ? media : undefined };
+  });
+  const profiles = state.profiles.map((profile) =>
+    profile.person.id !== viewerId
+      ? profile
+      : {
+          ...profile,
+          photos: profile.photos.filter((item) => !matches(item)),
+          recent: profile.recent.map((post) => {
+            if (!post.image || !matches(post.image)) return post;
+            if (!removedPerPost.has(post.id)) removedPerPost.set(post.id, 1);
+            return { ...post, image: undefined };
+          }),
+        },
+  );
+  return {
+    ...state,
+    photos: state.photos.filter((item) => !ids.has(item.id)),
+    gallery: state.gallery.filter((entry) => !ids.has(entry.photoId)),
+    galleryAdditions: state.galleryAdditions?.filter(
+      (entry) => !ids.has(entry.photoId),
+    ),
+    postingRecords: state.postingRecords?.map((record) =>
+      record.authorId === viewerId &&
+      removedPerPost.has(record.id) &&
+      record.imageCount !== undefined
+        ? {
+            ...record,
+            imageCount: Math.max(
+              0,
+              record.imageCount - removedPerPost.get(record.id)!,
+            ),
+          }
+        : record,
+    ),
+    posts,
+    profiles,
+  };
+}
+
 export function placePhoto(
   state: LocalState,
   viewerId: string,

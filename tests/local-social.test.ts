@@ -11,6 +11,7 @@ import {
   publishLocalPost,
   editLocalPost,
   deleteLocalPost,
+  deleteLocalPhoto,
   editablePostInput,
   localPostingEligibility,
   galleryPhotoEligibility,
@@ -58,6 +59,121 @@ describe("friend audience policy", () => {
   });
 });
 describe("isolated local application", () => {
+  it("uses a photo allowance for a gallery addition without consuming a post slot or creating a feed post", () => {
+    const { state } = fixture();
+    const base = {
+      ...state,
+      posts: [],
+      postingRecords: [],
+      gallery: [],
+      galleryAdditions: [],
+    };
+    const next = placePhoto(base, "ines", state.photos[0].id, undefined, now);
+    expect(next.posts).toBe(base.posts);
+    expect(localPostingEligibility(next, "ines", now, false)).toMatchObject({
+      regularRemaining: 3,
+      imagesRemaining: 2,
+    });
+  });
+  it("deletes an owned photograph and its aliases from every owned surface while keeping other photos, post text and discussions", () => {
+    const { state } = fixture();
+    const original = state.posts.find((post) => post.id === "post-fog")!;
+    const photo = state.photos.find(
+      (item) => item.image.src === original.media![0].image.src,
+    )!;
+    const alias = { ...photo, id: "alias" };
+    const otherOwner = { ...photo, id: "theos-photo", ownerId: "theo" };
+    const otherPost = {
+      ...original,
+      id: "post-theo-copy",
+      author: state.profiles.find((profile) => profile.person.id === "theo")!
+        .person,
+    };
+    const before = {
+      ...state,
+      photos: [...state.photos, alias, otherOwner],
+      gallery: [...state.gallery, { photoId: alias.id, featured: false }],
+      posts: [...state.posts, otherPost],
+    };
+    const next = deleteLocalPhoto(before, "ines", photo.id);
+    const edited = next.posts.find((post) => post.id === original.id)!;
+    expect(edited).toMatchObject({
+      id: original.id,
+      paragraphs: original.paragraphs,
+      comments: original.comments,
+      likes: original.likes,
+      createdAt: original.createdAt,
+      expiresAt: original.expiresAt,
+    });
+    expect(edited.media).toEqual(original.media!.slice(1));
+    expect(
+      next.photos.some((item) => item.id === photo.id || item.id === alias.id),
+    ).toBe(false);
+    expect(
+      next.gallery.some(
+        (entry) => entry.photoId === photo.id || entry.photoId === alias.id,
+      ),
+    ).toBe(false);
+    expect(next.photos).toContain(otherOwner);
+    expect(next.posts.find((post) => post.id === otherPost.id)).toBe(otherPost);
+    expect(next.profiles.find((profile) => profile.person.id === "theo")).toBe(
+      before.profiles.find((profile) => profile.person.id === "theo"),
+    );
+    expect(
+      localPostingEligibility(next, "ines", new Date(original.createdAt), false)
+        .imagesRemaining,
+    ).toBe(1);
+    expect(
+      localPostingEligibility(next, "ines", new Date(original.createdAt), false)
+        .regularRemaining,
+    ).toBe(
+      localPostingEligibility(
+        before,
+        "ines",
+        new Date(original.createdAt),
+        false,
+      ).regularRemaining,
+    );
+    expect(original.media).toHaveLength(3);
+    expect(before.photos).toContain(photo);
+  });
+  it("removes the last attachment and profile snapshots without deleting its post", () => {
+    const { state } = fixture();
+    const photo = state.photos[0];
+    const next = deleteLocalPhoto(state, "ines", photo.id);
+    const own = next.profiles.find((profile) => profile.person.id === "ines")!;
+    expect(own.photos.some((item) => item.image.src === photo.image.src)).toBe(
+      false,
+    );
+    expect(
+      own.recent.some((item) => item.image?.image.src === photo.image.src),
+    ).toBe(false);
+    const before = state.posts.find(
+      (post) => post.id === "post-profile-beach",
+    )!;
+    const after = next.posts.find((post) => post.id === before.id)!;
+    expect(after.media).toBeUndefined();
+    expect(after.paragraphs).toBe(before.paragraphs);
+    expect(next.posts).toHaveLength(state.posts.length);
+    expect(
+      next.galleryAdditions?.some((entry) => entry.photoId === photo.id),
+    ).toBe(false);
+    expect(
+      next.postingRecords?.find((record) => record.id === before.id)
+        ?.imageCount,
+    ).toBe(0);
+  });
+  it("rejects foreign and missing photo identifiers without changing local state", () => {
+    const { state } = fixture();
+    const snapshot = structuredClone(state);
+    expect(() => deleteLocalPhoto(state, "theo", state.photos[0].id)).toThrow(
+      "unavailable",
+    );
+    expect(() => deleteLocalPhoto(state, "ines", "missing-photo")).toThrow(
+      "unavailable",
+    );
+    expect(state).toEqual(snapshot);
+  });
   it("shares the daily image allowance between Gallery and posts without double-counting", () => {
     const { state } = fixture();
     const empty = { ...state, gallery: [], galleryAdditions: [] };

@@ -100,7 +100,7 @@ export default async function HomePage({
           active="profile"
           profileAvatar={<Avatar person={profile.person} />}
         >
-          <ProfilePreview profile={target} />
+          <ProfilePreview key={target.person.id} profile={target} />
         </MarginShell>
       );
     }

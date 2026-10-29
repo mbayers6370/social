@@ -60,18 +60,34 @@ describe("message reading groups", () => {
 });
 
 describe("screen preview boundaries", () => {
-  it("fills the two friend profiles with their own photos, posts and sample music", () => {
+  it("fills friend profiles with their own photos, posts and sample music", () => {
     vi.stubEnv("NODE_ENV", "development");
     const data = getDevelopmentSocial();
     const june = data.profiles.find((profile) => profile.person.id === "june")!;
     const samuel = data.profiles.find(
       (profile) => profile.person.id === "samuel",
     )!;
+    const theo = data.profiles.find((profile) => profile.person.id === "theo")!;
+    const mara = data.profiles.find((profile) => profile.person.id === "mara")!;
     expect(data.viewerId).toBe("ines");
     expect(june.person.photo?.src).toContain("park-2");
     expect(samuel.person.photo?.src).toContain("Okafor-profile");
+    expect(theo.person.photo?.src).toContain("Theo-profile");
+    expect(mara.person.photo?.src).toContain("mara-profile");
     expect(june.photos).toHaveLength(3);
     expect(samuel.photos).toHaveLength(2);
+    expect(theo.photos.map((photo) => photo.image.src)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Theo-Roma-Walk"),
+        expect.stringContaining("Theo-football"),
+      ]),
+    );
+    expect(mara.photos.map((photo) => photo.image.src)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("mara-photography.test"),
+        expect.stringContaining("mara-photography-2"),
+      ]),
+    );
     expect(
       june.photos.some((photo) => photo.image.src.includes("park-1")),
     ).toBe(true);
@@ -113,6 +129,20 @@ describe("screen preview boundaries", () => {
       );
     expect(profile.photos).toHaveLength(3);
     expect(profile.person.name).toBe("Ines Alvarez");
+    const notebook = threads.find(
+      (thread) => thread.contact.id === profile.person.id,
+    )!;
+    expect(notebook.messages.length).toBeGreaterThan(0);
+    expect(
+      notebook.messages.every((message) => message.direction === "outgoing"),
+    ).toBe(true);
+    expect(
+      threads
+        .filter((thread) => thread !== notebook)
+        .every((thread) =>
+          thread.messages.some((message) => message.direction === "incoming"),
+        ),
+    ).toBe(true);
   });
   it("bounds local message input and rejects unexpected recipient fields", () => {
     expect(messageInputSchema.parse({ body: " A thought " })).toEqual({

@@ -31,10 +31,18 @@ export function friendStatus(
 }
 export const friendActionSchema = z.strictObject({
   personId: z.string().regex(/^[a-z0-9-]{1,80}$/),
-  action: z.enum(["send", "accept", "decline", "cancel", "remove"]),
+  action: z.enum([
+    "send",
+    "accept",
+    "decline",
+    "cancel",
+    "remove",
+    "block",
+    "unblock",
+  ]),
 });
 export type FriendAction = z.infer<typeof friendActionSchema>["action"];
-const allowed: Record<FriendAction, FriendStatus> = {
+const allowed: Partial<Record<FriendAction, FriendStatus>> = {
   send: "none",
   accept: "incoming",
   decline: "incoming",
@@ -59,6 +67,29 @@ export function changeFriendship(
   )
     throw new PreviewError("That profile is unavailable.");
   const status = friendStatus(viewerId, personId, state.friendships);
+  if (action === "block" || action === "unblock") {
+    const ownBlock = state.friendships.some(
+      (pair) =>
+        pair.people.includes(viewerId) &&
+        pair.people.includes(personId) &&
+        pair.status === "blocked" &&
+        pair.blockedBy === viewerId,
+    );
+    if (status === "self" || (action === "block" ? ownBlock : !ownBlock))
+      throw new PreviewError("That profile action is unavailable.");
+    const friendships = state.friendships.filter(
+      (pair) =>
+        !(pair.people.includes(viewerId) && pair.people.includes(personId)) ||
+        (pair.status === "blocked" && pair.blockedBy !== viewerId),
+    );
+    if (action === "block")
+      friendships.push({
+        people: [viewerId, personId],
+        status: "blocked",
+        blockedBy: viewerId,
+      });
+    return { ...state, friendships };
+  }
   if (status !== allowed[action])
     throw new PreviewError(
       "This relationship has changed. Check its current status and try again.",

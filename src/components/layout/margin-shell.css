@@ -49,10 +49,10 @@
 }
 .margin-profile-menu {
   --ring: var(--ink);
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  z-index: 40;
+  position: fixed;
+  top: var(--profile-menu-top, calc(var(--margin-header-height) + 12px));
+  right: var(--profile-menu-right, 16px);
+  z-index: 60;
   display: grid;
   width: 240px;
   max-width: calc(100vw - 32px);
@@ -61,15 +61,15 @@
   );
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 8px 0;
+  padding: var(--menu-inset) 0;
   border: 1px solid hsl(var(--border));
-  border-radius: 14px;
+  border-radius: var(--radius-menu);
   background: hsl(var(--card));
   color: hsl(var(--ink));
 }
 .margin-profile-menu > a,
 .margin-profile-menu > button {
-  margin-inline: 8px;
+  margin-inline: var(--menu-inset);
 }
 .margin-profile-menu > a,
 .margin-profile-menu > button,
@@ -79,7 +79,7 @@
   min-height: 44px;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font: var(--text-body)/1.5 var(--font-body);
   text-align: left;
   color: inherit;
@@ -107,7 +107,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: var(--radius-control);
 }
 .margin-header-profile[aria-current="page"] {
   background: hsl(var(--accent));
@@ -228,7 +228,7 @@
   .margin-header-profile {
     position: relative;
     isolation: isolate;
-    border-radius: 50%;
+    border-radius: var(--radius-control);
     background: transparent;
   }
   .margin-header-actions > [data-slot="button"]:hover,
@@ -241,7 +241,7 @@
     position: absolute;
     z-index: -1;
     inset: 6px;
-    border-radius: 50%;
+    border-radius: var(--radius-control);
     background: hsl(var(--header-accent));
     opacity: 0;
     transition: opacity 120ms ease-out;
@@ -290,6 +290,13 @@ html[data-motion="reduced"] .margin-profile-menu {
   }
 }
 @media (min-width: 1024px) {
+  .margin-header-profile {
+    border-radius: 50%;
+  }
+  .margin-header-profile:hover,
+  .margin-header-profile[aria-expanded="true"] {
+    background: hsl(var(--header-accent));
+  }
   :root {
     scroll-padding-top: calc(var(--margin-desktop-header-height) + 16px);
   }

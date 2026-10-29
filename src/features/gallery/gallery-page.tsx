@@ -1,17 +1,16 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useRef, useState, type CSSProperties } from "react";
 import {
   Aperture,
-  Check,
   ChevronLeft,
   ChevronRight,
   Plus,
-  Grip,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react";
+import { PersonLink } from "@/components/shared/person-link";
 import { Button } from "@/components/ui/button";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { PhotoViewerFigure } from "@/components/shared/photo-viewer-figure";
@@ -30,39 +29,38 @@ import {
   previewMessage,
   type Photo,
 } from "@/features/local-preview/model";
-import { useGalleryDrag } from "./use-gallery-drag";
 import { PhotoPicker } from "./photo-picker";
+import { GalleryEditor } from "./gallery-editor";
 import { canReadFriendsPost } from "@/lib/friend-audience";
 
+type Editor = { addition?: Photo; selectedId?: string };
 export function GalleryPage({ personId }: { personId?: string }) {
   const preview = usePreview();
   const ownerId = personId ?? preview.bootstrap.viewerId;
   const own = ownerId === preview.bootstrap.viewerId;
+  const profile = preview.state.profiles.find(
+    (item) => item.person.id === ownerId,
+  );
   const visible = canReadFriendsPost(
     preview.bootstrap.viewerId,
     ownerId,
     preview.state.friendships,
   );
-  const profile = preview.state.profiles.find(
-    (item) => item.person.id === ownerId,
-  );
-  const [arranging, setArranging] = useState(false);
+  const [editor, setEditor] = useState<Editor | null>(null);
   const [picking, setPicking] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [pending, setPending] = useState<Photo | null>(null);
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
-  const [removing, setRemoving] = useState(false);
   const [viewing, setViewing] = useState(false);
-  const arrangeButton = useRef<HTMLButtonElement>(null);
-  const returnTo = useRef<HTMLButtonElement | null>(null);
-  function restoreFocus(event: Event) {
-    event.preventDefault();
-    const target = returnTo.current?.isConnected
-      ? returnTo.current
-      : arrangeButton.current;
-    target?.focus({ preventScroll: true });
-  }
+  const [deleting, setDeleting] = useState(false);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  const heading = useRef<HTMLHeadingElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const returnTo = useRef<HTMLElement | null>(null);
+  const deleteTrigger = useRef<HTMLButtonElement | null>(null);
+  const deleted = useRef(false);
+  const nextFocusId = useRef<string | null | undefined>(undefined);
+  const arrangeAfterViewer = useRef<string | null>(null);
+  const additionAfterPicker = useRef<Photo | null>(null);
   const entries = own
     ? preview.state.gallery
     : visible
@@ -72,9 +70,12 @@ export function GalleryPage({ personId }: { personId?: string }) {
         })) ?? [])
       : [];
   const photos = own
-    ? entries.map((entry) =>
-        preview.state.photos.find((photo) => photo.id === entry.photoId)!,
-      )
+    ? entries.flatMap((entry) => {
+        const item = preview.state.photos.find(
+          (photo) => photo.id === entry.photoId,
+        );
+        return item ? [item] : [];
+      })
     : visible
       ? (profile?.photos.map((photo, index): Photo => ({
           ...photo,
@@ -84,58 +85,56 @@ export function GalleryPage({ personId }: { personId?: string }) {
           kind: "fixture",
         })) ?? [])
       : [];
-  const index = photos.findIndex((photo) => photo.id === selectedId);
-  const selected = photos[index];
-  const featured = entries[index]?.featured ?? false;
   const groups = [true, false].map((flag) =>
-    photos.filter((_, position) => entries[position]?.featured === flag),
+    photos.filter(
+      (photo) =>
+        entries.find((entry) => entry.photoId === photo.id)?.featured === flag,
+    ),
   );
   const ordered = groups.flat();
   const viewedIndex = ordered.findIndex((photo) => photo.id === selectedId);
+  const selected = ordered[viewedIndex];
+  function restoreFocus(event: Event) {
+    event.preventDefault();
+    if (arrangeAfterViewer.current) {
+      const id = arrangeAfterViewer.current;
+      arrangeAfterViewer.current = null;
+      setEditor({ selectedId: id });
+      return;
+    }
+    if (nextFocusId.current !== undefined) {
+      const cell = Array.from(
+        stage.current?.querySelectorAll<HTMLElement>("[data-gallery-item]") ??
+          [],
+      ).find((item) => item.dataset.galleryItem === nextFocusId.current);
+      returnTo.current =
+        cell?.querySelector<HTMLButtonElement>(".margin-gallery-tile") ??
+        heading.current;
+      nextFocusId.current = undefined;
+    }
+    const target =
+      returnTo.current?.isConnected && !returnTo.current.matches(":disabled")
+        ? returnTo.current
+        : heading.current;
+    target?.focus({ preventScroll: true });
+  }
   function moveViewedPhoto(step: number) {
     const next = ordered[viewedIndex + step];
     if (next) setSelectedId(next.id);
   }
-  const selectedGroup = groups[featured ? 0 : 1];
-  const groupIndex = selectedGroup.findIndex(
-    (photo) => photo.id === selectedId,
-  );
-  function action(fn: () => void, message: string) {
-    try {
-      fn();
-      setError("");
-      setStatus(message);
-    } catch (error) {
-      setError(previewMessage(error));
-    }
-  }
-  const {
-    stage: stageRef,
-    ghost: ghostRef,
-    lift,
-    cancel: cancelDrag,
-    position,
-    handle,
-  } = useGalleryDrag(entries, (id, target) =>
-    action(
-      () => preview.movePhoto(id, target),
-      `Moved ${photoLabel(photos.find((photo) => photo.id === id)!)} to photograph ${ordered.findIndex((photo) => photo.id === target) + 1} of ${photos.length}${entries.find((entry) => entry.photoId === target)?.featured ? ", featured" : ""}.`,
-    ),
-  );
-  const lifted = photos.find((photo) => photo.id === lift?.id);
-  const back = own
-    ? "/?view=profile"
-    : `/?view=profile&person=${encodeURIComponent(ownerId)}`;
   if (!profile || !visible)
     return (
       <section className="margin-gallery-page">
-        <h1>Gallery unavailable</h1>
+        <h1>Gallery Unavailable</h1>
         <p className="margin-empty-copy">
           Photographs are shared with friends.
         </p>
         <Link href="/">Back to feed</Link>
       </section>
     );
+  const back = own
+    ? "/?view=profile"
+    : `/?view=profile&person=${encodeURIComponent(ownerId)}`;
   return (
     <section className="margin-gallery-page" aria-labelledby="gallery-title">
       <header className="margin-gallery-header" data-own={own}>
@@ -143,95 +142,66 @@ export function GalleryPage({ personId }: { personId?: string }) {
           <ChevronLeft aria-hidden="true" />
           Profile
         </Link>
-        <SectionTitle
-          as="h1"
-          id="gallery-title"
-          motif={<SectionMotif icon={Aperture} />}
-        >
-          {own ? "Your Gallery" : `${profile.person.name}’s gallery`}
-        </SectionTitle>
-        {own && (
-          <Button
-            className="margin-gallery-add-desktop"
-            variant="outline"
-            onClick={() => setPicking(true)}
+        <div className="margin-gallery-introduction">
+          <SectionTitle
+            as="h1"
+            id="gallery-title"
+            ref={heading}
+            tabIndex={-1}
+            motif={<SectionMotif icon={Aperture} />}
           >
-            <Plus aria-hidden="true" />
-            Add photo
-          </Button>
-        )}
-      </header>
-      {own && (
+            {own ? (
+              "Your Gallery"
+            ) : (
+              <>
+                <PersonLink person={profile.person}>
+                  {profile.person.name}
+                </PersonLink>
+                ’s Gallery
+              </>
+            )}
+          </SectionTitle>
+          <p>
+            {own
+              ? "A collection of your photographs, with up to three featured."
+              : "Photographs shared with friends."}
+          </p>
+        </div>
         <div className="margin-gallery-toolbar">
-          <Button
-            ref={arrangeButton}
-            className="margin-gallery-arrange"
-            variant="ghost"
-            aria-pressed={arranging}
-            onClick={() => {
-              cancelDrag();
-              setArranging(!arranging);
-              setSelectedId(null);
-              setPending(null);
-            }}
-          >
-            <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />
-            {arranging ? "Done arranging" : "Arrange gallery"}
-          </Button>
-          <Button
-            className="margin-gallery-add-mobile"
-            variant="secondary"
-            onClick={() => setPicking(true)}
-          >
-            <Plus aria-hidden="true" />
-            Add photo
-          </Button>
+          <p className="margin-gallery-meta">
+            {photos.length} of {GALLERY_LIMIT} photographs
+          </p>
+          {own && (
+            <div className="margin-gallery-page-actions">
+              <Button
+                className="margin-gallery-arrange"
+                variant="outline"
+                aria-label="Arrange gallery"
+                aria-haspopup="dialog"
+                disabled={!photos.length}
+                onClick={(event) => {
+                  returnTo.current = event.currentTarget;
+                  setError("");
+                  setEditor({});
+                }}
+              >
+                <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />
+                Arrange
+              </Button>
+              <Button
+                className="margin-gallery-add"
+                onClick={(event) => {
+                  returnTo.current = event.currentTarget;
+                  setPicking(true);
+                }}
+              >
+                <Plus aria-hidden="true" />
+                Add photo
+              </Button>
+            </div>
+          )}
         </div>
-      )}
-      {arranging && (
-        <p
-          className="margin-field-hint margin-gallery-help"
-          id="gallery-arrange-help"
-        >
-          Drag a handle, use its arrow keys, or select a photograph for move
-          controls. Release in the open space to place it; Escape cancels.
-          Moving between rows exchanges featured positions. Changes reset on
-          refresh.
-        </p>
-      )}
-      {pending && (
-        <div className="margin-gallery-notice">
-          <Image
-            {...pending.image}
-            unoptimized={pending.kind === "local"}
-            alt={pending.description}
-            width={80}
-            height={80}
-            loading="eager"
-          />
-          <div>
-            <strong>Adding one photograph</strong>
-            <p>
-              Your gallery is full. Choose one to replace; the new photograph
-              takes its place.
-            </p>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setPending(null);
-                setSelectedId(null);
-              }}
-            >
-              Cancel replacement
-            </Button>
-          </div>
-        </div>
-      )}
-      <div className="margin-gallery-meta">
-        <span>
-          {photos.length} of {GALLERY_LIMIT}
-        </span>
-      </div>
+      </header>
       {!photos.length && (
         <p className="margin-empty-copy">
           {own
@@ -239,11 +209,7 @@ export function GalleryPage({ personId }: { personId?: string }) {
             : "No photographs here yet."}
         </p>
       )}
-      <div
-        ref={stageRef}
-        className="margin-gallery-stage"
-        data-dragging={!!lift}
-      >
+      <div ref={stage} className="margin-gallery-stage">
         {groups.map(
           (group, groupIndex) =>
             group.length > 0 && (
@@ -254,6 +220,16 @@ export function GalleryPage({ personId }: { personId?: string }) {
                   groupIndex === 0 ? "Featured photographs" : "More photographs"
                 }
               >
+                <header className="margin-gallery-group-heading">
+                  <h2>
+                    {groupIndex === 0
+                      ? "Featured Photographs"
+                      : groups[0].length
+                        ? "More Photographs"
+                        : "Photographs"}
+                  </h2>
+                  {groupIndex === 0 && <p>Shown first on the profile</p>}
+                </header>
                 <div
                   className={
                     groupIndex === 0
@@ -265,58 +241,42 @@ export function GalleryPage({ personId }: { personId?: string }) {
                     <div
                       key={photo.id}
                       className="margin-gallery-cell"
-                      data-gallery-photo={photo.id}
-                      data-lifted={lift?.id === photo.id}
-                      style={position(photo.id)}
+                      data-gallery-item={photo.id}
+                      style={
+                        {
+                          "--gallery-photo-ratio":
+                            photo.image.width / photo.image.height,
+                        } as CSSProperties
+                      }
                     >
                       <button
                         type="button"
                         className="margin-gallery-tile"
-                        aria-pressed={
-                          arranging || pending
-                            ? photo.id === selectedId
-                            : undefined
-                        }
-                        aria-label={`${pending ? "Replace" : arranging ? "Select" : "View"} ${photoLabel(photo)}, photograph ${ordered.indexOf(photo) + 1} of ${photos.length}`}
+                        aria-label={`View ${photoLabel(photo)}, photograph ${ordered.indexOf(photo) + 1} of ${photos.length}`}
                         onClick={(event) => {
                           returnTo.current = event.currentTarget;
+                          nextFocusId.current = undefined;
                           setSelectedId(photo.id);
                           setError("");
-                          if (!arranging && !pending) setViewing(true);
+                          setViewing(true);
                         }}
                       >
                         <Image
                           {...photo.image}
                           alt={photo.description}
                           unoptimized={photo.kind === "local"}
-                          loading="eager"
-                          sizes="(max-width: 640px) 50vw, 400px"
+                          loading={
+                            ordered.indexOf(photo) < 3 ? "eager" : "lazy"
+                          }
+                          sizes={
+                            groupIndex === 0
+                              ? group.length !== 2 && group[0] === photo
+                                ? "(max-width: 639px) 90vw, (max-width: 1008px) 32vw, 320px"
+                                : "(max-width: 639px) 45vw, (max-width: 1008px) 32vw, 320px"
+                              : "(max-width: 639px) 28vw, (max-width: 1023px) 22vw, 185px"
+                          }
                         />
-                        {(arranging || pending) && photo.id === selectedId && (
-                          <span className="margin-photo-selected">
-                            <Check aria-hidden="true" />
-                          </span>
-                        )}
                       </button>
-                      {lift?.id === photo.id && (
-                        <span
-                          className="margin-gallery-placeholder"
-                          aria-hidden="true"
-                        >
-                          Place here
-                        </span>
-                      )}
-                      {own && arranging && !pending && (
-                        <button
-                          type="button"
-                          className="margin-gallery-drag"
-                          aria-label={`Move ${photoLabel(photo)}`}
-                          aria-describedby="gallery-arrange-help"
-                          {...handle(photo.id)}
-                        >
-                          <Grip aria-hidden="true" strokeWidth={1.5} />
-                        </button>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -324,178 +284,52 @@ export function GalleryPage({ personId }: { personId?: string }) {
             ),
         )}
       </div>
-      {lifted &&
-        lift &&
-        createPortal(
-          <div
-            ref={ghostRef}
-            className="margin-gallery-floating"
-            aria-hidden="true"
-            style={{ width: lift.width, height: lift.height }}
-          >
-            <Image
-              {...lifted.image}
-              alt=""
-              unoptimized={lifted.kind === "local"}
-              loading="eager"
-              sizes="160px"
-              draggable={false}
-            />
-          </div>,
-          document.body,
-        )}
       {error && <FieldError>{error}</FieldError>}
-      <p role="status" className={arranging ? "sr-only" : "margin-status"}>
-        {lifted && lift?.target
-          ? `${photoLabel(lifted)}, destination ${ordered.findIndex((photo) => photo.id === lift!.target) + 1} of ${photos.length}${entries.find((entry) => entry.photoId === lift!.target)?.featured ? ", featured" : ""}. Release to place.`
-          : status}
+      <p role="status" className="margin-status">
+        {status}
       </p>
-      {own && selected && (arranging || pending) && (
-        <footer className="margin-gallery-controls">
-          <strong className={arranging && !pending ? "sr-only" : undefined}>
-            {photoLabel(selected)}
-          </strong>
-          {pending ? (
-            <>
-              <p>
-                Replacing this photograph removes it from the gallery only. It
-                remains in any posts.
-              </p>
-              <Button
-                onClick={() =>
-                  action(() => {
-                    preview.place(pending.id, selected.id);
-                    setSelectedId(pending.id);
-                    setPending(null);
-                  }, "Photograph replaced in your local gallery.")
-                }
-              >
-                Replace photograph in gallery
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="margin-gallery-actions">
-                <Button
-                  variant="ghost"
-                  disabled={groupIndex === 0}
-                  onClick={() =>
-                    action(
-                      () => preview.changeGallery(selected.id, "earlier"),
-                      "Photograph moved earlier.",
-                    )
-                  }
-                >
-                  <ChevronLeft aria-hidden="true" />
-                  Move earlier
-                </Button>
-                <Button
-                  variant="ghost"
-                  disabled={groupIndex === selectedGroup.length - 1}
-                  onClick={() =>
-                    action(
-                      () => preview.changeGallery(selected.id, "later"),
-                      "Photograph moved later.",
-                    )
-                  }
-                >
-                  Move later
-                  <ChevronRight aria-hidden="true" />
-                </Button>
-                <Button
-                  variant="outline"
-                  aria-pressed={featured}
-                  onClick={() =>
-                    action(
-                      () => preview.changeGallery(selected.id, "feature"),
-                      featured
-                        ? "Photograph no longer featured."
-                        : "Photograph featured.",
-                    )
-                  }
-                >
-                  {featured ? "Unfeature" : "Feature photograph"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={(event) => {
-                    returnTo.current = event.currentTarget;
-                    setViewing(true);
-                  }}
-                >
-                  View full image
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={(event) => {
-                    returnTo.current = event.currentTarget;
-                    setRemoving(true);
-                  }}
-                >
-                  Remove from gallery
-                </Button>
-              </div>
-              <p className="margin-field-hint">
-                Up to three photographs can be featured. Removing one from your
-                gallery keeps it in its posts.
-              </p>
-            </>
-          )}
-        </footer>
-      )}
       <PhotoPicker
         context="gallery"
         open={picking}
         onOpenChange={setPicking}
         onChoose={(photo) => {
+          additionAfterPicker.current = photo;
           setPicking(false);
-          if (
-            entries.length >= GALLERY_LIMIT &&
-            !entries.some((entry) => entry.photoId === photo.id)
-          ) {
-            setPending(photo);
-            setSelectedId(null);
-          } else
-            action(() => {
-              preview.place(photo.id);
-              setSelectedId(photo.id);
-              setArranging(true);
-            }, "Photograph added to your local gallery.");
+        }}
+        onCloseAutoFocus={(event) => {
+          if (additionAfterPicker.current) {
+            event.preventDefault();
+            const addition = additionAfterPicker.current;
+            additionAfterPicker.current = null;
+            setEditor({ addition });
+          } else restoreFocus(event);
         }}
       />
-      <Dialog open={removing} onOpenChange={setRemoving}>
-        <DialogContent onCloseAutoFocus={restoreFocus}>
-          <DialogHeader>
-            <DialogTitle>Remove from gallery?</DialogTitle>
-            <DialogDescription>
-              The photograph stays in any posts. This changes your local gallery
-              only.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="margin-form-actions">
-            <Button variant="ghost" onClick={() => setRemoving(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() =>
-                action(() => {
-                  if (selected) preview.changeGallery(selected.id, "remove");
-                  setRemoving(false);
-                  setSelectedId(null);
-                }, "Photograph removed from the gallery; its posts are unchanged.")
-              }
-            >
-              Remove from gallery
-            </Button>
-          </div>
-        </DialogContent>
+      <Dialog
+        open={!!editor}
+        onOpenChange={(open) => {
+          if (!open) setEditor(null);
+        }}
+      >
+        {editor && (
+          <GalleryEditor
+            addition={editor.addition}
+            initialSelection={editor.selectedId}
+            onCancel={() => setEditor(null)}
+            onDone={() => {
+              setEditor(null);
+              setStatus("");
+            }}
+            onRestoreFocus={restoreFocus}
+          />
+        )}
       </Dialog>
       <Dialog open={viewing && !!selected} onOpenChange={setViewing}>
         <DialogContent
           className="margin-photo-viewer"
           onCloseAutoFocus={restoreFocus}
           onKeyDown={(event) => {
-            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+            if (!deleting && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
               event.preventDefault();
               moveViewedPhoto(event.key === "ArrowLeft" ? -1 : 1);
             }
@@ -503,7 +337,7 @@ export function GalleryPage({ personId }: { personId?: string }) {
         >
           <DialogTitle>Photograph</DialogTitle>
           {selected && <PhotoViewerFigure photo={selected} sizes="960px" />}
-          {ordered.length > 1 && (
+          <footer className="margin-gallery-viewer-footer">
             <div className="margin-photo-viewer-navigation">
               <Button
                 variant="ghost"
@@ -527,19 +361,108 @@ export function GalleryPage({ personId }: { personId?: string }) {
                 <ChevronRight aria-hidden="true" />
               </Button>
             </div>
+            {own && (
+              <div className="margin-photo-viewer-actions">
+                <Button
+                  variant="outline"
+                  className="margin-photo-arrange"
+                  aria-label="Arrange photograph"
+                  onClick={() => {
+                    arrangeAfterViewer.current = selected.id;
+                    setViewing(false);
+                  }}
+                >
+                  <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />
+                  Arrange
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="margin-gallery-delete"
+                  aria-label="Delete photograph"
+                  onClick={(event) => {
+                    deleteTrigger.current = event.currentTarget;
+                    deleted.current = false;
+                    setDeleting(true);
+                  }}
+                >
+                  <Trash2 aria-hidden="true" strokeWidth={1.5} />
+                  Delete
+                </Button>
+                <Button variant="outline" onClick={() => setViewing(false)}>
+                  Done
+                </Button>
+              </div>
+            )}
+          </footer>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={deleting && !!selected && own} onOpenChange={setDeleting}>
+        <DialogContent
+          role="alertdialog"
+          onCloseAutoFocus={(event) => {
+            if (deleted.current) restoreFocus(event);
+            else {
+              event.preventDefault();
+              if (deleteTrigger.current?.isConnected)
+                deleteTrigger.current.focus({ preventScroll: true });
+              else restoreFocus(event);
+            }
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Delete Photograph?</DialogTitle>
+            <DialogDescription>
+              This removes the photograph from your gallery, photo library, and
+              any of your posts or drafts. Post text and conversations stay.
+            </DialogDescription>
+          </DialogHeader>
+          {selected && (
+            <div className="margin-gallery-delete-preview">
+              <Image
+                {...selected.image}
+                alt={selected.description}
+                unoptimized={selected.kind === "local"}
+                width={80}
+                height={80}
+                sizes="80px"
+              />
+              <p>{photoLabel(selected)}</p>
+            </div>
           )}
-          {own && (
+          <p className="margin-field-hint">
+            Local preview only. Changes stay in this tab; sample photographs
+            return on refresh.
+          </p>
+          {error && <FieldError>{error}</FieldError>}
+          <div className="margin-form-actions">
+            <Button variant="ghost" onClick={() => setDeleting(false)}>
+              Cancel
+            </Button>
             <Button
-              variant="ghost"
-              className="margin-photo-arrange"
+              variant="destructive"
               onClick={() => {
-                setViewing(false);
-                setArranging(true);
+                try {
+                  if (!selected) return;
+                  const next =
+                    ordered[viewedIndex + 1] ?? ordered[viewedIndex - 1];
+                  preview.deletePhoto(selected.id);
+                  deleted.current = true;
+                  nextFocusId.current = next?.id ?? null;
+                  setDeleting(false);
+                  setViewing(false);
+                  setSelectedId(null);
+                  setError("");
+                  setStatus(
+                    "Photograph deleted from your gallery, photo library, and posts.",
+                  );
+                } catch (error) {
+                  setError(previewMessage(error));
+                }
               }}
             >
-              Arrange photograph
+              Delete photograph
             </Button>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
     </section>

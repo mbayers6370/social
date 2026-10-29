@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar } from "@/features/feed/post-content";
+import { PersonLink } from "@/components/shared/person-link";
 import { PhotoPicker } from "@/features/gallery/photo-picker";
 import { DeletePostButton } from "@/features/profile/delete-post-button";
 import { usePreview } from "@/features/local-preview/provider";
@@ -54,15 +55,18 @@ const resolveComposer: Resolver<PostInput> = (value, context, options) =>
 export function PostComposer({
   onComplete,
   startWithPhoto = false,
+  initialPhotoFile,
   editingPost,
 }: {
   onComplete: () => void;
   startWithPhoto?: boolean;
+  initialPhotoFile?: File;
   editingPost?: FriendPost;
 }) {
   const preview = usePreview();
   const router = useRouter();
   const [picking, setPicking] = useState(false);
+  const [droppedFile, setDroppedFile] = useState(initialPhotoFile);
   const {
     register,
     control,
@@ -170,7 +174,7 @@ export function PostComposer({
       <header className="margin-compose-header">
         <div className="margin-compose-heading">
           <DialogTitle className="margin-compose-title">
-            {editingPost ? "Edit post" : "New post"}
+            {editingPost ? "Edit Post" : "New Post"}
           </DialogTitle>
           {editingPost && (
             <details className="margin-compose-options">
@@ -188,9 +192,13 @@ export function PostComposer({
           For friends. Local preview only.
         </DialogDescription>
         <div className="margin-compose-author">
-          <Avatar person={profile.person} />
+          <Avatar person={profile.person} linked onNavigate={onComplete} />
           <div className="margin-compose-author-copy">
-            <strong>{profile.person.name}</strong>
+            <strong>
+              <PersonLink person={profile.person} onNavigate={onComplete}>
+                {profile.person.name}
+              </PersonLink>
+            </strong>
             <span className="margin-note">
               <Users aria-hidden="true" /> Friends ·{" "}
               {editingPost
@@ -457,14 +465,19 @@ export function PostComposer({
         </div>
       </form>
       <PhotoPicker
+        initialFile={droppedFile}
         canChoose={canChoosePhoto}
         allowUpload={canUploadPhoto}
         open={picking}
-        onOpenChange={setPicking}
+        onOpenChange={(open) => {
+          setPicking(open);
+          if (!open) setDroppedFile(undefined);
+        }}
         onChoose={(photo) => {
           if (canChoosePhoto(photo))
             update("photoIds", [...photoIds, photo.id]);
           setPicking(false);
+          setDroppedFile(undefined);
         }}
       />
     </DialogContent>

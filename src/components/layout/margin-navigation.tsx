@@ -10,7 +10,7 @@ import {
 import { usePreview } from "@/features/local-preview/provider";
 import type { Person } from "@/features/feed/schema";
 import { cn } from "@/lib/utils";
-import { House, MessageSquare, UserRound } from "lucide-react";
+import { House, Mail, UserRound } from "lucide-react";
 import { ProfileSearch } from "@/features/search/profile-search";
 import { NotificationCenter } from "@/features/notifications/notification-center";
 import { BrandLink } from "@/components/shared/brand-link";
@@ -23,7 +23,7 @@ const destinations = [
     name: "Messages",
     view: "messages",
     href: "/?view=messages",
-    Icon: MessageSquare,
+    Icon: Mail,
   },
 ] as const;
 
@@ -38,7 +38,7 @@ export function MarginNavigation({
     <>
       <header className="margin-header margin-topbar margin-navigation-theme">
         <div className="margin-header-inner">
-          <BrandLink label="margin feed" />
+          <BrandLink label="margin feed" animate />
           <nav aria-label="Primary" className="margin-desktop-nav">
             {destinations.map(({ name, view, href }) => (
               <Link

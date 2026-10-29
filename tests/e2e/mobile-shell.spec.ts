@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page, isMobile }) => {
   test.skip(
@@ -30,7 +30,10 @@ test("keeps the mobile bars compact, preserves tap targets, and accounts for saf
       ),
     ).toBe(true);
   }
-  await page.screenshot({ path: testInfo.outputPath("compact-bars.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("compact-bars.png"),
+  });
   await page.addStyleTag({
     content:
       ":root { --margin-safe-area-top: 47px; --margin-safe-area-bottom: 34px; --margin-safe-area-left: 20px; --margin-safe-area-right: 20px; }",
@@ -52,6 +55,7 @@ test("keeps the mobile bars compact, preserves tap targets, and accounts for saf
     /viewport-fit=cover/,
   );
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("simulated-safe-areas.png"),
   });
 });
@@ -85,6 +89,7 @@ test("keeps enlarged navigation readable and puts utility links under Settings",
       (await utilities.boundingBox())!.height,
   );
   await page.screenshot({
+    caret: "initial",
     path: testInfo.outputPath("settings-utilities.png"),
   });
   await page.getByRole("radio", { name: "Extra large", exact: true }).check();

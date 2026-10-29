@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 import {
   CircleHelp,
   Copyright,
@@ -25,12 +32,39 @@ export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const position = () => {
+      const bounds = trigger.current?.getBoundingClientRect();
+      if (!bounds || !panel.current) return;
+      panel.current.style.setProperty(
+        "--profile-menu-top",
+        `${bounds.bottom + 12}px`,
+      );
+      panel.current.style.setProperty(
+        "--profile-menu-right",
+        `${Math.max(16, innerWidth - bounds.right)}px`,
+      );
+    };
+    position();
+    window.addEventListener("resize", position);
+    window.addEventListener("scroll", position, { passive: true });
+    return () => {
+      window.removeEventListener("resize", position);
+      window.removeEventListener("scroll", position);
+    };
+  }, [open]);
   const first = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => first.current?.focus());
     const outside = (event: PointerEvent) => {
-      if (event.target instanceof Node && !root.current?.contains(event.target))
+      if (
+        event.target instanceof Node &&
+        !root.current?.contains(event.target) &&
+        !panel.current?.contains(event.target)
+      )
         setPanel((current) => (current === "profile" ? null : current));
     };
     const escape = (event: KeyboardEvent) => {
@@ -56,7 +90,8 @@ export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
       onBlur={(event) => {
         if (
           event.relatedTarget instanceof Node &&
-          !event.currentTarget.contains(event.relatedTarget)
+          !event.currentTarget.contains(event.relatedTarget) &&
+          !panel.current?.contains(event.relatedTarget)
         )
           close();
       }}
@@ -96,56 +131,59 @@ export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
         </svg>
         <span className="margin-header-menu-avatar">{avatar}</span>
       </Button>
-      {open && (
-        <nav
-          id={id}
-          aria-label="Profile menu"
-          className="margin-profile-menu"
-          data-profile-menu
-        >
-          <Link ref={first} href="/?view=profile" onClick={close}>
-            <UserRound aria-hidden="true" />
-            View profile
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              close();
-              preview.requestProfileEdit();
-              router.push("/?view=profile", { scroll: false });
-            }}
+      {open &&
+        createPortal(
+          <nav
+            ref={panel}
+            id={id}
+            aria-label="Profile menu"
+            className="margin-profile-menu"
+            data-profile-menu
           >
-            <Pencil aria-hidden="true" />
-            Edit profile
-          </button>
-          <Link href="/?view=friends" onClick={close}>
-            <Users aria-hidden="true" />
-            Friends
-          </Link>
-          <Link href="/?view=settings" onClick={close}>
-            <Settings2 aria-hidden="true" />
-            Settings
-          </Link>
-          <div className="margin-profile-menu-utilities">
-            <Link href="/help" onClick={close}>
-              <CircleHelp aria-hidden="true" />
-              Help &amp; safety
+            <Link ref={first} href="/?view=profile" onClick={close}>
+              <UserRound aria-hidden="true" />
+              View profile
             </Link>
-            <Link href="/privacy" onClick={close}>
-              <ShieldCheck aria-hidden="true" />
-              Privacy
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                preview.requestProfileEdit();
+                router.push("/?view=profile", { scroll: false });
+              }}
+            >
+              <Pencil aria-hidden="true" />
+              Edit profile
+            </button>
+            <Link href="/?view=friends" onClick={close}>
+              <Users aria-hidden="true" />
+              Friends
             </Link>
-            <Link href="/terms" onClick={close}>
-              <ScrollText aria-hidden="true" />
-              Terms
+            <Link href="/?view=settings" onClick={close}>
+              <Settings2 aria-hidden="true" />
+              Settings
             </Link>
-            <Link href="/copyright" onClick={close}>
-              <Copyright aria-hidden="true" />
-              Copyright
-            </Link>
-          </div>
-        </nav>
-      )}
+            <div className="margin-profile-menu-utilities">
+              <Link href="/help" onClick={close}>
+                <CircleHelp aria-hidden="true" />
+                Help &amp; safety
+              </Link>
+              <Link href="/privacy" onClick={close}>
+                <ShieldCheck aria-hidden="true" />
+                Privacy
+              </Link>
+              <Link href="/terms" onClick={close}>
+                <ScrollText aria-hidden="true" />
+                Terms
+              </Link>
+              <Link href="/copyright" onClick={close}>
+                <Copyright aria-hidden="true" />
+                Copyright
+              </Link>
+            </div>
+          </nav>,
+          document.body,
+        )}
     </div>
   );
 }

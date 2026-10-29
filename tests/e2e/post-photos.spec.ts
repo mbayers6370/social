@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   test.skip(
@@ -48,7 +48,10 @@ test("shows Ines's three photos before text, supports mobile swiping, and return
       .toBeGreaterThan(0);
     await expect(page.getByRole("dialog")).toHaveCount(0);
   }
-  await page.screenshot({ path: testInfo.outputPath("three-photo-post.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("three-photo-post.png"),
+  });
   const trigger = photos.nth(1);
   await trigger.click();
   const dialog = page.getByRole("dialog", {
@@ -64,7 +67,10 @@ test("shows Ines's three photos before text, supports mobile swiping, and return
   await expect(dialog.getByText("3 of 3", { exact: true })).toBeVisible();
   await page.keyboard.press("ArrowLeft");
   await expect(dialog.getByText("2 of 3", { exact: true })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath("full-photo-viewer.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("full-photo-viewer.png"),
+  });
   await dialog
     .getByRole("button", { name: "Back to post", exact: true })
     .click();
@@ -113,7 +119,7 @@ test("publishes three photographs together and preserves the image limit across 
   await page
     .getByRole("button", { name: "Share a thought…", exact: true })
     .click();
-  const compose = page.getByRole("dialog", { name: "New post", exact: true });
+  const compose = page.getByRole("dialog", { name: "New Post", exact: true });
   await compose
     .getByRole("textbox", { name: "Your post" })
     .fill("Three little moments from today.");
@@ -127,13 +133,18 @@ test("publishes three photographs together and preserves the image limit across 
   ).toBeDisabled();
   await compose.getByRole("button", { name: "Share with friends" }).click();
   await expect(compose).not.toBeVisible();
+  await expect(page).toHaveURL(/\?view=profile#post-local-/);
+  const publishedPost = page.locator(`#${new URL(page.url()).hash.slice(1)}`);
   await expect(
-    page
-      .locator(".margin-feed-post")
-      .first()
-      .getByRole("button", { name: /^View photograph/ }),
+    publishedPost.getByRole("button", { name: /^View photograph/ }),
   ).toHaveCount(3);
-  await page.getByRole("button", { name: "New post", exact: true }).click();
+  await page.getByRole("link", { name: "Feed", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Feed", exact: true }),
+  ).toBeAttached();
+  await page
+    .getByRole("button", { name: "Share a thought…", exact: true })
+    .click();
   await expect(
     compose.getByRole("button", { name: "Add photograph" }),
   ).toBeDisabled();

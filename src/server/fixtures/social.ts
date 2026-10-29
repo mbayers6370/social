@@ -45,6 +45,9 @@ export function getDevelopmentSocial(): Bootstrap {
     june: "Home cooking, dog photos, and catching up with friends.",
     samuel: "Weekend walks, coffee, and trying to get to the beach more often.",
     mara: "Tea, cooking, and whatever I'm reading this week.",
+    nadia:
+      "Early starts, long walks, and a camera in my bag. Usually planning the next trail.",
+    owen: "Cycling across town, finding new lunch spots, and making time for friends.",
   };
   // Sample listening choices only; they are not written to anyone's music account.
   const listening = {

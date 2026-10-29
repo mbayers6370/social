@@ -42,7 +42,7 @@ describe("shared component contracts", () => {
       );
     }
     render(<EditableProfile />);
-    expect(screen.queryByRole("button", { name: "Edit profile" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Edit profile" })).toBeVisible();
     const edit = screen.getByRole("button", {
       name: "Profile menu",
     });

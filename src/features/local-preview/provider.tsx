@@ -29,6 +29,7 @@ import {
   publishLocalPost,
   editLocalPost,
   deleteLocalPost,
+  deleteLocalPhoto,
   reorderGallery,
   preferencesSchema,
   type Preferences,
@@ -40,6 +41,11 @@ import {
 import { musicSelectionSchema } from "@/features/profile/music-schema";
 import type { ProfileTrack } from "@/features/profile/schema";
 import { validateLocalPhoto } from "./upload";
+import { saveGalleryArrangement } from "@/features/gallery/arrangement";
+import {
+  messageInputSchema,
+  type PreviewMessage,
+} from "@/features/messages/schema";
 import {
   previewReducer,
   type PreviewAction,
@@ -89,10 +95,16 @@ type Preview = {
   bootstrap: Bootstrap;
   state: LocalState;
   draft: PostInput;
+  messageDrafts: Record<string, string>;
+  updateMessageDraft: (threadId: string, body: string) => void;
+  notebookNotes: PreviewMessage[];
+  addNotebookNote: (body: string) => void;
   updateDraft: (patch: Partial<PostInput>) => void;
   publish: (input: unknown) => string;
   editPost: (id: string, input: unknown) => void;
   deletePost: (id: string) => void;
+  deletePhoto: (id: string) => void;
+  saveGallery: (input: unknown) => void;
   postStatus: string;
   upload: (file: File, description: string) => Promise<Photo>;
   place: (id: string, replacement?: string) => void;
@@ -114,6 +126,11 @@ export function PreviewProvider({
   const [interactions, dispatchInteraction] = useReducer(previewReducer, {});
   const [now, setNow] = useState(() => Date.parse(bootstrap.now));
   const [draft, setDraft] = useState<PostInput>(emptyDraft);
+  const [notebookNotes, setNotebookNotes] = useState<PreviewMessage[]>([]);
+  // Tab memory only: survives client navigation, never written to browser storage.
+  const [messageDrafts, setMessageDrafts] = useState<Record<string, string>>(
+    {},
+  );
   const [headerPanel, setHeaderPanel] = useState<
     "profile" | "notifications" | null
   >(null);
@@ -193,6 +210,44 @@ export function PreviewProvider({
     const next = update(latest.current);
     latest.current = next;
     setState(next);
+  }
+  function commitPhotoChange(next: LocalState) {
+    const remaining = new Set(next.photos.map((photo) => photo.id));
+    const removed = latest.current.photos.filter(
+      (photo) => !remaining.has(photo.id),
+    );
+    const ids = new Set(removed.map((photo) => photo.id));
+    commit(() => next);
+    if (!ids.size) return;
+    setDraft((current) => ({
+      ...current,
+      photoIds: current.photoIds?.filter((photoId) => !ids.has(photoId)),
+      replacements: Object.fromEntries(
+        Object.entries(current.replacements ?? {}).filter(
+          ([source, target]) => !ids.has(source) && !ids.has(target),
+        ),
+      ),
+    }));
+    const current = latest.current;
+    for (const src of new Set(removed.map((photo) => photo.image.src))) {
+      if (
+        src &&
+        urls.current.has(src) &&
+        !current.photos.some((item) => item.image.src === src) &&
+        !current.posts.some((post) =>
+          post.media?.some((item) => item.image.src === src),
+        ) &&
+        !current.profiles.some(
+          (profile) =>
+            profile.person.photo?.src === src ||
+            profile.photos.some((item) => item.image.src === src) ||
+            profile.recent.some((post) => post.image?.image.src === src),
+        )
+      ) {
+        URL.revokeObjectURL(src);
+        urls.current.delete(src);
+      }
+    }
   }
   const value: Preview = {
     headerPanel,
@@ -275,6 +330,25 @@ export function PreviewProvider({
     bootstrap,
     state,
     draft,
+    messageDrafts,
+    notebookNotes,
+    addNotebookNote: (body) => {
+      const input = messageInputSchema.parse({ body });
+      const note: PreviewMessage = {
+        id: createLocalId(),
+        body: input.body,
+        direction: "outgoing",
+        createdAt: new Date().toISOString(),
+      };
+      setNotebookNotes((current) => [...current, note]);
+    },
+    updateMessageDraft: (threadId, body) =>
+      setMessageDrafts((current) => {
+        const next = { ...current };
+        if (body) next[threadId] = body;
+        else delete next[threadId];
+        return next;
+      }),
     postStatus,
     updateDraft: (patch) => setDraft((current) => ({ ...current, ...patch })),
     publish(input) {
@@ -297,6 +371,21 @@ export function PreviewProvider({
         deleteLocalPost(current, bootstrap.viewerId, id, new Date(now)),
       );
       setPostStatus("Post deleted.");
+    },
+    deletePhoto(id) {
+      commitPhotoChange(
+        deleteLocalPhoto(latest.current, bootstrap.viewerId, id),
+      );
+    },
+    saveGallery(input) {
+      commitPhotoChange(
+        saveGalleryArrangement(
+          latest.current,
+          bootstrap.viewerId,
+          input,
+          new Date(now),
+        ),
+      );
     },
     async upload(file, description) {
       if (

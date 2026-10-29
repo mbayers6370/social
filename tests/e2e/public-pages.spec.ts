@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("public pages expose the footer, practical rules and draft policies on desktop and mobile", async ({
   page,

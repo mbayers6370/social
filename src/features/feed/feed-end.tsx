@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { BrandBrackets } from "@/components/shared/brand-brackets";
 
 export function FeedEnd() {
@@ -25,7 +25,7 @@ export function FeedEnd() {
           observer.disconnect();
         }
       },
-      { threshold: 0.5, rootMargin: "0px 0px -80px 0px" },
+      { threshold: 0.5 },
     );
     observer.observe(element);
     return () => {
@@ -40,7 +40,21 @@ export function FeedEnd() {
       data-reveal={revealed ? "active" : undefined}
     >
       <p ref={line}>
-        <BrandBrackets>That’s everything for now.</BrandBrackets>
+        <span className="sr-only">That’s everything for now.</span>
+        <span aria-hidden="true">
+          <BrandBrackets>
+            {["That’s", "everything", "for", "now."].map((word, index) => (
+              <span
+                key={word}
+                className="margin-feed-end-word"
+                style={{ "--word-order": index } as CSSProperties}
+              >
+                {word}
+                {index < 3 ? "\u00a0" : ""}
+              </span>
+            ))}
+          </BrandBrackets>
+        </span>
       </p>
     </footer>
   );

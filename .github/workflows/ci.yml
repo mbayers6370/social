@@ -20,16 +20,5 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run format:check
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run styles:check
-      - run: npm test
-      - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
-      - run: npm run test:e2e
-        env:
-          PLAYWRIGHT_PRODUCTION: "1"
-      - run: npm audit --audit-level=high
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run verify

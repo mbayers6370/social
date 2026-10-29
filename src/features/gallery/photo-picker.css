@@ -23,9 +23,110 @@
   gap: 18px;
   margin-top: 12px;
 }
-.margin-upload-form input[type="file"] {
-  height: auto;
+.margin-photo-source h3 {
+  margin-bottom: 12px;
+  font: 500 var(--text-control)/1.5 var(--font-body);
+}
+.margin-photo-picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid hsl(var(--border) / 0.65);
+}
+.margin-photo-picker-footer > button {
+  flex: 0 1 auto;
+  width: auto;
+  font-weight: 400;
+}
+.margin-file-picker {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid hsl(var(--blackened-olive) / 0.3);
+  border-radius: var(--radius-card);
+  background: hsl(var(--surface-heading));
+}
+.margin-file-picker:hover {
+  border-color: hsl(var(--blackened-olive) / 0.65);
+}
+.margin-file-picker:focus-within {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+.margin-file-picker[data-invalid="true"] {
+  border-color: hsl(var(--destructive));
+}
+.margin-file-picker[data-disabled="true"] {
+  opacity: 0.55;
+}
+.margin-file-picker-mark {
+  display: grid;
+  place-items: center;
+  color: hsl(var(--blackened-olive));
+}
+.margin-file-picker-mark svg {
+  width: 32px;
+  height: 32px;
+}
+.margin-file-summary {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.margin-file-name {
+  font: 500 var(--text-body)/1.5 var(--font-body);
+  overflow-wrap: anywhere;
+}
+.margin-upload-choose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  grid-column: 1 / -1;
+  gap: 8px;
   min-height: 44px;
-  padding: 8px;
-  font-size: var(--text-body);
+  padding: 10px 16px;
+  border-radius: var(--radius-control);
+  background: hsl(var(--blackened-olive));
+  color: hsl(var(--parchment));
+  font: 400 var(--text-control)/1.5 var(--font-body);
+}
+.margin-upload-choose svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+/* Keep one real, keyboard-operable file input over the branded surface. */
+.margin-upload-native {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.margin-upload-native:disabled {
+  cursor: not-allowed;
+}
+@media (min-width: 640px) {
+  .margin-file-picker {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+  }
+  .margin-upload-choose {
+    grid-column: auto;
+  }
+}
+
+.margin-dropped-photo {
+  width: 100%;
+  max-height: 220px;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-control);
+  background: hsl(var(--surface-heading));
 }

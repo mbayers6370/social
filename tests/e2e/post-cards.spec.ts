@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("post skeleton preview announces loading, respects reduced motion, and restores content", async ({
   page,
@@ -28,7 +28,10 @@ test("post skeleton preview announces loading, respects reduced motion, and rest
     )
     .toBe("none");
   await preview.scrollIntoViewIfNeeded();
-  await page.screenshot({ path: testInfo.outputPath("post-skeleton.png") });
+  await page.screenshot({
+    caret: "initial",
+    path: testInfo.outputPath("post-skeleton.png"),
+  });
   const toggle = preview.getByRole("button", { name: "Show loaded post" });
   await toggle.focus();
   await page.keyboard.press("Enter");

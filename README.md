@@ -14,7 +14,7 @@ npm run dev
 
 Open [localhost:3000](http://localhost:3000). Development includes the feed, Messages, Profile, Friends, Gallery, Settings, and `/design-system`, using fictional accounts without cloud credentials. `/welcome` previews the public website.
 
-Social posts, messages, uploads, friendships, preferences, and drafts are local previews. Most state survives navigation within the tab and resets on refresh; message drafts also reset when leaving Messages. Uploaded photographs stay in browser memory and are never sent to a server.
+Social posts, messages, uploads, friendships, preferences, and drafts are local previews. Most state, including unsent message drafts, survives navigation within the tab and resets on refresh. Messages added to the preview reset when leaving Messages. Uploaded photographs stay in browser memory and are never sent to a server.
 
 On Repeat supports live Apple catalogue search and optional local PostgreSQL persistence. See [local music setup](docs/music-search.md).
 
@@ -35,6 +35,22 @@ For phone testing, set `MARGIN_DEV_ALLOWED_HOSTS` to exact hostnames in your ign
 Prisma scripts load `.env` explicitly. The optional local database command uses its own isolated cluster; see the music guide. No cloud provisioning or remote migrations run automatically.
 
 ## Checks
+
+Before pushing, use the same verification command as CI:
+
+```sh
+npm run test:e2e:install
+npm run hooks:install
+npm run verify
+```
+
+Install the browser and repository hook once per clone. The pre-push hook runs verification automatically and stops a push on failure. Commit or stash changes first: it checks a clean working tree against the commit being pushed. It does not commit or push for you.
+
+Verification uses an ignored temporary copy under `.local/` so an open development server can keep running. It excludes real environment files, disables live integrations, and runs formatting, types, lint, styles, unit tests, the production build, desktop/mobile browser tests in development and production, and both dependency audits. Development tests use a fixed server/browser clock. Failed runs retain local reports at the printed path; successful copies are removed.
+
+Use `npm run verify -- --code-only` for formatting, types, lint, styles, unit tests, build and dependency audits without launching browsers. The pre-push hook runs the full suite by default. For an explicitly code-only local push, use `MARGIN_VERIFY_CODE_ONLY=1 git push`; the clean-tree and commit checks remain active, and CI still runs the full browser suites.
+
+Individual checks are also available:
 
 ```sh
 npm run format:check

@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
+import { PersonLink } from "@/components/shared/person-link";
 import { commentInputSchema, type CommentInput, type FeedPost } from "./schema";
 import type { PreviewAction, PreviewPostState } from "./state";
 
@@ -28,6 +29,9 @@ export function CommentForm({
   onPosted?: (commentId: string) => void;
 }) {
   const id = useId();
+  const replyAuthor = [...post.comments, ...state.comments].find(
+    (comment) => comment.id === state.replyTo?.id,
+  )?.author;
   const [submitted, setSubmitted] = useState(false);
   const [editing, setEditing] = useState(false);
   const {
@@ -91,7 +95,14 @@ export function CommentForm({
     >
       {state.replyTo && (
         <div className="margin-reply-target">
-          <span>Replying to {state.replyTo.name}</span>
+          <span>
+            Replying to{" "}
+            {replyAuthor ? (
+              <PersonLink person={replyAuthor}>{state.replyTo.name}</PersonLink>
+            ) : (
+              state.replyTo.name
+            )}
+          </span>
           <Button
             variant="ghost"
             size="icon"

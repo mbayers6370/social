@@ -78,7 +78,7 @@ export function PublicFooter() {
 export function PublicHeader() {
   return (
     <header className="margin-public-header margin-topbar margin-navigation-theme">
-      <BrandLink href={publicHomeHref()} />
+      <BrandLink href={publicHomeHref()} animate />
       <PublicLinks label="Public navigation" />
     </header>
   );

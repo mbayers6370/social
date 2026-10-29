@@ -66,6 +66,25 @@
 .margin-avatar-small {
   font-size: var(--text-meta);
 }
+.margin-person-link {
+  position: relative;
+  border-radius: 3px;
+  color: inherit;
+  text-decoration: none;
+}
+.margin-avatar-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  vertical-align: middle;
+  border-radius: 50%;
+}
+.margin-avatar-link:hover .margin-avatar {
+  box-shadow: 0 0 0 2px hsl(var(--citron));
+}
 .margin-status {
   font-size: var(--text-body);
   line-height: 1.5;

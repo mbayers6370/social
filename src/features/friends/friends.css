@@ -105,6 +105,17 @@
 .margin-friend-controls {
   min-width: 0;
 }
+.margin-friend-request-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius-control);
+  background: hsl(var(--background));
+  font: 400 var(--text-control)/1.5 var(--font-body);
+}
 .margin-friend-buttons {
   display: flex;
   align-items: center;
@@ -128,4 +139,8 @@
   .margin-friends-page {
     margin-block: 48px 80px;
   }
+}
+
+.margin-friends-icon {
+  color: hsl(var(--citron));
 }

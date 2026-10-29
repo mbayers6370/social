@@ -39,3 +39,74 @@
   align-self: end;
   transform: rotate(180deg);
 }
+/* Reserve the finished wordmark's width so its opening never shifts navigation. */
+.margin-brand-link[data-entrance="true"] .margin-brand-brackets {
+  position: relative;
+}
+.margin-brand-link[data-entrance="true"] .margin-brand-brackets > span {
+  grid-column: 2;
+}
+.margin-brand-link[data-entrance="true"] .margin-brand-corner-start {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  animation: margin-brand-open-start 1200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.margin-brand-link[data-entrance="true"] .margin-brand-corner-end {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 0;
+  animation: margin-brand-open-end 1200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.margin-brand-link[data-entrance="true"] .margin-brand-name {
+  display: inline-block;
+  /* Room for the g's descender and blur; offset it to preserve logo geometry. */
+  padding-block: 0.2em;
+  margin-block: -0.2em;
+  animation: margin-brand-word-reveal 800ms ease-out 1200ms both;
+}
+@keyframes margin-brand-open-start {
+  from {
+    inset-inline-start: calc(50% - var(--brand-corner-size));
+  }
+  to {
+    inset-inline-start: 0;
+  }
+}
+@keyframes margin-brand-open-end {
+  from {
+    inset-inline-end: calc(50% - var(--brand-corner-size));
+  }
+  to {
+    inset-inline-end: 0;
+  }
+}
+@keyframes margin-brand-word-reveal {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .margin-brand-link[data-entrance="true"]
+    :is(
+      .margin-brand-corner-start,
+      .margin-brand-corner-end,
+      .margin-brand-name
+    ) {
+    animation: none;
+  }
+}
+html[data-motion="reduced"]
+  .margin-brand-link[data-entrance="true"]
+  :is(
+    .margin-brand-corner-start,
+    .margin-brand-corner-end,
+    .margin-brand-name
+  ) {
+  animation: none;
+}

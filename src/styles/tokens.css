@@ -15,6 +15,7 @@
   --foreground: var(--ink);
   --card: 30 25% 98.431373%; /* parchment lifted with white: #FCFBFA */
   --card-foreground: var(--foreground);
+  --surface-heading: 70 32% 92.5%; /* soft olive paper for content headers */
   --popover: var(--card);
   --popover-foreground: var(--foreground);
   --primary: var(--citron);
@@ -45,6 +46,10 @@
   --text-display-md: 2.5rem;
   --text-display-lg: 3rem;
   --radius: 0.625rem;
+  --radius-control: 8px;
+  --radius-card: 14px;
+  --radius-menu: 12px;
+  --menu-inset: 8px;
   /* Close relationships, distinct items, and larger section breaks. */
   --space-related: 8px;
   --space-group: 24px;

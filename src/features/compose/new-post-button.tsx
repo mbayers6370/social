@@ -16,15 +16,26 @@ const PostComposer = dynamic(
 /** Reusable compose entry point for the local application. */
 export function NewPostButton({
   variant = "button",
+  open: controlledOpen,
+  onOpenChange,
+  initialPhotoFile,
+  disabled = false,
 }: {
   variant?: "button" | "header" | "prompt" | "photo";
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialPhotoFile?: File;
+  disabled?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onOpenChange ?? setLocalOpen;
   const header = variant === "header";
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
+          disabled={disabled}
           variant={variant === "button" ? "outline" : "ghost"}
           size={header || variant === "photo" ? "icon" : "default"}
           className={
@@ -40,7 +51,7 @@ export function NewPostButton({
               ? undefined
               : variant === "photo"
                 ? "New photo post"
-                : "New post"
+                : "New Post"
           }
         >
           {variant === "prompt" ? (
@@ -51,7 +62,7 @@ export function NewPostButton({
             <>
               <Plus aria-hidden="true" strokeWidth={1.5} />
               <span className={header ? "sr-only" : "margin-deferred-label"}>
-                New post
+                New Post
               </span>
             </>
           )}
@@ -59,7 +70,8 @@ export function NewPostButton({
       </DialogTrigger>
       {open && (
         <PostComposer
-          startWithPhoto={variant === "photo"}
+          startWithPhoto={variant === "photo" || !!initialPhotoFile}
+          initialPhotoFile={initialPhotoFile}
           onComplete={() => setOpen(false)}
         />
       )}
