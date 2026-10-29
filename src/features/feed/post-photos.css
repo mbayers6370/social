@@ -1,0 +1,153 @@
+/* Post photographs, the native swipe strip and full-image viewer. */
+.margin-post-photos {
+  position: relative;
+  margin-bottom: var(--space-group);
+}
+.margin-media:not([data-multiple="true"]) .margin-post-photo {
+  width: min(100%, calc(min(480px, 60svh) * var(--photo-ratio)));
+  margin-inline: auto;
+}
+.margin-post-photo {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  cursor: zoom-in;
+}
+.margin-post-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(480px, 60svh);
+  object-fit: contain;
+  object-position: center;
+  border-radius: inherit;
+  background: transparent;
+}
+.margin-media[data-multiple="true"] {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 2px;
+  margin-inline: -2px;
+  touch-action: pan-x pan-y;
+}
+.margin-media[data-multiple="true"] .margin-post-photo {
+  flex: 0 0 min(65%, 200px);
+  scroll-snap-align: start;
+}
+.margin-media[data-multiple="true"] .margin-post-image {
+  aspect-ratio: 4 / 3;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+}
+.margin-media[data-multiple="true"]::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 639px) {
+  .margin-post-photos[data-can-next="true"] .margin-media {
+    mask-image: linear-gradient(to right, black calc(100% - 44px), transparent);
+  }
+  .margin-post-photos[data-can-previous="true"] .margin-media {
+    mask-image: linear-gradient(to right, transparent, black 44px);
+  }
+  .margin-post-photos[data-can-next="true"][data-can-previous="true"]
+    .margin-media {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 44px,
+      black calc(100% - 44px),
+      transparent
+    );
+  }
+}
+.margin-post-photo-viewer {
+  --photo-viewer-image-height: max(120px, calc(100dvh - 18rem));
+  inset: 0;
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) 16px
+    max(16px, env(safe-area-inset-bottom));
+  border: 0;
+  border-radius: 0;
+  background: hsl(var(--card));
+  box-shadow: none;
+}
+.margin-post-photo-viewer-header,
+.margin-post-photo-viewer-footer,
+.margin-post-photo-viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.margin-post-photo-viewer-header,
+.margin-post-photo-viewer-footer {
+  flex-shrink: 0;
+  justify-content: space-between;
+}
+.margin-post-photo-viewer-footer {
+  justify-content: center;
+}
+.margin-post-photo-viewer-header > button {
+  padding-inline: 8px;
+}
+.margin-post-photo-viewer-stage {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  /* Let very long descriptions scroll from their start, rather than clipping. */
+  justify-content: safe center;
+}
+.margin-post-photo-viewer-actions {
+  flex-shrink: 0;
+}
+@media (min-width: 640px) {
+  .margin-media[data-multiple="true"] .margin-post-photo {
+    flex-basis: calc((100% - 24px) / 3);
+  }
+  .margin-post-photo-viewer {
+    --photo-viewer-image-height: max(120px, calc(min(90dvh, 900px) - 14rem));
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 48px);
+    max-width: 1100px;
+    height: 90dvh;
+    max-height: 900px;
+    padding: 24px;
+    border: 1px solid hsl(var(--border));
+    border-radius: 14px;
+  }
+}
+@media (min-width: 1024px) {
+  .margin-post-photo-viewer {
+    --photo-viewer-image-height: max(120px, calc(min(90dvh, 900px) - 10rem));
+  }
+  .margin-feed-layout[data-profile="true"]
+    .margin-media:not([data-multiple="true"])
+    .margin-post-photo,
+  .margin-conversation-front[data-profile-snapshot="true"]
+    .margin-media:not([data-multiple="true"])
+    .margin-post-photo {
+    width: min(100%, calc(240px * var(--photo-ratio)));
+  }
+  .margin-feed-layout[data-profile="true"] .margin-post-image,
+  .margin-conversation-front[data-profile-snapshot="true"] .margin-post-image {
+    max-height: 240px;
+  }
+}

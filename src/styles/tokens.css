@@ -1,0 +1,102 @@
+/* margin's palette and semantic tokens, shared by native elements and shadcn. */
+:root {
+  --font-body: var(--font-inter, ui-sans-serif), system-ui, sans-serif;
+  --font-serif: var(--font-caudex, Georgia), Cambria, "Times New Roman", serif;
+  /* HSL channels preserve exact brand colors and support existing alpha variants. */
+  --parchment: 45 28.571429% 97.254902%; /* lighter warm white #FAF9F6 */
+  --ink: 203.076923 11.926606% 21.372549%; /* smoky blue-black #30383D */
+  --citron: 67.222222 48.648649% 56.470588%; /* #B9C65A */
+  --blackened-olive: 71.707317 36.283186% 22.156863%; /* #454D24 */
+  /* Parchment on Blackened Olive has 8.52:1 contrast. */
+  --header: var(--blackened-olive);
+  --header-accent: 71.707317 36.283186% 19.156863%; /* darker interactive surface */
+  --header-foreground: var(--parchment);
+  --background: var(--parchment);
+  --foreground: var(--ink);
+  --card: 30 25% 98.431373%; /* parchment lifted with white: #FCFBFA */
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: var(--citron);
+  --primary-foreground: var(--ink);
+  --secondary: var(--card);
+  --secondary-foreground: var(--foreground);
+  --secondary-border: var(--border);
+  --muted: 40 11.111111% 94.705882%; /* parchment with a little ink: #F3F2F0 */
+  --muted-foreground: 200 5.142857% 34.313725%; /* #53595C, >=6.3:1 on parchment */
+  --note-foreground: 202.5 3.669725% 42.745098%; /* #696E71, >=4.6:1 on note surfaces */
+  --accent: 40 7.317073% 91.960784%; /* parchment/ink hover: #ECEBE9 */
+  --accent-foreground: var(--foreground);
+  --destructive: 0 72% 40%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 60 2.631579% 85.098039%; /* parchment/ink rule: #DADAD8 */
+  --input: 180 1.6% 49.019608%; /* #7B7F7F; stronger than rules */
+  --input-focus: var(--ring);
+  --ring: 197.142857 3.286385% 41.764706%; /* #676C6E, >=4.7:1 on parchment */
+  --text-control: 0.8125rem;
+  --text-meta: 0.75rem;
+  --text-body: 1rem;
+  --text-note: 0.75rem;
+  --text-title: 1.125rem;
+  --text-heading-sm: 1.5rem;
+  --text-heading-md: 1.75rem;
+  --text-heading-lg: 2rem;
+  --text-display-sm: 2.25rem;
+  --text-display-md: 2.5rem;
+  --text-display-lg: 3rem;
+  --radius: 0.625rem;
+  /* Close relationships, distinct items, and larger section breaks. */
+  --space-related: 8px;
+  --space-group: 24px;
+  --space-section: 32px;
+  --space-page: 48px;
+  --site-gutter: 24px;
+  --conversation: var(--muted);
+  --conversation-surface: var(--card);
+  --placeholder: var(--muted);
+  --avatar-paper: var(--muted);
+  --avatar-sage: 66.428571 43.75% 87.45098%; /* citron/parchment tint: #EAEDD1 */
+  --avatar-sand: var(--card);
+  --avatar-border: hsl(
+    var(--input)
+  ); /* opaque darker outline on light surfaces */
+  /* Geometry shared by the shell, feed and conversation panel. */
+  --margin-feed-width: 600px;
+  --margin-panel-width: clamp(320px, calc(100vw - 760px), 420px);
+  --margin-pair-gap: 40px;
+  --margin-feed-spread: calc(
+    var(--margin-feed-width) + var(--margin-pair-gap) +
+      var(--margin-panel-width)
+  );
+  --margin-post-open-shift: calc(
+    (var(--margin-panel-width) + var(--margin-pair-gap)) / 2
+  );
+  --margin-conversation-height: min(640px, calc(100dvh - 64px));
+  --margin-safe-area-top: env(safe-area-inset-top, 0px);
+  --margin-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --margin-safe-area-left: env(safe-area-inset-left, 0px);
+  --margin-safe-area-right: env(safe-area-inset-right, 0px);
+  --margin-header-height: calc(max(48px, 3rem) + var(--margin-safe-area-top));
+  --margin-desktop-header-height: calc(84px + var(--margin-safe-area-top));
+  --margin-mobile-nav-row-height: max(
+    52px,
+    calc(34px + var(--text-meta) * 1.2)
+  );
+  --margin-mobile-nav-height: calc(
+    var(--margin-mobile-nav-row-height) + 4px + var(--margin-safe-area-bottom)
+  );
+}
+@media (min-width: 640px) {
+  :root {
+    --site-gutter: clamp(32px, 4vw, 80px);
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --margin-header-height: var(--margin-desktop-header-height);
+    --margin-conversation-height: min(
+      640px,
+      calc(100dvh - var(--margin-desktop-header-height) - 64px)
+    );
+  }
+}

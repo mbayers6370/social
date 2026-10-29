@@ -1,0 +1,41 @@
+/* Live Caudex wordmark, framed by the supplied identity's vector corners. */
+.margin-brand-link {
+  --brand-corner-size: 12px;
+  --brand-corner-gap: 5px;
+  --brand-corner-color: hsl(var(--foreground));
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.margin-brand-name {
+  font-family: var(--font-serif);
+  font-size: var(--brand-wordmark-size, 1.8125rem);
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+.margin-brand-brackets {
+  display: inline-grid;
+  grid-template-columns:
+    var(--brand-corner-size, 14px) minmax(0, 1fr)
+    var(--brand-corner-size, 14px);
+  gap: var(--brand-corner-gap, 10px);
+  align-items: center;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.margin-brand-corner-start,
+.margin-brand-corner-end {
+  display: block;
+  width: var(--brand-corner-size, 14px);
+  height: var(--brand-corner-size, 14px);
+  color: var(--brand-corner-color, hsl(var(--citron)));
+}
+.margin-brand-corner-start {
+  align-self: start;
+}
+.margin-brand-corner-end {
+  align-self: end;
+  transform: rotate(180deg);
+}

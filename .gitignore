@@ -1,0 +1,63 @@
+# Dependencies and generated build files
+node_modules/
+.next/
+out/
+generated/
+next-env.d.ts
+*.tsbuildinfo
+
+# Test reports, traces, coverage and temporary output
+coverage/
+playwright-report/
+test-results/
+playwright/.auth/
+artifacts/
+*.log
+*.log.*
+npm-debug.log*
+tmp/
+.cache/
+*.tmp
+*.bak
+*.orig
+
+# Local configuration, credentials and database state
+.env
+.env.*
+!.env.example
+!.env.*.example
+.local/
+.aws/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.p8
+.ssh/
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+.netrc
+.npmrc
+.pypirc
+credentials.json
+credentials.*.json
+service-account*.json
+prisma/*.db
+prisma/*.db-*
+# Original reference artwork contains author/account metadata; live branding is SVG.
+/src/assets/brand/*.png
+
+# Local agent tooling and operating-system files
+.agents/
+.codex/
+AGENTS.md
+CLAUDE.md
+.claude/
+.cursor/
+.DS_Store
+Thumbs.db

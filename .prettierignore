@@ -1,0 +1,13 @@
+node_modules
+.next
+package-lock.json
+coverage
+playwright-report
+test-results
+next-env.d.ts
+src/generated
+playwright/.auth
+artifacts/staging
+# Keep provider-supplied brand artwork byte-for-byte as distributed.
+public/brands/*.svg
+.local

@@ -1,0 +1,226 @@
+/* Comments, grouped replies and the inline/expanded comment composer. */
+.margin-comment-main > p {
+  font-family: var(--font-body);
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.margin-comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+  padding-block: var(--space-section) var(--space-related);
+  list-style: none;
+}
+.margin-comment-list:empty {
+  padding: 0;
+}
+.margin-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.margin-comment > .margin-avatar {
+  margin-top: 8px;
+}
+.margin-comment-thread {
+  min-width: 0;
+}
+.margin-replies-toggle {
+  margin-left: 39px;
+  height: 44px;
+  padding-inline: 8px;
+  border-radius: 8px;
+  font-size: var(--text-control);
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+}
+.margin-replies-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.margin-comment-replies {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 12px;
+  margin-left: 16px;
+  list-style: none;
+}
+.margin-comment-replies[hidden] {
+  display: none;
+}
+.margin-comment-main {
+  min-width: 0;
+  flex: 1;
+}
+.margin-comment-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  min-height: 44px;
+}
+.margin-comment-meta strong {
+  font-size: var(--text-control);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.margin-comment-meta time {
+  font-size: var(--text-meta);
+  color: hsl(var(--muted-foreground));
+}
+.margin-comment-meta .margin-reply {
+  margin-left: auto;
+  padding-inline: 8px;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-control);
+}
+.margin-comment-main > p {
+  margin-top: 4px;
+  font-size: var(--text-body);
+  line-height: 1.65;
+}
+.margin-author-label {
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-meta);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.margin-reply-context {
+  display: block;
+  margin-top: 3px;
+  font-size: var(--text-meta);
+  color: hsl(var(--muted-foreground));
+}
+.margin-load-more {
+  width: 100%;
+  height: 48px;
+  margin-top: var(--space-related);
+  border-radius: 8px;
+  font-weight: 500;
+}
+.margin-comment-form {
+  padding-block: 22px 0;
+}
+.margin-comment-form > .margin-field-label {
+  margin-bottom: var(--space-related);
+}
+.margin-comment-input {
+  position: relative;
+  padding: 15px 14px calc(2.75rem + 13px);
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--card));
+  border-radius: 11px;
+}
+.margin-comment-input textarea {
+  display: block;
+  min-height: 65px;
+  width: 100%;
+  resize: vertical;
+  font: var(--text-body)/1.5 var(--font-body);
+  background: transparent;
+  border: 0;
+  color: hsl(var(--foreground));
+}
+.margin-comment-input textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.margin-comment-input textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 1;
+}
+.margin-comment-submit {
+  position: absolute;
+  bottom: 9px;
+  right: 10px;
+  border-radius: 999px;
+  padding-inline: 20px;
+  font-weight: 400;
+}
+.margin-reply-target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--text-meta);
+  margin-bottom: 8px;
+}
+.margin-no-comments {
+  padding-block: var(--space-group) 0;
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+@media (min-width: 1024px) {
+  .margin-comment {
+    gap: 9px;
+  }
+  .margin-comment > .margin-avatar {
+    margin-top: 10px;
+  }
+  .margin-replies-toggle {
+    margin-left: 34px;
+  }
+  .margin-comment-meta strong {
+    font-size: var(--text-control);
+  }
+  .margin-comment-main > p {
+    font-size: var(--text-body);
+    line-height: 1.65;
+  }
+  .margin-author-label {
+    font-size: var(--text-meta);
+  }
+  .margin-no-comments {
+    margin-top: 0;
+    font-size: var(--text-body);
+  }
+  .margin-comment-form[data-compact="true"] {
+    padding: 0;
+    width: 100%;
+    margin-inline: auto;
+  }
+  .margin-comment-form[data-compact="true"] .margin-comment-input {
+    padding: 12px 12px calc(2.25rem + 16px);
+    border-radius: 12px;
+  }
+  .margin-comment-form[data-compact="true"] textarea {
+    min-width: 0;
+    min-height: 3lh;
+    height: 3lh;
+    max-height: 4lh;
+    padding: 0;
+    font-size: var(--text-body);
+    line-height: 1.5;
+    resize: none;
+    overflow-y: auto;
+  }
+  .margin-comment-form[data-compact="true"] .margin-comment-submit {
+    position: absolute;
+    bottom: 9px;
+    right: 10px;
+    flex-shrink: 0;
+    height: 2.25rem;
+    min-height: 2.25rem;
+    padding-block: 0;
+    padding-inline: 16px;
+    font-size: var(--text-meta);
+  }
+}
+/* Expand the existing textarea in place so focus, selection and drafts survive. */
+.margin-comment-form[data-expanded="false"] .margin-comment-input {
+  padding: 0;
+}
+.margin-comment-form[data-expanded="false"] textarea {
+  height: calc(1lh + 20px);
+  min-height: calc(1lh + 20px);
+  max-height: calc(1lh + 20px);
+  padding: 10px 12px;
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+}

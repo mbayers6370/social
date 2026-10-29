@@ -1,0 +1,370 @@
+/* On Repeat cards, catalog selection and song service dialogs. */
+.margin-profile-music {
+  min-width: 0;
+}
+.margin-profile-music > .margin-empty-copy {
+  padding-block: 16px 0;
+}
+/* Decorative rhythm, independent of playback; transforms reserve the full icon size. */
+.margin-music-equalizer rect {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: margin-music-bars 1400ms ease-in-out infinite;
+}
+.margin-music-equalizer rect:nth-child(2) {
+  animation-delay: -450ms;
+  animation-duration: 1200ms;
+}
+.margin-music-equalizer rect:nth-child(3) {
+  animation-delay: -850ms;
+  animation-duration: 1600ms;
+}
+.margin-music-equalizer rect:nth-child(4) {
+  animation-delay: -200ms;
+  animation-duration: 1300ms;
+}
+@keyframes margin-music-bars {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+html[data-motion="reduced"] .margin-music-equalizer rect {
+  animation: none;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .margin-music-equalizer rect {
+    animation: none;
+    transform: none;
+  }
+}
+.margin-on-repeat-list {
+  display: grid;
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+  margin-top: 16px;
+}
+.margin-music-results {
+  display: grid;
+  list-style: none;
+  padding: 0;
+}
+.margin-track-row,
+.margin-track-choice {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  text-align: left;
+}
+.margin-track-row > img,
+.margin-track-choice > img {
+  flex: none;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.margin-track-identity {
+  display: block;
+  min-width: 0;
+}
+.margin-track-card {
+  width: calc(100% + 16px);
+  margin: -8px;
+  padding: 8px;
+  border-radius: 8px;
+}
+.margin-track-card:hover {
+  background: hsl(var(--conversation));
+}
+.margin-song-card {
+  position: relative;
+  margin: -8px;
+  padding: 8px;
+  border-radius: 8px;
+}
+.margin-song-card:hover,
+.margin-song-card:focus-within,
+.margin-music-results > li:hover,
+.margin-music-results > li:focus-within {
+  background: hsl(var(--conversation));
+}
+.margin-song-card .margin-track-card {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+.margin-song-card .margin-track-card::after,
+.margin-music-results .margin-track-choice::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+}
+.margin-music-results > li {
+  position: relative;
+  border-radius: 8px;
+}
+.margin-song-card:hover .margin-track-chevron,
+.margin-song-card:focus-within .margin-track-chevron {
+  opacity: 1;
+}
+.margin-track-chevron {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  margin-right: 12px;
+  flex: none;
+  color: hsl(var(--muted-foreground));
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.margin-track-card:hover .margin-track-chevron,
+.margin-track-card:focus-visible .margin-track-chevron {
+  opacity: 1;
+}
+@media (hover: none) {
+  .margin-track-chevron {
+    opacity: 1;
+  }
+}
+.margin-song-dialog {
+  max-width: 420px;
+}
+.margin-song-details {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-right: 12px;
+  min-width: 0;
+}
+.margin-song-details > img {
+  width: 96px;
+  height: 96px;
+  flex: none;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.margin-song-details > div {
+  min-width: 0;
+}
+.margin-song-details > div > * + * {
+  margin-top: 2px;
+}
+.margin-song-details h2 {
+  font: var(--text-heading-sm)/1.25 var(--font-serif);
+  overflow-wrap: anywhere;
+}
+.margin-song-details p {
+  overflow-wrap: anywhere;
+}
+.margin-song-services {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+.margin-song-service-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: hsl(var(--conversation));
+  font-size: var(--text-control);
+}
+.margin-song-service-link:hover {
+  background: hsl(var(--accent));
+}
+.margin-song-service-mark {
+  flex: none;
+  object-fit: contain;
+  opacity: 0.6;
+}
+.margin-song-service-label {
+  flex: 1;
+  min-width: 0;
+}
+.margin-song-service-link svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: hsl(var(--muted-foreground));
+}
+@media (max-width: 359px) {
+  .margin-song-details {
+    gap: 12px;
+  }
+  .margin-song-details > img {
+    width: 72px;
+    height: 72px;
+  }
+}
+.margin-track-identity strong {
+  display: block;
+  font-size: var(--text-body);
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.margin-track-identity > span {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--text-control);
+  color: hsl(var(--muted-foreground));
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.margin-music-picker {
+  max-width: 520px;
+}
+.margin-music-picker input {
+  margin-top: 8px;
+}
+.margin-music-results {
+  gap: 8px;
+  margin-top: 0;
+}
+.margin-track-choice {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+}
+.margin-track-choice:hover {
+  background: hsl(var(--conversation));
+}
+.margin-track-choice > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-left: auto;
+  color: hsl(var(--muted-foreground));
+}
+@media (min-width: 640px) {
+  .margin-track-row .margin-track-identity strong {
+    font-size: var(--text-body);
+  }
+  .margin-on-repeat-list {
+    gap: 24px;
+  }
+}
+
+.margin-track-artwork-placeholder {
+  width: 80px;
+  height: 80px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: hsl(var(--conversation));
+  color: hsl(var(--muted-foreground));
+}
+.margin-track-artwork-placeholder svg {
+  width: 22px;
+  height: 22px;
+}
+.margin-apple-song-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  width: 64px;
+  min-height: 24px;
+  padding: 2px 0;
+  justify-self: start;
+}
+.margin-music-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+.margin-music-selection button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  min-height: 44px;
+  max-width: 100%;
+  border-radius: 999px;
+  background: hsl(var(--conversation));
+  font-size: var(--text-control);
+}
+.margin-music-selection svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+/* The five-row grid centers the artwork beside title, artist and required store badge.
+   The badge stays a separate link rather than nesting it inside the song button. */
+.margin-song-card,
+.margin-music-results > li {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr) auto;
+  grid-template-rows: 1fr max-content max-content max-content 1fr;
+  column-gap: 12px;
+  row-gap: 0;
+}
+.margin-music-results > li {
+  padding: 10px;
+}
+.margin-song-card > .margin-track-card,
+.margin-music-results .margin-track-choice {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-row: 1 / 6;
+  grid-template-columns: subgrid;
+  grid-template-rows: subgrid;
+  column-gap: inherit;
+  row-gap: 0;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+.margin-song-card .margin-track-identity,
+.margin-music-results .margin-track-identity {
+  display: contents;
+}
+.margin-song-card .margin-track-identity strong,
+.margin-music-results .margin-track-identity strong {
+  grid-column: 2;
+  grid-row: 2;
+}
+.margin-song-card .margin-track-identity > span,
+.margin-music-results .margin-track-identity > span {
+  grid-column: 2;
+  grid-row: 3;
+  margin-top: 0;
+}
+.margin-song-card > .margin-apple-song-badge,
+.margin-music-results > li > .margin-apple-song-badge {
+  grid-column: 2;
+  grid-row: 4;
+}
+.margin-song-card .margin-track-row > img,
+.margin-song-card .margin-track-artwork-placeholder,
+.margin-music-results .margin-track-choice > img,
+.margin-music-results .margin-track-artwork-placeholder {
+  grid-column: 1;
+  grid-row: 1 / 6;
+  align-self: center;
+}
+.margin-song-card .margin-track-chevron,
+.margin-music-results .margin-track-choice > svg {
+  grid-column: 3;
+  grid-row: 1 / 6;
+  align-self: center;
+}
+@media (min-width: 640px) {
+  .margin-song-card,
+  .margin-music-results > li {
+    column-gap: 16px;
+  }
+}

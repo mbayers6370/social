@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Internal application identity. Authentication is handled by Clerk; never store credentials here.
+model User {
+  id        String        @id @default(cuid())
+  clerkId   String        @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  songs     ProfileSong[]
+}
+
+/// Three ordered references to catalogue songs. No audio, tokens or artwork bytes.
+model ProfileSong {
+  userId          String
+  position        Int
+  providerTrackId String
+  title           String
+  artist          String
+  artworkUrl      String?
+  appleUrl        String
+  spotifyUrl      String
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, position])
+  @@unique([userId, providerTrackId])
+}

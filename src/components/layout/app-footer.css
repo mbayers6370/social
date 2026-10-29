@@ -1,0 +1,46 @@
+/* Stacked mobile utilities in Settings and the desktop page footer. */
+.margin-app-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding-block: 16px 0;
+  border-top: 1px solid hsl(var(--border) / 0.65);
+  font: var(--text-meta)/1.6 var(--font-body);
+  color: hsl(var(--muted-foreground));
+}
+.margin-app-footer nav {
+  display: grid;
+  width: 100%;
+}
+.margin-app-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-control);
+}
+.margin-app-footer a:hover {
+  color: hsl(var(--foreground));
+}
+.margin-app-footer-desktop {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .margin-app-footer-desktop {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-group);
+    padding: 16px var(--site-gutter);
+  }
+  .margin-app-footer-desktop nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-group);
+    width: auto;
+  }
+  .margin-settings-page .margin-app-footer {
+    display: none;
+  }
+}

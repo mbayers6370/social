@@ -1,0 +1,24 @@
+/* One ordered entry point after globals.css. Shared primitives precede their consumers.
+   Feature CSS is colocated with the feature; import it here, never from individual screens. */
+@import "./components.css";
+@import "../components/shared/brand-link.css";
+@import "../components/layout/margin-shell.css";
+@import "../components/layout/app-footer.css";
+
+@import "../features/feed/feed.css";
+@import "../features/feed/post-photos.css";
+@import "../features/feed/conversation.css";
+@import "../features/feed/comments.css";
+@import "../features/compose/compose.css";
+@import "../features/gallery/photo-picker.css";
+@import "../features/profile/profile.css";
+@import "../features/profile/music.css";
+@import "../features/gallery/gallery.css";
+@import "../features/messages/messages.css";
+@import "../features/settings/settings.css";
+@import "../features/search/profile-search.css";
+@import "../features/public-site/public-shell.css";
+@import "../features/public-site/public-document.css";
+@import "../features/public-site/welcome.css";
+@import "../features/notifications/notifications.css";
+@import "../features/friends/friends.css";

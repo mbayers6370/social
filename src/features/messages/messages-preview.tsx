@@ -1,0 +1,409 @@
+"use client";
+
+import { createLocalId } from "@/lib/local-id";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ArrowUp, Download, MessageCircle } from "lucide-react";
+import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Avatar } from "@/features/feed/post-content";
+import { dayKey, postTime } from "@/features/feed/format";
+import { Button } from "@/components/ui/button";
+import { ComingSoon } from "@/components/shared/coming-soon";
+import { continuesMessageGroup } from "./format";
+import { FieldError } from "@/components/ui/field";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  messageInputSchema,
+  type MessageInput,
+  type PreviewMessage,
+  type PreviewThread,
+} from "./schema";
+
+export function MessagesPreview({ threads }: { threads: PreviewThread[] }) {
+  const router = useRouter();
+  const params = useSearchParams();
+  const selected = threads.find((thread) => thread.id === params.get("thread"));
+  const active = selected ?? threads[0];
+  const [local, setLocal] = useState<Record<string, PreviewMessage[]>>({});
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [read, setRead] = useState<string[]>([]);
+  const [exportNotice, setExportNotice] = useState(false);
+  const scroll = useRef<HTMLDivElement>(null);
+  const back = useRef<HTMLButtonElement>(null);
+  const exportButton = useRef<HTMLButtonElement>(null);
+  const messages = [...active.messages, ...(local[active.id] ?? [])];
+  const localCount = local[active.id]?.length ?? 0;
+  const selectedId = selected?.id;
+  const lastSelected = useRef(selectedId);
+  const previousThread = useRef(active.id);
+  const keepAtBottom = useRef(true);
+
+  useLayoutEffect(() => {
+    if (previousThread.current !== active.id) keepAtBottom.current = true;
+    previousThread.current = active.id;
+    const viewport = scroll.current;
+    if (viewport?.clientHeight && keepAtBottom.current)
+      viewport.scrollTop = viewport.scrollHeight;
+  }, [active.id, localCount, selectedId]);
+
+  useLayoutEffect(() => {
+    const viewport = scroll.current;
+    if (!viewport) return;
+    let height = viewport.clientHeight;
+    let width = viewport.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (viewport.clientHeight === height && viewport.clientWidth === width)
+        return;
+      height = viewport.clientHeight;
+      width = viewport.clientWidth;
+      // Growing the composer keeps the latest exchange visible, but never
+      // pulls a reader away from older messages they scrolled up to read.
+      if (height && keepAtBottom.current)
+        viewport.scrollTop = viewport.scrollHeight;
+    });
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    if (selectedId && !window.matchMedia("(min-width: 1024px)").matches)
+      back.current?.focus({ preventScroll: true });
+    else if (!selectedId && lastSelected.current)
+      document
+        .getElementById(`thread-${lastSelected.current}`)
+        ?.focus({ preventScroll: true });
+    lastSelected.current = selectedId;
+  }, [selectedId]);
+
+  function openThread(id: string) {
+    setRead((current) => (current.includes(id) ? current : [...current, id]));
+    router.push(`/?view=messages&thread=${id}`, { scroll: false });
+  }
+  function closeThread() {
+    router.push("/?view=messages", { scroll: false });
+  }
+
+  return (
+    <section
+      className="margin-messages"
+      data-thread-open={Boolean(selected)}
+      aria-label="Messages preview"
+    >
+      <aside className="margin-inbox" aria-labelledby="messages-title">
+        <SectionTitle
+          as="h1"
+          id="messages-title"
+          motif={<SectionMotif icon={MessageCircle} />}
+        >
+          Messages
+        </SectionTitle>
+        <p className="margin-inbox-description">
+          A little space for a conversation.
+        </p>
+        <p className="margin-preview-note">
+          Local preview · Sample messages, nothing is sent.
+        </p>
+        <ul className="margin-thread-list" aria-label="Conversations">
+          {threads.map((thread) => {
+            const items = [...thread.messages, ...(local[thread.id] ?? [])];
+            const latest = items[items.length - 1];
+            const unread = thread.unread && !read.includes(thread.id);
+            return (
+              <li key={thread.id}>
+                <button
+                  id={`thread-${thread.id}`}
+                  type="button"
+                  className="margin-thread-choice"
+                  data-active={active.id === thread.id}
+                  data-unread={unread}
+                  aria-current={active.id === thread.id ? "true" : undefined}
+                  onClick={() => openThread(thread.id)}
+                >
+                  <Avatar person={thread.contact} />
+                  <span className="margin-thread-preview">
+                    <strong>
+                      {thread.contact.name}
+                      {unread && (
+                        <span className="margin-unread-dot">
+                          <span className="sr-only">Unread</span>
+                        </span>
+                      )}
+                    </strong>
+                    <span>{latest.body}</span>
+                  </span>
+                  <time dateTime={latest.createdAt}>
+                    {dayKey(latest.createdAt) === "2026-10-27"
+                      ? postTime(latest.createdAt)
+                      : new Intl.DateTimeFormat("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          timeZone: "America/Los_Angeles",
+                        }).format(new Date(latest.createdAt))}
+                  </time>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </aside>
+      <section
+        className="margin-thread"
+        aria-label={`Conversation with ${active.contact.name}`}
+      >
+        <header className="margin-thread-header">
+          <Button
+            ref={back}
+            variant="ghost"
+            size="icon"
+            className="margin-thread-back"
+            aria-label="Back to messages"
+            onClick={closeThread}
+          >
+            <ChevronLeft aria-hidden="true" strokeWidth={1.5} />
+          </Button>
+          <Avatar person={active.contact} />
+          <div className="margin-thread-person">
+            <h2>{active.contact.name}</h2>
+            <Link href="/?view=profile">View sample profile</Link>
+          </div>
+          <Button
+            ref={exportButton}
+            variant="ghost"
+            className="margin-deferred-action"
+            aria-label="Export conversation"
+            aria-description="Not available in this preview"
+            onClick={() => setExportNotice(true)}
+          >
+            <Download aria-hidden="true" />
+            <ComingSoon />
+          </Button>
+        </header>
+        <div
+          ref={scroll}
+          className="margin-thread-scroll"
+          role="region"
+          aria-label="Message history"
+          tabIndex={0}
+          onScroll={(event) => {
+            const viewport = event.currentTarget;
+            if (!viewport.clientHeight) return;
+            keepAtBottom.current =
+              viewport.scrollHeight -
+                viewport.clientHeight -
+                viewport.scrollTop <=
+              24;
+          }}
+        >
+          <p className="margin-message-disclaimer">
+            Local preview · Messages stay in this browser until you leave or
+            refresh. Automatic deletion isn’t active.
+          </p>
+          <ol
+            className="margin-message-log"
+            aria-label={`Messages with ${active.contact.name}`}
+          >
+            {messages.map((message, index) => {
+              const date = dayKey(message.createdAt);
+              const previous = messages[index - 1];
+              const next = messages[index + 1];
+              const showTime = !next || !continuesMessageGroup(message, next);
+              return (
+                <li
+                  key={message.id}
+                  className="margin-message-row"
+                  data-direction={message.direction}
+                  data-group-start={!continuesMessageGroup(previous, message)}
+                >
+                  {(!previous || dayKey(previous.createdAt) !== date) && (
+                    <h3 className="margin-message-day">
+                      {date === "2026-10-27"
+                        ? "Today"
+                        : date === "2026-10-26"
+                          ? "Yesterday"
+                          : new Intl.DateTimeFormat("en-GB", {
+                              day: "numeric",
+                              month: "long",
+                              timeZone: "America/Los_Angeles",
+                            }).format(new Date(message.createdAt))}
+                    </h3>
+                  )}
+                  <p className="margin-message-bubble">
+                    <span className="sr-only">
+                      {message.direction === "outgoing"
+                        ? "You"
+                        : active.contact.name}
+                      :{" "}
+                    </span>
+                    {message.body}
+                  </p>
+                  {showTime && (
+                    <time dateTime={message.createdAt}>
+                      {postTime(message.createdAt)}
+                    </time>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        <MessageComposer
+          key={active.id}
+          name={active.contact.name}
+          draft={drafts[active.id] ?? ""}
+          onDraft={(body) =>
+            setDrafts((current) => ({ ...current, [active.id]: body }))
+          }
+          onSend={(body) => {
+            // Sending is explicit: show the newly added local message.
+            keepAtBottom.current = true;
+            setLocal((current) => ({
+              ...current,
+              [active.id]: [
+                ...(current[active.id] ?? []),
+                {
+                  id: createLocalId(),
+                  body,
+                  direction: "outgoing",
+                  createdAt: new Date().toISOString(),
+                },
+              ],
+            }));
+            setDrafts((current) => ({ ...current, [active.id]: "" }));
+          }}
+        />
+      </section>
+      <Dialog open={exportNotice} onOpenChange={setExportNotice}>
+        <DialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            exportButton.current?.focus({ preventScroll: true });
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Conversation export</DialogTitle>
+            <DialogDescription>
+              This is a sample conversation. Exporting real messages will be
+              available when private messaging is connected.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
+function MessageComposer({
+  name,
+  draft,
+  onDraft,
+  onSend,
+}: {
+  name: string;
+  draft: string;
+  onDraft: (value: string) => void;
+  onSend: (value: string) => void;
+}) {
+  const [sent, setSent] = useState(false);
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<MessageInput>({
+    resolver: zodResolver(messageInputSchema),
+    defaultValues: { body: draft },
+  });
+  const field = register("body", {
+    onChange: (event) => {
+      onDraft(event.target.value);
+      setSent(false);
+    },
+  });
+
+  useLayoutEffect(() => {
+    if (textarea.current) fitMessageInput(textarea.current);
+  }, [draft]);
+
+  useLayoutEffect(() => {
+    const input = textarea.current;
+    if (!input) return;
+    // Refit wrapped drafts after resizing or opening a hidden mobile thread.
+    // Ignore height changes from fitting the field itself.
+    let width = input.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (input.clientWidth === width) return;
+      width = input.clientWidth;
+      fitMessageInput(input);
+    });
+    observer.observe(input);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <form
+      className="margin-message-composer"
+      noValidate
+      onSubmit={handleSubmit(({ body }) => {
+        onSend(body);
+        reset({ body: "" });
+        setSent(true);
+      })}
+    >
+      <label htmlFor="message-body" className="margin-field-label">
+        Message to {name}
+      </label>
+      <div className="margin-message-input" data-field>
+        <textarea
+          {...field}
+          ref={(node) => {
+            field.ref(node);
+            textarea.current = node;
+          }}
+          id="message-body"
+          rows={1}
+          maxLength={2000}
+          placeholder={`Write to ${name.split(" ")[0]}…`}
+          aria-invalid={Boolean(errors.body)}
+          aria-describedby={`message-hint${errors.body ? " message-error" : ""}`}
+        />
+        <Button
+          type="submit"
+          aria-label="Add message to local preview"
+          className="margin-send"
+        >
+          <ArrowUp aria-hidden="true" />
+          <span>Send</span>
+        </Button>
+      </div>
+      <p id="message-hint" className="sr-only">
+        Expands up to three lines, then scrolls. Up to 2,000 characters. This
+        preview does not send messages.
+      </p>
+      {errors.body && (
+        <FieldError id="message-error">{errors.body.message}</FieldError>
+      )}
+      <p role="status" className="margin-status">
+        {sent ? "Added to the preview. Nothing was sent." : ""}
+      </p>
+    </form>
+  );
+}
+
+function fitMessageInput(input: HTMLTextAreaElement) {
+  if (!input.clientWidth) return;
+  const scrollTop = input.scrollTop;
+  // Measure natural content height; CSS caps the visible area at three lines.
+  input.style.height = "auto";
+  input.style.height = `${input.scrollHeight}px`;
+  input.scrollTop = scrollTop;
+}

@@ -1,0 +1,131 @@
+/* Friendship controls, request management and relationship feedback. */
+.margin-friends-page {
+  width: min(720px, calc(100% - 48px));
+  margin: 32px auto 64px;
+}
+.margin-friends-page h1 {
+  font: var(--text-heading-md)/1.2 var(--font-serif);
+  letter-spacing: -0.03em;
+}
+.margin-friends-page h1:focus {
+  outline: none;
+  box-shadow: none;
+}
+.margin-friends-page > header > .margin-section-heading {
+  margin-block: 24px 12px;
+}
+.margin-find-friends {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-control);
+  color: hsl(var(--muted-foreground));
+}
+.margin-friends-switch {
+  display: flex;
+  gap: 8px;
+  margin-block: 28px 20px;
+}
+.margin-friends-switch button {
+  color: hsl(var(--muted-foreground));
+  font-weight: 400;
+}
+.margin-friends-switch button[aria-pressed="true"] {
+  background: hsl(var(--secondary));
+  color: hsl(var(--foreground));
+}
+.margin-friends-switch button span {
+  font-size: var(--text-meta);
+}
+.margin-friends-search {
+  position: relative;
+}
+.margin-friends-search > svg {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: 16px;
+  height: 16px;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+}
+.margin-friends-search input {
+  padding-left: 40px;
+}
+.margin-friend-feedback {
+  font-size: var(--text-body);
+  color: hsl(var(--muted-foreground));
+  margin-top: 12px;
+}
+.margin-friends-group {
+  margin-top: 28px;
+}
+.margin-friends-group h2 {
+  font-size: var(--text-body);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.margin-friends-list {
+  display: grid;
+  gap: 8px;
+}
+.margin-friends-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: hsl(var(--secondary) / 0.6);
+}
+.margin-friend-person {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}
+.margin-friend-person > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.margin-friend-person strong,
+.margin-friend-person > span > span {
+  display: block;
+}
+.margin-friend-person strong {
+  font-size: var(--text-control);
+  font-weight: 500;
+}
+.margin-friend-person > span > span,
+.margin-friend-label {
+  font-size: var(--text-meta);
+  color: hsl(var(--muted-foreground));
+}
+.margin-friend-controls {
+  min-width: 0;
+}
+.margin-friend-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.margin-friend-buttons button {
+  font-size: var(--text-control);
+  font-weight: 400;
+}
+.margin-profile-identity > .margin-friend-controls {
+  margin-top: 20px;
+}
+.margin-friend-controls > p:not(:empty) {
+  margin-top: 8px;
+}
+.margin-friends-page > .margin-preview-note {
+  margin-top: 32px;
+}
+@media (min-width: 1024px) {
+  .margin-friends-page {
+    margin-block: 48px 80px;
+  }
+}

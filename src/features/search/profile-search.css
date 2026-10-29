@@ -1,0 +1,32 @@
+/* Profile discovery dialog and search result rows. */
+.margin-search-dialog {
+  max-width: 520px;
+}
+.margin-search-results {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+.margin-search-results a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+}
+.margin-search-results a:hover {
+  background: hsl(var(--secondary));
+}
+.margin-search-results a > span:last-child {
+  min-width: 0;
+}
+.margin-search-results strong {
+  font-size: var(--text-control);
+  overflow-wrap: anywhere;
+}
+.margin-search-results a > span:last-child > span {
+  display: block;
+  margin-top: 3px;
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-meta);
+}

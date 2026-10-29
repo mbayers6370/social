@@ -1,0 +1,141 @@
+/* Settings layout, preference choices and reading-size preview. */
+.margin-settings-page {
+  max-width: 1008px;
+  margin-inline: auto;
+  padding: 32px 24px 80px;
+}
+.margin-settings-page h1 {
+  margin-block: 20px 12px;
+  font: var(--text-display-sm)/1.2 var(--font-serif);
+}
+.margin-settings-columns {
+  display: grid;
+  gap: 40px;
+  margin-top: 40px;
+}
+.margin-settings-columns h2 {
+  font: var(--text-heading-sm)/1.3 var(--font-serif);
+  margin-bottom: 24px;
+}
+.margin-settings-columns fieldset + fieldset {
+  margin-top: 32px;
+}
+.margin-settings-columns legend,
+.margin-setting-summary h3 {
+  font-size: var(--text-body);
+  font-weight: 500;
+}
+.margin-settings-columns legend {
+  margin-bottom: 8px;
+}
+.margin-settings-columns p {
+  line-height: 1.6;
+}
+.margin-setting-choice {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: var(--text-body);
+  cursor: pointer;
+}
+.margin-setting-choice:has(input:checked) {
+  border-color: hsl(var(--border));
+  background: hsl(var(--card) / 0.5);
+}
+.margin-setting-choice input {
+  width: 18px;
+  height: 18px;
+  accent-color: hsl(var(--muted-foreground));
+}
+.margin-setting-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: hsl(var(--card));
+  font-size: var(--text-control);
+  line-height: 1.5;
+  transition: background-color 160ms ease;
+}
+.margin-setting-link:hover {
+  background: hsl(var(--accent));
+}
+.margin-setting-link strong {
+  font-weight: 500;
+  font-size: var(--text-control);
+}
+.margin-setting-link span > span {
+  display: block;
+  font-size: var(--text-body);
+  color: hsl(var(--muted-foreground));
+  margin-top: 6px;
+}
+.margin-setting-link svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: hsl(var(--muted-foreground));
+}
+.margin-settings-groups {
+  display: grid;
+  gap: var(--space-section);
+}
+.margin-setting-summary {
+  display: grid;
+  gap: var(--space-related);
+  font-size: var(--text-body);
+}
+.margin-settings-actions {
+  display: grid;
+  gap: var(--space-group);
+}
+.margin-setting-action {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-related);
+}
+.margin-setting-action .margin-status {
+  margin-top: 0;
+}
+.margin-settings-action-button {
+  justify-self: start;
+  min-height: 44px;
+  padding: 8px 10px;
+  margin-inline-start: -10px;
+  border-radius: 8px;
+  font-size: var(--text-control);
+  font-weight: 400;
+}
+.margin-settings-links {
+  display: grid;
+  gap: var(--space-related);
+  margin-top: var(--space-related);
+}
+@media (min-width: 1024px) {
+  .margin-settings-columns {
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+  }
+}
+
+.margin-text-size-preview {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  background: hsl(var(--conversation));
+  font-size: var(--text-body);
+}
+.margin-text-size-preview > span {
+  display: block;
+  margin-top: 8px;
+  font-size: var(--text-meta);
+  color: hsl(var(--muted-foreground));
+}
