@@ -1,4 +1,9 @@
 /* Mobile post turn, desktop conversation panel and sticky composer frame. */
+/* Page scrolling is locked in modal mode; release its empty scrollbar gutter. */
+html:has(.margin-conversation-frame[aria-modal="true"]) {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
 .margin-conversation-overlay {
   position: fixed;
   inset: 0;
