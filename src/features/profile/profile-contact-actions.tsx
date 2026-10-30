@@ -25,10 +25,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FriendActions } from "@/features/friends/friend-actions";
+import { useFriendFeedback } from "@/features/friends/use-friend-feedback";
 import { friendStatus } from "@/features/friends/model";
 import { usePreview } from "@/features/local-preview/provider";
 import { previewMessage } from "@/features/local-preview/model";
 import type { Person } from "@/features/feed/schema";
+import { reportReasons, type ReportInput } from "@/features/safety/model";
 
 type Step = "options" | "remove" | "block" | "report" | "report-ready";
 function subscribeDesktop(change: () => void) {
@@ -38,7 +40,7 @@ function subscribeDesktop(change: () => void) {
 }
 
 export function ProfileContactActions({ person }: { person: Person }) {
-  const { bootstrap, state, changeFriend } = usePreview();
+  const { bootstrap, state, changeFriend, submitReport } = usePreview();
   const desktop = useSyncExternalStore(
     subscribeDesktop,
     () => window.matchMedia("(min-width: 1024px)").matches,
@@ -58,7 +60,7 @@ export function ProfileContactActions({ person }: { person: Person }) {
   );
   const [menuOpen, setMenuOpen] = useState(false);
   const [step, setStep] = useState<Step | null>(null);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useFriendFeedback();
   const [error, setError] = useState("");
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -184,10 +186,11 @@ export function ProfileContactActions({ person }: { person: Person }) {
         variant="ghost"
         role={asMenu ? "menuitem" : undefined}
         tabIndex={asMenu ? -1 : undefined}
+        aria-label="Report profile"
+        title="Report profile"
         onClick={() => choose("report")}
       >
         <Flag aria-hidden="true" />
-        Report profile
       </Button>
       <Link
         role={asMenu ? "menuitem" : undefined}
@@ -223,7 +226,12 @@ export function ProfileContactActions({ person }: { person: Person }) {
       <div className="margin-profile-contact-actions">
         <FriendActions person={person} compact onStatusChange={setStatus} />
         {relationship === "friends" && (
-          <Button variant="outline" size="icon" asChild>
+          <Button
+            className="margin-profile-message-action"
+            variant="outline"
+            size="icon"
+            asChild
+          >
             <Link
               href={`/?view=messages&thread=${encodeURIComponent(person.id)}`}
               aria-label={`Message ${person.name}`}
@@ -322,7 +330,7 @@ export function ProfileContactActions({ person }: { person: Person }) {
                 : step === "report"
                   ? `Report ${person.name}`
                   : step === "report-ready"
-                    ? "Report preview"
+                    ? "Report saved"
                     : `${ownBlock ? "Unblock" : "Block"} ${person.name}?`}
           </DialogTitle>
           <DialogDescription
@@ -337,9 +345,9 @@ export function ProfileContactActions({ person }: { person: Person }) {
               : step === "remove"
                 ? "You’ll no longer see each other’s friend-only posts and photographs. Existing messages stay in your conversation history. You can send a new friend request later."
                 : step === "report"
-                  ? "Choose a reason and add any details you want to include. This local preview does not send reports."
+                  ? "Choose a reason and include only the details needed to understand the concern."
                   : step === "report-ready"
-                    ? "Your report preview is ready. Nothing has been sent or saved. For immediate help, visit Help & safety."
+                    ? "Your report is saved in this tab and included in your account download. Live moderation is not connected in this preview."
                     : ownBlock
                       ? "Unblocking allows friend requests again. It does not restore your friendship. This change stays in the local preview."
                       : "You’ll be removed from each other’s friends. Friend-only posts, galleries, new messages and friend requests will be unavailable between you. Existing conversation history stays. This change stays in the local preview."}
@@ -380,26 +388,52 @@ export function ProfileContactActions({ person }: { person: Person }) {
               className="margin-profile-report"
               onSubmit={(event) => {
                 event.preventDefault();
-                setStep("report-ready");
+                const data = new FormData(event.currentTarget);
+                try {
+                  submitReport({
+                    target: {
+                      kind: "profile",
+                      id: person.id,
+                      personId: person.id,
+                      label: person.name,
+                    },
+                    reason: String(data.get("reason")) as ReportInput["reason"],
+                    details: String(data.get("details") ?? ""),
+                  });
+                  setStep("report-ready");
+                } catch (error) {
+                  setError(previewMessage(error));
+                }
               }}
             >
               <label htmlFor={`${id}-reason`}>Reason</label>
-              <select id={`${id}-reason`} required defaultValue="">
+              <select
+                id={`${id}-reason`}
+                name="reason"
+                required
+                defaultValue=""
+              >
                 <option value="" disabled>
                   Choose a reason
                 </option>
-                <option>Harassment or bullying</option>
-                <option>Spam or scams</option>
-                <option>Harmful or inappropriate content</option>
-                <option>Something else</option>
+                {reportReasons.map((reason) => (
+                  <option key={reason.value} value={reason.value}>
+                    {reason.label}
+                  </option>
+                ))}
               </select>
               <label htmlFor={`${id}-details`}>Details (optional)</label>
-              <textarea id={`${id}-details`} rows={3} maxLength={1000} />
+              <textarea
+                id={`${id}-details`}
+                name="details"
+                rows={3}
+                maxLength={1000}
+              />
               <div className="margin-form-actions">
                 <Button variant="ghost" onClick={() => setStep(null)}>
                   Cancel
                 </Button>
-                <Button type="submit">Preview report</Button>
+                <Button type="submit">Save report</Button>
               </div>
             </form>
           )}

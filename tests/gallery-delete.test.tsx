@@ -191,10 +191,10 @@ it("confirms deletion, restores focus on Cancel, then removes the photo from the
   await user.click(screen.getByRole("button", { name: "Add photo" }));
   const picker = screen.getByRole("dialog", { name: "Choose a photograph" });
   expect(
-    within(picker).queryByRole("button", { name: "Use Beach" }),
+    within(picker).queryByRole("button", { name: "Select Beach" }),
   ).not.toBeInTheDocument();
   expect(
-    within(picker).getByRole("button", { name: "Use Coffee" }),
+    within(picker).getByRole("button", { name: "Select Coffee" }),
   ).toBeInTheDocument();
 });
 
@@ -402,14 +402,28 @@ it("adds a photograph through the sheet with explicit Done and Cancel, without c
   expect(
     within(picker).getByRole("button", { name: "Cancel" }),
   ).toBeInTheDocument();
-  await user.click(within(picker).getByRole("button", { name: "Use Coffee" }));
+  await user.click(
+    within(picker).getByRole("button", { name: "Select Coffee" }),
+  );
+  await user.click(
+    within(
+      screen.getByRole("dialog", { name: "Choose a photograph" }),
+    ).getByRole("button", { name: "Use Photograph" }),
+  );
   let editor = await screen.findByRole("dialog", { name: "Add Photograph" });
   expect(snapshot().state.gallery).toHaveLength(1);
   await user.click(within(editor).getByRole("button", { name: "Cancel" }));
   expect(snapshot().state.gallery).toHaveLength(1);
   await user.click(screen.getByRole("button", { name: "Add photo" }));
   picker = screen.getByRole("dialog", { name: "Choose a photograph" });
-  await user.click(within(picker).getByRole("button", { name: "Use Coffee" }));
+  await user.click(
+    within(picker).getByRole("button", { name: "Select Coffee" }),
+  );
+  await user.click(
+    within(
+      screen.getByRole("dialog", { name: "Choose a photograph" }),
+    ).getByRole("button", { name: "Use Photograph" }),
+  );
   editor = await screen.findByRole("dialog", { name: "Add Photograph" });
   await user.click(within(editor).getByRole("button", { name: "Done" }));
   expect(snapshot().state.gallery).toHaveLength(2);
@@ -422,7 +436,12 @@ it("requires a deliberate replacement in a full gallery and keeps the replaced p
   const user = userEvent.setup();
   openGallery(fullGallery());
   await user.click(screen.getByRole("button", { name: "Add photo" }));
-  await user.click(screen.getByRole("button", { name: "Use Photo 21" }));
+  await user.click(screen.getByRole("button", { name: "Select Photo 21" }));
+  await user.click(
+    within(
+      screen.getByRole("dialog", { name: "Choose a photograph" }),
+    ).getByRole("button", { name: "Use Photograph" }),
+  );
   const editor = await screen.findByRole("dialog", { name: "Add Photograph" });
   expect(within(editor).getByRole("button", { name: "Done" })).toBeDisabled();
   await user.click(

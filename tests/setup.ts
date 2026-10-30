@@ -4,6 +4,27 @@ import { afterEach, vi } from "vitest";
 
 // Vitest doesn't run Next's static-image loader. Mirror its metadata contract;
 // Playwright verifies the real loader, optimized image responses, and rendering.
+vi.mock("@/assets/fixtures/coffee-shop.jpg", () => ({
+  default: {
+    src: "/_next/static/media/coffee-shop.test.jpg",
+    width: 640,
+    height: 1138,
+  },
+}));
+vi.mock("@/assets/fixtures/life-happens.jpg", () => ({
+  default: {
+    src: "/_next/static/media/life-happens.test.jpg",
+    width: 640,
+    height: 427,
+  },
+}));
+vi.mock("@/assets/fixtures/usual-company.jpg", () => ({
+  default: {
+    src: "/_next/static/media/usual-company.test.jpg",
+    width: 640,
+    height: 960,
+  },
+}));
 vi.mock("@/assets/fixtures/fog.jpg", () => ({
   default: { src: "/_next/static/media/fog.test.jpg", width: 640, height: 853 },
 }));
@@ -109,6 +130,35 @@ vi.mock("@/assets/fixtures/mara-photography-2.jpg", () => ({
     src: "/_next/static/media/mara-photography-2.test.jpg",
     width: 640,
     height: 853,
+  },
+}));
+
+vi.mock("@/assets/fixtures/Haddad.jpg", () => ({
+  default: {
+    src: "/_next/static/media/Haddad.test.jpg",
+    width: 640,
+    height: 960,
+  },
+}));
+vi.mock("@/assets/fixtures/Haddad-2.jpg", () => ({
+  default: {
+    src: "/_next/static/media/Haddad-2.test.jpg",
+    width: 640,
+    height: 960,
+  },
+}));
+vi.mock("@/assets/fixtures/Haddad-3.jpg", () => ({
+  default: {
+    src: "/_next/static/media/Haddad-3.test.jpg",
+    width: 640,
+    height: 960,
+  },
+}));
+vi.mock("@/assets/fixtures/Haddad-concert.jpg", () => ({
+  default: {
+    src: "/_next/static/media/Haddad-concert.test.jpg",
+    width: 640,
+    height: 427,
   },
 }));
 

@@ -5,6 +5,7 @@ import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PostAuthor, PostContent, PostFooter } from "./post-content";
 import type { FeedPost } from "./schema";
+import { SafetyReportButton } from "@/features/safety/report-button";
 
 type PostCardProps = {
   post: FeedPost;
@@ -16,7 +17,7 @@ type PostCardProps = {
   onOpenConversation?: (post: FeedPost, trigger: HTMLElement) => void;
 };
 
-/** Accepts server-rendered content while keeping gestures local to each post. */
+/** Owns post identity/actions while accepting a server-rendered post body. */
 export const PostCard = memo(function PostCard({
   post,
   children,
@@ -47,7 +48,8 @@ export const PostCard = memo(function PostCard({
     <article
       id={post.id}
       className="margin-post-card margin-feed-post"
-      aria-labelledby={`author-${post.id}`}
+      aria-label={profileDate ? post.author.name : undefined}
+      aria-labelledby={profileDate ? undefined : `author-${post.id}`}
       data-selected={selected}
       data-phase={phase}
       data-conversation-layout={profileDate ? "flip" : "panel"}
@@ -83,26 +85,26 @@ export const PostCard = memo(function PostCard({
         }
       }}
     >
-      {children ?? (
-        <>
-          <PostAuthor post={post} profileDate={profileDate} />
-          <PostContent post={post} />
-        </>
-      )}
-      {("audience" in post || actions || profileDate || conversation) && (
-        <PostFooter
-          post={post}
-          profileDate={profileDate}
-          actions={
-            actions || conversation ? (
-              <>
-                {actions}
-                {conversation}
-              </>
-            ) : undefined
-          }
-        />
-      )}
+      {!profileDate && <PostAuthor post={post} actions={conversation} />}
+      {children ?? <PostContent post={post} />}
+      <PostFooter
+        post={post}
+        profileDate={profileDate}
+        actions={
+          <>
+            {actions}
+            {profileDate && conversation}
+            <SafetyReportButton
+              target={{
+                kind: "post",
+                id: post.id,
+                personId: post.author.id,
+                label: `Post by ${post.author.name}`,
+              }}
+            />
+          </>
+        }
+      />
     </article>
   );
 });

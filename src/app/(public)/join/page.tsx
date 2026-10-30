@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import { PublicDocument } from "@/features/public-site/public-document";
-import { publicDocuments } from "@/features/public-site/documents";
-const document = publicDocuments["join"];
-export const metadata: Metadata = {
-  title: document.title,
-  description: document.intro,
-};
-export default function Page() {
-  return <PublicDocument document={document} />;
+import { redirect } from "next/navigation";
+/** Preserve existing links into the old joining page. */
+export default function JoinPage() {
+  redirect("/sign-up");
 }

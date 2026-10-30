@@ -158,6 +158,9 @@ it("keeps separate drafts across leaving Messages and clears only the submitted 
   expect(screen.getByRole("textbox", { name: "Message to Theo" })).toHaveValue(
     "",
   );
+  expect(
+    screen.getByRole("list", { name: "Messages with Theo" }),
+  ).toHaveTextContent("A thought for Theo");
   expect(storage).not.toHaveBeenCalled();
 });
 it("starts with empty drafts when the tab-level provider is recreated", async () => {
@@ -248,9 +251,7 @@ it("keeps preview limits in an optional dialog and restores focus to the notice"
   const details = screen.getByRole("dialog", { name: "About this preview" });
   expect(details).toHaveTextContent("Nothing is sent to another person.");
   expect(details).toHaveTextContent("Refreshing clears them.");
-  expect(details).toHaveTextContent(
-    "Automatic deletion and conversation exports aren’t connected yet.",
-  );
+  expect(details).toHaveTextContent("Automatic deletion is not connected yet.");
   await user.keyboard("{Escape}");
   await waitFor(() => expect(notice).toHaveFocus());
 });

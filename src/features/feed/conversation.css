@@ -81,6 +81,14 @@ html:has(.margin-conversation-frame[aria-modal="true"]) {
   scroll-padding-block: 24px;
   scrollbar-width: thin;
 }
+.margin-conversation-scroll[data-empty="true"] {
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+.margin-conversation-scroll[data-empty="true"] .margin-post-summary {
+  flex-shrink: 0;
+}
 .margin-conversation-scroll:focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: -3px;
@@ -209,9 +217,6 @@ html:has(.margin-conversation-frame[aria-modal="true"]) {
     .margin-conversation-back-button {
     display: none;
   }
-  .margin-conversation-frame[data-layout="panel"] .margin-conversation-title {
-    margin-right: auto;
-  }
   .margin-conversation-frame[data-layout="panel"] .margin-like {
     font-size: var(--text-control);
   }
@@ -222,6 +227,7 @@ html:has(.margin-conversation-frame[aria-modal="true"]) {
     .margin-conversation-close-slot {
     display: flex;
     align-items: center;
+    margin-left: auto;
   }
   .margin-conversation-frame[data-layout="panel"] .margin-conversation-close {
     display: inline-flex;
@@ -236,7 +242,7 @@ html:has(.margin-conversation-frame[aria-modal="true"]) {
     width: 15px;
   }
   .margin-conversation-frame[data-layout="panel"] .margin-conversation-scroll {
-    padding: 0 20px 24px;
+    padding-inline: 20px;
     scroll-padding-block: 16px 32px;
   }
   .margin-conversation-frame[data-layout="panel"] .margin-post-summary {

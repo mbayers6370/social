@@ -1,4 +1,4 @@
-import type { FeedComment } from "./schema";
+import { commentInputSchema, type FeedComment } from "./schema";
 
 export type PreviewPostState = {
   liked: boolean;
@@ -10,6 +10,15 @@ export type PreviewPostState = {
 };
 export type PreviewState = Record<string, PreviewPostState>;
 export type PreviewAction =
+  | { type: "reset" }
+  | {
+      type: "edit-comment";
+      postId: string;
+      commentId: string;
+      body: string;
+      at: string;
+    }
+  | { type: "delete-comment"; postId: string; commentId: string; at: string }
   | { type: "like"; postId: string }
   | { type: "draft"; postId: string; body: string }
   | { type: "reply"; postId: string; replyTo: PreviewPostState["replyTo"] }
@@ -38,10 +47,37 @@ export function previewPostState(
 export function previewReducer(
   state: PreviewState,
   action: PreviewAction,
+  viewerId?: string,
 ): PreviewState {
+  if (action.type === "reset") return {};
   const current = previewPostState(state, action.postId);
   let next: PreviewPostState;
   switch (action.type) {
+    case "edit-comment":
+    case "delete-comment": {
+      const own = current.comments.find(
+        (comment) =>
+          comment.id === action.commentId && comment.author.id === viewerId,
+      );
+      if (!own || own.deletedAt || !Number.isFinite(Date.parse(action.at)))
+        return state;
+      const body =
+        action.type === "edit-comment"
+          ? commentInputSchema.safeParse({ body: action.body })
+          : null;
+      if (body && !body.success) return state;
+      const changed: FeedComment =
+        action.type === "delete-comment"
+          ? { ...own, body: "", deletedAt: action.at }
+          : { ...own, body: body!.data!.body, editedAt: action.at };
+      next = {
+        ...current,
+        comments: current.comments.map((comment) =>
+          comment.id === own.id ? changed : comment,
+        ),
+      };
+      break;
+    }
     case "like":
       next = { ...current, liked: !current.liked };
       break;

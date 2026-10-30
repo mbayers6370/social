@@ -75,10 +75,15 @@ test("post names and portraits open the matching profile, with its own posts and
   expect(
     new Set(
       await page
-        .locator(".margin-profile-posts .margin-person-name")
-        .allTextContents(),
+        .locator(".margin-profile-posts .margin-feed-post")
+        .evaluateAll((posts) =>
+          posts.map((post) => post.getAttribute("aria-label")),
+        ),
     ),
   ).toEqual(new Set(["Samuel Okafor"]));
+  await expect(
+    page.locator(".margin-profile-posts .margin-post-author"),
+  ).toHaveCount(0);
   await expect(page.locator(".margin-profile-gallery img")).not.toHaveCount(0);
   await expect(page.locator(".margin-profile-actions")).toHaveCount(0);
   await page.goBack();
@@ -96,8 +101,10 @@ test("post names and portraits open the matching profile, with its own posts and
   expect(
     new Set(
       await page
-        .locator(".margin-profile-posts .margin-person-name")
-        .allTextContents(),
+        .locator(".margin-profile-posts .margin-feed-post")
+        .evaluateAll((posts) =>
+          posts.map((post) => post.getAttribute("aria-label")),
+        ),
     ),
   ).toEqual(new Set(["Theo Marchetti"]));
 });
@@ -137,7 +144,7 @@ test("comment identities navigate out of a conversation and Back returns to a us
     .getByRole("textbox", { name: "Add a comment" })
     .fill("A good day for a walk.");
   await dialog.getByRole("button", { name: "Post", exact: true }).click();
-  await dialog.getByRole("link", { name: "You", exact: true }).click();
+  await dialog.getByRole("link", { name: "Ines Alvarez", exact: true }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Ines Alvarez" }),
   ).toBeVisible();
@@ -219,7 +226,7 @@ test("notification identities open their own profile without nesting links insid
     page.getByRole("heading", { level: 1, name: "Nadia Haddad" }),
   ).toBeVisible();
   await expect(page.locator(".margin-profile-handle")).toHaveText("@nadia");
-  await expect(page.locator(".margin-profile-bio")).toContainText("next trail");
+  await expect(page.locator(".margin-profile-bio")).toContainText("Scientist");
   await expect(page.locator(".margin-profile-posts")).toContainText(
     "Posts are shared with friends.",
   );

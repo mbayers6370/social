@@ -10,7 +10,6 @@ import type { ProfilePreviewData } from "./schema";
 import { usePreview } from "@/features/local-preview/provider";
 import { canReadFriendsPost } from "@/lib/friend-audience";
 import { FeedExperience } from "@/features/feed/feed-experience";
-import { NewPostButton } from "@/features/compose/new-post-button";
 import { ProfileSection } from "./profile-section";
 
 export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
@@ -46,23 +45,27 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
     current.person.id,
     preview.state.friendships,
   );
-  const gallery = own
-    ? [...preview.state.gallery]
-        .sort((a, b) => Number(b.featured) - Number(a.featured))
-        .map((entry) =>
-          preview.state.photos.find((photo) => photo.id === entry.photoId)!,
-        )
-    : current.photos;
+  const gallery = !visible
+    ? []
+    : own
+      ? [...preview.state.gallery]
+          .sort((a, b) => Number(b.featured) - Number(a.featured))
+          .map((entry) =>
+            preview.state.photos.find((photo) => photo.id === entry.photoId)!,
+          )
+      : current.photos;
   const knownPostIds = new Set(
     [...(preview.bootstrap.posts ?? []), ...preview.state.posts].map(
       (post) => post.id,
     ),
   );
-  const profilePosts = preview.state.posts.filter(
-    (post) =>
-      post.author.id === current.person.id &&
-      Date.parse(post.expiresAt) > preview.now,
-  );
+  const profilePosts = visible
+    ? preview.state.posts.filter(
+        (post) =>
+          post.author.id === current.person.id &&
+          Date.parse(post.expiresAt) > preview.now,
+      )
+    : [];
   const recent = visible
     ? current.recent.filter(
         (post) =>
@@ -84,16 +87,74 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
         editRequested={own && preview.profileEditRequested}
         onEditRequestHandled={preview.finishProfileEditRequest}
       />
+      <div className="margin-profile-details">
+        <OnRepeat
+          key={`on-repeat-${current.person.id}`}
+          own={own}
+          tracks={visible ? (current.onRepeat ?? []) : []}
+          restricted={!visible}
+        />
+        <ProfileSection
+          className="margin-profile-gallery"
+          aria-labelledby="profile-gallery-title"
+        >
+          <header className="margin-section-heading">
+            <SectionTitle
+              id="profile-gallery-title"
+              motif={<SectionMotif icon={Aperture} />}
+            >
+              Gallery
+            </SectionTitle>
+            {visible && (
+              <Link href={galleryHref} className="margin-section-link">
+                View More
+                <ChevronRight aria-hidden="true" strokeWidth={1.5} />
+              </Link>
+            )}
+          </header>
+          {!visible ? (
+            <p className="margin-empty-copy">Photos are shared with friends.</p>
+          ) : !gallery.length ? (
+            <p className="margin-empty-copy">
+              {own
+                ? "Your photographs will appear here."
+                : "No photographs here yet."}
+            </p>
+          ) : null}
+          {visible && gallery.length > 0 && (
+            <Link
+              href={galleryHref}
+              className="margin-gallery-preview"
+              data-count={Math.min(gallery.length, 3)}
+              aria-label={`View all ${gallery.length} photographs`}
+            >
+              {gallery.slice(0, 3).map((photo, index) => (
+                <Image
+                  key={photo.image.src}
+                  {...photo.image}
+                  alt={photo.description}
+                  loading="eager"
+                  unoptimized={photo.image.src.startsWith("blob:")}
+                  sizes={`(min-width: 1152px) ${
+                    gallery.length === 1
+                      ? 384
+                      : gallery.length === 2
+                        ? 192
+                        : index === 0
+                          ? 256
+                          : 128
+                  }px, (min-width: 640px) 180px, calc((100vw - 110px) / 3)`}
+                />
+              ))}
+            </Link>
+          )}
+        </ProfileSection>
+      </div>
       <section
         className="margin-profile-posts"
         aria-labelledby="recent-posts-title"
       >
-        <div
-          className="margin-profile-posts-card margin-profile-section-card"
-          data-empty={
-            !visible || (!recent.length && !profilePosts.length) || undefined
-          }
-        >
+        <div className="margin-profile-posts-card margin-profile-section-card">
           <header className="margin-section-heading">
             <SectionTitle
               id="recent-posts-title"
@@ -102,7 +163,6 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
             >
               Recent Posts
             </SectionTitle>
-            {own && <NewPostButton />}
           </header>
           {own && (
             <p role="status" className="margin-status">
@@ -146,67 +206,6 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
           Posts are designed to disappear after 30 days. Sample expiry only.
         </p>
       </section>
-      <div className="margin-profile-details">
-        {visible && (
-          <OnRepeat
-            key={`on-repeat-${current.person.id}`}
-            own={own}
-            tracks={current.onRepeat ?? []}
-          />
-        )}
-        <ProfileSection
-          className="margin-profile-gallery"
-          data-empty={!visible || !gallery.length || undefined}
-          aria-labelledby="profile-gallery-title"
-        >
-          <header className="margin-section-heading">
-            <SectionTitle
-              id="profile-gallery-title"
-              motif={<SectionMotif icon={Aperture} />}
-            >
-              Gallery
-            </SectionTitle>
-            {visible && (
-              <Link href={galleryHref} className="margin-section-link">
-                View More
-                <ChevronRight aria-hidden="true" strokeWidth={1.5} />
-              </Link>
-            )}
-          </header>
-          {!visible ? (
-            <p className="margin-empty-copy">Photos are shared with friends.</p>
-          ) : !gallery.length ? (
-            <p className="margin-empty-copy">
-              {own
-                ? "Your photographs will appear here."
-                : "No photographs here yet."}
-            </p>
-          ) : null}
-          {visible && gallery.length > 0 && (
-            <Link
-              href={galleryHref}
-              className="margin-gallery-preview"
-              data-count={Math.min(gallery.length, 3)}
-              aria-label={`View all ${gallery.length} photographs`}
-            >
-              {gallery.slice(0, 3).map((photo, index) => (
-                <Image
-                  key={photo.image.src}
-                  {...photo.image}
-                  alt={photo.description}
-                  loading="eager"
-                  unoptimized={photo.image.src.startsWith("blob:")}
-                  sizes={
-                    index === 0
-                      ? "(max-width: 640px) 60vw, 400px"
-                      : "(max-width: 640px) 30vw, 196px"
-                  }
-                />
-              ))}
-            </Link>
-          )}
-        </ProfileSection>
-      </div>
     </div>
   );
 }

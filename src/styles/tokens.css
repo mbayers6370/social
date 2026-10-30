@@ -15,7 +15,7 @@
   --foreground: var(--ink);
   --card: 30 25% 98.431373%; /* parchment lifted with white: #FCFBFA */
   --card-foreground: var(--foreground);
-  --surface-heading: 70 32% 92.5%; /* soft olive paper for content headers */
+  --surface-heading: 52.941176 24.637681% 86.470588%; /* warm olive paper #E5E3D4 */
   --popover: var(--card);
   --popover-foreground: var(--foreground);
   --primary: var(--citron);

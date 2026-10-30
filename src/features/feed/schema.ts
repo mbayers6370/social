@@ -15,13 +15,20 @@ export const personSchema = z.strictObject({
   tone: z.enum(["paper", "sage", "sand"]),
   photo: imageSchema.optional(),
 });
-export const commentSchema = z.strictObject({
-  id: z.string().min(1).max(100),
-  author: personSchema,
-  body: z.string().min(1).max(2000),
-  createdAt: z.iso.datetime(),
-  replyTo: z.string().max(100).optional(),
-});
+export const commentSchema = z
+  .strictObject({
+    id: z.string().min(1).max(100),
+    author: personSchema,
+    body: z.string().max(2000),
+    createdAt: z.iso.datetime(),
+    editedAt: z.iso.datetime().optional(),
+    deletedAt: z.iso.datetime().optional(),
+    replyTo: z.string().max(100).optional(),
+  })
+  .refine(
+    (comment) => Boolean(comment.deletedAt) || comment.body.trim().length > 0,
+    "Write a comment.",
+  );
 export const commentInputSchema = z.strictObject({
   body: z
     .string()

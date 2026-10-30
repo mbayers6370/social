@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PostMedia } from "./schema";
 
 const PostPhotoViewer = dynamic(() =>
@@ -70,11 +70,6 @@ export function PostPhotos({
               key={`${postId}-${index}`}
               type="button"
               className="margin-post-photo"
-              style={
-                {
-                  "--photo-ratio": photo.image.width / photo.image.height,
-                } as CSSProperties
-              }
               data-post-photo-trigger
               data-post-id={postId}
               aria-label={`View photograph ${index + 1} of ${photos.length}: ${photo.description}`}
@@ -90,8 +85,8 @@ export function PostPhotos({
                 className="margin-post-image"
                 sizes={
                   multiple
-                    ? "(max-width: 639px) min(calc((100vw - 82px) * 0.65), 200px), 200px"
-                    : `(max-width: 639px) min(calc(100vw - 82px), ${(480 * photo.image.width) / photo.image.height}px, ${(60 * photo.image.width) / photo.image.height}svh), min(550px, ${(480 * photo.image.width) / photo.image.height}px, ${(60 * photo.image.width) / photo.image.height}svh)`
+                    ? "(max-width: 639px) calc((100vw - 82px) * 0.85), (max-width: 647px) calc((100vw - 110px) / 2), 269px"
+                    : "(max-width: 639px) calc(100vw - 82px), (max-width: 647px) calc(100vw - 98px), 550px"
                 }
                 loading="eager"
                 fetchPriority={highPriority && index === 0 ? "high" : "auto"}

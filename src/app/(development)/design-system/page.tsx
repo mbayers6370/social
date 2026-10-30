@@ -3,7 +3,7 @@ import { Container } from "@/components/layout/container";
 import { SiteHeader } from "@/components/layout/site-header";
 import { ComponentExamples } from "./component-examples";
 import { PostCardPreview } from "@/features/feed/post-card-preview";
-import { PostAuthor, PostContent } from "@/features/feed/post-content";
+import { PostContent } from "@/features/feed/post-content";
 
 export const metadata = {
   title: "Component workbench",
@@ -39,7 +39,6 @@ export default async function DesignSystemPage() {
               </p>
             </div>
             <PostCardPreview post={examplePost}>
-              <PostAuthor post={examplePost} />
               <PostContent post={examplePost} />
             </PostCardPreview>
           </section>

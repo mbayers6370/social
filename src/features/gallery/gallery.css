@@ -418,17 +418,6 @@ html[data-motion="reduced"] .margin-gallery-floating img {
   object-fit: contain;
   border-radius: var(--radius-control);
 }
-@media (max-width: 639px) {
-  .margin-photo-picker-gallery {
-    inset: auto 0 0;
-    transform: none;
-    width: 100%;
-    max-width: none;
-    max-height: calc(100dvh - var(--margin-safe-area-top) - 24px);
-    border-radius: 16px 16px 0 0;
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
-  }
-}
 @media (min-width: 640px) {
   .margin-gallery-page {
     padding-top: 40px;

@@ -14,7 +14,7 @@ Routes pass explicit data objects to feature components. Keep secrets and databa
 
 The root layout installs the local preview provider only in development. Fictional social data comes from server fixtures and is serialized into that provider. Production renders the public website and excludes development fixture routes and music APIs.
 
-The local provider keeps posts, galleries, friendships, notifications, and preferences in memory across navigation. Messages keeps separate screen-local messages and drafts. Refresh resets social preview state; optional local music persistence is the exception.
+The local provider keeps posts, galleries, friendships, notifications, and preferences in memory across navigation. Messages keeps separate screen-local messages and drafts. Refresh resets social preview state; optional local music persistence is the exception. Nadia’s pending-request fixture exposes only her portrait and bio initially. Accepting the request loads her sample profile through a development-only Server Function, then commits the profile content and accepted relationship together. Loading failures leave the request pending; this function never creates a real account or friendship and rejects production requests.
 
 The preview identity is fictional and is not authenticated production access. All real writes must derive identity on the server and check authorization again at the resource boundary.
 
@@ -38,9 +38,11 @@ Device photographs are checked for type, signature, size, dimensions, and descri
 
 ## Server integrations
 
-Clerk supplies account sessions. Prisma/PostgreSQL owns persistent data; the current schema supports users and profile songs, with committed migrations. Local music access uses a restricted development adapter; see [music setup](music-search.md).
+Clerk supplies account sessions. Prisma/PostgreSQL owns persistent data. The candidate private-social migration adds separate account activation, canonical friendship pairs, directional blocks, posts, canonical photos and gallery/post references while preserving the existing identity/music tables. Local music access uses a restricted development adapter; see [music setup](music-search.md).
 
-Server helpers cover private R2 storage, Redis-backed limits, request security headers, and filtered Sentry reporting. These adapters do not imply completed production social endpoints or provisioned accounts. Resource authorization, validation, and limits belong on server operations, not only in UI controls.
+The [disabled private-backend slice](private-backend-slice.md) puts session identity, active-account checks, resource authorization, current friendship/block rules, origin checks, validation, rate limits and transactional allowances behind real API handlers. Private photos bypass the public image optimizer. Hosted Clerk, R2 and Redis verification remains a rollout gate; no service accounts or production database were provisioned for this implementation.
+
+The [OpenMLS experiment](../experiments/openmls/README.md) has its own Cargo project and browser harness. It is not imported by application code and does not change messaging or the Next.js CSP.
 
 Scheduled work has a type contract but no executable provider or public job endpoint. Add scheduling only with authenticated invocations, validated payloads, bounded work, and idempotent database operations.
 

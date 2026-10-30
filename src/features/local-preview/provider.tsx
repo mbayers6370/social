@@ -1,5 +1,6 @@
 "use client";
 
+import { canReadFriendsPost } from "@/lib/friend-audience";
 import { createLocalId } from "@/lib/local-id";
 import {
   changeFriendship,
@@ -8,6 +9,7 @@ import {
 } from "@/features/friends/model";
 import {
   createContext,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -22,6 +24,8 @@ import {
 } from "@/features/profile/schema";
 import {
   changeGallery,
+  changeLocalUsername,
+  setProfilePhotograph,
   emptyDraft,
   initialLocalState,
   placePhoto,
@@ -34,10 +38,12 @@ import {
   preferencesSchema,
   type Preferences,
   type Bootstrap,
+  type FriendProfileContent,
   type LocalState,
   type Photo,
   type PostInput,
 } from "./model";
+import { commentInputSchema } from "@/features/feed/schema";
 import { musicSelectionSchema } from "@/features/profile/music-schema";
 import type { ProfileTrack } from "@/features/profile/schema";
 import { validateLocalPhoto } from "./upload";
@@ -45,6 +51,7 @@ import { saveGalleryArrangement } from "@/features/gallery/arrangement";
 import {
   messageInputSchema,
   type PreviewMessage,
+  type PreviewThread,
 } from "@/features/messages/schema";
 import {
   previewReducer,
@@ -52,6 +59,11 @@ import {
   type PreviewState,
 } from "@/features/feed/state";
 import type { Dispatch, SetStateAction } from "react";
+import {
+  reportSchema,
+  type ReportInput,
+  type SafetyReport,
+} from "@/features/safety/model";
 import {
   initialNotificationState,
   notificationReducer,
@@ -68,12 +80,18 @@ type ConversationRequest = {
 };
 
 type Preview = {
+  freshStart: boolean;
+  threads: PreviewThread[];
+  allNotifications: ReturnType<typeof notificationsSchema.parse>;
   headerPanel: "profile" | "notifications" | null;
   setHeaderPanel: Dispatch<SetStateAction<"profile" | "notifications" | null>>;
   profileEditRequested: boolean;
   requestProfileEdit: () => void;
   finishProfileEditRequest: () => void;
-  changeFriend: (personId: string, action: FriendAction) => void;
+  changeFriend: (
+    personId: string,
+    action: FriendAction,
+  ) => void | Promise<void>;
   notifications: NotificationState;
   notificationRows: ReturnType<typeof visibleNotifications>;
   markNotificationRead: (id: string) => void;
@@ -96,6 +114,11 @@ type Preview = {
   state: LocalState;
   draft: PostInput;
   messageDrafts: Record<string, string>;
+  messageAdditions: Record<string, PreviewMessage[]>;
+  sendMessage: (personId: string, body: string) => void;
+  reports: SafetyReport[];
+  submitReport: (input: ReportInput) => string;
+  completeOnboarding: (input: ProfileInput & { username: string }) => void;
   updateMessageDraft: (threadId: string, body: string) => void;
   notebookNotes: PreviewMessage[];
   addNotebookNote: (body: string) => void;
@@ -113,20 +136,35 @@ type Preview = {
     action: "remove" | "feature" | "earlier" | "later",
   ) => void;
   updateProfile: (value: ProfileInput) => void;
+  setProfilePhoto: (photoId: string, replacement?: string) => void;
+  changeUsername: (value: unknown) => void;
 };
 const Context = createContext<Preview | null>(null);
 export function PreviewProvider({
   bootstrap,
   children,
+  loadFriendProfileAction,
 }: {
   bootstrap: Bootstrap;
   children: ReactNode;
+  loadFriendProfileAction?: (
+    personId: string,
+  ) => Promise<FriendProfileContent | null>;
 }) {
   const [state, setState] = useState(() => initialLocalState(bootstrap));
-  const [interactions, dispatchInteraction] = useReducer(previewReducer, {});
+  const [interactions, dispatchInteraction] = useReducer(
+    (current: PreviewState, action: PreviewAction) =>
+      previewReducer(current, action, bootstrap.viewerId),
+    {},
+  );
   const [now, setNow] = useState(() => Date.parse(bootstrap.now));
   const [draft, setDraft] = useState<PostInput>(emptyDraft);
   const [notebookNotes, setNotebookNotes] = useState<PreviewMessage[]>([]);
+  const [messageAdditions, setMessageAdditions] = useState<
+    Record<string, PreviewMessage[]>
+  >({});
+  const [reports, setReports] = useState<SafetyReport[]>([]);
+  const [freshStart, setFreshStart] = useState(false);
   // Tab memory only: survives client navigation, never written to browser storage.
   const [messageDrafts, setMessageDrafts] = useState<Record<string, string>>(
     {},
@@ -153,7 +191,7 @@ export function PreviewProvider({
     (rows) => initialNotificationState(rows, bootstrap.viewerId),
   );
   const notificationRows = visibleNotifications(
-    notificationSource.filter((row) => {
+    (freshStart ? [] : notificationSource).filter((row) => {
       if (row.target.kind !== "profile") return true;
       const relationship = friendStatus(
         bootstrap.viewerId,
@@ -250,12 +288,82 @@ export function PreviewProvider({
     }
   }
   const value: Preview = {
+    freshStart,
+    threads: freshStart
+      ? [
+          {
+            id: bootstrap.viewerId,
+            contact: state.profiles.find(
+              (profile) => profile.person.id === bootstrap.viewerId,
+            )!.person,
+            unread: false,
+            messages: [],
+          },
+        ]
+      : (bootstrap.threads ?? []),
+    allNotifications: freshStart
+      ? []
+      : notificationSource.filter(
+          (row) =>
+            row.recipientId === bootstrap.viewerId &&
+            Date.parse(row.createdAt) <= now,
+        ),
     headerPanel,
     setHeaderPanel,
     profileEditRequested,
     requestProfileEdit,
     finishProfileEditRequest,
     changeFriend: (personId, action) => {
+      if (action === "accept" && loadFriendProfileAction) {
+        // Validate before fetching, then revalidate on commit if another action intervenes.
+        changeFriendship(latest.current, bootstrap.viewerId, {
+          personId,
+          action,
+        });
+        return new Promise<void>((resolve, reject) => {
+          startTransition(async () => {
+            try {
+              const content = await loadFriendProfileAction(personId);
+              if (!mounted.current) {
+                resolve();
+                return;
+              }
+              if (
+                content &&
+                (content.profile.person.id !== personId ||
+                  content.posts.some((post) => post.author.id !== personId))
+              ) {
+                throw new PreviewError("That profile is unavailable.");
+              }
+              commit((current) => {
+                const next = changeFriendship(current, bootstrap.viewerId, {
+                  personId,
+                  action,
+                });
+                if (!content) return next;
+                const knownIds = new Set(next.posts.map((post) => post.id));
+                return {
+                  ...next,
+                  profiles: next.profiles.map((profile) =>
+                    profile.person.id === personId ? content.profile : profile,
+                  ),
+                  posts: [
+                    ...next.posts,
+                    ...content.posts.filter((post) => !knownIds.has(post.id)),
+                  ],
+                };
+              });
+              resolve();
+            } catch {
+              reject(
+                new PreviewError(
+                  "Couldn’t accept the request. Please try again.",
+                ),
+              );
+            }
+          });
+        });
+      }
       commit((current) =>
         changeFriendship(current, bootstrap.viewerId, { personId, action }),
       );
@@ -325,12 +433,214 @@ export function PreviewProvider({
         reorderGallery(current, bootstrap.viewerId, id, targetId),
       ),
     interactions,
-    dispatchInteraction,
+    dispatchInteraction(action) {
+      if (action.type === "comment") {
+        const author = latest.current.profiles.find(
+          (profile) => profile.person.id === bootstrap.viewerId,
+        )?.person;
+        if (!author) return;
+        const body = commentInputSchema.safeParse({
+          body: action.comment.body,
+        });
+        if (!body.success) return;
+        dispatchInteraction({
+          ...action,
+          comment: { ...action.comment, author, body: body.data.body },
+        });
+        return;
+      }
+      if (action.type === "edit-comment" || action.type === "delete-comment") {
+        const post = latest.current.posts.find(
+          (post) => post.id === action.postId,
+        );
+        const comment = post?.comments.find(
+          (comment) =>
+            comment.id === action.commentId &&
+            comment.author.id === bootstrap.viewerId,
+        );
+        if (comment) {
+          if (comment.deletedAt || !Number.isFinite(Date.parse(action.at)))
+            return;
+          const parsed =
+            action.type === "edit-comment"
+              ? commentInputSchema.safeParse({ body: action.body })
+              : null;
+          if (parsed && !parsed.success) return;
+          commit((current) => ({
+            ...current,
+            posts: current.posts.map((post) =>
+              post.id !== action.postId
+                ? post
+                : {
+                    ...post,
+                    comments: post.comments.map((item) =>
+                      item.id !== comment.id
+                        ? item
+                        : action.type === "delete-comment"
+                          ? { ...item, body: "", deletedAt: action.at }
+                          : {
+                              ...item,
+                              body: parsed!.data!.body,
+                              editedAt: action.at,
+                            },
+                    ),
+                  },
+            ),
+          }));
+          return;
+        }
+      }
+      dispatchInteraction(action);
+    },
     now,
     bootstrap,
     state,
     draft,
     messageDrafts,
+    messageAdditions,
+    sendMessage(personId, body) {
+      if (
+        friendStatus(
+          bootstrap.viewerId,
+          personId,
+          latest.current.friendships,
+        ) !== "friends"
+      )
+        throw new PreviewError(
+          "You can message accepted friends. This relationship has changed.",
+        );
+      const input = messageInputSchema.parse({ body });
+      const message: PreviewMessage = {
+        id: createLocalId(),
+        body: input.body,
+        direction: "outgoing",
+        createdAt: new Date().toISOString(),
+      };
+      setMessageAdditions((current) => ({
+        ...current,
+        [personId]: [...(current[personId] ?? []), message],
+      }));
+    },
+    reports,
+    submitReport(input) {
+      const parsed = reportSchema.parse(input);
+      const target = parsed.target;
+      const readablePosts = latest.current.posts.filter(
+        (post) =>
+          Date.parse(post.expiresAt) > now &&
+          canReadFriendsPost(
+            bootstrap.viewerId,
+            post.author.id,
+            latest.current.friendships,
+          ),
+      );
+      const available =
+        target.kind === "profile"
+          ? target.id === target.personId &&
+            latest.current.profiles.some(
+              (profile) => profile.person.id === target.personId,
+            )
+          : target.kind === "post"
+            ? readablePosts.some(
+                (post) =>
+                  post.id === target.id && post.author.id === target.personId,
+              )
+            : target.kind === "comment"
+              ? readablePosts.some((post) =>
+                  [
+                    ...post.comments,
+                    ...(interactions[post.id]?.comments ?? []),
+                  ].some(
+                    (comment) =>
+                      comment.id === target.id &&
+                      comment.author.id === target.personId &&
+                      !comment.deletedAt,
+                  ),
+                )
+              : (!freshStart &&
+                  (bootstrap.threads ?? []).some(
+                    (thread) =>
+                      thread.id === target.id &&
+                      thread.contact.id === target.personId,
+                  )) ||
+                (target.kind === "message" &&
+                  target.id === target.personId &&
+                  Boolean(messageAdditions[target.id]?.length));
+      if (target.personId === bootstrap.viewerId || !available)
+        throw new PreviewError("That report target is unavailable.");
+      const id = createLocalId();
+      setReports((current) => [
+        ...current,
+        {
+          ...parsed,
+          id,
+          createdAt: new Date().toISOString(),
+          status: "saved-locally",
+        },
+      ]);
+      return id;
+    },
+    completeOnboarding(input) {
+      const details = profileInputSchema.parse({
+        name: input.name,
+        bio: input.bio,
+      });
+      const currentProfile = latest.current.profiles.find(
+        (profile) => profile.person.id === bootstrap.viewerId,
+      )!;
+      let next = latest.current;
+      if (input.username !== currentProfile.handle)
+        next = changeLocalUsername(
+          next,
+          bootstrap.viewerId,
+          input.username,
+          new Date(now),
+        );
+      commit(() => ({
+        ...next,
+        usernameChangedAt: undefined,
+        friendships: next.friendships.filter(
+          (pair) => !pair.people.includes(bootstrap.viewerId),
+        ),
+        posts: next.posts.filter(
+          (post) => post.author.id !== bootstrap.viewerId,
+        ),
+        gallery: [],
+        galleryAdditions: [],
+        postingRecords: [],
+        photos: next.photos.filter(
+          (photo) => photo.ownerId !== bootstrap.viewerId,
+        ),
+        profiles: next.profiles.map((profile) =>
+          profile.person.id === bootstrap.viewerId
+            ? {
+                ...profile,
+                bio: details.bio,
+                recent: [],
+                photos: [],
+                onRepeat: [],
+                person: {
+                  ...profile.person,
+                  name: details.name,
+                  initials: details.name
+                    .split(/\s+/)
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join(""),
+                  photo: undefined,
+                },
+              }
+            : profile,
+        ),
+      }));
+      setMessageAdditions({});
+      setMessageDrafts({});
+      setNotebookNotes([]);
+      setReports([]);
+      setDraft(emptyDraft);
+      setFreshStart(true);
+      dispatchInteraction({ type: "reset" });
+    },
     notebookNotes,
     addNotebookNote: (body) => {
       const input = messageInputSchema.parse({ body });
@@ -428,11 +738,32 @@ export function PreviewProvider({
       commit((current) =>
         changeGallery(current, bootstrap.viewerId, id, action),
       ),
+    changeUsername(value) {
+      commit((current) =>
+        changeLocalUsername(current, bootstrap.viewerId, value, new Date(now)),
+      );
+    },
+    setProfilePhoto(photoId, replacement) {
+      commit((current) =>
+        setProfilePhotograph(
+          current,
+          bootstrap.viewerId,
+          photoId,
+          replacement,
+          new Date(now),
+        ),
+      );
+    },
     updateProfile(value) {
       const parsed = profileInputSchema.safeParse(value);
       if (!parsed.success) throw new PreviewError("Check your name and bio.");
       commit((current) => ({
         ...current,
+        posts: current.posts.map((post) =>
+          post.author.id === bootstrap.viewerId
+            ? { ...post, author: { ...post.author, name: parsed.data.name } }
+            : post,
+        ),
         profiles: current.profiles.map((profile) =>
           profile.person.id === bootstrap.viewerId
             ? {
@@ -451,4 +782,7 @@ export function usePreview() {
   const value = useContext(Context);
   if (!value) throw new Error("Local preview provider is unavailable");
   return value;
+}
+export function useOptionalPreview() {
+  return useContext(Context);
 }

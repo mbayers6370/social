@@ -68,7 +68,7 @@ test("a friend's profile has compact friendship and message controls and opens t
   if (testInfo.project.name === "mobile") {
     await page.setViewportSize({ width: 320, height: 700 });
     const avatar = (await identity
-      .locator(".margin-profile-heading > .margin-avatar")
+      .locator(".margin-profile-heading .margin-avatar")
       .boundingBox())!;
     const name = (await identity
       .getByRole("heading", { level: 1 })
@@ -204,12 +204,10 @@ test("nonfriends can be blocked and reported without sending a request or report
   await page
     .getByRole("textbox", { name: "Details (optional)" })
     .fill("An example for this preview.");
-  await page
-    .getByRole("button", { name: "Preview report", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save report", exact: true }).click();
   await expect(
-    page.getByRole("dialog", { name: "Report preview", exact: true }),
-  ).toContainText("Nothing has been sent or saved.");
+    page.getByRole("dialog", { name: "Report saved", exact: true }),
+  ).toContainText("Live moderation is not connected");
   await page
     .getByRole("button", { name: "Close", exact: true })
     .first()

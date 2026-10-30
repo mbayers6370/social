@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePreview } from "@/features/local-preview/provider";
+import { AccountControls } from "@/features/account/account-controls";
 
 /** Account utilities use a disclosure with ordinary links and tab order. */
 export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
@@ -181,6 +182,7 @@ export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
                 Copyright
               </Link>
             </div>
+            <AccountControls compact />
           </nav>,
           document.body,
         )}

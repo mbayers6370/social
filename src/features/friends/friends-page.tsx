@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Orbit, Search } from "lucide-react";
+import { ChevronLeft, Users, Search } from "lucide-react";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,14 @@ import { ProfileSearch } from "@/features/search/profile-search";
 import { usePreview } from "@/features/local-preview/provider";
 import { searchProfiles } from "@/features/local-preview/model";
 import { FriendActions } from "./friend-actions";
+import { useFriendFeedback } from "./use-friend-feedback";
 import { friendStatus } from "./model";
 
 export function FriendsPage() {
   const { state, bootstrap } = usePreview();
   const [section, setSection] = useState<"friends" | "requests">("friends");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useFriendFeedback();
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (!status) return;
@@ -70,7 +71,7 @@ export function FriendsPage() {
           <SectionTitle
             as="h1"
             id="friends-title"
-            motif={<SectionMotif icon={Orbit} />}
+            motif={<SectionMotif icon={Users} />}
             ref={heading}
             tabIndex={-1}
           >

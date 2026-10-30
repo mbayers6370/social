@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, expect, it, vi } from "vitest";
 import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 const { protect } = vi.hoisted(() => ({ protect: vi.fn() }));
 vi.mock("@clerk/nextjs/server", () => ({
   clerkMiddleware:
@@ -15,7 +16,7 @@ vi.mock("@clerk/nextjs/server", () => ({
       return NextResponse.next();
     },
 }));
-import proxy from "@/proxy";
+import proxy, { config } from "@/proxy";
 import { PUBLIC_PAGE_PATHS } from "@/lib/public-routes";
 
 afterEach(() => {
@@ -30,6 +31,47 @@ async function request(path: string) {
   expect(result).toBeInstanceOf(NextResponse);
   return result as NextResponse;
 }
+
+it("does not exempt private paths that resemble public asset filenames", () => {
+  for (const path of [
+    "/robots.txt/private",
+    "/robotsXtxt",
+    "/sitemap.xml/private",
+    "/favicon.ico/private",
+    "/_next/image/private",
+    "/_next/static-private/photo.jpg",
+    "/api/private.json",
+  ])
+    expect(unstable_doesMiddlewareMatch({ config, url: path }), path).toBe(
+      true,
+    );
+  for (const path of [
+    "/robots.txt",
+    "/sitemap.xml",
+    "/favicon.ico",
+    "/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fpublic.jpg&w=640&q=75",
+    "/_next/static/chunks/public.js",
+  ])
+    expect(unstable_doesMiddlewareMatch({ config, url: path }), path).toBe(
+      false,
+    );
+});
+
+it("marks protected responses noncacheable and nonindexable with and without Clerk", async () => {
+  vi.stubEnv("NODE_ENV", "production");
+  for (const credentials of [false, true]) {
+    vi.stubEnv("CLERK_SECRET_KEY", credentials ? "test-secret" : "");
+    vi.stubEnv(
+      "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+      credentials ? "test-key" : "",
+    );
+    const response = await request("/api/private.json");
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response.headers.get("X-Robots-Tag")).toBe(
+      "noindex, noarchive, nosnippet",
+    );
+  }
+});
 
 for (const mode of ["development", "production"] as const) {
   it(`allows only the approved brand images without auth credentials in ${mode}`, async () => {

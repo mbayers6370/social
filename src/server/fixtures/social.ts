@@ -10,7 +10,7 @@ import { getDevelopmentNotifications } from "./notifications";
 
 export function getDevelopmentSocial(): Bootstrap {
   const { posts } = getDevelopmentFeed(); // Runtime guard rejects production/test.
-  const { profile } = getDevelopmentScreens();
+  const { profile, threads } = getDevelopmentScreens();
   const people = [
     ...new Map(
       posts
@@ -46,7 +46,7 @@ export function getDevelopmentSocial(): Bootstrap {
     samuel: "Weekend walks, coffee, and trying to get to the beach more often.",
     mara: "Tea, cooking, and whatever I'm reading this week.",
     nadia:
-      "Early starts, long walks, and a camera in my bag. Usually planning the next trail.",
+      "Scientist, usually asking one more question. Outside the lab: live music, long walks, and coffee with friends.",
     owen: "Cycling across town, finding new lunch spots, and making time for friends.",
   };
   // Sample listening choices only; they are not written to anyone's music account.
@@ -179,6 +179,7 @@ export function getDevelopmentSocial(): Bootstrap {
     });
   }
   return {
+    threads,
     posts: [...canonicalPosts.values()],
     notifications: getDevelopmentNotifications(posts, people, "ines", now),
     postingRecords: [...postingRecords.values()],

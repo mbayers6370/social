@@ -2,27 +2,20 @@
 
 import { usePreview } from "@/features/local-preview/provider";
 import { friendStatus } from "@/features/friends/model";
-import { createLocalId } from "@/lib/local-id";
 
 import Link from "next/link";
 import { PersonLink, profileHref } from "@/components/shared/person-link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import {
-  ChevronLeft,
-  ArrowUp,
-  BookOpen,
-  Download,
-  Info,
-  Mail,
-} from "lucide-react";
+import { ChevronLeft, ArrowUp, BookOpen, Info, Mail } from "lucide-react";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Avatar } from "@/features/feed/post-content";
 import { dayKey, postTime } from "@/features/feed/format";
 import { Button } from "@/components/ui/button";
-import { ComingSoon } from "@/components/shared/coming-soon";
+import { AccountDownload } from "@/features/settings/account-download";
+import { SafetyReportButton } from "@/features/safety/report-button";
 import { continuesMessageGroup } from "./format";
 import { FieldError } from "@/components/ui/field";
 import {
@@ -35,7 +28,6 @@ import {
 import {
   messageInputSchema,
   type MessageInput,
-  type PreviewMessage,
   type PreviewThread,
 } from "./schema";
 
@@ -46,14 +38,19 @@ export function MessagesPreview({
 }) {
   const {
     state,
+    freshStart,
+    threads: accountThreads,
     bootstrap,
     messageDrafts,
     updateMessageDraft,
     notebookNotes,
     addNotebookNote,
+    messageAdditions: local,
+    sendMessage,
   } = usePreview();
+  const baseThreads = freshStart ? accountThreads : sampleThreads;
   const threads: PreviewThread[] = [
-    ...sampleThreads,
+    ...baseThreads,
     ...state.profiles
       .filter(
         (profile) =>
@@ -62,7 +59,7 @@ export function MessagesPreview({
             profile.person.id,
             state.friendships,
           ) === "friends" &&
-          !sampleThreads.some(
+          !baseThreads.some(
             (thread) => thread.contact.id === profile.person.id,
           ),
       )
@@ -89,14 +86,11 @@ export function MessagesPreview({
     state.friendships,
   );
   const canMessage = relationship === "friends" || relationship === "self";
-  const [local, setLocal] = useState<Record<string, PreviewMessage[]>>({});
   const [read, setRead] = useState<string[]>([]);
-  const [exportNotice, setExportNotice] = useState(false);
   const [previewInfo, setPreviewInfo] = useState(false);
   const noticeTrigger = useRef<HTMLButtonElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const back = useRef<HTMLButtonElement>(null);
-  const exportButton = useRef<HTMLButtonElement>(null);
   const messages = [
     ...active.messages,
     ...(notebook ? notebookNotes : (local[active.id] ?? [])),
@@ -321,17 +315,21 @@ export function MessagesPreview({
             </div>
           </div>
           {!notebook && (
-            <Button
-              ref={exportButton}
-              variant="ghost"
-              className="margin-deferred-action"
-              aria-label="Export conversation"
-              aria-description="Not available in this preview"
-              onClick={() => setExportNotice(true)}
-            >
-              <Download aria-hidden="true" />
-              <ComingSoon />
-            </Button>
+            <>
+              <SafetyReportButton
+                target={{
+                  kind: "message",
+                  id: active.id,
+                  personId: active.contact.id,
+                  label: `Conversation with ${active.contact.name}`,
+                }}
+              />
+              <AccountDownload
+                key={active.id}
+                conversationId={active.id}
+                iconOnly
+              />
+            </>
           )}
         </header>
         <div
@@ -421,19 +419,7 @@ export function MessagesPreview({
               // Sending is explicit: show the newly added local message.
               keepAtBottom.current = true;
               if (notebook) addNotebookNote(body);
-              else
-                setLocal((current) => ({
-                  ...current,
-                  [active.id]: [
-                    ...(current[active.id] ?? []),
-                    {
-                      id: createLocalId(),
-                      body,
-                      direction: "outgoing",
-                      createdAt: new Date().toISOString(),
-                    },
-                  ],
-                }));
+              else sendMessage(active.contact.id, body);
               updateMessageDraft(active.id, "");
             }}
           />
@@ -468,26 +454,10 @@ export function MessagesPreview({
             reset on refresh. Nothing is sent to anyone.
           </p>
           <p>
-            Messages you add to a conversation reset when you leave Messages or
-            refresh. Automatic deletion and conversation exports aren’t
-            connected yet.
+            Messages you add stay in this tab until you refresh. Automatic
+            deletion is not connected yet. You can export your conversations
+            using Download.
           </p>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={exportNotice} onOpenChange={setExportNotice}>
-        <DialogContent
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            exportButton.current?.focus({ preventScroll: true });
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>Conversation export</DialogTitle>
-            <DialogDescription>
-              This is a sample conversation. Exporting real messages will be
-              available when private messaging is connected.
-            </DialogDescription>
-          </DialogHeader>
         </DialogContent>
       </Dialog>
     </section>

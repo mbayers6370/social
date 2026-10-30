@@ -5,6 +5,13 @@
 .margin-profile-music > .margin-empty-copy {
   padding-block: 16px 0;
 }
+@media (width < 72rem) {
+  .margin-profile-music .margin-track-row > img,
+  .margin-profile-music .margin-track-artwork-placeholder {
+    width: 64px;
+    height: 64px;
+  }
+}
 /* Decorative rhythm, independent of playback; transforms reserve the full icon size. */
 .margin-music-equalizer rect {
   transform-box: fill-box;

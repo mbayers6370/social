@@ -76,6 +76,8 @@ export async function changeMusic(
             where: { clerkId: subject },
             create: { clerkId: subject },
             update: {},
+            // Keep the preview adapter compatible before the additive social migration.
+            select: { id: true },
           });
           const rows = await tx.profileSong.findMany({
             where: { userId: user.id },

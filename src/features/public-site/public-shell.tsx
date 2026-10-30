@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { BrandLink } from "@/components/shared/brand-link";
+import { PublicHomeLink } from "./public-home-link";
 import { publicSiteDetails } from "./site-details";
 export const publicHomeHref = () =>
   process.env.NODE_ENV === "development" ? "/welcome" : "/";
@@ -20,6 +20,7 @@ const groups = [
       ["Help", "/help"],
       ["Contact", "/contact"],
       ["Community Guidelines", "/community-guidelines"],
+      ["Accessibility", "/accessibility"],
     ],
   },
   {
@@ -28,15 +29,25 @@ const groups = [
       ["Privacy", "/privacy"],
       ["Terms", "/terms"],
       ["Copyright", "/copyright"],
+      ["Your data", "/your-data"],
+      ["Retention", "/retention"],
+      ["Cookies", "/cookies"],
     ],
   },
 ];
 function PublicLinks({ label }: { label: string }) {
   return (
     <nav aria-label={label} className="margin-public-primary">
-      <Link href="/why-margin">Why margin</Link>
-      <Link href="/how-it-works">How it works</Link>
-      <Link href="/join" className="margin-public-join">
+      <Link href="/why-margin" className="margin-public-information">
+        Why margin
+      </Link>
+      <Link href="/how-it-works" className="margin-public-information">
+        How it works
+      </Link>
+      <Link href="/sign-in" className="margin-public-sign-in">
+        Sign in
+      </Link>
+      <Link href="/sign-up" className="margin-public-join">
         {publicSiteDetails.joiningLabel}
       </Link>
     </nav>
@@ -46,10 +57,6 @@ export function PublicFooter() {
   return (
     <footer className="margin-public-footer">
       <div className="margin-public-footer-inner">
-        <div className="margin-public-footer-top">
-          <BrandLink href={publicHomeHref()} />
-          <PublicLinks label="Footer introduction" />
-        </div>
         <nav
           className="margin-public-footer-groups margin-navigation-theme"
           aria-label="Footer"
@@ -78,7 +85,7 @@ export function PublicFooter() {
 export function PublicHeader() {
   return (
     <header className="margin-public-header margin-topbar margin-navigation-theme">
-      <BrandLink href={publicHomeHref()} animate />
+      <PublicHomeLink signedOutHref={publicHomeHref()} />
       <PublicLinks label="Public navigation" />
     </header>
   );
@@ -97,12 +104,14 @@ export function PublicShell({ children }: { children: ReactNode }) {
 export function PublicTextLink({
   href,
   children,
+  ...props
 }: {
   href: string;
   children: ReactNode;
+  "aria-describedby"?: string;
 }) {
   return (
-    <Link href={href} className="margin-public-text-link">
+    <Link href={href} className="margin-public-text-link" {...props}>
       {children}
       <ChevronRight aria-hidden="true" strokeWidth={1.5} />
     </Link>

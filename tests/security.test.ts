@@ -59,11 +59,40 @@ describe("security boundaries", () => {
     expect(result.exception?.values?.[0].stacktrace?.frames?.[0]).toEqual({
       filename: "app.js",
       lineno: 8,
-      function: undefined,
       colno: undefined,
       in_app: undefined,
     });
     expect(result.event_id).toBe("test");
+  });
+
+  it("does not leak custom exception names, functions, or private source filenames", () => {
+    const result = sanitizeEvent({
+      type: undefined,
+      exception: {
+        values: [
+          {
+            type: "private-message-identifier",
+            value: "private-message-body",
+            stacktrace: {
+              frames: [
+                {
+                  filename:
+                    "https://example.com/private-photograph.js?token=private-token",
+                  function: "private-customer-name",
+                  lineno: 42,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain("private-");
+    expect(result.exception?.values?.[0]).toMatchObject({
+      type: "Error",
+      value: "[filtered]",
+      stacktrace: { frames: [{ filename: "source", lineno: 42 }] },
+    });
   });
 
   it("rejects unauthorized ownership, including empty identities", () => {

@@ -29,7 +29,8 @@ function profile() {
 it("offers editing and settings on the owner's profile without self friendship controls", async () => {
   const user = userEvent.setup();
   const { bootstrap } = notificationFixture();
-  render(<ProfileIdentity profile={bootstrap.profiles[0]} />);
+  const update = vi.fn();
+  render(<ProfileIdentity profile={bootstrap.profiles[0]} onUpdate={update} />);
   const edit = screen.getByRole("button", { name: "Edit profile" });
   expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
     "href",
@@ -48,12 +49,53 @@ it("offers editing and settings on the owner's profile without self friendship c
     screen.queryByRole("link", { name: /Message Ines/ }),
   ).not.toBeInTheDocument();
   await user.click(edit);
-  const dialog = screen.getByRole("dialog", { name: "Edit profile" });
-  expect(within(dialog).getByRole("textbox", { name: "Name" })).toHaveValue(
-    "Ines",
+  let form = screen.getByRole("form", { name: "Edit profile" });
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  const name = within(form).getByRole("textbox", { name: "Name" });
+  expect(name).toHaveValue("Ines");
+  await waitFor(() => expect(name).toHaveFocus());
+  await user.clear(name);
+  await user.type(name, "Unsaved name");
+  await user.click(within(form).getByRole("button", { name: "Cancel" }));
+  expect(update).not.toHaveBeenCalled();
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Ines");
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Edit profile" })).toHaveFocus(),
   );
-  await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
-  await waitFor(() => expect(edit).toHaveFocus());
+  await user.click(screen.getByRole("button", { name: "Edit profile" }));
+  form = screen.getByRole("form", { name: "Edit profile" });
+  const restoredName = within(form).getByRole("textbox", { name: "Name" });
+  expect(restoredName).toHaveValue("Ines");
+  await user.clear(restoredName);
+  await user.click(within(form).getByRole("button", { name: "Save changes" }));
+  expect(await within(form).findByRole("alert")).toHaveTextContent(
+    "Enter a name.",
+  );
+  expect(update).not.toHaveBeenCalled();
+  await user.type(restoredName, "Ines, locally");
+  const bio = within(form).getByRole("textbox", { name: "Bio" });
+  await user.clear(bio);
+  await user.type(bio, "Walking slowly.");
+  await user.click(within(form).getByRole("button", { name: "Save changes" }));
+  expect(update).toHaveBeenCalledExactlyOnceWith({
+    name: "Ines, locally",
+    bio: "Walking slowly.",
+  });
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+    "Ines, locally",
+  );
+  await user.click(screen.getByRole("button", { name: "Edit profile" }));
+  form = screen.getByRole("form", { name: "Edit profile" });
+  expect(within(form).getByRole("textbox", { name: "Name" })).toHaveValue(
+    "Ines, locally",
+  );
+  await user.keyboard("{Escape}");
+  expect(
+    screen.queryByRole("form", { name: "Edit profile" }),
+  ).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Edit profile" })).toHaveFocus(),
+  );
 });
 
 it("shows a two-person status and icon-only message, and moves unfriend feedback below the controls", async () => {

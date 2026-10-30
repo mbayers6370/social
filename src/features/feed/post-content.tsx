@@ -63,10 +63,10 @@ export function Avatar({
 
 export function PostAuthor({
   post,
-  profileDate = false,
+  actions,
 }: {
   post: FeedPost;
-  profileDate?: boolean;
+  actions?: ReactNode;
 }) {
   return (
     <header className="margin-post-author">
@@ -76,19 +76,10 @@ export function PostAuthor({
           <PersonLink person={post.author}>{post.author.name}</PersonLink>
         </h2>
         <time className="margin-post-time" dateTime={post.createdAt}>
-          {profileDate && (
-            <span className="margin-profile-card-date">
-              {new Intl.DateTimeFormat("en-GB", {
-                day: "numeric",
-                month: "short",
-                timeZone: "America/Los_Angeles",
-              }).format(new Date(post.createdAt))}{" "}
-              ·{" "}
-            </span>
-          )}
           {postTime(post.createdAt)}
         </time>
       </div>
+      {actions}
     </header>
   );
 }
@@ -145,6 +136,15 @@ export function PostFooter({
     <footer className="margin-post-footer">
       {profileDate && (
         <div className="margin-post-details">
+          <time className="margin-post-published" dateTime={post.createdAt}>
+            Posted{" "}
+            {new Intl.DateTimeFormat("en-GB", {
+              day: "numeric",
+              month: "short",
+              timeZone: FEED_TIME_ZONE,
+            }).format(new Date(post.createdAt))}
+          </time>
+          <span aria-hidden="true">·</span>
           <time className="margin-post-expiry" dateTime={post.expiresAt}>
             Expires{" "}
             {new Intl.DateTimeFormat("en-GB", {

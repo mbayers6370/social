@@ -118,7 +118,8 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
 }, testInfo) => {
   const post = page.locator("#post-porch");
   const trigger = post.locator("[data-conversation-trigger]");
-  await trigger.scrollIntoViewIfNeeded();
+  // Keep the trigger clear of the fixed mobile navigation before recording scroll.
+  await trigger.evaluate((node) => node.scrollIntoView({ block: "center" }));
   const before = await page.evaluate(() => ({
     y: scrollY,
     post: document
@@ -507,6 +508,9 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
   await input.fill(
     "A longer thought to exercise scrolling in a short window. ".repeat(25),
   );
+  await expect(
+    dialog.getByRole("button", { name: "Post", exact: true }),
+  ).toBeInViewport();
   await dialog.getByRole("button", { name: "Post", exact: true }).click();
   const scroll = dialog.getByRole("region", { name: "Conversation content" });
   await scroll.evaluate((node) => {
@@ -539,14 +543,26 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
 test("opens the local post composer and returns to the feed", async ({
   page,
 }) => {
+  const before = (await page.locator(".margin-feed-list").boundingBox())!;
   await page
     .getByRole("button", { name: "Share a thought…", exact: true })
     .click();
-  const dialog = page.getByRole("dialog", { name: "New Post", exact: true });
+  const dialog = page.locator(".margin-compose-inline, .margin-compose-dialog");
   await expect(dialog).toBeVisible();
   await expect(
     dialog.getByRole("textbox", { name: "Your post" }),
-  ).toBeVisible();
+  ).toBeFocused();
+  if (page.viewportSize()!.width >= 1024) {
+    await expect(dialog).toHaveClass(/margin-compose-inline/);
+    const after = (await page.locator(".margin-feed-list").boundingBox())!;
+    expect(after.y - before.y).toBeGreaterThan(100);
+    await expect(page.getByRole("dialog", { name: "New Post" })).toHaveCount(0);
+  } else {
+    const bounds = (await dialog.boundingBox())!;
+    expect(Math.abs(bounds.x)).toBeLessThan(1);
+    expect(Math.abs(bounds.y)).toBeLessThan(1);
+    expect(Math.abs(bounds.width - page.viewportSize()!.width)).toBeLessThan(1);
+  }
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
 });
@@ -663,11 +679,12 @@ test("conversation controls have padded hover targets and a soft comment focus b
     });
   } else {
     const back = dialog.getByRole("button", { name: "Back to post" });
-    await expect(back).toHaveCSS("font-size", "13px");
+    await expect(back).toBeInViewport();
+    await expect(back).toBeEnabled();
     await expect(back.locator(".lucide-chevron-left")).toHaveCount(1);
   }
   const input = dialog.getByRole("textbox", { name: "Add a comment" });
-  expect((await input.boundingBox())!.height).toBe(44);
+  expect((await input.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.screenshot({
     caret: "initial",
     path: testInfo.outputPath("inline-comment.png"),

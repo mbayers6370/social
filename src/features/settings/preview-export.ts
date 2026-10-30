@@ -83,7 +83,7 @@ export function createPreviewExport(
       postId,
       liked: value.liked,
       comments: value.comments
-        .filter((comment) => comment.author.id === "local-viewer")
+        .filter((comment) => comment.author.id === viewerId)
         .map((comment) => ({
           id: comment.id,
           body: comment.body,

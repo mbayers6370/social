@@ -6,8 +6,6 @@ import type { Person } from "@/features/feed/schema";
 import { cn } from "@/lib/utils";
 
 export function profileHref(personId: string) {
-  // Locally added comments use this alias for the signed-in preview identity.
-  if (personId === "local-viewer") return "/?view=profile";
   return `/?view=profile&person=${encodeURIComponent(personId)}`;
 }
 

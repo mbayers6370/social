@@ -38,6 +38,24 @@ it("filters sensitive data from the actual SDK's outbound event envelope", async
       });
       scope.addEventProcessor((event) => ({
         ...event,
+        exception: {
+          values: [
+            {
+              type: "sensitive-custom-error",
+              value: "sensitive-message",
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      "https://example.com/sensitive-upload.js?token=sensitive-query",
+                    function: "sensitive-function",
+                    lineno: 12,
+                  },
+                ],
+              },
+            },
+          ],
+        },
         request: {
           url: "https://example.com/?token=sensitive-query",
           headers: {

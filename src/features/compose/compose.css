@@ -2,17 +2,24 @@
 .margin-feed-composer {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 36px minmax(0, 1fr) 44px;
   align-items: center;
   gap: var(--space-related);
   width: 100%;
   min-width: 0;
-  padding: 16px;
+  padding: 10px 16px;
   border: 1px solid hsl(var(--border) / 0.65);
   border-radius: var(--radius-card);
   background: hsl(var(--card));
   color: hsl(var(--ink));
   --ring: var(--blackened-olive);
+}
+.margin-feed-composer .margin-avatar {
+  --margin-avatar-size: 36px;
+}
+.margin-feed-composer[data-expanded="true"] {
+  display: block;
+  padding-block: 16px;
 }
 .margin-feed-compose-prompt {
   justify-content: flex-start;
@@ -20,8 +27,8 @@
   min-width: 0;
   min-height: 44px;
   height: auto;
-  padding: 10px 16px;
-  border: 1px solid hsl(var(--border) / 0.65);
+  padding: 10px 0 10px 12px;
+  border: 0;
   border-radius: var(--radius-control);
   background: transparent;
   text-align: left;
@@ -29,17 +36,17 @@
   color: hsl(var(--ink));
 }
 .margin-feed-compose-prompt:hover {
-  background: hsl(var(--surface-heading));
+  background: hsl(var(--accent));
   color: hsl(var(--ink));
 }
 .margin-feed-compose-photo {
   color: hsl(var(--blackened-olive));
-  background: hsl(var(--citron));
-  border: 1px solid hsl(var(--blackened-olive));
+  background: transparent;
+  border: 1px solid hsl(var(--border));
   border-radius: var(--radius-control);
 }
 .margin-feed-compose-photo:hover {
-  background: hsl(var(--citron) / 0.85);
+  background: hsl(var(--accent));
 }
 .margin-feed-compose-photo svg {
   width: 22px;
@@ -63,28 +70,17 @@
   .margin-feed-composer {
     padding-inline: 12px;
   }
-  .margin-feed-compose-prompt {
-    padding-inline: 12px;
-  }
 }
 .margin-new-post-button {
-  display: none;
-  border-color: hsl(var(--blackened-olive) / 0.55);
-  background: hsl(var(--surface-heading));
+  display: inline-flex;
+  height: 44px;
+  border-color: hsl(var(--blackened-olive));
+  background: hsl(var(--citron));
   color: hsl(var(--blackened-olive));
 }
 .margin-new-post-button:hover {
-  background: hsl(var(--blackened-olive) / 0.08);
+  background: hsl(var(--citron) / 0.85);
   color: hsl(var(--blackened-olive));
-}
-@media (min-width: 1024px) {
-  .margin-new-post-button {
-    display: inline-flex;
-    border-radius: var(--radius-control);
-    padding-inline: 20px;
-    height: 44px;
-    font-weight: 400;
-  }
 }
 .margin-compose-dialog {
   display: flex;
@@ -98,6 +94,55 @@
   border-radius: 0;
   padding: 0;
   gap: 0;
+}
+.margin-compose-dialog.margin-compose-feed {
+  left: 0;
+  top: 0;
+  transform: none;
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+}
+.margin-compose-inline {
+  min-width: 0;
+  animation: margin-compose-expand 180ms ease-out;
+}
+.margin-compose-inline .margin-compose-header {
+  margin: -16px -16px 16px;
+  padding: 16px;
+  border-bottom: 1px solid hsl(var(--border) / 0.65);
+}
+.margin-compose-inline .margin-compose-title {
+  font: 500 var(--text-control)/1.5 var(--font-body);
+}
+.margin-compose-inline .margin-compose-editor {
+  padding: 0;
+  overflow: visible;
+  gap: 16px;
+}
+.margin-compose-inline .margin-compose-actions {
+  margin: 16px -16px -16px;
+  padding: 16px;
+}
+@keyframes margin-compose-expand {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .margin-compose-inline {
+    animation: none;
+  }
+}
+html[data-motion="reduced"] .margin-compose-inline {
+  animation: none;
 }
 .margin-compose-header {
   flex-shrink: 0;
@@ -239,7 +284,7 @@
   border-radius: 8px;
   padding: 8px;
 }
-.margin-compose-footer {
+.margin-compose-tools {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -252,9 +297,17 @@
   padding-top: 4px;
 }
 .margin-compose-allowances {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
+  display: grid;
+  flex: 1 1 180px;
+  min-width: 0;
+  gap: 4px;
+  text-align: right;
+}
+@media (max-width: 639px) {
+  .margin-compose-allowances {
+    flex-basis: 100%;
+    text-align: left;
+  }
 }
 .margin-compose-rules summary {
   display: flex;

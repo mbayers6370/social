@@ -66,15 +66,7 @@
   font-size: var(--text-meta);
   color: hsl(var(--muted-foreground));
 }
-.margin-comment-meta .margin-reply {
-  margin-left: auto;
-  padding-inline: 8px;
-  min-width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  color: hsl(var(--muted-foreground));
-  font-size: var(--text-control);
-}
+
 .margin-comment-main > p {
   margin-top: 4px;
   font-size: var(--text-body);
@@ -147,10 +139,20 @@
   margin-bottom: 8px;
 }
 .margin-no-comments {
-  padding-block: var(--space-group) 0;
-  font-size: var(--text-body);
-  line-height: 1.6;
-  color: hsl(var(--muted-foreground));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  align-self: center;
+  width: 100%;
+  max-width: 36ch;
+  min-height: 5rem;
+  padding-block: 20px;
+  margin: 0;
+  color: hsl(var(--note-foreground));
+  font: 0.875rem/1.6 var(--font-body);
+  text-align: center;
+  text-wrap: balance;
 }
 @media (min-width: 1024px) {
   .margin-comment {
@@ -168,10 +170,6 @@
   }
   .margin-author-label {
     font-size: var(--text-meta);
-  }
-  .margin-no-comments {
-    margin-top: 0;
-    font-size: var(--text-body);
   }
   .margin-comment-form[data-compact="true"] {
     padding: 0;
@@ -217,4 +215,44 @@
   line-height: 1.5;
   resize: none;
   overflow: hidden;
+}
+
+.margin-comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  margin-left: -8px;
+}
+.margin-comment-actions > button {
+  min-width: 44px;
+  min-height: 44px;
+  padding-inline: 8px;
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+  font: 400 var(--text-meta)/1.4 var(--font-body);
+}
+.margin-comment-actions > .margin-report-control {
+  margin-left: auto;
+}
+.margin-comment-edited {
+  color: hsl(var(--note-foreground));
+  font: var(--text-note)/1.5 var(--font-body);
+}
+.margin-comment-deleted {
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+.margin-comment-editor {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.margin-comment-editor textarea {
+  width: 100%;
+  min-height: 100px;
+  border: 1px solid hsl(var(--input));
+  border-radius: 8px;
+  background: hsl(var(--card));
+  padding: 12px;
 }

@@ -27,7 +27,7 @@ import { PostAuthor, PostContent, PostFooter } from "./post-content";
 import { CommentForm } from "./comment-form";
 import { ConversationComments } from "./conversation-comments";
 import { groupCommentThreads } from "./comment-threads";
-import type { FeedPost } from "./schema";
+import type { FeedPost, Person } from "./schema";
 import type { PreviewAction, PreviewPostState } from "./state";
 
 export type ConversationSelection = {
@@ -35,6 +35,7 @@ export type ConversationSelection = {
   post: FeedPost;
   trigger: HTMLElement;
   scrollY: number;
+  documentTop: number;
   rect: { left: number; top: number; width: number; height: number };
 };
 const DESKTOP = "(min-width: 1024px)";
@@ -46,6 +47,7 @@ function subscribeViewport(callback: () => void) {
 
 export function ConversationDialog({
   selection,
+  viewer,
   state,
   referenceTime,
   dispatch,
@@ -55,6 +57,7 @@ export function ConversationDialog({
   forceFlip = false,
 }: {
   selection: ConversationSelection;
+  viewer: Person;
   state: PreviewPostState;
   referenceTime: string;
   dispatch: Dispatch<PreviewAction>;
@@ -390,6 +393,13 @@ export function ConversationDialog({
     };
   }, [frame, desktop, inlineFlip, layout, post.id, onOpened, onClosed, rect]);
 
+  const conversationPreview = (
+    <span className="margin-conversation-trigger">
+      <MessageCircle size={20} aria-hidden="true" strokeWidth={1.5} />
+      <span>Conversation</span>
+    </span>
+  );
+
   return (
     <Dialog.Root
       open
@@ -414,7 +424,7 @@ export function ConversationDialog({
           aria-describedby={`conversation-description-${post.id}`}
           style={
             {
-              "--post-top": `${wideScreen ? rect.top + window.scrollY : rect.top}px`,
+              "--post-top": `${wideScreen ? selection.documentTop : rect.top}px`,
               "--post-height": `${rect.height}px`,
               "--reading-left": `${rect.left}px`,
               "--reading-width": `${rect.width}px`,
@@ -476,25 +486,20 @@ export function ConversationDialog({
             aria-hidden="true"
             inert
           >
-            <PostAuthor
-              post={{ ...post, id: `snapshot-${post.id}` }}
-              profileDate={forceFlip}
-            />
+            {!forceFlip && (
+              <PostAuthor
+                post={{ ...post, id: `snapshot-${post.id}` }}
+                actions={conversationPreview}
+              />
+            )}
             <PostContent post={post} />
-            <PostFooter
-              post={post}
-              profileDate={forceFlip}
-              actions={
-                <span className="margin-conversation-trigger">
-                  <MessageCircle
-                    size={20}
-                    aria-hidden="true"
-                    strokeWidth={1.5}
-                  />
-                  <span>Conversation</span>
-                </span>
-              }
-            />
+            {forceFlip && (
+              <PostFooter
+                post={post}
+                profileDate
+                actions={conversationPreview}
+              />
+            )}
           </div>
           <div className="margin-conversation-back">
             <header className="margin-conversation-header">
@@ -508,7 +513,7 @@ export function ConversationDialog({
                 <ChevronLeft aria-hidden="true" strokeWidth={1.5} />
                 <span>Post</span>
               </Button>
-              <Dialog.Title className="margin-conversation-title">
+              <Dialog.Title className="margin-conversation-title lg:sr-only">
                 Conversation
                 <span className="sr-only"> on {post.author.name}’s post</span>
               </Dialog.Title>
@@ -549,6 +554,7 @@ export function ConversationDialog({
             </Dialog.Description>
             <div
               className="margin-conversation-scroll"
+              data-empty={!comments.length || undefined}
               tabIndex={0}
               role="region"
               aria-label="Conversation content"
@@ -617,6 +623,7 @@ export function ConversationDialog({
             </div>
             <div className="margin-conversation-composer">
               <CommentForm
+                viewer={viewer}
                 post={post}
                 state={state}
                 dispatch={dispatch}

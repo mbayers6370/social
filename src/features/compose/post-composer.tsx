@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   useForm,
@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown, ImagePlus, MoreHorizontal, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { Field, FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import {
@@ -57,16 +58,24 @@ export function PostComposer({
   startWithPhoto = false,
   initialPhotoFile,
   editingPost,
+  inline = false,
+  feed = false,
+  onReturnFocus,
 }: {
   onComplete: () => void;
   startWithPhoto?: boolean;
   initialPhotoFile?: File;
   editingPost?: FriendPost;
+  inline?: boolean;
+  feed?: boolean;
+  onReturnFocus?: () => void;
 }) {
   const preview = usePreview();
+  const { updateDraft } = preview;
   const router = useRouter();
   const [picking, setPicking] = useState(false);
   const [droppedFile, setDroppedFile] = useState(initialPhotoFile);
+  const initialized = useRef(false);
   const {
     register,
     control,
@@ -159,54 +168,82 @@ export function PostComposer({
   const allowanceDay = editingPost
     ? `for ${dateLabel(editingPost.createdAt)}`
     : "today";
+  useEffect(() => {
+    if (!inline || initialized.current) return;
+    const frame = requestAnimationFrame(() => {
+      initialized.current = true;
+      setFocus("body");
+      if (startWithPhoto) {
+        setValue("kind", "post");
+        updateDraft({ kind: "post" });
+        if (canAddPhoto) setPicking(true);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [inline, setFocus, setValue, startWithPhoto, canAddPhoto, updateDraft]);
   return (
-    <DialogContent
-      className="margin-compose-dialog"
-      onOpenAutoFocus={(event) => {
-        event.preventDefault();
+    <ComposerSurface
+      inline={inline}
+      feed={feed}
+      onReturnFocus={onReturnFocus}
+      onActivate={() => {
         setFocus("body");
-        if (startWithPhoto) {
+        if (startWithPhoto && !initialized.current) {
           update("kind", "post");
           if (canAddPhoto) setPicking(true);
         }
+        initialized.current = true;
       }}
+      onCancel={picking ? undefined : onComplete}
     >
       <header className="margin-compose-header">
-        <div className="margin-compose-heading">
-          <DialogTitle className="margin-compose-title">
-            {editingPost ? "Edit Post" : "New Post"}
-          </DialogTitle>
-          {editingPost && (
-            <details className="margin-compose-options">
-              <summary aria-label="Post options" title="Post options">
-                <span className="sr-only">Post options</span>
-                <MoreHorizontal aria-hidden="true" strokeWidth={1.5} />
-              </summary>
-              <div>
-                <DeletePostButton post={editingPost} onDeleted={onComplete} />
-              </div>
-            </details>
-          )}
-        </div>
-        <DialogDescription className="sr-only">
-          For friends. Local preview only.
-        </DialogDescription>
-        <div className="margin-compose-author">
-          <Avatar person={profile.person} linked onNavigate={onComplete} />
-          <div className="margin-compose-author-copy">
-            <strong>
-              <PersonLink person={profile.person} onNavigate={onComplete}>
-                {profile.person.name}
-              </PersonLink>
-            </strong>
-            <span className="margin-note">
-              <Users aria-hidden="true" /> Friends ·{" "}
-              {editingPost
-                ? `Expires ${dateLabel(editingPost.expiresAt)}`
-                : "Disappears after 30 days"}
-            </span>
+        {inline ? (
+          <div className="margin-compose-author">
+            <Avatar person={profile.person} />
+            <h2 className="margin-compose-title">Your post</h2>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="margin-compose-heading">
+              <DialogTitle className="margin-compose-title">
+                {editingPost ? "Edit Post" : "New Post"}
+              </DialogTitle>
+              {editingPost && (
+                <details className="margin-compose-options">
+                  <summary aria-label="Post options" title="Post options">
+                    <span className="sr-only">Post options</span>
+                    <MoreHorizontal aria-hidden="true" strokeWidth={1.5} />
+                  </summary>
+                  <div>
+                    <DeletePostButton
+                      post={editingPost}
+                      onDeleted={onComplete}
+                    />
+                  </div>
+                </details>
+              )}
+            </div>
+            <DialogDescription className="sr-only">
+              For friends. Local preview only.
+            </DialogDescription>
+            <div className="margin-compose-author">
+              <Avatar person={profile.person} linked onNavigate={onComplete} />
+              <div className="margin-compose-author-copy">
+                <strong>
+                  <PersonLink person={profile.person} onNavigate={onComplete}>
+                    {profile.person.name}
+                  </PersonLink>
+                </strong>
+                <span className="margin-note">
+                  <Users aria-hidden="true" /> Friends ·{" "}
+                  {editingPost
+                    ? `Expires ${dateLabel(editingPost.expiresAt)}`
+                    : "Disappears after 30 days"}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
       </header>
       <form
         noValidate
@@ -248,7 +285,12 @@ export function PostComposer({
             ))}
           </div>
           <Field>
-            <Label htmlFor="post-body">Your post</Label>
+            <Label
+              htmlFor="post-body"
+              className={inline ? "sr-only" : undefined}
+            >
+              Your post
+            </Label>
             <textarea
               data-field
               id="post-body"
@@ -375,40 +417,40 @@ export function PostComposer({
             <FieldError>{errors.photoIds.message}</FieldError>
           )}
           {errors.root && <FieldError>{errors.root.message}</FieldError>}
-          <div className="margin-compose-footer">
-            {values.kind === "post" && (
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={!canAddPhoto}
-                onClick={() => setPicking(true)}
-              >
-                <ImagePlus aria-hidden="true" />
-                Add photograph
-              </Button>
-            )}
-          </div>
           <div className="margin-compose-guidance">
-            <div className="margin-compose-allowances">
-              <p
-                className="margin-field-hint"
-                id="posting-allowance"
-                aria-live="polite"
-              >
-                {eligibility.allowed
-                  ? hasLink
-                    ? "This link-containing post will be your only post today."
-                    : `${eligibility.regularRemaining} regular ${eligibility.regularRemaining === 1 ? "post" : "posts"} remaining ${allowanceDay}.`
-                  : eligibility.reason}
-              </p>
-              <p
-                className="margin-field-hint"
-                id="photo-allowance"
-                aria-live="polite"
-              >
-                {Math.max(0, eligibility.imagesRemaining - photoIds.length)}{" "}
-                photographs remaining {allowanceDay}.
-              </p>
+            <div className="margin-compose-tools">
+              {values.kind === "post" && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={!canAddPhoto}
+                  onClick={() => setPicking(true)}
+                >
+                  <ImagePlus aria-hidden="true" />
+                  Add photograph
+                </Button>
+              )}
+              <div className="margin-compose-allowances">
+                <p
+                  className="margin-field-hint"
+                  id="posting-allowance"
+                  aria-live="polite"
+                >
+                  {eligibility.allowed
+                    ? hasLink
+                      ? "This link-containing post will be your only post today."
+                      : `${eligibility.regularRemaining} regular ${eligibility.regularRemaining === 1 ? "post" : "posts"} remaining ${allowanceDay}.`
+                    : eligibility.reason}
+                </p>
+                <p
+                  className="margin-field-hint"
+                  id="photo-allowance"
+                  aria-live="polite"
+                >
+                  {Math.max(0, eligibility.imagesRemaining - photoIds.length)}{" "}
+                  photographs remaining {allowanceDay}.
+                </p>
+              </div>
             </div>
             <details className="margin-compose-rules">
               <summary>
@@ -458,8 +500,12 @@ export function PostComposer({
                   ? "Saving…"
                   : "Save changes"
                 : isSubmitting
-                  ? "Sharing…"
-                  : "Share with friends"}
+                  ? feed
+                    ? "Publishing…"
+                    : "Sharing…"
+                  : feed
+                    ? "Publish"
+                    : "Share with friends"}
             </Button>
           </div>
         </div>
@@ -480,6 +526,58 @@ export function PostComposer({
           setDroppedFile(undefined);
         }}
       />
+    </ComposerSurface>
+  );
+}
+
+function ComposerSurface({
+  inline,
+  feed,
+  onActivate,
+  onReturnFocus,
+  onCancel,
+  children,
+}: {
+  inline: boolean;
+  feed: boolean;
+  onActivate: () => void;
+  onReturnFocus?: () => void;
+  onCancel?: () => void;
+  children: ReactNode;
+}) {
+  if (inline)
+    return (
+      <section
+        className="margin-compose-inline"
+        aria-label="New Post"
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && !event.defaultPrevented && onCancel) {
+            event.preventDefault();
+            event.stopPropagation();
+            onCancel();
+          }
+        }}
+      >
+        {children}
+      </section>
+    );
+  return (
+    <DialogContent
+      className={cn("margin-compose-dialog", feed && "margin-compose-feed")}
+      onOpenAutoFocus={(event) => {
+        event.preventDefault();
+        onActivate();
+      }}
+      onCloseAutoFocus={
+        onReturnFocus
+          ? (event) => {
+              event.preventDefault();
+              onReturnFocus();
+            }
+          : undefined
+      }
+    >
+      {children}
     </DialogContent>
   );
 }

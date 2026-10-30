@@ -9,11 +9,130 @@ datasource db {
 
 /// Internal application identity. Authentication is handled by Clerk; never store credentials here.
 model User {
-  id        String        @id @default(cuid())
-  clerkId   String        @unique
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  songs     ProfileSong[]
+  id              String         @id @default(cuid())
+  clerkId         String         @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  songs           ProfileSong[]
+  safetyReports   SafetyReport[]
+  account         Account?
+  posts           Post[]
+  photos          Photo[]
+  gallery         GalleryEntry[]
+  friendshipsLow  Friendship[]   @relation("FriendLow")
+  friendshipsHigh Friendship[]   @relation("FriendHigh")
+  blocksSent      Block[]        @relation("BlockSender")
+  blocksReceived  Block[]        @relation("BlockRecipient")
+}
+
+/// Activation is separate from provider identity and legacy preview music users.
+model Account {
+  invitationsRemaining Int @default(0)
+  onboardedAt DateTime?
+  ageConfirmedAt DateTime?
+  userId String        @id
+  status AccountStatus @default(PENDING)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  DEACTIVATED
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
+enum PhotoState {
+  PENDING
+  READY
+  DELETE_PENDING
+  PURGED
+}
+
+model Friendship {
+  lowId       String
+  highId      String
+  requesterId String
+  status      FriendshipStatus @default(PENDING)
+  low         User             @relation("FriendLow", fields: [lowId], references: [id], onDelete: Cascade)
+  high        User             @relation("FriendHigh", fields: [highId], references: [id], onDelete: Cascade)
+
+  @@id([lowId, highId])
+  @@index([highId, status])
+}
+
+model Block {
+  blockerId String
+  blockedId String
+  blocker   User   @relation("BlockSender", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User   @relation("BlockRecipient", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+model Post {
+  id        String      @id @default(cuid())
+  ownerId   String
+  body      String
+  hasLink   Boolean
+  dayKey    String
+  createdAt DateTime    @default(now())
+  expiresAt DateTime
+  deletedAt DateTime?
+  owner     User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  photos    PostPhoto[]
+
+  @@unique([id, ownerId])
+  @@index([ownerId, dayKey])
+  @@index([expiresAt])
+}
+
+/// Canonical, normalized private object. Object keys are never returned in DTOs.
+model Photo {
+  id              String        @id @default(cuid())
+  ownerId         String
+  objectKey       String        @unique
+  state           PhotoState    @default(PENDING)
+  dayKey          String
+  createdAt       DateTime      @default(now())
+  uploadExpiresAt DateTime
+  description     String
+  width           Int
+  height          Int
+  byteLength      Int
+  owner           User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  posts           PostPhoto[]
+  gallery         GalleryEntry?
+
+  @@unique([id, ownerId])
+  @@index([ownerId, dayKey, state])
+  @@index([state, uploadExpiresAt])
+}
+
+model PostPhoto {
+  postId  String
+  photoId String
+  ownerId String
+  post    Post   @relation(fields: [postId, ownerId], references: [id, ownerId], onDelete: Cascade)
+  photo   Photo  @relation(fields: [photoId, ownerId], references: [id, ownerId], onDelete: Cascade)
+
+  @@id([postId, photoId])
+  @@index([photoId])
+}
+
+model GalleryEntry {
+  photoId String @id
+  ownerId String
+  photo   Photo  @relation(fields: [photoId, ownerId], references: [id, ownerId], onDelete: Cascade)
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@unique([photoId, ownerId])
+  @@index([ownerId])
 }
 
 /// Three ordered references to catalogue songs. No audio, tokens or artwork bytes.
@@ -31,4 +150,30 @@ model ProfileSong {
 
   @@id([userId, position])
   @@unique([userId, providerTrackId])
+}
+
+/// A single-use bearer invitation. Only a SHA-256 digest is stored.
+model Invitation {
+  createdBy String?
+  id String @id @default(cuid())
+  digest String @unique
+  email String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  claimedBy String?
+}
+
+/// Minimal report records; content access is checked before accepting the target.
+model SafetyReport {
+  id String @id @default(cuid())
+  reporterId String
+  targetKind String
+  targetId String
+  targetPersonId String
+  reason String
+  details String
+  status String @default("RECEIVED")
+  createdAt DateTime @default(now())
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Restrict)
+  @@index([reporterId, createdAt])
 }
