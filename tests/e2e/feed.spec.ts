@@ -1,11 +1,23 @@
 import { expect, test, type Page } from "./fixtures";
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page }, testInfo) => {
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION === "1",
     "Development fixtures are excluded from production",
   );
   await page.goto("/");
+  if (testInfo.project.name === "chromium-scrollbars") {
+    // Exercise classic, permanently reserved scrollbars even on overlay-scrollbar hosts.
+    await page.addStyleTag({
+      content:
+        "html { overflow-y: scroll; } html::-webkit-scrollbar { width: 15px; height: 15px; }",
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(() => innerWidth - document.documentElement.clientWidth),
+      )
+      .toBe(15);
+  }
 });
 
 async function openPost(page: Page, id = "post-fog") {
@@ -150,10 +162,11 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
     expect(moved!.y).toBeCloseTo(before.post.y - scrollDelta, 1);
     expect(panel!.height).toBeCloseTo(moved!.height, 1);
     expect(panel!.y).toBeCloseTo(moved!.y, 1);
-    const width = await page.evaluate(
-      () => document.documentElement.clientWidth,
+    const content = (await page.locator(".margin-main").boundingBox())!;
+    expect((moved!.x + panel!.x + panel!.width) / 2).toBeCloseTo(
+      content.x + content.width / 2,
+      0,
     );
-    expect((moved!.x + panel!.x + panel!.width) / 2).toBeCloseTo(width / 2, 0);
   } else {
     const panel = await dialog.boundingBox();
     expect(panel!.x).toBeCloseTo(0, 0);
@@ -327,13 +340,21 @@ test("keeps the active experience usable when switching between desktop and mobi
   await expect(
     dialog.getByRole("button", { name: "Liked", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
-  const contentWidth = await page.evaluate(
-    () => document.documentElement.clientWidth,
-  );
+  await expect(dialog).toHaveAttribute("aria-modal", "true");
   await expect
-    .poll(async () => (await dialog.boundingBox())?.width)
-    .toBe(contentWidth);
+    .poll(async () =>
+      page.evaluate(() => {
+        const dialog = document.querySelector('[role="dialog"]')!;
+        return Math.abs(
+          dialog.getBoundingClientRect().width -
+            (window.visualViewport?.width ?? window.innerWidth),
+        );
+      }),
+    )
+    .toBeLessThan(1);
   await page.setViewportSize({ width: 1280, height: 700 });
+  await expect(dialog).toHaveAttribute("data-layout", "panel");
+  await expect(dialog).not.toHaveAttribute("aria-modal", "true");
   await expect
     .poll(async () => {
       const panel = await dialog.boundingBox();

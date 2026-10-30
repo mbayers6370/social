@@ -13,6 +13,13 @@ import path from "node:path";
 
 const root = process.cwd();
 const codeOnly = process.argv.includes("--code-only");
+const requiredNode = Number(
+  readFileSync(path.join(root, ".nvmrc"), "utf8").trim().split(".")[0],
+);
+if (!codeOnly && Number(process.versions.node.split(".")[0]) !== requiredNode)
+  throw new Error(
+    `Full verification requires Node ${requiredNode}, matching CI. Switch to the project's Node version before verifying or pushing.`,
+  );
 const git = spawnSync(
   "git",
   ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
