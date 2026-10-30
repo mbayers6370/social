@@ -47,6 +47,11 @@ test("centers empty conversation copy and keeps menu buttons compact", async ({
     name: "Profile menu",
     exact: true,
   });
+  await menu.evaluate(async (node) => {
+    await Promise.all(
+      node.getAnimations().map((animation) => animation.finished),
+    );
+  });
   const signin = menu.getByRole("link", { name: "Sign in", exact: true });
   const exit = menu.getByRole("button", { name: "Exit preview", exact: true });
   const first = (await signin.boundingBox())!,
