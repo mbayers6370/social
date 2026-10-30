@@ -220,7 +220,8 @@ test("public pages expose the footer, practical rules and draft policies on desk
     .boundingBox())!;
   const heroBounds = (await hero.boundingBox())!;
   const viewport = await page.evaluate(() => ({
-    width: document.documentElement.clientWidth,
+    left: document.body.getBoundingClientRect().left,
+    width: document.body.getBoundingClientRect().width,
     gutter: parseFloat(
       getComputedStyle(document.querySelector(".margin-public-header")!)
         .paddingLeft,
@@ -228,7 +229,9 @@ test("public pages expose the footer, practical rules and draft policies on desk
   }));
   const contentWidth = Math.min(1600, viewport.width - 2 * viewport.gutter);
   expect(
-    Math.abs(heroBounds.x - (viewport.width - contentWidth) / 2),
+    Math.abs(
+      heroBounds.x - viewport.left - (viewport.width - contentWidth) / 2,
+    ),
   ).toBeLessThan(1);
   expect(Math.abs(heroBounds.width - contentWidth)).toBeLessThan(1);
   if (page.viewportSize()!.width >= 1024) {

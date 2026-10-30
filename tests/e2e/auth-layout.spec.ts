@@ -21,8 +21,10 @@ test("centers account cards and offers a single direct preview action", async ({
         const box = node.getBoundingClientRect();
         const shell = node.closest(".margin-auth-page")!;
         const style = getComputedStyle(shell);
+        const page = document.body.getBoundingClientRect();
         return {
           x: box.x + box.width / 2,
+          pageCenterX: page.x + page.width / 2,
           y: box.y + box.height / 2,
           fits:
             box.height +
@@ -32,9 +34,7 @@ test("centers account cards and offers a single direct preview action", async ({
           cardTop: box.top,
         };
       });
-      expect(
-        Math.abs(geometry.x - page.viewportSize()!.width / 2),
-      ).toBeLessThan(1);
+      expect(Math.abs(geometry.x - geometry.pageCenterX)).toBeLessThan(1);
       if (geometry.fits)
         expect(
           Math.abs(geometry.y - page.viewportSize()!.height / 2),
