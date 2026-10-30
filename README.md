@@ -44,11 +44,13 @@ npm run hooks:install
 npm run verify
 ```
 
-Install the browser and repository hook once per clone. The pre-push hook runs verification automatically and stops a push on failure. Commit or stash changes first: it checks a clean working tree against the commit being pushed. It does not commit or push for you.
+Use the Node version in `.nvmrc` (`nvm use` if using nvm). Install the browser and repository hook once per clone. The pre-push hook runs verification automatically and stops a push on failure. Commit or stash changes first: it checks a clean working tree against the commit being pushed. It does not commit or push for you.
 
 Verification uses an ignored temporary copy under `.local/` so an open development server can keep running. It excludes real environment files, disables live integrations, and runs formatting, types, lint, styles, unit tests, the production build, desktop/mobile browser tests in development and production, and both dependency audits. Development tests use a fixed server/browser clock. Failed runs retain local reports at the printed path; successful copies are removed.
 
-Use `npm run verify -- --code-only` for formatting, types, lint, styles, unit tests, build and dependency audits without launching browsers. The pre-push hook runs the full suite by default. For an explicitly code-only local push, use `MARGIN_VERIFY_CODE_ONLY=1 git push`; the clean-tree and commit checks remain active, and CI still runs the full browser suites.
+The browser suite includes a classic-scrollbar project for conversation centering and responsive transitions. These are automated layout assertions, separate from manual visual review. CI uploads only the failed run's Playwright reports and test results for seven days, never the whole local directory. Publish fixes through a branch and wait for a successful GitHub run before merging them into `main`; local checks alone do not establish that the CI environment passes.
+
+Use `npm run verify -- --code-only` for quick development checks without launching browsers. Code-only results do not authorize a push: the pre-push hook always runs the complete suite, including development and production Playwright tests. Full verification requires the Node version declared in `.nvmrc`, matching CI. There is no code-only push mode.
 
 Individual checks are also available:
 

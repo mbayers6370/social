@@ -25,18 +25,9 @@ try {
         throw new Error(
           "Check out the commit being pushed and push one tested branch at a time.",
         );
-    const codeOnly = process.env.MARGIN_VERIFY_CODE_ONLY === "1";
-    if (codeOnly)
-      process.stdout.write(
-        "Pre-push: code-only verification requested; browser suites will run in CI.\n",
-      );
-    const result = spawnSync(
-      process.execPath,
-      ["scripts/verify.mjs", ...(codeOnly ? ["--code-only"] : [])],
-      {
-        stdio: "inherit",
-      },
-    );
+    const result = spawnSync(process.execPath, ["scripts/verify.mjs"], {
+      stdio: "inherit",
+    });
     if (result.status !== 0)
       throw new Error("Push stopped because verification failed.");
     if (git("rev-parse", "HEAD") !== head || git("status", "--porcelain"))

@@ -345,7 +345,7 @@ export function ConversationDialog({
                   offset: 1,
                   left: "0px",
                   top: "0px",
-                  width: "100%",
+                  width: "100vw",
                   height: "100dvh",
                   transform: "perspective(1200px) rotateY(-180deg)",
                   borderRadius: "0px",

@@ -32,6 +32,15 @@ export default defineConfig({
       name: "mobile",
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
     },
+    {
+      name: "chromium-scrollbars",
+      testMatch: /feed\.spec\.ts/,
+      grep: /opens the correct conversation, keeps Like|keeps the active experience usable/,
+      use: {
+        ...devices["Desktop Chrome"],
+        launchOptions: { ignoreDefaultArgs: ["--hide-scrollbars"] },
+      },
+    },
   ],
   webServer: runningLocalUrl
     ? undefined
