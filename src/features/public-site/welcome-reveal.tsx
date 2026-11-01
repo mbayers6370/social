@@ -3,7 +3,15 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /** Only the visibility trigger is client-side; the example content stays server-rendered. */
-export function WelcomeReveal({ children }: { children: ReactNode }) {
+export function WelcomeReveal({
+  children,
+  label = "Feed and conversation",
+  className = "",
+}: {
+  children: ReactNode;
+  label?: string;
+  className?: string;
+}) {
   const figure = useRef<HTMLElement>(null);
   const [active, setActive] = useState(false);
 
@@ -37,8 +45,8 @@ export function WelcomeReveal({ children }: { children: ReactNode }) {
   return (
     <figure
       ref={figure}
-      className="margin-welcome-preview"
-      aria-label="Example post and conversation"
+      className={`margin-welcome-preview ${className}`.trim()}
+      aria-label={label}
       data-reveal={active ? "active" : undefined}
     >
       {children}

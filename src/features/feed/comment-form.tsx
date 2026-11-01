@@ -10,11 +10,17 @@ import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { PersonLink } from "@/components/shared/person-link";
-import { commentInputSchema, type CommentInput, type FeedPost } from "./schema";
+import {
+  commentInputSchema,
+  type CommentInput,
+  type FeedPost,
+  type Person,
+} from "./schema";
 import type { PreviewAction, PreviewPostState } from "./state";
 
 export function CommentForm({
   post,
+  viewer,
   state,
   dispatch,
   textareaRef,
@@ -22,6 +28,7 @@ export function CommentForm({
   onPosted,
 }: {
   post: FeedPost;
+  viewer: Person;
   state: PreviewPostState;
   dispatch: Dispatch<PreviewAction>;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -77,12 +84,7 @@ export function CommentForm({
           total: post.comments.length + state.comments.length + 1,
           comment: {
             id: commentId,
-            author: {
-              id: "local-viewer",
-              name: "You",
-              initials: "YO",
-              tone: "paper",
-            },
+            author: viewer,
             body,
             createdAt,
             ...(state.replyTo ? { replyTo: state.replyTo.id } : {}),
@@ -116,7 +118,7 @@ export function CommentForm({
           </Button>
         </div>
       )}
-      <Label htmlFor={id}>
+      <Label htmlFor={id} className="sr-only">
         {state.replyTo ? `Reply to ${state.replyTo.name}` : "Add a comment"}
       </Label>
       <div className="margin-comment-input" data-field>

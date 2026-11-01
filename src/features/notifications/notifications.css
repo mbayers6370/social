@@ -231,7 +231,6 @@
   color: hsl(var(--muted-foreground));
 }
 .margin-notification-preferences {
-  margin-top: 40px;
   scroll-margin-top: 24px;
 }
 .margin-notification-preferences > p {
@@ -261,8 +260,8 @@
 }
 .margin-notification-preference span > span {
   display: block;
-  font-size: var(--text-body);
-  line-height: 1.6;
+  font-size: var(--text-control);
+  line-height: 1.5;
   color: hsl(var(--muted-foreground));
 }
 @media (min-width: 1024px) {

@@ -17,6 +17,7 @@ import theoFootball from "@/assets/fixtures/Theo-football.jpg";
 import maraPortrait from "@/assets/fixtures/mara-profile.jpg";
 import maraRiver from "@/assets/fixtures/mara-photography.jpg";
 import maraStreet from "@/assets/fixtures/mara-photography-2.jpg";
+import nadiaPortrait from "@/assets/fixtures/Haddad-3.jpg";
 
 export function imageData(image: {
   src: string;
@@ -60,6 +61,13 @@ const mara: Person = {
   initials: "ML",
   tone: "sage",
   photo: imageData(maraPortrait),
+};
+const nadia: Person = {
+  id: "nadia",
+  name: "Nadia Haddad",
+  initials: "NH",
+  tone: "paper",
+  photo: imageData(nadiaPortrait),
 };
 const referenceTime = "2026-10-27T17:42:00Z";
 
@@ -130,12 +138,7 @@ const posts: FeedPost[] = [
       },
       {
         id: "fog-6",
-        author: {
-          id: "nadia",
-          name: "Nadia Haddad",
-          initials: "NH",
-          tone: "paper",
-        },
+        author: nadia,
         body: "We went in August and could barely see the water. Still had a good time.",
         createdAt: "2026-10-27T17:14:00Z",
       },

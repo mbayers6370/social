@@ -102,7 +102,7 @@ it("starts a post with the dropped file, requires its description and attaches i
       screen.queryByRole("dialog", { name: "Choose a photograph" }),
     ).not.toBeInTheDocument(),
   );
-  const composer = screen.getByRole("dialog", { name: "New Post" });
+  const composer = screen.getByRole("region", { name: "New Post" });
   expect(
     within(composer).getByRole("img", { name: "A quiet morning by the sea" }),
   ).toBeInTheDocument();
@@ -113,9 +113,7 @@ it("starts a post with the dropped file, requires its description and attaches i
     within(composer).getByRole("textbox", { name: "Your post" }),
     "A morning worth keeping.",
   );
-  await user.click(
-    within(composer).getByRole("button", { name: "Share with friends" }),
-  );
+  await user.click(within(composer).getByRole("button", { name: "Publish" }));
   await waitFor(() =>
     expect(
       JSON.parse(screen.getByTestId("state").textContent!).posts,
@@ -172,6 +170,9 @@ it.each(["posts", "images", "gallery"])(
       quota === "posts" ? /three-post limit/ : /photographs/,
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "New Post" }),
+    ).not.toBeInTheDocument();
     expect(decode).not.toHaveBeenCalled();
     expect(
       JSON.parse(screen.getByTestId("state").textContent!).photos,
@@ -191,6 +192,9 @@ it("rejects unreadable and multiple files without starting a post", async () => 
     "Drop one photograph at a time.",
   );
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("region", { name: "New Post" }),
+  ).not.toBeInTheDocument();
 });
 
 it("leaves mobile and non-file drags to the browser and keeps the photo button available", () => {
@@ -203,5 +207,8 @@ it("leaves mobile and non-file drags to the browser and keeps the photo button a
     }),
   ).toBe(true);
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("region", { name: "New Post" }),
+  ).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "New photo post" })).toBeEnabled();
 });

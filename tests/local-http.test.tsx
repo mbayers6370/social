@@ -72,10 +72,12 @@ it("opens a mobile conversation, records its history marker, posts a comment and
   const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
   render(
     <ConversationDialog
+      viewer={post.author}
       selection={{
         post,
         trigger: document.createElement("button"),
         scrollY: 0,
+        documentTop: 0,
         rect: { left: 24, top: 100, width: 342, height: 400 },
       }}
       state={previewPostState({}, post.id)}
@@ -169,10 +171,12 @@ it("keeps a desktop conversation's post below the sticky header when aligning th
       <header className="margin-header" />
       <article id={post.id}>The original post</article>
       <ConversationDialog
+        viewer={post.author}
         selection={{
           post,
           trigger: document.createElement("button"),
           scrollY: 0,
+          documentTop: 0,
           rect: { left: 320, top: 16, width: 600, height: 400 },
         }}
         state={previewPostState({}, post.id)}

@@ -4,7 +4,7 @@ import { PublicHome } from "@/features/public-site/public-home";
 import { notFound } from "next/navigation";
 import { MarginShell } from "@/components/layout/margin-shell";
 import { FeedExperience } from "@/features/feed/feed-experience";
-import { Avatar, PostAuthor, PostContent } from "@/features/feed/post-content";
+import { Avatar, PostContent } from "@/features/feed/post-content";
 import { chronologicalPosts } from "@/features/feed/format";
 
 export const viewport: Viewport = {
@@ -120,13 +120,11 @@ export default async function HomePage({
           renderedPosts={Object.fromEntries(
             feedPosts.map((post) => [
               post.id,
-              <div key={post.id}>
-                <PostAuthor post={post} />
-                <PostContent
-                  post={post}
-                  highPriority={post.id === firstPhotoId}
-                />
-              </div>,
+              <PostContent
+                key={post.id}
+                post={post}
+                highPriority={post.id === firstPhotoId}
+              />,
             ]),
           )}
         />

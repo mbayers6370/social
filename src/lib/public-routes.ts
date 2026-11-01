@@ -1,6 +1,8 @@
 /** Exact public pages only. Never broaden this to arbitrary support/API prefixes. */
 export const PUBLIC_PAGE_PATHS = [
   "/welcome",
+  "/sign-in",
+  "/sign-up",
   "/why-margin",
   "/how-it-works",
   "/join",

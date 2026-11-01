@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Caudex, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { AccountSession } from "@/components/auth/account-session";
 import "@/styles/globals.css";
 import "@/styles/application.css";
 
@@ -43,6 +44,8 @@ export default async function RootLayout({
     const { PreviewProvider } =
       await import("@/features/local-preview/provider");
     const { getDevelopmentSocial } = await import("@/server/fixtures/social");
+    const { loadDevelopmentFriendProfile } =
+      await import("@/server/fixtures/friend-profile-action");
     const bootstrap = getDevelopmentSocial();
     bootstrap.profiles = bootstrap.profiles.map((profile) =>
       profile.person.id === bootstrap.viewerId
@@ -63,7 +66,12 @@ export default async function RootLayout({
       }
     }
     content = (
-      <PreviewProvider bootstrap={bootstrap}>{content}</PreviewProvider>
+      <PreviewProvider
+        bootstrap={bootstrap}
+        loadFriendProfileAction={loadDevelopmentFriendProfile}
+      >
+        {content}
+      </PreviewProvider>
     );
   }
   return (
@@ -74,6 +82,7 @@ export default async function RootLayout({
           <ClerkProvider
             dynamic
             signInUrl="/sign-in"
+            signUpUrl="/sign-up"
             appearance={{
               variables: {
                 fontFamily: "var(--font-body)",
@@ -102,10 +111,10 @@ export default async function RootLayout({
               },
             }}
           >
-            {content}
+            <AccountSession enabled>{content}</AccountSession>
           </ClerkProvider>
         ) : (
-          content
+          <AccountSession enabled={false}>{content}</AccountSession>
         )}
       </body>
     </html>

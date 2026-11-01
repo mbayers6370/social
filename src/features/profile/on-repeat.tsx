@@ -10,9 +10,11 @@ import { ProfileSection } from "./profile-section";
 export function OnRepeat({
   tracks,
   own,
+  restricted = false,
 }: {
   tracks: ProfileTrack[];
   own: boolean;
+  restricted?: boolean;
 }) {
   return (
     <ProfileSection
@@ -41,7 +43,7 @@ export function OnRepeat({
         >
           On Repeat
         </SectionTitle>
-        {own && (
+        {own && !restricted && (
           <Dialog>
             <DialogTrigger asChild>
               <button type="button" className="margin-section-link">
@@ -53,7 +55,9 @@ export function OnRepeat({
           </Dialog>
         )}
       </header>
-      {tracks.length ? (
+      {restricted ? (
+        <p className="margin-empty-copy">Songs are shared with friends.</p>
+      ) : tracks.length ? (
         <ul className="margin-on-repeat-list" aria-label="On repeat songs">
           {tracks.map((track) => (
             <li key={track.id}>

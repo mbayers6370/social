@@ -20,6 +20,19 @@ const animated = () =>
     "Animated images aren’t allowed. Choose a still JPEG, PNG, or WebP photograph.",
   );
 
+function assertDimensions(width: number, height: number) {
+  if (
+    !width ||
+    !height ||
+    width > PHOTO_MAX_DIMENSION ||
+    height > PHOTO_MAX_DIMENSION ||
+    width * height > PHOTO_MAX_PIXELS
+  )
+    throw new PhotoPolicyError(
+      "Choose an image up to 10,000 pixels per side and 40 megapixels.",
+    );
+}
+
 export function assertStillPhoto(
   bytes: Uint8Array,
   type: string,
@@ -69,6 +82,11 @@ export function assertStillPhoto(
       if (["acTL", "fcTL", "fdAT"].includes(kind)) throw animated();
       if (length > bytes.length - cursor - 12) throw invalid();
       if (cursor === 8 && (kind !== "IHDR" || length !== 13)) throw invalid();
+      if (cursor === 8)
+        assertDimensions(
+          view.getUint32(cursor + 8),
+          view.getUint32(cursor + 12),
+        );
       if (kind === "IDAT") image = true;
       cursor += length + 12;
       if (kind === "IEND") {
@@ -95,7 +113,35 @@ export function assertStillPhoto(
       )
         throw animated();
       if (length > bytes.length - cursor - 8) throw invalid();
-      if (["VP8 ", "VP8L"].includes(kind)) image = true;
+      const start = cursor + 8;
+      if (kind === "VP8X") {
+        if (cursor !== 12 || length !== 10) throw invalid();
+        const u24 = (offset: number) =>
+          bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16);
+        assertDimensions(1 + u24(start + 4), 1 + u24(start + 7));
+      }
+      if (kind === "VP8 ") {
+        if (
+          length < 10 ||
+          (bytes[start] & 1) !== 0 ||
+          ![0x9d, 0x01, 0x2a].every(
+            (byte, index) => bytes[start + 3 + index] === byte,
+          )
+        )
+          throw invalid();
+        assertDimensions(
+          view.getUint16(start + 6, true) & 0x3fff,
+          view.getUint16(start + 8, true) & 0x3fff,
+        );
+        image = true;
+      }
+      if (kind === "VP8L") {
+        if (length < 5 || bytes[start] !== 0x2f) throw invalid();
+        const header = view.getUint32(start + 1, true);
+        if (header >>> 29) throw invalid();
+        assertDimensions(1 + (header & 0x3fff), 1 + ((header >>> 14) & 0x3fff));
+        image = true;
+      }
       cursor += 8 + length + (length % 2);
     }
     if (cursor === bytes.length && image) return;

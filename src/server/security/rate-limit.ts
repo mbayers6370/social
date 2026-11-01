@@ -3,7 +3,10 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { getRedis } from "@/server/cache";
 
 // Add named, reviewed policies rather than accepting limits supplied by a request.
-const policies = { mutation: { requests: 10, window: "1 m" } } as const;
+const policies = {
+  mutation: { requests: 10, window: "1 m" },
+  invitation: { requests: 20, window: "1 m" },
+} as const;
 const limiters = new Map<keyof typeof policies, Ratelimit>();
 
 export class RateLimitError extends Error {
@@ -13,7 +16,7 @@ export class RateLimitError extends Error {
   }
 }
 
-/** Call after authentication using the verified session subject. Redis errors propagate (fail closed). */
+/** Use a verified subject for account operations; invitation verification uses a fixed shared anonymous gate. Redis errors fail closed. */
 export async function enforceRateLimit(
   policy: keyof typeof policies,
   subject: string,

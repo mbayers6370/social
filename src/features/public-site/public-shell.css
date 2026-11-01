@@ -65,20 +65,10 @@
   color: hsl(var(--muted-foreground));
 }
 .margin-public-footer {
-  border-top: 1px solid hsl(var(--secondary-border));
   background: hsl(var(--secondary));
 }
 .margin-public-footer-inner {
   width: 100%;
-}
-.margin-public-footer-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 22px;
-  padding-block: 28px 24px;
-  padding-inline: var(--site-gutter);
 }
 .margin-public-footer-groups {
   display: grid;
@@ -86,7 +76,7 @@
   gap: 28px;
   padding-block: 26px;
   padding-inline: var(--site-gutter);
-  border-block: 1px solid hsl(var(--header-foreground) / 0.2);
+  border-bottom: 1px solid hsl(var(--header-foreground) / 0.2);
 }
 .margin-public-footer-groups h2 {
   font-size: var(--text-body);
@@ -124,14 +114,29 @@
   color: hsl(var(--ink));
   background: hsl(var(--citron) / 0.9);
 }
-@media (max-width: 1023px) {
+.margin-public-site:has(.margin-public-hero)
+  .margin-public-primary
+  > .margin-public-information {
+  display: none;
+}
+@media (max-width: 639px) {
   .margin-public-site:has(.margin-public-hero) .margin-public-header {
-    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+  .margin-public-site:has(.margin-public-hero) .margin-public-primary {
+    gap: 10px;
+    flex-wrap: nowrap;
   }
   .margin-public-site:has(.margin-public-hero)
     .margin-public-header
-    .margin-public-primary {
-    display: none;
+    > .margin-brand-link {
+    --brand-wordmark-size: 1.5rem;
+    --brand-corner-size: 9px;
+    --brand-corner-gap: 4px;
+  }
+  .margin-public-primary .margin-public-join {
+    padding-inline: 12px;
   }
 }
 @media (min-width: 640px) {
@@ -140,9 +145,6 @@
   }
   .margin-public-primary .margin-public-join {
     padding-inline: 20px;
-  }
-  .margin-public-footer-top {
-    padding-top: 32px;
   }
   .margin-public-footer-bottom {
     padding-bottom: 32px;
@@ -158,4 +160,10 @@
     z-index: 35;
     flex-shrink: 0;
   }
+}
+
+.margin-public-primary .margin-public-sign-in {
+  padding: 8px 12px;
+  border: 1px solid hsl(var(--header-foreground) / 0.5);
+  border-radius: var(--radius-control);
 }

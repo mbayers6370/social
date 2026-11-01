@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { PublicHome } from "@/features/public-site/public-home";
 export const metadata: Metadata = {
-  title: { absolute: "margin · A little less, a little closer." },
+  title: { absolute: "margin · A small social space for friends" },
   description:
-    "A social space for friends. Share a thought, a photograph, a little of your day. Catch up with your people, then get back to living.",
+    "Stay close to the lives you care about. Margin is a social space for friends, in development, with a finite feed, photographs and conversations.",
 };
 export default function Page() {
   return <PublicHome />;

@@ -14,7 +14,7 @@ npm run dev
 
 Open [localhost:3000](http://localhost:3000). Development includes the feed, Messages, Profile, Friends, Gallery, Settings, and `/design-system`, using fictional accounts without cloud credentials. `/welcome` previews the public website.
 
-Social posts, messages, uploads, friendships, preferences, and drafts are local previews. Most state, including unsent message drafts, survives navigation within the tab and resets on refresh. Messages added to the preview reset when leaving Messages. Uploaded photographs stay in browser memory and are never sent to a server.
+Social posts, messages, uploads, friendships, preferences, and drafts are local previews. State, including added messages and unsent drafts, survives navigation within the tab and resets on refresh. Uploaded photographs stay in browser memory and are never sent to a server.
 
 On Repeat supports live Apple catalogue search and optional local PostgreSQL persistence. See [local music setup](docs/music-search.md).
 
@@ -28,7 +28,7 @@ For phone testing, set `MARGIN_DEV_ALLOWED_HOSTS` to exact hostnames in your ign
 
 - **Clerk:** authentication keys and the canonical app origin. Configure domains, redirects, and account policy in Clerk.
 - **PostgreSQL:** `DATABASE_URL` for Prisma. Review migrations before running `npm run db:migrate` against the intended development database.
-- **Cloudflare R2:** private bucket and scoped credentials. Production user-media upload/delivery is not implemented.
+- **Cloudflare R2:** private bucket and scoped credentials. The disabled private-backend slice includes upload/delivery adapters; hosted bucket permissions remain unverified.
 - **Upstash Redis:** REST endpoint and token for server rate limits.
 - **Sentry:** DSN and project settings; use an upload token only in trusted build environments.
 
@@ -36,21 +36,31 @@ Prisma scripts load `.env` explicitly. The optional local database command uses 
 
 ## Checks
 
-Before pushing, use the same verification command as CI:
+For everyday edits, run the quick checks. Optionally name the unit test files relevant to the change:
+
+```sh
+npm run check
+npm run check -- tests/profile-presentation.test.tsx tests/profile-posts-ui.test.tsx
+```
+
+Quick checks run formatting, types, lint, styles and unit tests in an isolated copy. They skip the production build, database tests, browser suites and dependency audits. Use focused checks while editing; run full verification at the push boundary rather than repeating it after every small change.
+
+Before the first push from a clone, install the browser and hook:
 
 ```sh
 npm run test:e2e:install
 npm run hooks:install
-npm run verify
 ```
 
-Use the Node version in `.nvmrc` (`nvm use` if using nvm). Install the browser and repository hook once per clone. The pre-push hook runs verification automatically and stops a push on failure. Commit or stash changes first: it checks a clean working tree against the commit being pushed. It does not commit or push for you.
+Use the Node version in `.nvmrc` (`nvm use` if using nvm). The pre-push hook runs `npm run verify` automatically and stops a push on failure, so there is no need to run it manually immediately before pushing. Commit or stash changes first: it checks a clean working tree against the commit being pushed. It does not commit or push for you. CI independently runs the same full verification.
 
-Verification uses an ignored temporary copy under `.local/` so an open development server can keep running. It excludes real environment files, disables live integrations, and runs formatting, types, lint, styles, unit tests, the production build, desktop/mobile browser tests in development and production, and both dependency audits. Development tests use a fixed server/browser clock. Failed runs retain local reports at the printed path; successful copies are removed.
+Full verification first runs the private-backend tests against a fresh disposable database in the existing local PostgreSQL cluster. Set up that cluster once using the [local database instructions](docs/music-search.md); `MARGIN_PG_BIN` can select your PostgreSQL bin directory. The test runner never reads or changes `.env`, migrates the preview database, or uses a remote database. CI uses its own disposable PostgreSQL service. Database verification is mandatory for a push.
+
+The remaining verification uses an ignored temporary copy under `.local/` so an open development server can keep running. It excludes real environment files, disables live integrations, and runs formatting, types, lint, styles, unit tests, the production build, desktop/mobile browser tests in development and production, and both dependency audits. Development tests use a fixed server/browser clock. Failed runs retain local reports at the printed path; successful copies are removed.
 
 The browser suite includes a classic-scrollbar project for conversation centering and responsive transitions. These are automated layout assertions, separate from manual visual review. CI uploads only the failed run's Playwright reports and test results for seven days, never the whole local directory. Publish fixes through a branch and wait for a successful GitHub run before merging them into `main`; local checks alone do not establish that the CI environment passes.
 
-Use `npm run verify -- --code-only` for quick development checks without launching browsers. Code-only results do not authorize a push: the pre-push hook always runs the complete suite, including development and production Playwright tests. Full verification requires the Node version declared in `.nvmrc`, matching CI. There is no code-only push mode.
+`npm run verify -- --code-only` remains available for a broader local check including the build and dependency audits but excluding database and browser suites. Neither quick nor code-only results authorize a push: the pre-push hook always runs the complete suite. Full verification requires the Node version declared in `.nvmrc`, matching CI. There is no quick or code-only push mode.
 
 Individual checks are also available:
 
@@ -78,6 +88,9 @@ Keep test source files and fixtures in Git. Generated reports, screenshots, trac
 ## Structure
 
 - [Architecture](docs/architecture.md): module boundaries, local state, and server responsibilities.
+- [Account flows](docs/account-flows.md): invitation signup, profile controls, local safety records, downloads and remaining hosted integration.
+- [Private backend slice](docs/private-backend-slice.md): closed account activation, authorization, photo lifecycle, tests, and rollout gates.
+- [OpenMLS experiment](experiments/openmls/README.md): isolated browser feasibility harness, results scope, and unresolved production gates.
 - [Styles](src/styles/README.md): CSS ownership, tokens, and interface conventions.
 - [Brand assets](src/assets/brand/README.md): original artwork and shared branding components.
 - `src/app/`: routes and layouts.
@@ -89,6 +102,6 @@ Keep test source files and fixtures in Git. Generated reports, screenshots, trac
 
 ## Production boundaries
 
-The social application is a development preview. Authenticated social writes, persistent friendships and messages, private user-media delivery, moderation, and scheduled expiration/deletion remain incomplete. Music persistence currently uses a development-only actor and local database; it is not production account storage. Real exports and account deletion are unavailable.
+The social UI remains a development preview. A separate backend slice implements session-derived access for explicitly activated accounts, friendship/block transitions, private posts, protected photo delivery and deletion. It is disabled by default, has no preview UI connection, and requires hosted-provider verification before activation. Persistent production messages, moderation, exports, full identity-provider account erasure and scheduled maintenance remain incomplete. Music persistence uses a development-only actor and local database.
 
 Do not expose the development server publicly. Production launch requires server-derived identity, resource authorization, transactional posting allowances, durable storage, configured service accounts, and live integration verification. Dependency versions belong in `package-lock.json`; use normal audited upgrades rather than forced major-version overrides.

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Isolated OpenMLS feasibility fixture</title>
+  <body>
+    <p>Synthetic devices only. No application integration.</p>
+    <script type="module">
+      import init, { Device } from "./pkg/margin_openmls_feasibility.js";
+      let device;
+      let frozen = false;
+      let failStorage = false;
+      const database = new Promise((resolve, reject) => {
+        const request = indexedDB.open("margin-openmls-synthetic-fixture", 1);
+        request.onupgradeneeded = () =>
+          request.result.createObjectStore("state");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () =>
+          reject(new Error("Fixture storage unavailable"));
+      });
+      async function stored(write, value) {
+        if (write && failStorage) throw new Error("Synthetic storage failure");
+        const db = await database;
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction("state", write ? "readwrite" : "readonly");
+          const request = write
+            ? tx.objectStore("state").put(value, "device")
+            : tx.objectStore("state").get("device");
+          tx.oncomplete = () => resolve(request.result);
+          tx.onerror = tx.onabort = () =>
+            reject(new Error("Fixture storage failed"));
+        });
+      }
+      window.ready = (async () => {
+        await init();
+        const snapshot = await stored(false);
+        if (snapshot) device = Device.restore(snapshot);
+        window.lab = {
+          async create(name) {
+            device = new Device(name);
+            await stored(true, device.snapshot());
+          },
+          async call(method, argument) {
+            if (frozen) throw new Error("Device frozen after storage failure");
+            const bytes = ["add", "join", "receive"].includes(method);
+            let result =
+              argument === undefined
+                ? device[method]()
+                : device[method](bytes ? Uint8Array.from(argument) : argument);
+            // Persist advanced sender/receiver state BEFORE returning wire bytes/plaintext.
+            // Real production storage still needs atomic rollback protection and encryption.
+            try {
+              await stored(true, device.snapshot());
+            } catch (error) {
+              frozen = true;
+              throw error;
+            }
+            if (result instanceof Uint8Array) result = Array.from(result);
+            if (method === "add") result = JSON.parse(result);
+            return result ?? null;
+          },
+          failStorage() {
+            failStorage = true;
+          },
+          async corruptState() {
+            await stored(true, "{corrupt fixture snapshot");
+          },
+        };
+      })();
+    </script>
+  </body>
+</html>

@@ -46,30 +46,36 @@ describe.skipIf(process.env.RUN_LOCAL_DB_TESTS !== "1")(
         expect(
           results.filter((result) => result.status === "fulfilled"),
         ).toHaveLength(3);
-        expect(await readMusic(owner)).toHaveLength(1);
+        const saved = await readMusic(owner);
+        expect(saved).toHaveLength(1);
         expect(await readMusic(other)).toEqual([]);
-        await changeMusic({ action: "remove", trackId: "itunes-123" }, other);
-        expect(await readMusic(owner)).toHaveLength(1);
+        const trackId = saved[0].id;
+        await changeMusic({ action: "remove", trackId }, other);
+        expect(await readMusic(owner)).toEqual(saved);
         await expect(
-          changeMusic(
-            { action: "remove", trackId: "itunes-123", ownerId: owner },
-            other,
-          ),
+          changeMusic({ action: "remove", trackId, ownerId: owner }, other),
         ).rejects.toMatchObject({ status: 400 });
         const permissions = await db.$queryRaw<
           Array<{
             create_schema: boolean;
             migration_write: boolean;
             superuser: boolean;
+            bypass_rls: boolean;
+            create_database: boolean;
+            create_role: boolean;
           }>
-        >`SELECT has_schema_privilege(current_user, 'public', 'CREATE') AS create_schema, has_table_privilege(current_user, '"_prisma_migrations"', 'UPDATE') AS migration_write, (SELECT rolsuper FROM pg_roles WHERE rolname=current_user) AS superuser`;
+        >`SELECT has_schema_privilege(current_user, 'public', 'CREATE') AS create_schema, has_table_privilege(current_user, '"_prisma_migrations"', 'UPDATE') AS migration_write, rolsuper AS superuser, rolbypassrls AS bypass_rls, rolcreatedb AS create_database, rolcreaterole AS create_role FROM pg_roles WHERE rolname=current_user`;
         expect(permissions[0]).toEqual({
           create_schema: false,
           migration_write: false,
           superuser: false,
+          bypass_rls: false,
+          create_database: false,
+          create_role: false,
         });
         const user = await db.user.findUniqueOrThrow({
           where: { clerkId: owner },
+          select: { id: true },
         });
         await expect(
           db.profileSong.create({

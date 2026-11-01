@@ -59,13 +59,15 @@ test("keeps the editor reachable when a tall profile post flips into its convers
   await page
     .getByRole("button", { name: "Share a thought…", exact: true })
     .click();
-  const composer = page.getByRole("dialog", { name: "New Post", exact: true });
+  const composer = page.locator(
+    ".margin-compose-inline, .margin-compose-dialog",
+  );
   const paragraph =
     "A longer entry still deserves enough room to read and reply. ".repeat(5);
   await composer
     .getByRole("textbox", { name: "Your post" })
     .fill(Array.from({ length: 8 }, () => paragraph.trim()).join("\n\n"));
-  await composer.getByRole("button", { name: "Share with friends" }).click();
+  await composer.getByRole("button", { name: "Publish" }).click();
   await expect(composer).not.toBeVisible();
   await expect(page).toHaveURL(/\?view=profile#post-local-/);
   const post = page.locator(`#${new URL(page.url()).hash.slice(1)}`);

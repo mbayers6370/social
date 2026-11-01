@@ -8,11 +8,9 @@ export function NotificationPreferences() {
       className="margin-notification-preferences"
       aria-labelledby="notification-preferences-title"
     >
-      <h2 id="notification-preferences-title">Notifications</h2>
-      <p className="margin-field-hint">
-        Choose the sample activity shown in your notification center.
-        Preferences apply to this tab and reset on refresh.
-      </p>
+      <h3 id="notification-preferences-title" className="sr-only">
+        Notifications
+      </h3>
       {(
         [
           [
@@ -43,8 +41,8 @@ export function NotificationPreferences() {
         </label>
       ))}
       <p className="margin-field-hint">
-        Account information remains available. Push notifications and email
-        delivery aren’t connected.
+        These choices change activity in this tab. Push and email delivery
+        aren’t connected.
       </p>
     </section>
   );

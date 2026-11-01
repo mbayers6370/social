@@ -89,12 +89,47 @@ test("public shell is responsive, keyboard accessible, and uses a fresh CSP nonc
 test("protected paths fail closed without auth credentials, including dotted paths", async ({
   request,
 }) => {
-  for (const path of ["/account", "/api/private.json", "/sign-in"]) {
+  for (const path of [
+    "/account",
+    "/api/account",
+    "/api/posts/guessed-post",
+    "/api/photos/guessed-photo",
+    "/api/relationships",
+    "/api/private.json",
+    "/robots.txt/private",
+    "/robotsXtxt",
+    "/sitemap.xml/private",
+    "/favicon.ico/private",
+    "/_next/image/private",
+    "/_next/static-private/photo.jpg",
+  ]) {
     const response = await request.get(path);
     expect(response.status()).toBe(503);
     expect(await response.json()).toEqual({
       error: "Authentication service unavailable",
     });
+    expect(response.headers()["cache-control"]).toContain("no-store");
+    expect(response.headers()["x-robots-tag"]).toContain("noindex");
+  }
+});
+
+test("the public image optimizer rejects private local paths and unapproved remote sources", async ({
+  request,
+}) => {
+  for (const source of [
+    "/api/private/photo.jpg",
+    "/private/photo.jpg",
+    "/account/photo.jpg",
+    "/_next/static/media/public.jpg?token=private",
+    "http://127.0.0.1:3100/api/private/photo.jpg",
+    "http://169.254.169.254/latest/meta-data/",
+    "https://unapproved.example/photo.jpg",
+    "file:///etc/passwd",
+  ]) {
+    const query = new URLSearchParams({ url: source, w: "640", q: "75" });
+    const response = await request.get(`/_next/image?${query}`);
+    expect(response.status(), source).toBe(400);
+    expect(response.headers()["content-type"] ?? "").not.toContain("image/");
   }
 });
 
@@ -140,6 +175,7 @@ test("retired job URLs cannot execute or register jobs", async ({
 
 test("production hides the workbench and excludes development CSP permissions", async ({
   request,
+  page,
 }) => {
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION !== "1",
@@ -150,11 +186,13 @@ test("production hides the workbench and excludes development CSP permissions", 
   expect(html).not.toContain("post-fog");
   expect(html).not.toContain("Ines Alvarez");
   for (const query of ["?view=messages&thread=ines", "?view=profile"]) {
-    const previewHtml = await (await request.get(`/${query}`)).text();
+    const response = await page.goto(`/${query}`);
+    expect(response?.status()).toBe(200);
+    const previewHtml = await response!.text();
     expect(previewHtml).not.toContain("Ines Alvarez");
     expect(previewHtml).not.toContain("Meet at the lot");
-    expect(previewHtml).toMatch(
-      /<h1[^>]*>A little less\.<br\s*\/?\s*>A little closer\.<\/h1>/,
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      /A little less\.\s*A little closer\./,
     );
   }
   const csp = (await request.get("/")).headers()["content-security-policy"];

@@ -9,7 +9,6 @@ import {
   POSTING_RULE_SUMMARY,
   POSTING_EDIT_RULE,
   POSTING_EXCLUSIONS,
-  MINIMUM_AGE,
 } from "@/lib/platform-rules";
 afterEach(() => vi.unstubAllEnvs());
 it("keeps every policy visibly draft with the temporary contact and unconfirmed operator", () => {
@@ -28,6 +27,25 @@ it("keeps every policy visibly draft with the temporary contact and unconfirmed 
     }
     for (const link of page.querySelectorAll<HTMLAnchorElement>("a[href^='#']"))
       expect(page.getElementById(link.hash.slice(1))).not.toBeNull();
+    const ids = [...page.querySelectorAll("[id]")].map((node) => node.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const link of page.querySelectorAll<HTMLAnchorElement>(
+      'a[href^="/"]',
+    )) {
+      const url = new URL(link.getAttribute("href")!, "https://margin.invalid");
+      expect(isPublicPage(url.pathname)).toBe(true);
+      if (url.hash) {
+        const destination =
+          publicDocuments[
+            url.pathname.slice(1) as keyof typeof publicDocuments
+          ];
+        expect(
+          destination?.sections.some(
+            (section) => section.id === url.hash.slice(1),
+          ),
+        ).toBe(true);
+      }
+    }
   }
 });
 it("shares the exact posting copy between practical pages", () => {
@@ -68,43 +86,60 @@ it("renders the public home and footer as server markup with valid public destin
   for (const link of page.querySelectorAll<HTMLAnchorElement>("a"))
     expect(
       isPublicPage(
-        new URL(link.getAttribute("href")!, "https://margin.invalid").pathname,
+        new URL(link.getAttribute("href")!, "https://margin.invalid/welcome")
+          .pathname,
       ),
     ).toBe(true);
   expect(html).not.toContain("Ines");
   expect(page.querySelectorAll("form, iframe, video, audio")).toHaveLength(0);
   const hero = page.querySelector<HTMLElement>(".margin-public-hero")!;
-  expect(hero.textContent).toContain("Registration isn’t open yet.");
-  expect(hero.textContent).toContain(`For people ${MINIMUM_AGE} and over.`);
-  expect(hero.querySelector(".margin-welcome-cta")?.getAttribute("href")).toBe(
-    "/join",
+  expect(hero.textContent).toContain("An invitation code to begin.");
+  const primary = hero.querySelector<HTMLAnchorElement>(".margin-welcome-cta")!;
+  expect(primary.getAttribute("href")).toBe("/sign-up");
+  expect(primary.textContent).toBe("Join Margin");
+  expect(page.getElementById("welcome-preview")).not.toBeNull();
+  expect(page.querySelector(".margin-welcome-joining")?.textContent).toContain(
+    "Start with your invitation.",
   );
-  const signup = hero.querySelector<HTMLAnchorElement>(".margin-welcome-cta")!;
-  expect(signup.textContent).toBe("Coming soon");
   expect(
-    page.getElementById(signup.getAttribute("aria-describedby")!)?.textContent,
-  ).toContain("Registration isn’t open yet.");
-  expect(
-    page.querySelector('nav[aria-label="Public navigation"] a[href="/join"]')
+    page.querySelector('nav[aria-label="Public navigation"] a[href="/sign-up"]')
       ?.textContent,
-  ).toBe("Coming soon");
-  expect(
-    page.querySelector(".margin-welcome-principles")?.textContent,
-  ).toContain("Share a few moments. Leave room for living them.");
+  ).toBe("Join Margin");
+  expect(hero.querySelectorAll("figure")).toHaveLength(1);
   const preview = page.querySelector("figure")!;
-  expect(preview.getAttribute("aria-label")).toBe(
-    "Example post and conversation",
-  );
+  expect(preview.getAttribute("aria-label")).toBe("Feed and conversation");
   expect(preview.textContent).toContain("That’s everything for now.");
-  // The public illustration must not expose private app controls or lazy-load its hero image.
-  expect(preview.querySelectorAll("button, a, input, textarea")).toHaveLength(
-    0,
+  // The bounded public control opens only fictional discussion, never private app data.
+  expect(preview.querySelectorAll("button")).toHaveLength(2);
+  expect(preview.querySelector("button")?.getAttribute("aria-expanded")).toBe(
+    "false",
   );
+  expect(preview.querySelectorAll("a, input, textarea")).toHaveLength(0);
   const photo = preview.querySelector("img")!;
   expect(photo.getAttribute("loading")).toBe("eager");
   expect(photo.getAttribute("fetchPriority")?.toLowerCase()).toBe("high");
   expect(photo.getAttribute("alt")).toBeTruthy();
-  expect(photo.getAttribute("src")).toContain("long-way-round");
+  expect(photo.getAttribute("src")).toContain("coffee-shop");
+  const messages = page.querySelector(
+    'figure[aria-label="Messages between friends"]',
+  )!;
+  expect(messages.textContent).toContain("Coffee there this weekend?");
+  expect(messages.querySelectorAll("button, a, input, textarea")).toHaveLength(
+    0,
+  );
+  expect(messages.textContent).not.toMatch(
+    /encrypted|end.to.end|delivered|online/i,
+  );
+  expect(hero.contains(messages)).toBe(false);
+  for (const id of [
+    "welcome-pace-title",
+    "welcome-connection-title",
+    "welcome-gallery-title",
+  ])
+    expect(page.getElementById(id)?.tagName).toBe("H2");
+  const gallery = page.querySelector(".margin-welcome-gallery")!;
+  expect(gallery.querySelectorAll("img")).toHaveLength(3);
+  expect(gallery.querySelectorAll("button, a")).toHaveLength(0);
   for (const link of page.querySelectorAll<HTMLAnchorElement>(
     'a[href^="/how-it-works#"]',
   )) {

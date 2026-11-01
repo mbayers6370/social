@@ -119,19 +119,27 @@ test("publishes three photographs together and preserves the image limit across 
   await page
     .getByRole("button", { name: "Share a thought…", exact: true })
     .click();
-  const compose = page.getByRole("dialog", { name: "New Post", exact: true });
+  const compose = page.locator(
+    ".margin-compose-inline, .margin-compose-dialog",
+  );
   await compose
     .getByRole("textbox", { name: "Your post" })
     .fill("Three little moments from today.");
   for (let index = 0; index < 3; index++) {
     await compose.getByRole("button", { name: "Add photograph" }).click();
     const picker = page.getByRole("dialog", { name: "Choose a photograph" });
-    await picker.getByRole("button", { name: /^Use / }).nth(index).click();
+    await picker
+      .getByRole("button", { name: /^Select / })
+      .nth(index)
+      .click();
+    await picker
+      .getByRole("button", { name: "Use Photograph", exact: true })
+      .click();
   }
   await expect(
     compose.getByRole("button", { name: "Add photograph" }),
   ).toBeDisabled();
-  await compose.getByRole("button", { name: "Share with friends" }).click();
+  await compose.getByRole("button", { name: "Publish" }).click();
   await expect(compose).not.toBeVisible();
   await expect(page).toHaveURL(/\?view=profile#post-local-/);
   const publishedPost = page.locator(`#${new URL(page.url()).hash.slice(1)}`);
@@ -154,7 +162,5 @@ test("publishes three photographs together and preserves the image limit across 
   await compose
     .getByRole("textbox", { name: "Your post" })
     .fill("A text-only thought can still be shared.");
-  await expect(
-    compose.getByRole("button", { name: "Share with friends" }),
-  ).toBeEnabled();
+  await expect(compose.getByRole("button", { name: "Publish" })).toBeEnabled();
 });

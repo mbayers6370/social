@@ -3,7 +3,9 @@ import type { FeedPost, PostMedia } from "@/features/feed/schema";
 import type { ProfilePreviewData } from "@/features/profile/schema";
 import type { Friendship } from "@/lib/friend-audience";
 import type { LocalNotification } from "@/features/notifications/model";
+import type { PreviewThread } from "@/features/messages/schema";
 import { dayKey } from "@/features/feed/format";
+import { checkUsername } from "@/features/profile/username";
 import {
   containsPostLink,
   postingEligibility,
@@ -30,7 +32,12 @@ export const preferencesSchema = z.strictObject({
 });
 export type Preferences = z.infer<typeof preferencesSchema>;
 export type FriendPost = FeedPost & { audience: "friends" };
+export type FriendProfileContent = {
+  profile: ProfilePreviewData;
+  posts: FriendPost[];
+};
 export type Bootstrap = {
+  threads?: PreviewThread[];
   galleryAdditions?: GalleryAddition[];
   posts?: FriendPost[];
   notifications?: LocalNotification[];
@@ -43,6 +50,7 @@ export type Bootstrap = {
   gallery: GalleryEntry[];
 };
 export type LocalState = {
+  usernameChangedAt?: string;
   galleryAdditions?: GalleryAddition[];
   friendships: Friendship[];
   postingRecords?: PostingRecord[];
@@ -129,12 +137,60 @@ export function initialLocalState(bootstrap: Bootstrap): LocalState {
     galleryAdditions: bootstrap.galleryAdditions ?? [],
   };
 }
+export function changeLocalUsername(
+  state: LocalState,
+  viewerId: string,
+  input: unknown,
+  now: Date,
+): LocalState {
+  const check = checkUsername(
+    input,
+    state.profiles,
+    viewerId,
+    state.usernameChangedAt,
+    now,
+  );
+  if (!check.available) throw new PreviewError(check.message);
+  return {
+    ...state,
+    profiles: state.profiles.map((profile) =>
+      profile.person.id === viewerId
+        ? { ...profile, handle: check.username }
+        : profile,
+    ),
+    usernameChangedAt: now.toISOString(),
+  };
+}
 export function ownedPhoto(state: LocalState, viewerId: string, id: string) {
   const photo = state.photos.find(
     (item) => item.id === id && item.ownerId === viewerId,
   );
   if (!photo) throw new PreviewError("That photograph is unavailable.");
   return photo;
+}
+
+export function setProfilePhotograph(
+  state: LocalState,
+  viewerId: string,
+  photoId: string,
+  replacement: string | undefined,
+  now: Date,
+) {
+  const photo = ownedPhoto(state, viewerId, photoId);
+  const next = placePhoto(state, viewerId, photoId, replacement, now);
+  return {
+    ...next,
+    profiles: next.profiles.map((profile) =>
+      profile.person.id === viewerId
+        ? { ...profile, person: { ...profile.person, photo: photo.image } }
+        : profile,
+    ),
+    posts: next.posts.map((post) =>
+      post.author.id === viewerId
+        ? { ...post, author: { ...post.author, photo: photo.image } }
+        : post,
+    ),
+  };
 }
 
 /** Delete an owned image throughout the local preview, preserving post text and discussions. */
@@ -152,16 +208,25 @@ export function deleteLocalPhoto(
   );
   const removedPerPost = new Map<string, number>();
   const posts = state.posts.map((post) => {
-    if (post.author.id !== viewerId || !post.media?.some(matches)) return post;
+    if (post.author.id !== viewerId) return post;
+    const clean =
+      post.author.photo?.src === photo.image.src
+        ? { ...post, author: { ...post.author, photo: undefined } }
+        : post;
+    if (!post.media?.some(matches)) return clean;
     const media = post.media.filter((item) => !matches(item));
     removedPerPost.set(post.id, post.media.length - media.length);
-    return { ...post, media: media.length ? media : undefined };
+    return { ...clean, media: media.length ? media : undefined };
   });
   const profiles = state.profiles.map((profile) =>
     profile.person.id !== viewerId
       ? profile
       : {
           ...profile,
+          person:
+            profile.person.photo?.src === photo.image.src
+              ? { ...profile.person, photo: undefined }
+              : profile.person,
           photos: profile.photos.filter((item) => !matches(item)),
           recent: profile.recent.map((post) => {
             if (!post.image || !matches(post.image)) return post;

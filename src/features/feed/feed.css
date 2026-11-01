@@ -17,9 +17,6 @@
 .margin-feed-layout[data-profile="true"] {
   width: 100%;
 }
-.margin-profile-card-date {
-  display: inline;
-}
 .margin-feed-layout[data-profile="true"] .margin-feed-list {
   gap: 0;
 }
@@ -105,18 +102,14 @@
   margin-bottom: calc(var(--space-related) * 2);
   min-height: 44px;
 }
-.margin-feed-post[data-conversation-layout="panel"] > .margin-post-author,
-.margin-conversation-front:not([data-profile-snapshot]) > .margin-post-author {
-  margin: calc(-1 * var(--post-block-padding))
-    calc(-1 * var(--post-inline-padding)) 20px;
-  padding: 12px var(--post-inline-padding);
-  border-bottom: 1px solid hsl(var(--border) / 0.65);
-  border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0
-    0;
-  background: hsl(var(--surface-heading));
-}
 .margin-post-author > div {
+  flex: 1;
   min-width: 0;
+}
+.margin-post-author > .margin-conversation-trigger {
+  flex-shrink: 0;
+  min-width: 44px;
+  font-weight: 400;
 }
 .margin-person-name {
   font-family: var(--font-body);
@@ -169,8 +162,11 @@
   align-items: baseline;
   gap: 4px 12px;
 }
-.margin-post-expiry {
-  flex-basis: 100%;
+.margin-post-published {
+  color: hsl(var(--foreground));
+}
+.margin-post-details time {
+  white-space: nowrap;
 }
 .margin-post-actions {
   display: flex;
@@ -187,7 +183,8 @@
   font-size: var(--text-control);
   font-weight: 400;
 }
-.margin-post-actions svg {
+.margin-post-actions svg,
+.margin-conversation-trigger svg {
   width: 16px;
   height: 16px;
 }
@@ -323,6 +320,11 @@
     opacity: 1;
   }
 }
+@media (max-width: 639px) {
+  .margin-post-author > .margin-conversation-trigger > span {
+    display: none;
+  }
+}
 @media (min-width: 640px) {
   .margin-feed-intro {
     padding-top: var(--space-section);
@@ -394,4 +396,29 @@ html[data-motion="reduced"]
 }
 html[data-motion="reduced"] .margin-post-skeleton-content {
   animation: none;
+}
+
+.margin-empty-feed {
+  padding: 56px 24px;
+  text-align: center;
+}
+.margin-empty-feed-mark {
+  color: hsl(var(--blackened-olive));
+  font: var(--text-body)/1.5 var(--font-serif);
+}
+.margin-empty-feed h2 {
+  max-width: 18ch;
+  margin: 24px auto 16px;
+  font: clamp(2rem, 4vw, 3rem)/1.15 var(--font-serif);
+  letter-spacing: -0.035em;
+  color: hsl(var(--blackened-olive));
+}
+.margin-empty-feed > p {
+  max-width: 36ch;
+  margin: 0 auto 24px;
+  text-wrap: pretty;
+}
+.margin-empty-feed > .margin-field-hint {
+  margin-top: 20px;
+  margin-bottom: 0;
 }

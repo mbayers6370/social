@@ -17,27 +17,84 @@ function navigation(page: Page) {
 test("text-size preferences scale content and portal fields and survive navigation", async ({
   page,
 }) => {
-  await page.goto("/?view=settings");
+  await page.goto("/?view=profile");
+  const standardHeadingSize = await page
+    .locator(".margin-profile h1")
+    .evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  const standardNavigationSize = await navigation(page)
+    .getByRole("link", { name: "Feed", exact: true })
+    .evaluate((node) =>
+      parseFloat(
+        getComputedStyle(node.querySelector("span:last-child") ?? node)
+          .fontSize,
+      ),
+    );
+  const settingsHeading = page.getByRole("heading", {
+    name: "Settings",
+    level: 1,
+  });
+  const standardSettingsHeadingSize = await settingsHeading.evaluate((node) =>
+    parseFloat(getComputedStyle(node).fontSize),
+  );
   const preview = page.getByRole("group", { name: "Text size preview" });
   for (const [label, size, meta] of [
-    ["Standard", 16, 12],
-    ["Larger", 20, 15],
-    ["Extra large", 24, 18],
+    ["Standard", 16, 14],
+    ["Larger", 20, 17.5],
+    ["Extra large", 24, 21],
   ] as const) {
     await page.getByRole("radio", { name: label, exact: true }).check();
     await expect(preview.locator("p")).toHaveCSS("font-size", `${size}px`);
+    await expect(settingsHeading).toHaveCSS(
+      "font-size",
+      `${(standardSettingsHeadingSize * size) / 16}px`,
+    );
     await expect(preview.locator("span")).toHaveCSS("font-size", `${meta}px`);
+    const navigationSize = await navigation(page)
+      .getByRole("link", { name: "Feed", exact: true })
+      .evaluate((node) =>
+        parseFloat(
+          getComputedStyle(node.querySelector("span:last-child") ?? node)
+            .fontSize,
+        ),
+      );
+    expect(navigationSize / standardNavigationSize).toBeCloseTo(size / 16, 2);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
     await page.getByRole("button", { name: "Search profiles" }).click();
     const dialog = page.getByRole("dialog", { name: "Find a Profile" });
     await expect(
       dialog.getByRole("searchbox", { name: "Name or username" }),
     ).toHaveCSS("font-size", `${size}px`);
+    expect(
+      await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth),
+    ).toBe(true);
     await page.keyboard.press("Escape");
+    if (label === "Standard" || label === "Extra large") {
+      await settingsHeading.click();
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({
+        path: `test-results/settings-type-${size}-${page.viewportSize()!.width}.png`,
+        fullPage: true,
+      });
+    }
   }
   await page
     .locator(".margin-settings-page")
     .getByRole("link", { name: "Profile", exact: true })
     .click();
+  await expect(page.locator(".margin-profile h1")).toHaveCSS(
+    "font-size",
+    `${standardHeadingSize * 1.5}px`,
+  );
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
   await expect(page.locator(".margin-profile-bio")).toHaveCSS(
     "font-size",
     "24px",
@@ -176,8 +233,14 @@ test("opens sample threads, validates and escapes local messages without sending
     });
     await exportButton.click();
     await expect(
-      page.getByRole("dialog", { name: "Conversation export" }),
+      page.getByRole("dialog", { name: "Download this conversation" }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("checkbox", { name: /^Messages / }),
+    ).toBeChecked();
+    await expect(
+      page.getByRole("checkbox", { name: /^Profile & music / }),
+    ).not.toBeChecked();
     await page.keyboard.press("Escape");
     await expect(exportButton).toBeFocused();
   }
@@ -269,7 +332,7 @@ test("preserves separate message drafts between sample threads and supports brow
   await expect(page).not.toHaveURL(/thread=ines/);
 });
 
-test("profile editing validates input, contains keyboard focus and updates only the preview", async ({
+test("edits the profile inline, validates input and updates only the preview", async ({
   page,
 }) => {
   await page.goto("/?view=profile");
@@ -282,27 +345,27 @@ test("profile editing validates input, contains keyboard focus and updates only 
       exact: true,
     });
   await trigger.click();
-  const dialog = page.getByRole("dialog", {
+  const form = page.locator(".margin-profile-identity").getByRole("form", {
     name: "Edit profile",
     exact: true,
   });
-  await dialog.getByRole("textbox", { name: "Name", exact: true }).fill("");
-  await dialog.getByRole("button", { name: "Save preview" }).click();
-  await expect(dialog.getByRole("alert")).toHaveText("Enter a name.");
-  await dialog
+  await expect(
+    page.getByRole("dialog", { name: "Edit profile", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    form.getByRole("textbox", { name: "Name", exact: true }),
+  ).toBeFocused();
+  await form.getByRole("textbox", { name: "Name", exact: true }).fill("");
+  await form.getByRole("button", { name: "Save changes" }).click();
+  await expect(form.getByRole("alert")).toHaveText("Enter a name.");
+  await form
     .getByRole("textbox", { name: "Name", exact: true })
     .fill("Ines, locally");
-  await dialog
+  await form
     .getByRole("textbox", { name: "Bio", exact: true })
     .fill("Walking slowly. Looking closely.");
-  for (let i = 0; i < 6; i++) {
-    await page.keyboard.press("Tab");
-    expect(
-      await dialog.evaluate((node) => node.contains(document.activeElement)),
-    ).toBe(true);
-  }
-  await dialog.getByRole("button", { name: "Save preview" }).click();
-  await expect(dialog).not.toBeVisible();
+  await form.getByRole("button", { name: "Save changes" }).click();
+  await expect(form).not.toBeVisible();
   await expect(menu).toBeFocused();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Ines, locally",
@@ -338,26 +401,28 @@ test("uses all supplied photos through Next image optimization", async ({
       expect(source).toContain("/_next/image?");
       expect((await request.get(source)).status()).toBe(200);
       expect(await image.getAttribute("alt")).toBeTruthy();
-      await expect(image).toHaveCSS(
-        "object-fit",
-        multiple ? "cover" : "contain",
-      );
+      await expect(image).toHaveCSS("object-fit", "cover");
+      await expect(image).toHaveCSS("object-position", "50% 50%");
       await expect(image).toHaveCSS("border-radius", "12px");
       const bounds = (await image.boundingBox())!;
       const post = (await page.locator(`#${id}`).boundingBox())!;
       expect(bounds.width).toBeLessThan(post.width);
-      expect(bounds.height).toBeLessThanOrEqual(
-        Math.min(480, page.viewportSize()!.height * 0.6) + 1,
-      );
+      expect(Math.abs(bounds.width / bounds.height - 3 / 2)).toBeLessThan(0.01);
+      if (!multiple) {
+        const media = (await page
+          .locator(`#${id} .margin-media`)
+          .boundingBox())!;
+        expect(Math.abs(bounds.width - media.width)).toBeLessThan(1);
+      }
       if (multiple)
         expect(
           Number(new URL(source).searchParams.get("w")),
-        ).toBeLessThanOrEqual(640);
+        ).toBeLessThanOrEqual(1080);
     }
   }
   await page.goto("/?view=profile");
   const authorPhoto = page.locator("#post-fog .margin-avatar-image");
-  await expect(authorPhoto).toHaveAttribute("src", /Ines_Coffee\./);
+  await expect(authorPhoto).toHaveCount(0);
   await page.goto("/?view=profile");
   const avatar = page.locator(".margin-profile-identity .margin-avatar-image");
   await expect(avatar).toHaveAttribute("src", /Ines_Coffee\./);

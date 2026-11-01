@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect } from "react";
+import { useAccountSession } from "@/components/auth/account-session";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -34,6 +35,11 @@ export function MarginNavigation({
   active?: MarginView;
   profileAvatar: ReactNode;
 }) {
+  const session = useAccountSession();
+  const enterPreview = session?.enterPreview;
+  useEffect(() => {
+    enterPreview?.();
+  }, [enterPreview]);
   return (
     <>
       <header className="margin-header margin-topbar margin-navigation-theme">

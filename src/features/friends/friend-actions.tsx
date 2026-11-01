@@ -12,6 +12,7 @@ import {
 import { usePreview } from "@/features/local-preview/provider";
 import { previewMessage } from "@/features/local-preview/model";
 import type { Person } from "@/features/feed/schema";
+import { useFriendFeedback } from "./use-friend-feedback";
 import { friendStatus, type FriendAction } from "./model";
 
 export function FriendActions({
@@ -32,8 +33,9 @@ export function FriendActions({
     state.friendships,
   );
   const [confirming, setConfirming] = useState(false);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useFriendFeedback();
   const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
   const cancel = useRef<HTMLButtonElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const controls = useRef<HTMLDivElement>(null);
@@ -47,9 +49,13 @@ export function FriendActions({
     });
     return () => cancelAnimationFrame(frame);
   }, [status, onComplete]);
-  function act(action: FriendAction) {
+  async function act(action: FriendAction) {
     try {
-      changeFriend(person.id, action);
+      const completion = changeFriend(person.id, action);
+      if (completion) {
+        setWorking(true);
+        await completion;
+      }
       const messages: Record<FriendAction, string> = {
         send: `Friend request sent to ${person.name}.`,
         accept: `You and ${person.name} are now friends.`,
@@ -66,6 +72,8 @@ export function FriendActions({
       onStatusChange?.(messages[action]);
     } catch (error) {
       setError(previewMessage(error));
+    } finally {
+      setWorking(false);
     }
   }
   if (relationship === "self") return null;
@@ -91,8 +99,18 @@ export function FriendActions({
         )}
         {relationship === "incoming" && (
           <>
-            <Button onClick={() => act("accept")}>Accept request</Button>
-            <Button variant="ghost" onClick={() => act("decline")}>
+            <Button
+              disabled={working}
+              aria-busy={working || undefined}
+              onClick={() => act("accept")}
+            >
+              {working ? "Accepting…" : "Accept request"}
+            </Button>
+            <Button
+              variant={compact ? "outline" : "ghost"}
+              disabled={working}
+              onClick={() => act("decline")}
+            >
               Decline
             </Button>
           </>
@@ -120,6 +138,7 @@ export function FriendActions({
             title="Friends"
           >
             <Users aria-hidden="true" strokeWidth={1.5} />
+            <span>Friends</span>
           </span>
         )}
         {relationship === "friends" && !compact && (

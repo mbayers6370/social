@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,13 @@ import { usePreview } from "@/features/local-preview/provider";
 import { searchProfiles } from "@/features/local-preview/model";
 import { friendStatus } from "@/features/friends/model";
 
+const subscribe = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
+
 export function ProfileSearch() {
+  // Keep the SSR trigger inert until its React handler can open the dialog.
+  const hydrated = useSyncExternalStore(subscribe, clientReady, serverReady);
   const { state, bootstrap } = usePreview();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -32,6 +38,7 @@ export function ProfileSearch() {
           size="icon"
           aria-label="Search profiles"
           title="Search profiles"
+          disabled={!hydrated}
         >
           <Search aria-hidden="true" strokeWidth={1.5} />
         </Button>

@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   images: {
+    // Only imported public artwork may use the unauthenticated optimizer.
+    // Private media must have its own authorized delivery path, including variants.
+    localPatterns: [{ pathname: "/_next/static/media/**", search: "" }],
     remotePatterns: [1, 2, 3, 4, 5].map((number) => ({
       protocol: "https" as const,
       hostname: `is${number}-ssl.mzstatic.com`,

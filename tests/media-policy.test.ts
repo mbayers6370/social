@@ -15,6 +15,71 @@ const progressive = Buffer.from(
   "/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wgARCAACAAIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAVAQEBAAAAAAAAAAAAAAAAAAACA//aAAwDAQACEAMQAAABsCR//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/AP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8Qf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8Qf//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8Qf//Z",
   "base64",
 );
+// Synthetic 2x2 images generated locally, covering all supported WebP headers.
+const webpFixtures = {
+  lossy: Buffer.from(
+    "UklGRjQAAABXRUJQVlA4ICgAAABwAQCdASoCAAIAAUAmJaACdAFAAAD+9SdeWZwr2X/8gx/uy/0k4jAA",
+    "base64",
+  ),
+  lossless: Buffer.from(
+    "UklGRh4AAABXRUJQVlA4TBEAAAAvAUAAAAdQslJUpv+BiOh/AAA=",
+    "base64",
+  ),
+  extended: Buffer.from(
+    "UklGRlQAAABXRUJQVlA4WAoAAAAQAAAAAQAAAQAAQUxQSAUAAAAAgICAgABWUDggKAAAAHABAJ0BKgIAAgABQCYloAJ0AUAAAP71J15ZnCvZf/yDH+7L/STiMAA=",
+    "base64",
+  ),
+};
+
+it("accepts actual still WebP bitstreams with lossy, lossless, and extended headers", () => {
+  for (const bytes of Object.values(webpFixtures))
+    expect(() =>
+      assertStillPhoto(bytes, "image/webp", "photo.webp"),
+    ).not.toThrow();
+});
+
+it("rejects oversized and zero PNG dimensions before a decoder allocates pixels", () => {
+  for (const [width, height] of [
+    [0, 1],
+    [10001, 1],
+    [7000, 6000],
+  ]) {
+    const bytes = Buffer.from(png);
+    bytes.writeUInt32BE(width, 16);
+    bytes.writeUInt32BE(height, 20);
+    expect(() => assertStillPhoto(bytes, "image/png", "photo.png")).toThrow(
+      /40 megapixels/,
+    );
+  }
+});
+
+it("rejects oversized WebP bitstream and canvas dimensions before decoding", () => {
+  const lossy = Buffer.from(webpFixtures.lossy);
+  lossy.writeUInt16LE(10001, 26);
+  const lossless = Buffer.from(webpFixtures.lossless);
+  lossless.writeUInt32LE((lossless.readUInt32LE(21) & ~0x3fff) | 10000, 21);
+  const canvas = Buffer.from(webpFixtures.extended);
+  canvas.writeUIntLE(10000, 24, 3);
+  for (const bytes of [lossy, lossless, canvas])
+    expect(() => assertStillPhoto(bytes, "image/webp", "photo.webp")).toThrow(
+      /40 megapixels/,
+    );
+});
+
+it("rejects truncated WebP headers even when the RIFF byte count is consistent", () => {
+  for (const bytes of [
+    webpFixtures.lossy,
+    webpFixtures.lossless,
+    webpFixtures.extended,
+  ]) {
+    const truncated = Buffer.from(bytes.subarray(0, 22));
+    truncated.writeUInt32LE(truncated.length - 8, 4);
+    truncated.writeUInt32LE(2, 16);
+    expect(() =>
+      assertStillPhoto(truncated, "image/webp", "photo.webp"),
+    ).toThrow(PhotoPolicyError);
+  }
+});
 function jpegSegment(marker: number, payload: Buffer) {
   const header = Buffer.from([0xff, marker, 0, 0]);
   header.writeUInt16BE(payload.length + 2, 2);

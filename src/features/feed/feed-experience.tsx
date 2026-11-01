@@ -1,5 +1,6 @@
 "use client";
 import { FeedEnd } from "./feed-end";
+import { EmptyFeed } from "./empty-feed";
 
 import { FeedComposer } from "@/features/compose/feed-composer";
 
@@ -115,6 +116,7 @@ export function FeedExperience({
         post,
         trigger,
         scrollY,
+        documentTop: rect.top + window.scrollY,
         rect: {
           left: rect.left,
           top: rect.top,
@@ -311,11 +313,16 @@ export function FeedExperience({
               );
             })}
           </div>
-          {!profileId && <FeedEnd />}
+          {!profileId && (ordered.length ? <FeedEnd /> : <EmptyFeed />)}
         </div>
       </div>
       {selection && selectedPost && (
         <ConversationDialog
+          viewer={
+            preview.state.profiles.find(
+              (profile) => profile.person.id === preview.bootstrap.viewerId,
+            )!.person
+          }
           forceFlip={Boolean(profileId)}
           selection={{ ...selection, post: selectedPost }}
           state={previewPostState(state, selection.post.id)}

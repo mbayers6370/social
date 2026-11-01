@@ -102,19 +102,22 @@ it("downloads JSON on explicit activation and leaves real account deletion unava
       <PreviewDataControls />
     </PreviewProvider>,
   );
+  await user.click(
+    screen.getByText("Account removal", { selector: "summary span" }),
+  );
   expect(screen.getByRole("button", { name: /Delete account/ })).toBeDisabled();
   expect(create).not.toHaveBeenCalled();
-  await user.click(
-    screen.getByRole("button", { name: "Download preview data" }),
-  );
+  await user.click(screen.getByRole("button", { name: "Download your data" }));
+  expect(create).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Clear all" }));
+  await user.click(screen.getByRole("checkbox", { name: /Profile & music/ }));
+  await user.click(screen.getByRole("radio", { name: "JSON records only" }));
+  await user.click(screen.getByRole("button", { name: "Download" }));
   expect(create).toHaveBeenCalledOnce();
   expect((create.mock.calls as unknown as [[Blob]])[0][0].type).toBe(
     "application/json",
   );
   expect(click).toHaveBeenCalledOnce();
-  expect(screen.getByRole("status")).toHaveTextContent(
-    "not a server account archive",
-  );
   unmount();
   expect(revoke).toHaveBeenCalledWith("blob:download");
 });

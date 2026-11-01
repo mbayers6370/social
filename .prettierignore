@@ -11,3 +11,5 @@ artifacts/staging
 # Keep provider-supplied brand artwork byte-for-byte as distributed.
 public/brands/*.svg
 .local
+experiments/openmls/pkg
+experiments/openmls/target

@@ -20,6 +20,11 @@ function isPublic(pathname: string) {
     pathname === "/brands/itunes-store.svg" ||
     pathname === "/sign-in" ||
     pathname.startsWith("/sign-in/") ||
+    pathname === "/sign-up" ||
+    pathname.startsWith("/sign-up/") ||
+    pathname === "/onboarding" ||
+    pathname === "/fonts/NotoSans-Regular.ttf" ||
+    pathname === "/fonts/OFL.txt" ||
     (process.env.NODE_ENV === "development" &&
       ["/api/development/music", "/api/development/music/selections"].includes(
         pathname,
@@ -55,7 +60,10 @@ const clerkProxy = clerkMiddleware(
   },
 );
 
-export default function proxy(request: NextRequest, event: NextFetchEvent) {
+export default async function proxy(
+  request: NextRequest,
+  event: NextFetchEvent,
+) {
   if (
     request.nextUrl.pathname.startsWith("/api/development/") &&
     process.env.NODE_ENV !== "development"
@@ -75,16 +83,25 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
     process.env.CLERK_SECRET_KEY
-  )
-    return clerkProxy(request, event);
-  // Missing credentials never authorize a protected path. Public UI can still run locally.
-  if (
-    !isPublic(request.nextUrl.pathname) ||
-    request.nextUrl.pathname.startsWith("/sign-in")
   ) {
+    const response = await clerkProxy(request, event);
+    if (response && !isPublic(request.nextUrl.pathname)) {
+      response.headers.set("Cache-Control", "private, no-store");
+      response.headers.set("X-Robots-Tag", "noindex, noarchive, nosnippet");
+    }
+    return response;
+  }
+  // Missing credentials never authorize a protected path. Public UI can still run locally.
+  if (!isPublic(request.nextUrl.pathname)) {
     return NextResponse.json(
       { error: "Authentication service unavailable" },
-      { status: 503, headers: { "Cache-Control": "no-store" } },
+      {
+        status: 503,
+        headers: {
+          "Cache-Control": "private, no-store",
+          "X-Robots-Tag": "noindex, noarchive, nosnippet",
+        },
+      },
     );
   }
   const nonce = Buffer.from(
@@ -104,6 +121,6 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+    "/((?!_next/static/|_next/image$|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$).*)",
   ],
 };
