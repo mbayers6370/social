@@ -140,10 +140,10 @@
 .margin-welcome-author,
 .margin-welcome-comment {
   display: flex;
-  gap: 12px;
 }
 .margin-welcome-author {
   align-items: center;
+  gap: 12px;
 }
 .margin-welcome-author > div,
 .margin-welcome-comment > div {
@@ -351,8 +351,11 @@
 .margin-welcome-section-copy > p,
 .margin-welcome-gallery-heading > p {
   max-width: 31ch;
-  margin-top: 24px;
   font: var(--text-body)/1.75 var(--font-body);
+}
+.margin-welcome-interlude-copy > p,
+.margin-welcome-section-copy > p {
+  margin-top: 24px;
 }
 .margin-welcome-interlude .margin-public-text-link {
   --ring: var(--parchment);

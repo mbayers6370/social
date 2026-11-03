@@ -14,11 +14,13 @@ export function PostPhotos({
   postId,
   authorName,
   highPriority = false,
+  privateMedia = false,
 }: {
   photos: PostMedia[];
   postId: string;
   authorName: string;
   highPriority?: boolean;
+  privateMedia?: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const returnTo = useRef<HTMLButtonElement | null>(null);
@@ -82,6 +84,7 @@ export function PostPhotos({
               <Image
                 {...photo.image}
                 alt={photo.description}
+                title={photo.description}
                 className="margin-post-image"
                 sizes={
                   multiple
@@ -90,7 +93,9 @@ export function PostPhotos({
                 }
                 loading="eager"
                 fetchPriority={highPriority && index === 0 ? "high" : "auto"}
-                unoptimized={photo.image.src.startsWith("blob:")}
+                unoptimized={
+                  privateMedia || photo.image.src.startsWith("blob:")
+                }
                 draggable={false}
               />
             </button>
@@ -99,6 +104,7 @@ export function PostPhotos({
       </div>
       {selected !== null && (
         <PostPhotoViewer
+          privateMedia={privateMedia}
           photos={photos}
           initialIndex={selected}
           postId={postId}

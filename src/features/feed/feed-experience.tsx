@@ -1,5 +1,11 @@
 "use client";
 import { FeedEnd } from "./feed-end";
+import { useOptionalSpacesPreview } from "@/features/spaces/preview-provider";
+import { SpaceClientProvider } from "@/features/spaces/client";
+import {
+  SpacePostCard,
+  spacePostView,
+} from "@/features/spaces/space-post-card";
 import { EmptyFeed } from "./empty-feed";
 
 import { FeedComposer } from "@/features/compose/feed-composer";
@@ -16,7 +22,10 @@ import {
 import { calendarDayLabel, chronologicalPosts, dayKey } from "./format";
 import { previewPostState } from "./state";
 import type { FeedPost } from "./schema";
-import type { ConversationSelection } from "./conversation-dialog";
+import {
+  selectConversation,
+  type ConversationSelection,
+} from "./conversation-selection";
 import { usePreview } from "@/features/local-preview/provider";
 import { canReadFriendsPost } from "@/lib/friend-audience";
 import { PostCard } from "./post-card";
@@ -42,6 +51,17 @@ export function FeedExperience({
   profileId?: string;
 }) {
   const preview = usePreview();
+  const spaces = useOptionalSpacesPreview();
+  const spacePosts = useMemo(
+    () =>
+      new Map(
+        (profileId ? [] : (spaces?.feedPosts ?? [])).map((post) => [
+          post.id,
+          post,
+        ]),
+      ),
+    [profileId, spaces?.feedPosts],
+  );
   const { conversationRequest, finishNotificationRequest } = preview;
   const displayDate = new Date(preview.now).toISOString();
   const today = dayKey(displayDate);
@@ -55,18 +75,20 @@ export function FeedExperience({
           ...new Map(
             [...posts, ...preview.state.posts].map((post) => [post.id, post]),
           ).values(),
-        ].filter(
-          (post) =>
-            (profileId
-              ? post.author.id === profileId
-              : post.author.id !== preview.bootstrap.viewerId) &&
-            Date.parse(post.expiresAt) > preview.now &&
-            canReadFriendsPost(
-              preview.bootstrap.viewerId,
-              post.author.id,
-              preview.state.friendships,
-            ),
-        ),
+        ]
+          .filter(
+            (post) =>
+              (profileId
+                ? post.author.id === profileId
+                : post.author.id !== preview.bootstrap.viewerId) &&
+              Date.parse(post.expiresAt) > preview.now &&
+              canReadFriendsPost(
+                preview.bootstrap.viewerId,
+                post.author.id,
+                preview.state.friendships,
+              ),
+          )
+          .concat([...spacePosts.values()].map(spacePostView)),
       ),
     [
       posts,
@@ -75,6 +97,7 @@ export function FeedExperience({
       preview.bootstrap,
       preview.now,
       profileId,
+      spacePosts,
     ],
   );
   const state = preview.interactions;
@@ -86,44 +109,18 @@ export function FeedExperience({
   const selectionRef = useRef(selection);
   const openConversation = useCallback(
     (post: FeedPost, trigger: HTMLElement, commentId?: string) => {
-      if (selectionRef.current) return;
-      const card = document.getElementById(post.id);
-      if (!card) return;
-      const scrollY = window.scrollY;
-      let rect = card.getBoundingClientRect();
-      if (window.matchMedia("(min-width: 1024px)").matches) {
-        const topInset =
-          (document.querySelector(".margin-header")?.getBoundingClientRect()
-            .height ?? 0) + 32;
-        const availableHeight = Math.min(
-          640,
-          Math.max(0, window.innerHeight - topInset - 32),
-        );
-        const pairHeight = profileId
-          ? availableHeight
-          : Math.max(rect.height, availableHeight);
-        if (
-          rect.top < topInset ||
-          rect.top + Math.min(pairHeight, window.innerHeight - topInset - 32) >
-            window.innerHeight - 32
-        ) {
-          window.scrollBy({ top: rect.top - topInset, behavior: "instant" });
-          rect = card.getBoundingClientRect();
-        }
-      }
-      const next = {
-        commentId,
+      if (
+        selectionRef.current ||
+        document.querySelector(".margin-conversation-frame")
+      )
+        return;
+      const next = selectConversation(
         post,
         trigger,
-        scrollY,
-        documentTop: rect.top + window.scrollY,
-        rect: {
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height,
-        },
-      };
+        Boolean(profileId),
+        commentId,
+      );
+      if (!next) return;
       selectionRef.current = next;
       setPhase("opening");
       setSelection(next);
@@ -134,18 +131,12 @@ export function FeedExperience({
     const previous = selectionRef.current;
     selectionRef.current = null;
     setSelection(null);
-    // Focus and scrolling are restored explicitly; the feed never unmounts or reorders.
+    // The dialog restores focus when its focus trap unmounts.
     requestAnimationFrame(() => {
       if (!previous) return;
       window.scrollTo({ top: previous.scrollY, behavior: "instant" });
-      const target = previous.trigger.isConnected
-        ? previous.trigger
-        : document.getElementById(
-            profileId ? "recent-posts-title" : "feed-title",
-          );
-      target?.focus({ preventScroll: true });
     });
-  }, [profileId]);
+  }, []);
   const opened = useCallback(() => setPhase("open"), []);
   const closing = useCallback(() => setPhase("closing"), []);
   const selectedPost =
@@ -283,32 +274,42 @@ export function FeedExperience({
                       </time>
                     </h2>
                   )}
-                  <div
-                    className="margin-post-slot"
-                    data-selected={selected}
-                    style={
-                      selected
-                        ? ({
-                            "--post-base-height": `${selection.rect.height}px`,
-                          } as React.CSSProperties)
-                        : undefined
-                    }
-                  >
-                    <PostCard
-                      post={post}
-                      selected={selected}
-                      phase={selected ? phase : undefined}
-                      onOpenConversation={openConversation}
-                      profileDate={Boolean(profileId)}
-                      actions={
-                        profileId === preview.bootstrap.viewerId ? (
-                          <PostManagement post={post as FriendPost} />
-                        ) : undefined
+                  {spacePosts.has(post.id) && spaces ? (
+                    <SpaceClientProvider client={spaces.client}>
+                      <SpacePostCard
+                        inFeed
+                        post={spacePosts.get(post.id)!}
+                        viewerId={preview.bootstrap.viewerId}
+                      />
+                    </SpaceClientProvider>
+                  ) : (
+                    <div
+                      className="margin-post-slot"
+                      data-selected={selected}
+                      style={
+                        selected
+                          ? ({
+                              "--post-base-height": `${selection.rect.height}px`,
+                            } as React.CSSProperties)
+                          : undefined
                       }
                     >
-                      {renderedPosts[post.id]}
-                    </PostCard>
-                  </div>
+                      <PostCard
+                        post={post}
+                        selected={selected}
+                        phase={selected ? phase : undefined}
+                        onOpenConversation={openConversation}
+                        profileDate={Boolean(profileId)}
+                        actions={
+                          profileId === preview.bootstrap.viewerId ? (
+                            <PostManagement post={post as FriendPost} />
+                          ) : undefined
+                        }
+                      >
+                        {renderedPosts[post.id]}
+                      </PostCard>
+                    </div>
+                  )}
                 </div>
               );
             })}

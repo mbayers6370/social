@@ -7,6 +7,7 @@ import { previewMessage } from "@/features/local-preview/model";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AccountControls } from "./account-controls";
 import { usernameSchema } from "@/features/profile/username";
 export function OnboardingForm({
   managed,
@@ -25,24 +26,44 @@ export function OnboardingForm({
   const preview = useOptionalPreview();
   const router = useRouter();
   const [error, setError] = useState("");
-  const [state, action, pending] = useActionState(saveAction, {
-    error: "",
-    saved: false,
+  const [values, setValues] = useState({
+    name: initialName,
+    username: initialUsername,
+    bio: "",
+    adult: false,
   });
+  const [state, action, pending] = useActionState(
+    async (previous: { error: string; saved?: boolean }, form: FormData) => {
+      try {
+        return await saveAction(previous, form);
+      } catch {
+        return {
+          error:
+            "Your profile could not be saved. Your details are still here; please try again.",
+        };
+      }
+    },
+    {
+      error: "",
+      saved: false,
+    },
+  );
   if (state.saved)
     return (
       <div className="margin-auth-unavailable">
         <h2>Your profile is ready.</h2>
         <p>
-          Your invitation has been accepted. Pilot account activation is managed
-          separately while the live service is being prepared.
+          Your profile is saved, but account setup needs attention. Contact
+          support to finish joining Margin.
         </p>
-        <Link href="/">Return to Margin</Link>
+        <Link href="mailto:support@margin.social">Contact support</Link>
+        <AccountControls />
       </div>
     );
   return (
     <form
       className="margin-account-form"
+      onReset={(event) => event.preventDefault()}
       action={managed ? action : undefined}
       onSubmit={
         managed
@@ -77,7 +98,11 @@ export function OnboardingForm({
         id="onboard-name"
         name="name"
         autoComplete="name"
-        defaultValue={initialName}
+        value={values.name}
+        onChange={(event) =>
+          setValues((current) => ({ ...current, name: event.target.value }))
+        }
+        disabled={pending}
         required
         maxLength={80}
       />
@@ -86,7 +111,11 @@ export function OnboardingForm({
         id="onboard-username"
         name="username"
         autoComplete="username"
-        defaultValue={initialUsername}
+        value={values.username}
+        onChange={(event) =>
+          setValues((current) => ({ ...current, username: event.target.value }))
+        }
+        disabled={pending}
         required
         minLength={3}
         maxLength={24}
@@ -97,9 +126,32 @@ export function OnboardingForm({
         Start with a letter. Use 3–24 letters, numbers or underscores.
       </p>
       <Label htmlFor="onboard-bio">A little about you (optional)</Label>
-      <textarea id="onboard-bio" name="bio" rows={3} maxLength={300} />
+      <textarea
+        id="onboard-bio"
+        name="bio"
+        rows={3}
+        maxLength={300}
+        value={values.bio}
+        onChange={(event) =>
+          setValues((current) => ({ ...current, bio: event.target.value }))
+        }
+        disabled={pending}
+      />
       <label className="margin-account-confirmation">
-        <input type="checkbox" name="adult" value="yes" required />
+        <input
+          type="checkbox"
+          name="adult"
+          value="yes"
+          required
+          checked={values.adult}
+          onChange={(event) =>
+            setValues((current) => ({
+              ...current,
+              adult: event.target.checked,
+            }))
+          }
+          disabled={pending}
+        />
         <span>I am 18 or older.</span>
       </label>
       <p className="margin-field-hint">
@@ -114,6 +166,12 @@ export function OnboardingForm({
         </p>
       )}
       {(state.error || error) && <p role="alert">{state.error || error}</p>}
+      {managed && state.error && (
+        <p>
+          For an invitation problem, reopen your personal invitation email. If
+          it has expired, ask for a new link.
+        </p>
+      )}
       <Button type="submit" disabled={pending || (!managed && !preview)}>
         {pending ? "Saving…" : managed ? "Save profile" : "Start your space"}
       </Button>

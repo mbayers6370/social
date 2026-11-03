@@ -19,10 +19,10 @@ test("sets up a new profile with an empty feed and invitation", async ({
     page.getByRole("heading", { name: "It starts with your people." }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Invite a friend", exact: true })
+    .getByRole("button", { name: "Invite someone", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Access requires an invitation code",
+    "Your three invitations become available when you finish joining",
   );
   expect(
     await page.evaluate(

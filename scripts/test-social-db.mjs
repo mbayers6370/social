@@ -8,6 +8,41 @@ import { resolve, join } from "node:path";
 if (Number(process.versions.node.split(".")[0]) !== 22)
   throw new Error("Use Node 22");
 const root = resolve(import.meta.dirname, "..");
+const authOnly = process.argv.slice(2).includes("--auth");
+const adapterOnly = process.argv.slice(2).includes("--database-adapter");
+const memberOnly = process.argv.slice(2).includes("--member");
+const notificationOnly = process.argv.slice(2).includes("--notification-links");
+const communicationOnly = process.argv.slice(2).includes("--communication");
+const spaceInvitationOnly = process.argv
+  .slice(2)
+  .includes("--space-invitations");
+const invitationOnly = process.argv.slice(2).includes("--invitations");
+if (
+  [
+    authOnly,
+    adapterOnly,
+    memberOnly,
+    notificationOnly,
+    communicationOnly,
+    invitationOnly,
+    spaceInvitationOnly,
+  ].filter(Boolean).length > 1 ||
+  process.argv
+    .slice(2)
+    .some(
+      (argument) =>
+        ![
+          "--auth",
+          "--database-adapter",
+          "--member",
+          "--notification-links",
+          "--communication",
+          "--invitations",
+          "--space-invitations",
+        ].includes(argument),
+    )
+)
+  throw new Error("Unknown database-test option");
 const bin =
   process.env.MARGIN_PG_BIN ??
   "/Applications/Postgres.app/Contents/Versions/latest/bin";
@@ -93,7 +128,31 @@ try {
     [
       "node_modules/vitest/vitest.mjs",
       "run",
-      "tests/social-db.integration.test.ts",
+      "--no-file-parallelism",
+      ...(spaceInvitationOnly
+        ? ["tests/space-invitation-db.integration.test.ts"]
+        : notificationOnly
+          ? ["tests/notification-links-db.integration.test.ts"]
+          : communicationOnly
+            ? ["tests/communication-db.integration.test.ts"]
+            : invitationOnly
+              ? ["tests/invitation-links-db.integration.test.ts"]
+              : memberOnly
+                ? ["tests/member-db.integration.test.ts"]
+                : adapterOnly
+                  ? ["tests/database-adapter-db.integration.test.ts"]
+                  : authOnly
+                    ? ["tests/auth-db.integration.test.ts"]
+                    : [
+                        "tests/social-db.integration.test.ts",
+                        "tests/space-invitation-db.integration.test.ts",
+                        "tests/auth-db.integration.test.ts",
+                        "tests/invitation-links-db.integration.test.ts",
+                        "tests/database-adapter-db.integration.test.ts",
+                        "tests/member-db.integration.test.ts",
+                        "tests/notification-links-db.integration.test.ts",
+                        "tests/communication-db.integration.test.ts",
+                      ]),
     ],
     { cwd: root, env: { ...env, RUN_PRIVATE_DB_TESTS: "1" }, stdio: "inherit" },
   );

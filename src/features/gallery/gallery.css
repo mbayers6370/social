@@ -235,7 +235,10 @@ html[data-motion="reduced"] .margin-gallery-floating img {
   overflow-wrap: anywhere;
 }
 .margin-photo-viewer {
-  --photo-viewer-image-height: max(120px, calc(85dvh - 18rem));
+  --photo-viewer-image-height: max(
+    120px,
+    calc(var(--margin-viewport-height, 100dvh) * 0.85 - 18rem)
+  );
   max-width: 1000px;
   text-align: left;
 }
@@ -279,11 +282,13 @@ html[data-motion="reduced"] .margin-gallery-floating img {
 .margin-gallery-editor {
   display: flex;
   flex-direction: column;
-  inset: auto 0 0;
+  inset: auto 0 var(--margin-viewport-bottom, 0px);
   transform: none;
   width: 100%;
   max-width: none;
-  max-height: calc(100dvh - var(--margin-safe-area-top) - 24px);
+  max-height: calc(
+    var(--margin-viewport-height, 100dvh) - var(--margin-safe-area-top) - 24px
+  );
   padding: 0;
   gap: 0;
   overflow: hidden;
@@ -369,7 +374,7 @@ html[data-motion="reduced"] .margin-gallery-floating img {
   padding: 16px 24px max(16px, env(safe-area-inset-bottom));
   border-top: 1px solid hsl(var(--border) / 0.65);
   background: hsl(var(--card));
-  max-height: 45dvh;
+  max-height: calc(var(--margin-viewport-height, 100dvh) * 0.45);
   overflow-y: auto;
 }
 .margin-editor-selection {
@@ -444,11 +449,16 @@ html[data-motion="reduced"] .margin-gallery-floating img {
     flex-wrap: wrap;
   }
   .margin-gallery-editor {
-    inset: 50% auto auto 50%;
+    inset: auto;
+    left: 50%;
+    top: calc(
+      var(--margin-viewport-top, 0px) + var(--margin-viewport-height, 100dvh) /
+        2
+    );
     transform: translate(-50%, -50%);
     width: calc(100% - 48px);
     max-width: 840px;
-    max-height: min(90dvh, 900px);
+    max-height: min(calc(var(--margin-viewport-height, 100dvh) * 0.9), 900px);
     border-radius: var(--radius-card);
   }
   .margin-editor-grid {
@@ -506,11 +516,17 @@ html[data-motion="reduced"] .margin-gallery-floating img {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    height: min(90dvh, 900px);
+    height: min(calc(var(--margin-viewport-height, 100dvh) * 0.9), 900px);
     max-height: 90dvh;
     max-width: 1100px;
   }
   .margin-photo-viewer > :not(.margin-photo-viewer-figure) {
     flex-shrink: 0;
+  }
+}
+
+@media (max-width: 359px) {
+  .margin-editor-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

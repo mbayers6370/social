@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Edit } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { usePreview } from "@/features/local-preview/provider";
@@ -26,7 +26,7 @@ export function PostManagement({ post }: { post: FriendPost }) {
       <Dialog open={editing} onOpenChange={setEditing}>
         <DialogTrigger asChild>
           <Button variant="ghost" aria-label="Edit post">
-            <Pencil aria-hidden="true" strokeWidth={1.5} />
+            <Edit aria-hidden="true" />
             Edit
           </Button>
         </DialogTrigger>

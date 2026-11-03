@@ -3,7 +3,13 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronLeft, ChevronRight, Grip, Trash2 } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Trash,
+} from "@/components/margin-icons";
+import { Grip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -12,7 +18,7 @@ import {
   Dialog,
 } from "@/components/ui/dialog";
 import { FieldError } from "@/components/ui/field";
-import { usePreview } from "@/features/local-preview/provider";
+import { useOptionalPreview } from "@/features/local-preview/provider";
 import {
   FEATURED_LIMIT,
   GALLERY_LIMIT,
@@ -30,16 +36,25 @@ export function GalleryEditor({
   onCancel,
   onDone,
   onRestoreFocus,
+  source,
 }: {
   addition?: Photo;
   initialSelection?: string;
   onCancel: () => void;
   onDone: () => void;
   onRestoreFocus: (event: Event) => void;
+  source?: {
+    gallery: GalleryEntry[];
+    photos: Photo[];
+    save: (input: import("./arrangement").GalleryArrangement) => Promise<void>;
+  };
 }) {
-  const preview = usePreview();
+  const preview = useOptionalPreview();
+  const [saving, setSaving] = useState(false);
   const [base] = useState(() =>
-    preview.state.gallery.map((entry) => ({ ...entry })),
+    (source?.gallery ?? preview?.state.gallery ?? []).map((entry) => ({
+      ...entry,
+    })),
   );
   const [entries, setEntries] = useState<GalleryEntry[]>(() =>
     addition &&
@@ -67,7 +82,9 @@ export function GalleryEditor({
   const deleteTrigger = useRef<HTMLButtonElement>(null);
   const featureButton = useRef<HTMLButtonElement>(null);
   const photo = (id: string) =>
-    preview.state.photos.find((item) => item.id === id)!;
+    (source?.photos ?? preview?.state.photos ?? []).find(
+      (item) => item.id === id,
+    )!;
   const groups = [true, false].map((flag) =>
     entries.filter((entry) => entry.featured === flag),
   );
@@ -142,12 +159,16 @@ export function GalleryEditor({
       className="margin-gallery-editor"
       aria-describedby="gallery-arrange-help"
       onCloseAutoFocus={onRestoreFocus}
+      onInteractOutside={(event) => {
+        if (saving) event.preventDefault();
+      }}
+      aria-busy={saving}
       onOpenAutoFocus={(event) => {
         event.preventDefault();
         title.current?.focus();
       }}
       onEscapeKeyDown={(event) => {
-        if (isActive() || deleting) {
+        if (saving || isActive() || deleting) {
           event.preventDefault();
           cancelDrag();
         }
@@ -163,7 +184,11 @@ export function GalleryEditor({
           your gallery as it was.
         </DialogDescription>
       </header>
-      <div ref={scroller} className="margin-gallery-editor-scroll">
+      <div
+        ref={scroller}
+        className="margin-gallery-editor-scroll"
+        inert={saving}
+      >
         {needsReplacement && addition && (
           <div className="margin-gallery-replacement">
             <Image
@@ -259,7 +284,7 @@ export function GalleryEditor({
                         aria-describedby="gallery-arrange-help"
                         {...handle(item.id)}
                       >
-                        <Grip aria-hidden="true" strokeWidth={1.5} />
+                        <Grip aria-hidden="true" />
                       </button>
                     </div>
                   );
@@ -326,7 +351,7 @@ export function GalleryEditor({
           </div>,
           document.body,
         )}
-      <footer className="margin-gallery-editor-footer">
+      <footer className="margin-gallery-editor-footer" inert={saving}>
         {selected && (
           <div className="margin-editor-selection">
             <p title={photoLabel(selected)}>{photoLabel(selected)}</p>
@@ -395,7 +420,7 @@ export function GalleryEditor({
                     aria-label="Delete photograph"
                     onClick={() => setDeleting(selected)}
                   >
-                    <Trash2 aria-hidden="true" strokeWidth={1.5} />
+                    <Trash aria-hidden="true" />
                   </Button>
                 )}
               </div>
@@ -420,14 +445,17 @@ export function GalleryEditor({
               : status}
         </p>
         <div className="margin-gallery-editor-complete">
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="outline" disabled={saving} onClick={onCancel}>
             Cancel
           </Button>
           <Button
-            disabled={needsReplacement || !!lift}
-            onClick={() => {
+            disabled={saving || needsReplacement || !!lift}
+            onClick={async () => {
+              setSaving(true);
               try {
-                preview.saveGallery({
+                const save = source?.save ?? preview?.saveGallery;
+                if (!save) throw Error("Gallery is unavailable.");
+                await save({
                   base,
                   entries,
                   deletedPhotoIds,
@@ -435,11 +463,18 @@ export function GalleryEditor({
                 });
                 onDone();
               } catch (error) {
-                setError(previewMessage(error));
+                setError(
+                  source && error instanceof Error
+                    ? error.message
+                    : previewMessage(error),
+                );
+                requestAnimationFrame(() => title.current?.focus());
+              } finally {
+                setSaving(false);
               }
             }}
           >
-            Done
+            {saving ? "Saving…" : "Done"}
           </Button>
         </div>
       </footer>

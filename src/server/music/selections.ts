@@ -27,7 +27,7 @@ export function localMusicDb() {
     throw new MusicError("Saved music is temporarily unavailable.");
   return getDb();
 }
-function fromRow(row: {
+export function profileTrackFromRow(row: {
   providerTrackId: string;
   title: string;
   artist: string;
@@ -54,7 +54,7 @@ export async function readMusic(subject = LOCAL_MUSIC_VIEWER) {
     where: { clerkId: subject },
     select: { songs: { orderBy: { position: "asc" } } },
   });
-  return user?.songs.map(fromRow) ?? [];
+  return user?.songs.map(profileTrackFromRow) ?? [];
 }
 export async function changeMusic(
   input: unknown,
@@ -110,7 +110,7 @@ export async function changeMusic(
               where: { userId: user.id },
               orderBy: { position: "asc" },
             })
-          ).map(fromRow);
+          ).map(profileTrackFromRow);
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );

@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Check, Plus } from "lucide-react";
+import { Check, Add } from "@/components/margin-icons";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,7 +92,7 @@ export function ComponentExamples() {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           <Button>
-            <Plus aria-hidden="true" />
+            <Add aria-hidden="true" />
             Primary action
           </Button>
           <Button variant="outline">Secondary action</Button>

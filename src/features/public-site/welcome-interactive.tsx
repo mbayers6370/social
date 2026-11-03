@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, Conversation } from "@/components/margin-icons";
 
 /** The product's card turn, using only a fictional public discussion. */
 export function WelcomePost({
@@ -69,7 +69,7 @@ export function WelcomePost({
               setOpen(true);
             }}
           >
-            <MessageCircle aria-hidden="true" />
+            <Conversation aria-hidden="true" />
             <span
               className="margin-welcome-post-action-label"
               aria-hidden="true"

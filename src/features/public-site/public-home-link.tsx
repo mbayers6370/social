@@ -5,7 +5,13 @@ export function PublicHomeLink({ signedOutHref }: { signedOutHref: string }) {
   const session = useAccountSession();
   return (
     <BrandLink
-      href={session?.signedIn ? "/" : signedOutHref}
+      href={
+        session?.signedIn
+          ? session.managed
+            ? "/app/feed"
+            : "/"
+          : signedOutHref
+      }
       animate
       label={session?.signedIn ? "margin feed" : "margin home"}
     />

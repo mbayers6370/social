@@ -33,14 +33,14 @@ test("photographs stay selected until confirmed and retain saved alt text", asyn
     page.getByRole("dialog", { name: "Your Profile Photograph" }),
   ).toBeVisible();
 });
-test("quiet flags have a dismissible keyboard tooltip and account actions are outlined", async ({
+test("profile flags have a dismissible keyboard tooltip and account actions are outlined", async ({
   page,
 }, testInfo) => {
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION === "1",
     "Post and account fixtures are development-only",
   );
-  await page.goto("/");
+  await page.goto("/?view=profile&person=samuel");
   const flag = page
     .locator(".margin-feed-post")
     .first()

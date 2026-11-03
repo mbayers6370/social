@@ -7,7 +7,6 @@ import {
   initialLocalState,
   searchProfiles,
 } from "@/features/local-preview/model";
-import { USERNAME_COOLDOWN_MS } from "@/features/profile/username";
 import { UsernameSettings } from "@/features/settings/username-settings";
 import { ProfilePreview } from "@/features/profile/profile-preview";
 import { previewBootstrap } from "./helpers/local-preview-fixture";
@@ -44,19 +43,19 @@ it("changes only the viewer's search identifier while preserving IDs and relatio
   ).toEqual(["ines"]);
   expect(() =>
     changeLocalUsername(changed, data.viewerId, "ines_again", now),
-  ).toThrow(/again on/);
-  const almost = new Date(now.getTime() + USERNAME_COOLDOWN_MS - 1);
+  ).toThrow(/already been used/);
+  const almost = new Date(now.getTime() + 7 * 86_400_000);
   expect(() =>
     changeLocalUsername(changed, data.viewerId, "ines_again", almost),
-  ).toThrow(/again on/);
-  expect(
+  ).toThrow(/already been used/);
+  expect(() =>
     changeLocalUsername(
       changed,
       data.viewerId,
       "ines_again",
-      new Date(now.getTime() + USERNAME_COOLDOWN_MS),
-    ).profiles[0].handle,
-  ).toBe("ines_again");
+      new Date(now.getTime() + 365 * 86_400_000),
+    ),
+  ).toThrow(/already been used/);
 });
 
 it.each([
@@ -82,7 +81,7 @@ it.each([
   },
 );
 
-it("denies a missing viewer or invalid cooldown state", () => {
+it("denies a missing viewer or invalid change marker", () => {
   const data = previewBootstrap();
   const state = initialLocalState(data);
   expect(() =>
@@ -98,7 +97,7 @@ it("denies a missing viewer or invalid cooldown state", () => {
   ).toThrow(/unavailable/);
 });
 
-it("requires confirmation, permits cancellation, updates the profile and then applies the cooldown", async () => {
+it("requires confirmation, permits cancellation, updates the profile and permanently uses the one-time allowance", async () => {
   const user = userEvent.setup();
   const data = previewBootstrap();
   const { container } = render(
@@ -161,7 +160,7 @@ it("requires confirmation, permits cancellation, updates the profile and then ap
     expect(container.querySelector(".margin-username-current")).toHaveFocus(),
   );
   expect(
-    screen.getByText(/You can change your username again on/),
+    screen.getByText(/Your one username change has been used/),
   ).toBeVisible();
   expect(screen.getByText("Username changed to @ines_science.")).toBeVisible();
 });

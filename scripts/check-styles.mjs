@@ -52,6 +52,43 @@ function visit(file) {
       register(selectorOwners, selector.replace(/\s+/g, " ").trim(), relative);
     }
   });
+  // One declaration per selector/property in the same conditional context.
+  // Expand selector groups so a later singleton cannot silently patch a shared rule.
+  // Responsive, support and layer contexts remain independent; keyframes are steps.
+  const declarations = new Map();
+  root.walkRules((rule) => {
+    const scope = [];
+    for (
+      let parent = rule.parent;
+      parent?.type !== "root";
+      parent = parent.parent
+    ) {
+      if (parent.type === "atrule" && /keyframes$/.test(parent.name)) return;
+      scope.unshift(
+        parent.type === "atrule"
+          ? `@${parent.name} ${parent.params}`
+          : parent.selector,
+      );
+    }
+    for (const selector of rule.selectors) {
+      for (const declaration of rule.nodes.filter(
+        (node) => node.type === "decl",
+      )) {
+        const key = JSON.stringify([
+          scope,
+          selector.trim().replace(/\s+/g, " "),
+          declaration.prop,
+          Boolean(declaration.important),
+        ]);
+        const previous = declarations.get(key);
+        assert(
+          !previous,
+          `${relative}:${declaration.source.start.line}: ${selector} repeats ${declaration.prop} from line ${previous?.source.start.line} in the same CSS context. Consolidate the declarations.`,
+        );
+        declarations.set(key, declaration);
+      }
+    }
+  });
 }
 for (const entry of entries) visit(path.join(source, entry.slice(2)));
 function checkReachable(directory) {

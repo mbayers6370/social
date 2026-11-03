@@ -21,13 +21,40 @@ model User {
   gallery         GalleryEntry[]
   friendshipsLow  Friendship[]   @relation("FriendLow")
   friendshipsHigh Friendship[]   @relation("FriendHigh")
+  spacesCreated   Space[] @relation("SpaceCreator")
+  memberships     SpaceMembership[]
+  spaceInvitesSent SpaceInvitation[] @relation("SpaceInviter")
+  spaceInvitesReceived SpaceInvitation[] @relation("SpaceInvitee")
+  comments PostComment[]
+  sentMessages MemberMessage[] @relation("MessageSender")
+  receivedMessages MemberMessage[] @relation("MessageRecipient")
+  activity MemberNotification[] @relation("NotificationRecipient")
+  activityBy MemberNotification[] @relation("NotificationActor")
+  likes PostLike[]
   blocksSent      Block[]        @relation("BlockSender")
   blocksReceived  Block[]        @relation("BlockRecipient")
 }
 
 /// Activation is separate from provider identity and legacy preview music users.
 model Account {
+  portraitPhotoId String?
+  portrait Photo? @relation(fields: [portraitPhotoId], references: [id], onDelete: SetNull)
+  usernameChangedAt DateTime?
+  galleryVersion Int @default(0)
+  readingSize String @default("standard") @db.VarChar(16)
+  motion String @default("system") @db.VarChar(16)
+  notifyComments Boolean @default(true)
+  notifyLikes Boolean @default(true)
+  notifyFriends Boolean @default(true)
+  notifyMessages Boolean @default(true)
+  messagingEnabled Boolean @default(true)
+  username String? @unique @db.VarChar(24)
+  bio String @default("") @db.VarChar(300)
+  emailVerifiedAt DateTime?
+  displayName String @default("Margin member") @db.VarChar(80)
   invitationsRemaining Int @default(0)
+  invitationAllowanceGrantedAt DateTime?
+  role AccountRole @default(MEMBER)
   onboardedAt DateTime?
   ageConfirmedAt DateTime?
   userId String        @id
@@ -39,6 +66,11 @@ enum AccountStatus {
   PENDING
   ACTIVE
   DEACTIVATED
+}
+
+enum AccountRole {
+  MEMBER
+  FOUNDER
 }
 
 enum FriendshipStatus {
@@ -76,6 +108,11 @@ model Block {
 }
 
 model Post {
+  activity MemberNotification[]
+  likes PostLike[]
+  spaceId String?
+  space Space? @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  comments PostComment[]
   id        String      @id @default(cuid())
   ownerId   String
   body      String
@@ -89,11 +126,13 @@ model Post {
 
   @@unique([id, ownerId])
   @@index([ownerId, dayKey])
+  @@index([spaceId, createdAt, id])
   @@index([expiresAt])
 }
 
 /// Canonical, normalized private object. Object keys are never returned in DTOs.
 model Photo {
+  portraits Account[]
   id              String        @id @default(cuid())
   ownerId         String
   objectKey       String        @unique
@@ -108,6 +147,8 @@ model Photo {
   owner           User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   posts           PostPhoto[]
   gallery         GalleryEntry?
+  uploadedAt DateTime?
+  spaceReferences SpacePhoto[]
 
   @@unique([id, ownerId])
   @@index([ownerId, dayKey, state])
@@ -126,6 +167,8 @@ model PostPhoto {
 }
 
 model GalleryEntry {
+  position Int @default(0)
+  featured Boolean @default(false)
   photoId String @id
   ownerId String
   photo   Photo  @relation(fields: [photoId, ownerId], references: [id, ownerId], onDelete: Cascade)
@@ -133,6 +176,49 @@ model GalleryEntry {
 
   @@unique([photoId, ownerId])
   @@index([ownerId])
+  @@index([ownerId, position])
+}
+
+/// Durable participant-only messages; self-addressed messages form the Notebook.
+model MemberMessage {
+  id String @id @default(cuid())
+  senderId String
+  recipientId String
+  requestId String @db.VarChar(80)
+  body String @db.VarChar(2000)
+  createdAt DateTime @default(now())
+  readAt DateTime?
+  hiddenBySender Boolean @default(false)
+  hiddenByRecipient Boolean @default(false)
+  sender User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  @@unique([senderId, requestId])
+  @@index([senderId, recipientId, createdAt, id])
+  @@index([recipientId, readAt, createdAt])
+}
+
+model MemberNotification {
+  id String @id @default(cuid())
+  recipientId String
+  actorId String
+  kind String @db.VarChar(24)
+  postId String?
+  dedupeKey String @unique @db.VarChar(200)
+  createdAt DateTime @default(now())
+  readAt DateTime?
+  recipient User @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor User @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  post Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@index([recipientId, createdAt, id])
+}
+
+model PostLike {
+  postId String
+  userId String
+  createdAt DateTime @default(now())
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([postId, userId])
 }
 
 /// Three ordered references to catalogue songs. No audio, tokens or artwork bytes.
@@ -161,6 +247,37 @@ model Invitation {
   createdAt DateTime @default(now())
   expiresAt DateTime
   claimedBy String?
+  claimedAt DateTime?
+  revokedAt DateTime?
+  clerkInvitationId String? @unique
+  providerRevokedAt DateTime?
+  deliveryAttemptedAt DateTime?
+  providerCheckedAt DateTime?
+  founderSubject String?
+  linkId String?
+  link InvitationLink? @relation(fields: [linkId], references: [id], onDelete: Restrict)
+  @@index([linkId, email])
+  @@index([revokedAt, providerRevokedAt])
+  @@index([founderSubject])
+}
+
+/// Issuance consumes a member's allowance. Only completed, verified claims consume capacity.
+model InvitationLink {
+  id String @id @default(cuid())
+  digest String @unique
+  createdBy String
+  community Boolean @default(false)
+  label String? @db.VarChar(80)
+  maxRedemptions Int @default(1)
+  acceptedCount Int @default(0)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  requestId String
+  invitations Invitation[]
+  @@unique([createdBy, requestId])
+  @@index([createdBy, createdAt])
+  @@index([expiresAt])
 }
 
 /// Minimal report records; content access is checked before accepting the target.
@@ -176,4 +293,89 @@ model SafetyReport {
   createdAt DateTime @default(now())
   reporter User @relation(fields: [reporterId], references: [id], onDelete: Restrict)
   @@index([reporterId, createdAt])
+}
+
+
+enum SpaceKind {
+  PRIVATE
+  GATHERING
+  EVENT
+}
+enum SpaceRole {
+  ADMIN
+  MEMBER
+}
+enum SpaceRsvp {
+  GOING
+  MAYBE
+  DECLINED
+}
+model Space {
+  id String @id @default(cuid())
+  name String @db.VarChar(100)
+  kind SpaceKind
+  creatorId String
+  creator User @relation("SpaceCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  startsAt DateTime?
+  timeZone String?
+  location String? @db.VarChar(300)
+  ticketmasterId String? @unique
+  endsAt DateTime?
+  expiresAt DateTime?
+  imageUrl String?
+  sourceUrl String?
+  archivedAt DateTime?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  memberships SpaceMembership[]
+  invitations SpaceInvitation[]
+  posts Post[]
+  photos SpacePhoto[]
+  @@index([kind, archivedAt, id])
+  @@index([expiresAt])
+}
+model SpaceMembership {
+  spaceId String
+  userId String
+  role SpaceRole @default(MEMBER)
+  includeInFeed Boolean @default(false)
+  rsvp SpaceRsvp?
+  joinedAt DateTime @default(now())
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([spaceId, userId])
+  @@index([userId, spaceId])
+}
+model SpaceInvitation {
+  id String @id @default(cuid())
+  spaceId String
+  inviterId String
+  inviteeId String
+  expiresAt DateTime
+  acceptedAt DateTime?
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  inviter User @relation("SpaceInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee User @relation("SpaceInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  @@index([inviteeId, expiresAt])
+}
+/// Includes in-flight reservations; one asset occupies one slot in each referencing Space.
+model SpacePhoto {
+  spaceId String
+  photoId String
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  photo Photo @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  @@id([spaceId, photoId])
+  @@index([photoId])
+}
+model PostComment {
+  replyToId String?
+  id String @id @default(cuid())
+  postId String
+  authorId String
+  body String @db.VarChar(2000)
+  createdAt DateTime @default(now())
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  @@unique([id, postId])
+  @@index([postId, createdAt, id])
 }

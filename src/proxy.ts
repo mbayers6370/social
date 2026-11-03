@@ -1,3 +1,5 @@
+import { accountConfiguration } from "@/server/account/config";
+import { authenticationUnavailable } from "@/server/account/unavailable-response";
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import {
   NextResponse,
@@ -23,23 +25,39 @@ function isPublic(pathname: string) {
     pathname === "/sign-up" ||
     pathname.startsWith("/sign-up/") ||
     pathname === "/onboarding" ||
+    /^\/invite\/(?:claim\/)?[A-Za-z0-9_-]{43}$/.test(pathname) ||
+    /^\/api\/invite\/[A-Za-z0-9_-]{43}$/.test(pathname) ||
     pathname === "/fonts/NotoSans-Regular.ttf" ||
     pathname === "/fonts/OFL.txt" ||
     (process.env.NODE_ENV === "development" &&
-      ["/api/development/music", "/api/development/music/selections"].includes(
-        pathname,
-      )) ||
-    (process.env.NODE_ENV === "development" && pathname === "/design-system")
+      [
+        "/api/development/music",
+        "/api/development/music/selections",
+        "/api/development/events",
+      ].includes(pathname)) ||
+    (process.env.NODE_ENV === "development" &&
+      [
+        "/design-system",
+        "/preview/spaces",
+        "/preview/auth",
+        "/preview/invitations",
+        "/preview/onboarding",
+      ].includes(pathname))
   );
 }
 
 const clerkProxy = clerkMiddleware(
   async (auth, request) => {
-    if (!isPublic(request.nextUrl.pathname)) await auth.protect();
+    // The session probe owns its JSON 401 response; it verifies the session again on the server.
+    if (
+      !isPublic(request.nextUrl.pathname) &&
+      request.nextUrl.pathname !== "/api/auth/session"
+    )
+      await auth.protect();
   },
   {
     authorizedParties: [
-      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+      accountConfiguration().origin ?? "https://unconfigured.invalid",
     ],
     contentSecurityPolicy: {
       strict: true,
@@ -76,34 +94,50 @@ export default async function proxy(
   )
     return new NextResponse(null, { status: 404 });
   if (
-    request.nextUrl.pathname === "/design-system" &&
+    [
+      "/design-system",
+      "/preview/spaces",
+      "/preview/auth",
+      "/preview/invitations",
+      "/preview/onboarding",
+    ].includes(request.nextUrl.pathname) &&
     process.env.NODE_ENV !== "development"
   )
     return new NextResponse(null, { status: 404 });
-  if (
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-    process.env.CLERK_SECRET_KEY
-  ) {
-    const response = await clerkProxy(request, event);
-    if (response && !isPublic(request.nextUrl.pathname)) {
-      response.headers.set("Cache-Control", "private, no-store");
-      response.headers.set("X-Robots-Tag", "noindex, noarchive, nosnippet");
+  if (accountConfiguration().configured) {
+    try {
+      const response = await clerkProxy(request, event);
+      if (response && request.nextUrl.pathname.startsWith("/invite/")) {
+        response.headers.set("Cache-Control", "private, no-store");
+        response.headers.set("Referrer-Policy", "no-referrer");
+        response.headers.set("X-Robots-Tag", "noindex, noarchive, nosnippet");
+      }
+      if (
+        response &&
+        (!isPublic(request.nextUrl.pathname) ||
+          ["/sign-in", "/sign-up", "/onboarding"].some(
+            (path) =>
+              request.nextUrl.pathname === path ||
+              request.nextUrl.pathname.startsWith(`${path}/`),
+          ))
+      ) {
+        response.headers.set("Cache-Control", "private, no-store");
+        response.headers.set("X-Robots-Tag", "noindex, noarchive, nosnippet");
+      }
+      return response;
+    } catch {
+      return authenticationUnavailable(request);
     }
-    return response;
   }
+  // Only the local page redirects to fictional review data. APIs retain their auth boundary.
+  if (
+    process.env.NODE_ENV === "development" &&
+    request.nextUrl.pathname === "/app/spaces"
+  )
+    return NextResponse.redirect(new URL("/preview/spaces", request.url));
   // Missing credentials never authorize a protected path. Public UI can still run locally.
-  if (!isPublic(request.nextUrl.pathname)) {
-    return NextResponse.json(
-      { error: "Authentication service unavailable" },
-      {
-        status: 503,
-        headers: {
-          "Cache-Control": "private, no-store",
-          "X-Robots-Tag": "noindex, noarchive, nosnippet",
-        },
-      },
-    );
-  }
+  if (!isPublic(request.nextUrl.pathname))
+    return authenticationUnavailable(request);
   const nonce = Buffer.from(
     crypto.getRandomValues(new Uint8Array(16)),
   ).toString("base64");
@@ -115,7 +149,20 @@ export default async function proxy(
   headers.set("x-nonce", nonce);
   headers.set("Content-Security-Policy", csp);
   const response = NextResponse.next({ request: { headers } });
+  if (request.nextUrl.pathname.startsWith("/invite/")) {
+    response.headers.set("Cache-Control", "private, no-store");
+    response.headers.set("Referrer-Policy", "no-referrer");
+    response.headers.set("X-Robots-Tag", "noindex, noarchive, nosnippet");
+  }
   response.headers.set("Content-Security-Policy", csp);
+  if (
+    ["/sign-in", "/sign-up", "/onboarding"].some(
+      (path) =>
+        request.nextUrl.pathname === path ||
+        request.nextUrl.pathname.startsWith(`${path}/`),
+    )
+  )
+    response.headers.set("Cache-Control", "private, no-store");
   return response;
 }
 

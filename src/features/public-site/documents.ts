@@ -5,6 +5,10 @@ import {
   POSTING_EXCLUSIONS,
   POSTING_TIME_ZONE,
 } from "@/lib/platform-rules";
+import {
+  MESSAGE_LIFETIME_DAYS,
+  NOTEBOOK_LIFETIME_DAYS,
+} from "@/lib/message-policy";
 import type { PublicDocumentData } from "./public-document";
 import { publicSiteDetails } from "./site-details";
 
@@ -15,9 +19,9 @@ const postingPoints = [
   `Calendar days currently run midnight to midnight in ${POSTING_TIME_ZONE}.`,
   "A link pasted into regular post text counts as a link-containing post too.",
 ];
-const temporaryContact = `${publicSiteDetails.supportEmail} is a temporary placeholder and is not a monitored inbox. Do not send private information there. A working contact address must be confirmed before the beta opens.`;
+const supportContact = `For general support, email ${publicSiteDetails.supportEmail}. Never send passwords, verification codes or recovery codes.`;
 const previewStatus =
-  "Margin is in development. Account setup begins with an invitation code. The application preview uses fictional people; its social interactions do not reach real accounts.";
+  "Margin is in development. Account setup begins with a personal invitation link. The application preview uses fictional people; its social interactions do not reach real accounts.";
 const policyStatus =
   "This is a draft for review, with no effective date. Proposed rules describe the service being developed; they are not a claim that every feature or operational process is live.";
 
@@ -66,14 +70,11 @@ export const publicDocuments = {
           "Margin is an independent project exploring a smaller, more deliberate social space. The name is a reminder to leave something unfilled.",
           previewStatus,
           "The product is taking shape through a working local preview. Private account services, support and moderation processes, and final policies still need to be ready before people are invited in. There is no launch date or waitlist to announce yet.",
-          "Margin is the platform name. The legal operator, official domain and working contact details have not been confirmed. Those details will need to be clear before registration opens.",
+          `Margin’s domain is ${publicSiteDetails.domain}, and its general support address is ${publicSiteDetails.supportEmail}. The legal operator and final policies still need to be confirmed before registration opens.`,
         ],
       },
     ],
-    related: [
-      { label: "How Margin works", href: "/how-it-works" },
-      { label: "Join Margin", href: "/sign-up" },
-    ],
+    related: [{ label: "How Margin works", href: "/how-it-works" }],
   },
   "how-it-works": {
     category: "Explore",
@@ -116,7 +117,7 @@ export const publicDocuments = {
         title: "A post is the beginning",
         paragraphs: [
           "Choose the speech-bubble icon on a post to open its conversation. Read the replies, add a thought or respond to someone. Returning brings you back to the post.",
-          "Messages have a separate inbox. The preview also includes a Notebook for notes to yourself. Sample messages, notes and drafts stay local; they are not delivered to anyone. A live message-retention and notebook policy has not been finalised.",
+          `Messages have a separate inbox, with an intended lifetime of ${MESSAGE_LIFETIME_DAYS} days after each message is sent. Notebook is for private notes to yourself, with an intended lifetime of ${NOTEBOOK_LIFETIME_DAYS} days after each note is saved. The preview keeps these locally; message and note expiry are not connected yet.`,
         ],
       },
       {
@@ -222,7 +223,7 @@ export const publicDocuments = {
         id: "account",
         title: "Who can join, and how do I sign in?",
         paragraphs: [
-          `Margin is intended for people ${MINIMUM_AGE} and older. Start at Join Margin with an invitation code. Live registration depends on the connected account service. The sample identity in the local application is not a real signed-in account.`,
+          `Margin is intended for people ${MINIMUM_AGE} and older. Open a personal invitation link from an existing member to begin. Live registration depends on the connected account service. The sample identity in the local application is not a real signed-in account.`,
           "When accounts become available, use the official sign-in flow. Never send a password, verification code or recovery code to someone claiming to provide support.",
         ],
       },
@@ -231,7 +232,7 @@ export const publicDocuments = {
         title: "How do I change my profile?",
         paragraphs: [
           "Choose Edit profile beside your profile details or in the account menu. Edit your name and bio, then Save changes. Cancel or Escape discards the draft. Username changes live separately in Settings.",
-          "Usernames use 3–24 letters, numbers or underscores, start with a letter and are saved in lowercase. The preview checks sample-name availability and applies a seven-day change cooldown. Those checks are local; they do not reserve a username for a future account.",
+          "Usernames use 3–24 letters, numbers or underscores, start with a letter and are saved in lowercase. Each account can change its username once after setup; that change is permanent. The local preview follows the same rule within the current tab, but preview names do not reserve an account.",
         ],
       },
       {
@@ -284,7 +285,7 @@ export const publicDocuments = {
         title: "Report a problem",
         paragraphs: [
           "A useful bug report says which page you used, what you were trying to do, what happened and which browser or device was involved. Include the visible error wording if there is one. Remove personal information from screenshots and leave out messages, credentials and recovery codes.",
-          temporaryContact,
+          supportContact,
         ],
         links: [{ label: "Contact and reporting status", href: "/contact" }],
       },
@@ -315,17 +316,23 @@ export const publicDocuments = {
     title: "Get in touch",
     intro: "A question, a rough edge, or something we could explain better.",
     summary: [
-      "Support is not accepting messages yet.",
+      `General support: ${publicSiteDetails.supportEmail}.`,
       "This page does not collect or send information.",
       "Never share passwords or verification codes.",
     ],
     sections: [
       {
         id: "support",
-        title: "The current contact status",
+        title: "Email Margin",
         paragraphs: [
-          temporaryContact,
-          "Margin is the platform name. Its official domain, legal operator and support process still need to be confirmed. There is no form, live chat or monitored contact route on this page. When a route opens, this page will explain what it handles and what information is needed.",
+          supportContact,
+          `Margin’s domain is ${publicSiteDetails.domain}. This page opens your email app; it does not collect or send messages itself. Response times and specialist request processes have not been established.`,
+        ],
+        links: [
+          {
+            label: `Email ${publicSiteDetails.supportEmail}`,
+            href: `mailto:${publicSiteDetails.supportEmail}`,
+          },
         ],
       },
       {
@@ -346,7 +353,7 @@ export const publicDocuments = {
         id: "safety",
         title: "For a safety concern",
         paragraphs: [
-          "A live safety-reporting service is not available yet. Do not send harmful, intimate or sensitive material to the placeholder address. The final reporting route must explain what evidence is needed, who can review it and how to ask for another review.",
+          "A live safety-reporting service is not available yet. Do not send harmful, intimate or sensitive material to the support inbox. The final reporting route must explain what evidence is needed, who can review it and how to ask for another review.",
           "Margin is not an emergency service. If someone is in immediate danger, use an appropriate local emergency service rather than waiting for a platform response.",
         ],
         links: [
@@ -357,7 +364,7 @@ export const publicDocuments = {
         id: "data-copyright",
         title: "For privacy or copyright questions",
         paragraphs: [
-          "Privacy requests and copyright notices need their own verified handling processes. Neither process is accepting submissions through this page. Do not send identity documents, complete account archives or legal notices to the temporary address.",
+          "Privacy requests and copyright notices need their own verified handling processes. Neither process is accepting submissions through this page. Do not send identity documents, complete account archives or legal notices to the general support address.",
         ],
         links: [
           { label: "Your data", href: "/your-data" },
@@ -452,7 +459,7 @@ export const publicDocuments = {
       "A final operator, data inventory and request process are still required.",
     ],
     review: [
-      "Legal operator, address, official domain and privacy contact.",
+      "Legal operator, address and dedicated privacy request process.",
       "Launch regions, applicable rights and legal grounds for each use of data.",
       "Actual service providers, storage locations and transfer arrangements.",
       "Retention periods, request handling, incident notices and effective date.",
@@ -463,8 +470,8 @@ export const publicDocuments = {
         title: "Who is responsible",
         paragraphs: [
           policyStatus,
-          "Margin is the platform name. The legal operator, address and official domain are not finalised. A working privacy contact and any jurisdiction-specific representative details must be confirmed before this policy takes effect.",
-          temporaryContact,
+          `Margin’s domain is ${publicSiteDetails.domain}. The legal operator and address are not finalised. The privacy request process and any jurisdiction-specific representative details must be confirmed before this policy takes effect.`,
+          supportContact,
         ],
       },
       {
@@ -746,7 +753,7 @@ export const publicDocuments = {
       "Final erasure, backup and exception schedules remain under review.",
     ],
     review: [
-      "Exact clocks and schedules for posts, comments, messages and Notebook.",
+      "Enforcement and cleanup schedules for posts, comments, messages and Notebook.",
       "Permanent-erasure deadlines and recovery from failed deletion.",
       "Backup rotation, restoration controls and restricted safety/legal holds.",
       "Account, provider and security-record retention.",
@@ -764,8 +771,8 @@ export const publicDocuments = {
         id: "messages",
         title: "Messages and Notebook",
         paragraphs: [
-          "Private messages are intended to expire after thirty days. The preview’s messages are a local simulation; delivery and expiry for real participants are not active.",
-          "The final policy must explain whether timing is measured per message or conversation, how both participants’ views behave and what an export includes. Notebook is a separate notes-to-self feature. Its live retention period has not been decided and should not be assumed to match messages or last forever.",
+          `Private messages are intended to expire ${MESSAGE_LIFETIME_DAYS} days after each message is sent. A new message does not renew an older message’s lifetime. Automatic message expiry is not active yet.`,
+          `Notebook is a separate notes-to-self feature. Each note is intended to expire ${NOTEBOOK_LIFETIME_DAYS} days after it is saved; adding another note does not renew earlier entries. Automatic note expiry is not active yet. Final permanent-erasure, backup and export rules remain under review.`,
         ],
       },
       {
@@ -838,13 +845,13 @@ export const publicDocuments = {
         id: "notices",
         title: "If you believe your work has been copied",
         paragraphs: [
-          "There is no operational copyright-notice destination on this page. The temporary support address is not a designated agent and must not be used to send a legal notice.",
+          "There is no operational copyright-notice destination on this page. The general support address is not a designated agent and must not be used to send a legal notice.",
           "A future complaint process should make it possible to identify the original work and the disputed material without publicly exposing private account content. Required contact information, statements and signatures depend on the applicable process and must be explained before submissions open.",
         ],
         points: [
           "Keep a reference to the work you believe is yours and where the disputed material appears.",
           "Do not collect unrelated private conversations or circulate the disputed material more widely.",
-          "Do not submit a notice to a placeholder contact or assume it starts a legal response period.",
+          "Do not assume a general support message starts a formal legal response period.",
         ],
       },
       {
@@ -981,8 +988,8 @@ export const publicDocuments = {
         id: "contact",
         title: "Tell us what gets in the way",
         paragraphs: [
-          "A working accessibility contact must be confirmed before launch. A useful report describes the page, the task you were trying to complete and the barrier you encountered. Browser or assistive-technology details can help, but only share information you are comfortable providing.",
-          temporaryContact,
+          "For accessibility feedback, use the general support address below. A useful report describes the page, the task you were trying to complete and the barrier you encountered. Browser or assistive-technology details can help, but only share information you are comfortable providing.",
+          supportContact,
         ],
         links: [{ label: "Contact status", href: "/contact" }],
       },

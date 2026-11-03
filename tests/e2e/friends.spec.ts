@@ -22,7 +22,12 @@ test("uses the responsive navigation and manages local friendships across screen
     await expect(
       bottom.getByRole("button", { name: /^Notifications,/ }),
     ).toHaveCount(0);
-    await expect(bottom.getByRole("link")).toHaveCount(3);
+    await expect(bottom.getByRole("link")).toHaveText([
+      "Feed",
+      "Spaces",
+      "Messages",
+      "Profile",
+    ]);
     await expect(bottom.getByRole("button", { name: "New Post" })).toHaveCount(
       0,
     );

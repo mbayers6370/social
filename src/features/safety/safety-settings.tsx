@@ -1,13 +1,15 @@
 "use client";
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { usePreview } from "@/features/local-preview/provider";
 import { previewMessage } from "@/features/local-preview/model";
 import { Avatar } from "@/features/feed/post-content";
 import { reportReasons } from "./model";
+import { useLocalReports } from "./use-local-reports";
 export function SafetySettings() {
   const preview = usePreview();
+  const reports = useLocalReports();
   const [error, setError] = useState("");
   const blocked = preview.state.friendships
     .filter(
@@ -29,7 +31,7 @@ export function SafetySettings() {
         <summary>
           <span>Blocked people</span>
           <span>{blocked.length}</span>
-          <ChevronDown aria-hidden="true" strokeWidth={1.5} />
+          <ChevronDown aria-hidden="true" />
         </summary>
         <div>
           <p className="margin-field-hint">
@@ -67,19 +69,19 @@ export function SafetySettings() {
       <details className="margin-settings-record">
         <summary>
           <span>Your reports</span>
-          <span>{preview.reports.length}</span>
-          <ChevronDown aria-hidden="true" strokeWidth={1.5} />
+          <span>{reports.length}</span>
+          <ChevronDown aria-hidden="true" />
         </summary>
         <div>
           <p className="margin-field-hint">
             Reports saved in this tab are included in your download. Live review
             is not connected.
           </p>
-          {!preview.reports.length ? (
+          {!reports.length ? (
             <p>No reports saved in this tab.</p>
           ) : (
             <ul className="margin-saved-reports">
-              {preview.reports.map((report) => (
+              {reports.map((report) => (
                 <li key={report.id}>
                   <strong>{report.target.label}</strong>
                   <span>

@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,7 +42,7 @@ export function DeletePostButton({
           className="margin-post-delete"
           aria-label="Delete post"
         >
-          <Trash2 aria-hidden="true" strokeWidth={1.5} />
+          <Trash aria-hidden="true" />
           Delete post
         </Button>
       </DialogTrigger>

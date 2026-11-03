@@ -12,7 +12,14 @@
   box-shadow: none;
 }
 .margin-friends-page > header > .margin-section-heading {
-  margin-block: 24px 12px;
+  margin-block: var(--space-group) 16px;
+}
+.margin-friends-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 .margin-find-friends {
   display: flex;
@@ -24,15 +31,17 @@
 .margin-friends-switch {
   display: flex;
   gap: 8px;
-  margin-block: 28px 20px;
+  margin-block: var(--space-group) 16px;
 }
 .margin-friends-switch button {
   color: hsl(var(--muted-foreground));
   font-weight: 400;
 }
-.margin-friends-switch button[aria-pressed="true"] {
+.margin-friends-switch button[aria-pressed="true"],
+.margin-friends-switch button[aria-selected="true"] {
   background: hsl(var(--secondary));
   color: hsl(var(--foreground));
+  font-weight: 700;
 }
 .margin-friends-switch button span {
   font-size: var(--text-meta);
@@ -58,7 +67,7 @@
   margin-top: 12px;
 }
 .margin-friends-group {
-  margin-top: 28px;
+  margin-top: var(--space-group);
 }
 .margin-friends-group h2 {
   font-size: var(--text-body);

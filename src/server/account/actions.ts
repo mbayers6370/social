@@ -1,14 +1,23 @@
 "use server";
+import { clerkInvitationProvider } from "./invitation-clerk";
+import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { clerkClient, currentUser } from "@clerk/nextjs/server";
-import { getDb } from "@/server/db";
-import { enforceRateLimit } from "@/server/security/rate-limit";
 import {
-  INVITATION_COOKIE,
-  invitationDigest,
-  readInvitation,
-} from "./invitations";
+  requireAccountSession,
+  UnauthorizedError,
+  EmailVerificationRequiredError,
+} from "@/server/auth";
+import { accountConfiguration } from "./config";
+import { completeAccountOnboarding, AccountSetupError } from "./service";
+import { getDb } from "@/server/db";
+import { enforceRateLimit, RateLimitError } from "@/server/security/rate-limit";
+import { INVITATION_COOKIE, invitationDigest } from "./invitations";
+import {
+  checkProviderInvitation,
+  synchronizeInvitations,
+} from "./invitation-provider";
+import { linkUnavailable, tokenValid } from "./invitation-links";
 import { profileInputSchema } from "@/features/profile/schema";
 import {
   usernameSchema,
@@ -19,13 +28,16 @@ export async function acceptInvitation(
   _previous: { error: string },
   form: FormData,
 ): Promise<{ error: string }> {
-  const code = String(form.get("code") ?? "").trim();
-  if (!/^[A-Za-z0-9_-]{32,128}$/.test(code))
-    return { error: "Enter the full invitation code you received." };
-  if (process.env.MARGIN_REGISTRATION_ENABLED !== "1")
+  const code = String(form.get("token") ?? "").trim();
+  let ticket = String(form.get("ticket") ?? "");
+  if (!tokenValid(code) || ticket.length > 8192)
+    return {
+      error: "Open the personal invitation from your email to continue.",
+    };
+  if (!accountConfiguration().registrationEnabled)
     return {
       error:
-        "Account registration is not connected yet. Your code has not been used.",
+        "Account registration is not connected yet. Your invitation has not been used.",
     };
   try {
     // A shared bounded gate avoids collecting anonymous network identifiers.
@@ -36,10 +48,67 @@ export async function acceptInvitation(
     if (
       !invitation ||
       invitation.claimedBy ||
+      invitation.revokedAt ||
+      (!invitation.linkId && !invitation.founderSubject) ||
       invitation.expiresAt <= new Date()
     )
       return { error: "That invitation is unavailable or has expired." };
-  } catch {
+    if (invitation.founderSubject) {
+      const identity = await requireAccountSession();
+      if (
+        identity.subject !== invitation.founderSubject ||
+        identity.verifiedEmail?.toLowerCase() !==
+          invitation.email?.toLowerCase()
+      )
+        return {
+          error:
+            "Sign in with the existing account selected for founder setup, then reopen this link.",
+        };
+      ticket = "";
+    } else {
+      if ((await auth()).userId) {
+        const identity = await requireAccountSession({ verifiedEmail: false });
+        if (
+          identity.verifiedEmail?.toLowerCase() !==
+          invitation.email?.toLowerCase()
+        )
+          return {
+            error:
+              "You’re signed in to a different account. Sign out, then reopen this invitation email to continue.",
+          };
+      }
+      const link = await getDb().invitationLink.findUnique({
+        where: { id: invitation.linkId! },
+      });
+      const reason = linkUnavailable(link);
+      if (reason) return { error: reason };
+      if (
+        !(await checkProviderInvitation(
+          await clerkInvitationProvider(),
+          invitation,
+        ))
+      )
+        return {
+          error:
+            "That invitation is unavailable or has expired. Ask for a new link.",
+        };
+    }
+    if (!ticket && !invitation.founderSubject) {
+      const identity = await requireAccountSession();
+      if (
+        identity.verifiedEmail?.toLowerCase() !==
+        invitation.email?.toLowerCase()
+      )
+        return {
+          error:
+            "Open the invitation email and sign in with the address it was sent to.",
+        };
+    }
+  } catch (error) {
+    if (error instanceof UnauthorizedError)
+      return {
+        error: "Sign in with your invited account, then reopen this link.",
+      };
     return { error: "Invitations could not be checked. Try again later." };
   }
   (await cookies()).set(INVITATION_COOKIE, code, {
@@ -49,7 +118,11 @@ export async function acceptInvitation(
     path: "/",
     maxAge: 1800,
   });
-  redirect("/sign-up");
+  redirect(
+    ticket
+      ? `/sign-up?__clerk_ticket=${encodeURIComponent(ticket)}`
+      : "/onboarding",
+  );
 }
 
 export async function saveOnboarding(
@@ -69,77 +142,70 @@ export async function saveOnboarding(
   )
     return { error: "Check your name, username and age confirmation." };
   try {
-    const user = await currentUser();
-    if (!user) return { error: "Sign in before setting up your account." };
-    await enforceRateLimit("mutation", user.id);
-    const invitation = await readInvitation(user.id);
-    if (!invitation)
+    const session = await requireAccountSession();
+    await enforceRateLimit("onboarding", session.subject);
+    const db = getDb();
+    const existing = await db.user.findUnique({
+      where: { clerkId: session.subject },
+      select: { account: { select: { onboardedAt: true } } },
+    });
+    if (
+      !existing?.account?.onboardedAt &&
+      !accountConfiguration().registrationEnabled
+    )
       return {
         error:
-          "A valid invitation is required. Return to your invitation code to continue.",
+          "Registration is currently closed. Your invitation has not been used.",
       };
-    const email = user.emailAddresses.find(
-      (item) => item.id === user.primaryEmailAddressId,
-    );
+    const cookieStore = await cookies();
+    const code = cookieStore.get(INVITATION_COOKIE)?.value ?? null;
+    const invitation = code
+      ? await db.invitation.findUnique({
+          where: { digest: invitationDigest(code) },
+        })
+      : null;
     if (
-      !email ||
-      email.verification?.status !== "verified" ||
-      (invitation.email &&
-        invitation.email.toLowerCase() !== email.emailAddress.toLowerCase())
+      invitation?.linkId &&
+      !existing?.account?.onboardedAt &&
+      !(await checkProviderInvitation(
+        await clerkInvitationProvider(),
+        invitation,
+        true,
+      ))
     )
-      return { error: "Use the verified email address for this invitation." };
-    const db = getDb();
-    await db.$transaction(
-      async (tx) => {
-        const claimed = await tx.invitation.updateMany({
-          where: {
-            id: invitation.id,
-            expiresAt: { gt: new Date() },
-            OR: [{ claimedBy: null }, { claimedBy: user.id }],
-          },
-          data: { claimedBy: user.id },
-        });
-        if (claimed.count !== 1) throw Error("Invitation unavailable");
-        const owner = await tx.user.upsert({
-          where: { clerkId: user.id },
-          create: { clerkId: user.id },
-          update: {},
-        });
-        const account = await tx.account.findUnique({
-          where: { userId: owner.id },
-        });
-        if (account?.status === "DEACTIVATED")
-          throw Error("Account unavailable");
-        await tx.account.upsert({
-          where: { userId: owner.id },
-          create: {
-            userId: owner.id,
-            status: "PENDING",
-            onboardedAt: new Date(),
-            ageConfirmedAt: new Date(),
-          },
-          update: { onboardedAt: new Date(), ageConfirmedAt: new Date() },
-        });
-      },
-      { isolationLevel: "Serializable" },
+      return {
+        error:
+          "Verify your personal invitation email before finishing account setup.",
+      };
+    const account = await completeAccountOnboarding(
+      db,
+      { subject: session.subject, verifiedEmail: session.verifiedEmail! },
+      { ...details.data, username: username.data },
+      code,
     );
-    const client = await clerkClient();
-    await client.users.updateUser(user.id, {
-      firstName: details.data.name,
-      lastName: "",
-      username: username.data,
-      publicMetadata: {
-        ...user.publicMetadata,
-        marginProfile: { bio: details.data.bio },
-        marginOnboardingComplete: true,
-      },
-    });
-    (await cookies()).delete(INVITATION_COOKIE);
-    return { error: "", saved: true };
-  } catch {
+    cookieStore.delete(INVITATION_COOKIE);
+    if (invitation?.linkId) {
+      try {
+        await synchronizeInvitations(db, await clerkInvitationProvider());
+      } catch {
+        /* Durable revocation markers are retried by invitations:sync. */
+      }
+    }
+    if (account.status !== "ACTIVE") return { error: "", saved: true };
+  } catch (error) {
+    if (error instanceof RateLimitError)
+      return {
+        error: `Too many account setup attempts. Wait ${error.retryAfterSeconds} seconds and try again.`,
+      };
+    if (error instanceof AccountSetupError) return { error: error.message };
+    if (error instanceof EmailVerificationRequiredError)
+      return { error: error.message };
+    if (error instanceof UnauthorizedError)
+      return { error: "Your session has ended. Sign in and try again." };
     return {
       error:
-        "Your profile could not be saved. Check your invitation and try another username if needed. Your account has not been activated.",
+        "We couldn’t save your profile. Your details are still here. Please try again.",
     };
   }
+  redirect("/app");
 }

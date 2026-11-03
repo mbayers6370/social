@@ -5,10 +5,12 @@ export function AuthShell({
   title,
   intro,
   children,
+  providerHeading = false,
 }: {
   title: string;
   intro: string;
   children: ReactNode;
+  providerHeading?: boolean;
 }) {
   return (
     <div className="margin-auth-page">
@@ -16,12 +18,18 @@ export function AuthShell({
         <BrandLink href="/welcome" />
       </header>
       <main id="main-content" tabIndex={-1} className="margin-auth-panel">
-        <header>
+        <header
+          className={providerHeading ? "margin-auth-provider-brand" : undefined}
+        >
           <div className="margin-auth-mobile-brand">
             <BrandLink href="/welcome" />
           </div>
-          <h1>{title}</h1>
-          <p>{intro}</p>
+          {!providerHeading && (
+            <>
+              <h1>{title}</h1>
+              <p>{intro}</p>
+            </>
+          )}
         </header>
         <div className="margin-auth-content">{children}</div>
         <footer>
@@ -33,13 +41,3 @@ export function AuthShell({
     </div>
   );
 }
-export const authAppearance = {
-  elements: {
-    rootBox: "margin-auth-provider",
-    cardBox: "margin-auth-provider-card",
-    card: "margin-auth-provider-inner",
-    header: "sr-only",
-    socialButtonsBlockButton: "margin-auth-social-button",
-    footer: "margin-auth-provider-footer",
-  },
-};

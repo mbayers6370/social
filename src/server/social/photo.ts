@@ -13,6 +13,19 @@ import {
 } from "@/lib/media-policy";
 import { getPrivateStorage } from "@/server/storage";
 import { SocialError } from "./errors";
+// Keep the private filesystem adapter out of production bundles/traces entirely.
+const developmentStore =
+  process.env.NODE_ENV === "development"
+    ? import("./local-photo-store").then(({ localPhotoStore }) =>
+        localPhotoStore(),
+      )
+    : null;
+function isLocalStoreEnabled() {
+  if (process.env.MARGIN_LOCAL_PHOTO_STORE !== "1") return false;
+  if (process.env.NODE_ENV !== "development")
+    throw Error("Local photo storage is development-only");
+  return true;
+}
 
 export interface PrivatePhotoStore {
   put(key: string, bytes: Uint8Array): Promise<void>;
@@ -22,6 +35,7 @@ export interface PrivatePhotoStore {
 // No public URL, ACL, signed bearer URL, or image-optimizer path is produced.
 export const privatePhotoStore: PrivatePhotoStore = {
   async put(key, bytes) {
+    if (isLocalStoreEnabled()) return (await developmentStore!).put(key, bytes);
     const { client, bucket } = getPrivateStorage();
     await client.send(
       new PutObjectCommand({
@@ -35,6 +49,7 @@ export const privatePhotoStore: PrivatePhotoStore = {
     );
   },
   async get(key) {
+    if (isLocalStoreEnabled()) return (await developmentStore!).get(key);
     const { client, bucket } = getPrivateStorage();
     const object = await client.send(
       new GetObjectCommand({ Bucket: bucket, Key: key }),
@@ -49,6 +64,7 @@ export const privatePhotoStore: PrivatePhotoStore = {
     return object.Body.transformToByteArray();
   },
   async delete(key) {
+    if (isLocalStoreEnabled()) return (await developmentStore!).delete(key);
     const { client, bucket } = getPrivateStorage();
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }), {
       abortSignal: AbortSignal.timeout(10_000),

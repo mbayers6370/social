@@ -32,7 +32,7 @@ beforeEach(() => {
   vi.spyOn(window, "scrollBy").mockImplementation(() => {});
 });
 afterEach(() => vi.unstubAllGlobals());
-it("keeps three mobile destinations with notifications and account utilities in the header", () => {
+it("keeps four mobile destinations with notifications and account utilities in the header", () => {
   render(
     <PreviewProvider bootstrap={notificationFixture().bootstrap}>
       <MarginNavigation active="profile" profileAvatar={<span>IA</span>} />
@@ -57,7 +57,7 @@ it("keeps three mobile destinations with notifications and account utilities in 
     within(bottom)
       .getAllByRole("link")
       .map((link) => link.textContent),
-  ).toEqual(["Feed", "Messages", "Profile"]);
+  ).toEqual(["Feed", "Spaces", "Messages", "Profile"]);
   expect(within(bottom).getByRole("link", { name: "Profile" })).toHaveAttribute(
     "aria-current",
     "page",

@@ -1,39 +1,17 @@
 "use client";
-import { useLayoutEffect, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Aperture, ChevronRight, Newspaper } from "lucide-react";
+import { Notebook } from "@/components/margin-icons";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
+import { ProfileFrame } from "./profile-frame";
+import { ProfileGalleryPreview } from "./profile-gallery-preview";
 import { ProfileIdentity } from "./profile-identity";
 import { OnRepeat } from "./on-repeat";
 import type { ProfilePreviewData } from "./schema";
 import { usePreview } from "@/features/local-preview/provider";
 import { canReadFriendsPost } from "@/lib/friend-audience";
 import { FeedExperience } from "@/features/feed/feed-experience";
-import { ProfileSection } from "./profile-section";
 
 export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
-  const root = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const page = root.current;
-    const identity = page?.querySelector<HTMLElement>(
-      ".margin-profile-identity",
-    );
-    if (!page || !identity) return;
-    const measure = () =>
-      page.style.setProperty(
-        "--profile-identity-height",
-        `${identity.getBoundingClientRect().height}px`,
-      );
-    measure();
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", measure);
-      return () => window.removeEventListener("resize", measure);
-    }
-    const observer = new ResizeObserver(measure);
-    observer.observe(identity);
-    return () => observer.disconnect();
-  }, [profile.person.id]);
   const preview = usePreview();
   const current =
     preview.state.profiles.find(
@@ -78,7 +56,7 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
     ? "/?view=gallery"
     : `/?view=gallery&person=${encodeURIComponent(current.person.id)}`;
   return (
-    <div className="margin-profile" ref={root}>
+    <ProfileFrame personId={current.person.id}>
       <ProfileIdentity
         key={`identity-${current.person.id}`}
         profile={current}
@@ -94,61 +72,12 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
           tracks={visible ? (current.onRepeat ?? []) : []}
           restricted={!visible}
         />
-        <ProfileSection
-          className="margin-profile-gallery"
-          aria-labelledby="profile-gallery-title"
-        >
-          <header className="margin-section-heading">
-            <SectionTitle
-              id="profile-gallery-title"
-              motif={<SectionMotif icon={Aperture} />}
-            >
-              Gallery
-            </SectionTitle>
-            {visible && (
-              <Link href={galleryHref} className="margin-section-link">
-                View More
-                <ChevronRight aria-hidden="true" strokeWidth={1.5} />
-              </Link>
-            )}
-          </header>
-          {!visible ? (
-            <p className="margin-empty-copy">Photos are shared with friends.</p>
-          ) : !gallery.length ? (
-            <p className="margin-empty-copy">
-              {own
-                ? "Your photographs will appear here."
-                : "No photographs here yet."}
-            </p>
-          ) : null}
-          {visible && gallery.length > 0 && (
-            <Link
-              href={galleryHref}
-              className="margin-gallery-preview"
-              data-count={Math.min(gallery.length, 3)}
-              aria-label={`View all ${gallery.length} photographs`}
-            >
-              {gallery.slice(0, 3).map((photo, index) => (
-                <Image
-                  key={photo.image.src}
-                  {...photo.image}
-                  alt={photo.description}
-                  loading="eager"
-                  unoptimized={photo.image.src.startsWith("blob:")}
-                  sizes={`(min-width: 1152px) ${
-                    gallery.length === 1
-                      ? 384
-                      : gallery.length === 2
-                        ? 192
-                        : index === 0
-                          ? 256
-                          : 128
-                  }px, (min-width: 640px) 180px, calc((100vw - 110px) / 3)`}
-                />
-              ))}
-            </Link>
-          )}
-        </ProfileSection>
+        <ProfileGalleryPreview
+          photos={gallery}
+          href={galleryHref}
+          visible={visible}
+          own={own}
+        />
       </div>
       <section
         className="margin-profile-posts"
@@ -159,7 +88,7 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
             <SectionTitle
               id="recent-posts-title"
               tabIndex={-1}
-              motif={<SectionMotif icon={Newspaper} />}
+              motif={<SectionMotif icon={Notebook} />}
             >
               Recent Posts
             </SectionTitle>
@@ -206,6 +135,6 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
           Posts are designed to disappear after 30 days. Sample expiry only.
         </p>
       </section>
-    </div>
+    </ProfileFrame>
   );
 }

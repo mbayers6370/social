@@ -50,6 +50,14 @@ it("pins the notebook above newer and unread conversations, including after savi
       <MessagesPreview threads={threads} />
     </PreviewProvider>,
   );
+  expect(
+    screen.getByText("Notes are intended to expire 90 days after saving."),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("region", { name: "Notebook history" }),
+  ).toHaveAccessibleDescription(
+    "Notes are intended to expire 90 days after saving.",
+  );
   const first = () =>
     within(screen.getByRole("list", { name: "Conversations" })).getAllByRole(
       "listitem",
@@ -66,6 +74,9 @@ it("pins the notebook above newer and unread conversations, including after savi
     expect(
       within(first()).getByRole("button", { name: "Open notebook" }),
     ).toHaveTextContent("Remember this thought"),
+  );
+  await waitFor(() =>
+    expect(screen.getByRole("textbox", { name: "Note to self" })).toHaveFocus(),
   );
   app.rerender(
     <PreviewProvider bootstrap={bootstrap}>
@@ -148,6 +159,9 @@ it("keeps separate drafts across leaving Messages and clears only the submitted 
       screen.getByRole("textbox", { name: "Message to Theo" }),
     ).toHaveValue(""),
   );
+  expect(
+    screen.getByRole("textbox", { name: "Message to Theo" }),
+  ).toHaveFocus();
   await user.click(screen.getByRole("button", { name: "Switch contact" }));
   expect(screen.getByRole("textbox", { name: "Note to self" })).toHaveValue(
     "A separate thought",

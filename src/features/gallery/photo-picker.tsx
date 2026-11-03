@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
-import { Check, ImagePlus, Upload } from "lucide-react";
+import { DevicePhotoPreview } from "@/components/shared/device-photo-preview";
+import { Check, Image as ImageIcon, Upload } from "@/components/margin-icons";
 import { useEffect, useId, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -175,7 +176,7 @@ function PhotoSelection({
             />
             {selectedPhoto?.id === photo.id && (
               <span className="margin-photo-selected-mark" aria-hidden="true">
-                <Check strokeWidth={2.5} />
+                <Check />
               </span>
             )}
           </button>
@@ -217,7 +218,7 @@ function PhotoSelection({
           }}
         >
           {selectedFile && (
-            <DroppedPhotograph file={selectedFile} description={description} />
+            <DevicePhotoPreview file={selectedFile} description={description} />
           )}
           <Field>
             <Label htmlFor="local-photo">Photograph from your device</Label>
@@ -226,7 +227,7 @@ function PhotoSelection({
               data-disabled={isSubmitting || !uploadAllowed || undefined}
             >
               <span className="margin-file-picker-mark" aria-hidden="true">
-                <ImagePlus strokeWidth={1.5} />
+                <ImageIcon />
               </span>
               <div className="margin-file-summary">
                 <span className="margin-file-name" role="status">
@@ -237,7 +238,7 @@ function PhotoSelection({
                 </span>
               </div>
               <span className="margin-upload-choose" aria-hidden="true">
-                <Upload strokeWidth={1.5} />
+                <Upload />
                 {selectedFile ? "Change photograph" : "Choose photograph"}
               </span>
               <input
@@ -311,32 +312,5 @@ function PhotoSelection({
         </Button>
       </footer>
     </>
-  );
-}
-function DroppedPhotograph({
-  file,
-  description,
-}: {
-  file: File;
-  description: string;
-}) {
-  const image = useRef<HTMLImageElement>(null);
-  useEffect(() => {
-    const src = URL.createObjectURL(file);
-    if (image.current) image.current.src = src;
-    return () => URL.revokeObjectURL(src);
-  }, [file]);
-  // This temporary blob exists only in this tab and cannot use image optimization.
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      ref={image}
-      className="margin-dropped-photo"
-      alt={
-        description.trim() || "Selected photograph; add its description below"
-      }
-      width={320}
-      height={240}
-    />
   );
 }

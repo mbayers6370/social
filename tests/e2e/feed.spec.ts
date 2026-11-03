@@ -681,7 +681,7 @@ test("conversation controls have padded hover targets and a soft comment focus b
     const back = dialog.getByRole("button", { name: "Back to post" });
     await expect(back).toBeInViewport();
     await expect(back).toBeEnabled();
-    await expect(back.locator(".lucide-chevron-left")).toHaveCount(1);
+    await expect(back.locator(".margin-icon")).toHaveCount(1);
   }
   const input = dialog.getByRole("textbox", { name: "Add a comment" });
   expect((await input.boundingBox())!.height).toBeGreaterThanOrEqual(44);

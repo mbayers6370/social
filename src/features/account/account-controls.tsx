@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { LogIn, LogOut, ShieldCheck } from "lucide-react";
+import { Shield } from "@/components/margin-icons";
+import { LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAccountSession } from "@/components/auth/account-session";
 export function AccountControls({ compact = false }: { compact?: boolean }) {
@@ -15,6 +16,13 @@ export function AccountControls({ compact = false }: { compact?: boolean }) {
         Loading account…
       </p>
     );
+  if (!session.available)
+    return (
+      <div className="margin-account-controls">
+        <p role="status">Account services are temporarily unavailable.</p>
+        <Link href="/sign-in">Return to sign in</Link>
+      </div>
+    );
   return (
     <div
       className={
@@ -24,10 +32,17 @@ export function AccountControls({ compact = false }: { compact?: boolean }) {
       {session.managed ? (
         <Button
           variant="outline"
-          onClick={session.manage}
+          onClick={async () => {
+            setError("");
+            try {
+              await session.manage();
+            } catch {
+              setError("Account security could not be opened. Try again.");
+            }
+          }}
           aria-label="Account & security"
         >
-          {!compact && <ShieldCheck aria-hidden="true" />}
+          {!compact && <Shield aria-hidden="true" />}
           {compact ? "Account" : "Account & security"}
         </Button>
       ) : (
@@ -38,27 +53,29 @@ export function AccountControls({ compact = false }: { compact?: boolean }) {
           </Link>
         </Button>
       )}
-      <Button
-        variant="outline"
-        disabled={working}
-        onClick={async () => {
-          setWorking(true);
-          setError("");
-          try {
-            await session.leave();
-          } catch {
-            setError("Couldn’t sign out. Try again.");
-            setWorking(false);
-          }
-        }}
-      >
-        {!compact && <LogOut aria-hidden="true" />}
-        {working
-          ? "Signing out…"
-          : session.managed
-            ? "Sign out"
-            : "Exit preview"}
-      </Button>
+      {session.signedIn && (
+        <Button
+          variant="outline"
+          disabled={working}
+          onClick={async () => {
+            setWorking(true);
+            setError("");
+            try {
+              await session.leave();
+            } catch {
+              setError("Couldn’t sign out. Try again.");
+              setWorking(false);
+            }
+          }}
+        >
+          {!compact && <LogOut aria-hidden="true" />}
+          {working
+            ? "Signing out…"
+            : session.managed
+              ? "Sign out"
+              : "Exit preview"}
+        </Button>
+      )}
       {!compact && session.managed && (
         <p className="margin-account-session-note">
           Signing out ends your session on this device.

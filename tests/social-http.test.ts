@@ -78,6 +78,23 @@ it("sanitizes provider failures and fails closed before database access", async 
   expect(await response.text()).not.toContain("CANARY");
   expect(getDb).not.toHaveBeenCalled();
 });
+it("rejects unsupported or repeated profile query fields before database access", async () => {
+  vi.stubEnv("MARGIN_PRIVATE_BACKEND_ENABLED", "1");
+  vi.mocked(requireViewer).mockResolvedValue({ id: "verified-subject" });
+  for (const query of [
+    "ownerId=other",
+    "before=a&before=b",
+    "before=../other",
+  ]) {
+    const response = await socialRequest(
+      new Request(`http://localhost:3000/api/profiles/person?${query}`),
+      "profile",
+      "person",
+    );
+    expect(response.status).toBe(400);
+  }
+  expect(getDb).not.toHaveBeenCalled();
+});
 it("bounds the actual body stream even when Content-Length is absent or misleading", async () => {
   const stream = () =>
     new ReadableStream({

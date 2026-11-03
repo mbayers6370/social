@@ -1,6 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { Download } from "lucide-react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+  type ComponentProps,
+} from "react";
+import { Download } from "@/components/margin-icons";
 import { zipSync, strToU8 } from "fflate";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { usePreview } from "@/features/local-preview/provider";
+import { useLocalReports } from "@/features/safety/use-local-reports";
 import {
   createAccountArchive,
   accountPhotographs,
@@ -21,12 +28,15 @@ import type { ExportFile } from "./account-pdf";
 
 export function AccountDownload({
   conversationId,
-  iconOnly = false,
+  trigger,
+  onCloseAutoFocus,
 }: {
   conversationId?: string;
-  iconOnly?: boolean;
+  trigger?: ReactElement;
+  onCloseAutoFocus?: ComponentProps<typeof DialogContent>["onCloseAutoFocus"];
 }) {
   const preview = usePreview();
+  const reports = useLocalReports();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<ExportSection[]>(
     conversationId ? ["messages"] : exportSections.map((section) => section.id),
@@ -66,7 +76,7 @@ export function AccountDownload({
           messageDrafts: preview.messageDrafts,
           notebookNotes: preview.notebookNotes,
           draft: preview.draft,
-          reports: preview.reports,
+          reports,
         },
         selected,
         conversationId,
@@ -203,22 +213,23 @@ export function AccountDownload({
       }}
     >
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          className={
-            iconOnly
-              ? "margin-account-export-icon"
-              : "margin-settings-action-button"
-          }
-          aria-label={
-            conversationId ? "Export conversation" : "Download your data"
-          }
-        >
-          <Download aria-hidden="true" />
-          {!iconOnly && "Download your data"}
-        </Button>
+        {trigger ?? (
+          <Button
+            variant="ghost"
+            className="margin-settings-action-button"
+            aria-label={
+              conversationId ? "Export conversation" : "Download your data"
+            }
+          >
+            <Download aria-hidden="true" />
+            {conversationId ? "Download conversation" : "Download your data"}
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent className="margin-account-download">
+      <DialogContent
+        className="margin-account-download"
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
         <DialogTitle>
           {conversationId
             ? "Download this conversation"

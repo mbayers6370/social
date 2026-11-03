@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
-import { Caudex, Inter } from "next/font/google";
+import localFont from "next/font/local";
+import { Inter } from "next/font/google";
+import { accountConfiguration } from "@/server/account/config";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ui } from "@clerk/ui";
+import {
+  clerkAppearance,
+  clerkLocalization,
+} from "@/features/account/clerk-appearance";
+import { MobileViewport } from "@/components/shared/mobile-viewport";
 import { AccountSession } from "@/components/auth/account-session";
 import "@/styles/globals.css";
 import "@/styles/application.css";
@@ -10,12 +18,27 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
-const caudex = Caudex({
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
-  variable: "--font-caudex",
+const hinge = localFont({
+  src: [
+    {
+      path: "../../public/fonts/margin/margin-hinge-light.woff2",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/margin/margin-hinge-medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/margin/margin-hinge-bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-hinge",
   display: "swap",
+  fallback: ["Arial", "sans-serif"],
 });
 // A per-request nonce cannot be baked into cached HTML.
 export const dynamic = "force-dynamic";
@@ -29,7 +52,8 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  let content = (
+  const { configured } = accountConfiguration();
+  const content = (
     <>
       <a
         href="#main-content"
@@ -40,81 +64,31 @@ export default async function RootLayout({
       {children}
     </>
   );
-  if (process.env.NODE_ENV === "development") {
-    const { PreviewProvider } =
-      await import("@/features/local-preview/provider");
-    const { getDevelopmentSocial } = await import("@/server/fixtures/social");
-    const { loadDevelopmentFriendProfile } =
-      await import("@/server/fixtures/friend-profile-action");
-    const bootstrap = getDevelopmentSocial();
-    bootstrap.profiles = bootstrap.profiles.map((profile) =>
-      profile.person.id === bootstrap.viewerId
-        ? { ...profile, onRepeat: [] }
-        : profile,
-    );
-    if (process.env.DATABASE_URL) {
-      const { readMusic } = await import("@/server/music/selections");
-      try {
-        const onRepeat = await readMusic();
-        bootstrap.profiles = bootstrap.profiles.map((profile) =>
-          profile.person.id === bootstrap.viewerId
-            ? { ...profile, onRepeat }
-            : profile,
-        );
-      } catch {
-        /* A database outage must not take down the local shell. Saves fail closed. */
-      }
-    }
-    content = (
-      <PreviewProvider
-        bootstrap={bootstrap}
-        loadFriendProfileAction={loadDevelopmentFriendProfile}
-      >
-        {content}
-      </PreviewProvider>
-    );
-  }
   return (
-    <html lang="en" className={`${inter.variable} ${caudex.variable}`}>
+    <html lang="en" className={`${inter.variable} ${hinge.variable}`}>
       <body>
-        {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-        process.env.CLERK_SECRET_KEY ? (
+        <MobileViewport />
+        {configured ? (
           <ClerkProvider
+            ui={ui}
             dynamic
             signInUrl="/sign-in"
             signUpUrl="/sign-up"
-            appearance={{
-              variables: {
-                fontFamily: "var(--font-body)",
-                fontFamilyButtons: "var(--font-body)",
-                fontSize: {
-                  xs: "1rem",
-                  sm: "1rem",
-                  md: "1rem",
-                  lg: "1.125rem",
-                  xl: "1.25rem",
-                },
-                colorForeground: "#30383D",
-                colorMutedForeground: "#53595C",
-                colorInputForeground: "#30383D",
-                colorInput: "#FCFBFA",
-                colorBackground: "#FAF9F6",
-              },
-              elements: {
-                formFieldInput: {
-                  minHeight: "44px",
-                  height: "auto",
-                  lineHeight: "1.5",
-                  "&::placeholder": { color: "#53595C", opacity: 1 },
-                },
-                formFieldLabel: { lineHeight: "1.5" },
-              },
-            }}
+            signInForceRedirectUrl="/onboarding"
+            signUpForceRedirectUrl="/onboarding"
+            afterSignOutUrl="/welcome"
+            appearance={clerkAppearance}
+            localization={clerkLocalization}
           >
             <AccountSession enabled>{content}</AccountSession>
           </ClerkProvider>
         ) : (
-          <AccountSession enabled={false}>{content}</AccountSession>
+          <AccountSession
+            enabled={false}
+            previewAllowed={process.env.NODE_ENV === "development"}
+          >
+            {content}
+          </AccountSession>
         )}
       </body>
     </html>

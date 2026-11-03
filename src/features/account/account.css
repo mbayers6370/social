@@ -18,7 +18,7 @@
 }
 .margin-auth-panel {
   width: 100%;
-  max-width: 460px;
+  max-width: 420px;
   min-width: 0;
   margin: 0;
   background: hsl(var(--card));
@@ -27,12 +27,15 @@
   overflow: hidden;
 }
 .margin-auth-panel > header {
-  padding: 32px 32px 0;
+  padding: 24px 24px 0;
+}
+.margin-auth-panel > .margin-auth-provider-brand {
+  display: none;
 }
 .margin-auth-panel h1 {
   color: hsl(var(--blackened-olive));
-  font: 2.5rem/1.12 var(--font-serif);
-  letter-spacing: -0.035em;
+  font: 2rem/1.2 var(--font-serif);
+  letter-spacing: -0.025em;
 }
 .margin-auth-panel > header p {
   margin-top: 12px;
@@ -40,14 +43,14 @@
   font: var(--text-body)/1.6 var(--font-body);
 }
 .margin-auth-content {
-  padding: 24px 32px 8px;
+  padding: 24px 24px 8px;
 }
 .margin-auth-panel > footer {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 24px;
   justify-content: center;
-  padding: 12px 32px 20px;
+  padding: 12px 24px 20px;
 }
 .margin-auth-panel > footer a {
   display: inline-flex;
@@ -56,23 +59,11 @@
   color: hsl(var(--muted-foreground));
   font-size: 0.875rem;
 }
-.margin-auth-panel .cl-rootBox,
-.margin-auth-panel .cl-cardBox {
-  width: 100%;
-  max-width: 100%;
-  box-shadow: none;
-}
-.margin-auth-panel .cl-card {
-  padding: 0;
-  box-shadow: none;
-  background: transparent;
-}
-.margin-auth-panel .cl-footer {
-  background: transparent;
-}
 .margin-auth-unavailable {
   display: grid;
   gap: 20px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .margin-auth-unavailable h2 {
   font: 1.5rem/1.3 var(--font-serif);
@@ -125,7 +116,6 @@
 }
 .margin-account-menu-actions {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 8px;
   padding: 8px 12px;
   margin-top: 8px;
 }
@@ -143,23 +133,24 @@
   color: hsl(var(--muted-foreground));
   font: var(--text-meta)/1.5 var(--font-body);
 }
-.margin-invitation-code {
+.margin-invitation-dialog {
+  max-height: 85dvh;
+  overflow-y: auto;
+}
+.margin-invitation-link {
   display: grid;
-  gap: 8px;
+  gap: var(--space-related);
 }
-.margin-invitation-code code {
-  display: block;
-  padding: 16px;
-  border-radius: 8px;
-  background: hsl(var(--muted));
-  overflow-wrap: anywhere;
-  font: var(--text-body)/1.5 var(--font-body);
-  user-select: all;
+.margin-invitation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-related);
 }
-.margin-invitation-message {
-  max-width: 36ch;
-  font: 1.25rem/1.5 var(--font-serif);
-  color: hsl(var(--blackened-olive));
+.margin-invitation-list {
+  display: grid;
+  gap: var(--space-group);
+  margin-top: var(--space-group);
+  list-style: none;
 }
 .margin-account-download {
   display: flex;
@@ -239,11 +230,6 @@
   padding: 16px 24px;
   border-top: 1px solid hsl(var(--border));
   background: hsl(var(--card));
-}
-.margin-account-export-icon {
-  width: 44px;
-  height: 44px;
-  padding: 0;
 }
 .margin-safety-report-form {
   display: grid;
@@ -368,6 +354,9 @@
   .margin-auth-panel > header {
     padding: 16px 16px 0;
   }
+  .margin-auth-panel > .margin-auth-provider-brand {
+    display: block;
+  }
   .margin-auth-panel > header p {
     margin-top: 8px;
   }
@@ -386,16 +375,6 @@
   .margin-auth-next {
     margin-top: 8px;
   }
-  .margin-invitation-form {
-    gap: 8px;
-  }
-  .margin-invitation-form > button {
-    margin-top: 0;
-  }
-  .margin-invitation-form .margin-field-hint {
-    font-size: 0.875rem;
-    line-height: 1.5;
-  }
 }
 
 .margin-auth-local-setup {
@@ -407,4 +386,17 @@
   font: 0.875rem/1.5 var(--font-body);
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+.margin-account-access {
+  display: grid;
+  gap: 16px;
+  width: min(100% - 40px, 460px);
+  margin: 48px auto;
+  padding: 24px;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-card);
+  background: hsl(var(--card));
+}
+.margin-account-access h1 {
+  font: var(--text-heading-sm)/1.3 var(--font-serif);
 }

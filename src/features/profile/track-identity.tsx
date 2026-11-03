@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Music2 } from "lucide-react";
+import { Music } from "@/components/margin-icons";
 import type { ProfileTrack } from "./schema";
 
 export function TrackIdentity({ track }: { track: ProfileTrack }) {
@@ -16,7 +16,7 @@ export function TrackIdentity({ track }: { track: ProfileTrack }) {
         />
       ) : (
         <span className="margin-track-artwork-placeholder" aria-hidden="true">
-          <Music2 strokeWidth={1.5} />
+          <Music />
         </span>
       )}
       <span className="margin-track-identity">

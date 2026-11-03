@@ -3,15 +3,15 @@
   --text-control: 0.9375rem;
   --text-meta: 0.875rem;
   --text-note: 0.875rem;
-  width: min(1080px, 100%);
+  width: min(1080px, calc(100% - 48px));
   margin-inline: auto;
-  padding: 28px var(--site-gutter) 56px;
+  padding-block: var(--space-section) 56px;
 }
 .margin-settings-opening {
-  padding-bottom: 28px;
+  padding-bottom: var(--space-section);
 }
 .margin-settings-page h1 {
-  margin-block: 12px 8px;
+  margin-block: 16px 12px;
   color: hsl(var(--blackened-olive));
   font: 2.5rem/1.12 var(--font-serif);
   letter-spacing: -0.035em;
@@ -24,19 +24,24 @@
   display: grid;
   gap: 40px;
 }
+.margin-settings-feedback {
+  margin: 0 0 var(--space-group);
+}
+.margin-settings-feedback:empty {
+  display: none;
+}
 .margin-settings-column {
   display: grid;
   align-content: start;
-  gap: 32px;
+  gap: var(--space-section);
   min-width: 0;
 }
 .margin-settings-section {
   min-width: 0;
-  padding-top: 20px;
-  scroll-margin-top: 112px;
+  scroll-margin-top: calc(var(--margin-header-height) + 24px);
 }
 .margin-settings-section h2 {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-group);
   color: hsl(var(--blackened-olive));
   font: 1.5rem/1.3 var(--font-serif);
   letter-spacing: -0.02em;
@@ -117,7 +122,8 @@
   font: var(--text-meta)/1.5 var(--font-body);
 }
 .margin-settings-profile {
-  display: flex;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   min-height: 56px;
@@ -270,18 +276,28 @@
   text-underline-offset: 4px;
 }
 .margin-settings-page .margin-account-controls {
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 }
 .margin-settings-page .margin-account-controls > :is(button, a) {
   min-height: 44px;
-  justify-self: start;
   padding-inline: 14px;
   font-size: var(--text-control);
   font-weight: 400;
 }
+.margin-settings-page .margin-account-controls > p {
+  flex-basis: 100%;
+}
 .margin-settings-data {
-  gap: 8px;
-  margin-top: 4px;
+  gap: 16px;
+  margin-top: var(--space-group);
+}
+.margin-settings-data > [data-slot="button"] {
+  justify-self: start;
+  font-size: var(--text-control);
+  font-weight: 400;
 }
 .margin-settings-data > .margin-field-hint {
   max-width: 42ch;
@@ -309,6 +325,10 @@
   font-weight: 400;
 }
 .margin-settings-help {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   padding-top: 4px;
   color: hsl(var(--muted-foreground));
   font: var(--text-control)/1.5 var(--font-body);
@@ -318,7 +338,6 @@
   align-items: center;
   gap: 4px;
   min-height: 44px;
-  margin-left: 12px;
   color: hsl(var(--blackened-olive));
 }
 .margin-settings-preview-note {
@@ -335,9 +354,26 @@
 @media (min-width: 1024px) {
   .margin-settings-columns {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 72px;
+    gap: 64px;
   }
-  .margin-settings-opening {
-    padding-bottom: 36px;
+}
+@media (max-width: 639px) {
+  .margin-settings-profile {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+  .margin-settings-profile > span:last-child {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .margin-username-settings {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .margin-username-change {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+    padding-inline: 0;
   }
 }

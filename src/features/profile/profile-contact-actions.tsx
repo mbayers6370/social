@@ -10,13 +10,13 @@ import {
 } from "react";
 import Link from "next/link";
 import {
-  Ban,
-  CircleHelp,
+  Block,
+  Info,
   Flag,
-  Mail,
   MoreHorizontal,
-  UserMinus,
-} from "lucide-react";
+  Friends,
+  Message,
+} from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -168,7 +168,7 @@ export function ProfileContactActions({ person }: { person: Person }) {
           data-destructive="true"
           onClick={() => choose("remove")}
         >
-          <UserMinus aria-hidden="true" />
+          <Friends aria-hidden="true" />
           Unfriend
         </Button>
       )}
@@ -179,7 +179,7 @@ export function ProfileContactActions({ person }: { person: Person }) {
         data-destructive={!ownBlock || undefined}
         onClick={() => choose("block")}
       >
-        <Ban aria-hidden="true" />
+        <Block aria-hidden="true" />
         {ownBlock ? "Unblock profile" : "Block profile"}
       </Button>
       <Button
@@ -191,6 +191,7 @@ export function ProfileContactActions({ person }: { person: Person }) {
         onClick={() => choose("report")}
       >
         <Flag aria-hidden="true" />
+        Report profile
       </Button>
       <Link
         role={asMenu ? "menuitem" : undefined}
@@ -201,7 +202,7 @@ export function ProfileContactActions({ person }: { person: Person }) {
           setStep(null);
         }}
       >
-        <CircleHelp aria-hidden="true" />
+        <Info aria-hidden="true" />
         Help &amp; safety
       </Link>
     </div>
@@ -237,7 +238,7 @@ export function ProfileContactActions({ person }: { person: Person }) {
               aria-label={`Message ${person.name}`}
               title="Message"
             >
-              <Mail aria-hidden="true" strokeWidth={1.5} />
+              <Message aria-hidden="true" />
             </Link>
           </Button>
         )}

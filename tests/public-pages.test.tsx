@@ -11,7 +11,7 @@ import {
   POSTING_EXCLUSIONS,
 } from "@/lib/platform-rules";
 afterEach(() => vi.unstubAllEnvs());
-it("keeps every policy visibly draft with the temporary contact and unconfirmed operator", () => {
+it("keeps policies visibly draft with the confirmed support contact and unconfirmed operator", () => {
   for (const document of Object.values(publicDocuments)) {
     const html = renderToStaticMarkup(<PublicDocument document={document} />);
     const page = new DOMParser().parseFromString(html, "text/html");
@@ -19,8 +19,13 @@ it("keeps every policy visibly draft with the temporary contact and unconfirmed 
     if ("draft" in document && document.draft) {
       const note = page.querySelector("aside")!;
       expect(note.textContent).toContain("Draft · No effective date");
-      expect(note.textContent).toContain("support@example.com");
-      expect(note.textContent).toContain("not a monitored support inbox");
+      expect(
+        note.querySelector('a[href="mailto:support@margin.social"]')
+          ?.textContent,
+      ).toBe("support@margin.social");
+      expect(note.textContent).not.toMatch(
+        /placeholder|unmonitored|not a monitored/,
+      );
       expect(note.textContent).toContain(
         "legal operator has not been confirmed",
       );
@@ -93,18 +98,15 @@ it("renders the public home and footer as server markup with valid public destin
   expect(html).not.toContain("Ines");
   expect(page.querySelectorAll("form, iframe, video, audio")).toHaveLength(0);
   const hero = page.querySelector<HTMLElement>(".margin-public-hero")!;
-  expect(hero.textContent).toContain("An invitation code to begin.");
+  expect(hero.textContent).toContain("grown through personal invitations.");
   const primary = hero.querySelector<HTMLAnchorElement>(".margin-welcome-cta")!;
-  expect(primary.getAttribute("href")).toBe("/sign-up");
-  expect(primary.textContent).toBe("Join Margin");
+  expect(primary.getAttribute("href")).toBe("/how-it-works");
+  expect(primary.textContent).toBe("Membership by invitation");
   expect(page.getElementById("welcome-preview")).not.toBeNull();
   expect(page.querySelector(".margin-welcome-joining")?.textContent).toContain(
-    "Start with your invitation.",
+    "Open a link from someone you know to begin.",
   );
-  expect(
-    page.querySelector('nav[aria-label="Public navigation"] a[href="/sign-up"]')
-      ?.textContent,
-  ).toBe("Join Margin");
+  expect(page.querySelectorAll('a[href="/sign-up"]')).toHaveLength(0);
   expect(hero.querySelectorAll("figure")).toHaveLength(1);
   const preview = page.querySelector("figure")!;
   expect(preview.getAttribute("aria-label")).toBe("Feed and conversation");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { createLocalId } from "@/lib/local-id";
@@ -15,6 +15,7 @@ export function PostPhotoViewer({
   authorName,
   onClose,
   onRestoreFocus,
+  privateMedia = false,
 }: {
   photos: PostMedia[];
   initialIndex: number;
@@ -22,6 +23,7 @@ export function PostPhotoViewer({
   authorName: string;
   onClose: () => void;
   onRestoreFocus: (event: Event) => void;
+  privateMedia?: boolean;
 }) {
   const [index, setIndex] = useState(initialIndex);
   const [open, setOpen] = useState(true);
@@ -103,7 +105,16 @@ export function PostPhotoViewer({
           </span>
         </header>
         <PhotoViewerFigure
+          privateMedia={privateMedia}
           photo={photo}
+          onPrevious={
+            index > 0 ? () => setIndex((current) => current - 1) : undefined
+          }
+          onNext={
+            index < photos.length - 1
+              ? () => setIndex((current) => current + 1)
+              : undefined
+          }
           className="margin-post-photo-viewer-stage"
           sizes="(max-width: 639px) calc(100vw - 32px), 1000px"
         />

@@ -5,7 +5,7 @@
   gap: 0;
   width: calc(100% - 32px);
   max-width: 680px;
-  max-height: 90dvh;
+  max-height: calc(var(--margin-viewport-height, 100dvh) * 0.9);
   overflow: hidden;
   padding: 0;
 }
@@ -126,7 +126,7 @@
   min-height: 44px;
   padding: 10px 16px;
   border-radius: var(--radius-control);
-  border: 1px solid hsl(var(--border));
+  border: 1px solid hsl(var(--button-border));
   background: transparent;
   color: hsl(var(--blackened-olive));
   font: 400 var(--text-control)/1.5 var(--font-body);
@@ -163,19 +163,20 @@
 
 .margin-dropped-photo {
   width: 100%;
-  max-height: 220px;
-  height: auto;
+  height: 220px;
   object-fit: contain;
   border-radius: var(--radius-control);
   background: hsl(var(--card));
 }
 @media (max-width: 639px) {
   .margin-photo-picker {
-    inset: auto 0 0;
+    inset: auto 0 var(--margin-viewport-bottom, 0px);
     transform: none;
     width: 100%;
     max-width: none;
-    max-height: calc(100dvh - var(--margin-safe-area-top) - 24px);
+    max-height: calc(
+      var(--margin-viewport-height, 100dvh) - var(--margin-safe-area-top) - 24px
+    );
     border-radius: 16px 16px 0 0;
   }
 }

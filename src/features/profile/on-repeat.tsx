@@ -1,5 +1,5 @@
 "use client";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, OnRepeatAnimated } from "@/components/margin-icons";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { SectionTitle } from "@/components/shared/section-motif";
 import type { ProfileTrack } from "./schema";
@@ -11,10 +11,14 @@ export function OnRepeat({
   tracks,
   own,
   restricted = false,
+  live = false,
+  onSaved,
 }: {
   tracks: ProfileTrack[];
   own: boolean;
   restricted?: boolean;
+  live?: boolean;
+  onSaved?: (tracks: ProfileTrack[]) => void;
 }) {
   return (
     <ProfileSection
@@ -25,20 +29,7 @@ export function OnRepeat({
         <SectionTitle
           id="on-repeat-title"
           motif={
-            <svg
-              className="margin-section-motif margin-music-equalizer"
-              viewBox="0 0 20 20"
-              width="20"
-              height="20"
-              fill="currentColor"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <rect x="1" y="10" width="3" height="8" rx="1.5" />
-              <rect x="6" y="4" width="3" height="14" rx="1.5" />
-              <rect x="11" y="7" width="3" height="11" rx="1.5" />
-              <rect x="16" y="2" width="3" height="16" rx="1.5" />
-            </svg>
+            <OnRepeatAnimated size={20} className="margin-section-motif" />
           }
         >
           On Repeat
@@ -48,10 +39,10 @@ export function OnRepeat({
             <DialogTrigger asChild>
               <button type="button" className="margin-section-link">
                 Find Music
-                <ChevronRight aria-hidden="true" strokeWidth={1.5} />
+                <ChevronRight aria-hidden="true" />
               </button>
             </DialogTrigger>
-            <MusicPicker tracks={tracks} />
+            <MusicPicker tracks={tracks} live={live} onSaved={onSaved} />
           </Dialog>
         )}
       </header>
