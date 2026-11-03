@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useForm,
@@ -9,17 +9,18 @@ import {
   type UseFormSetValue,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, ImagePlus, MoreHorizontal, Users, X } from "lucide-react";
+import {
+  ChevronDown,
+  Image as ImageIcon,
+  MoreHorizontal,
+  Friends,
+  Close,
+} from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { Field, FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
-import {
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Avatar } from "@/features/feed/post-content";
 import { PersonLink } from "@/components/shared/person-link";
 import { PhotoPicker } from "@/features/gallery/photo-picker";
@@ -41,6 +42,8 @@ import {
   type Photo,
   type PostInput,
 } from "@/features/local-preview/model";
+
+import { ComposerSurface } from "./composer-surface";
 
 const resolvePost = zodResolver(postInputSchema);
 // Keep inactive fields in the draft; validate and submit only the chosen mode.
@@ -212,7 +215,7 @@ export function PostComposer({
                 <details className="margin-compose-options">
                   <summary aria-label="Post options" title="Post options">
                     <span className="sr-only">Post options</span>
-                    <MoreHorizontal aria-hidden="true" strokeWidth={1.5} />
+                    <MoreHorizontal aria-hidden="true" />
                   </summary>
                   <div>
                     <DeletePostButton
@@ -235,7 +238,7 @@ export function PostComposer({
                   </PersonLink>
                 </strong>
                 <span className="margin-note">
-                  <Users aria-hidden="true" /> Friends ·{" "}
+                  <Friends aria-hidden="true" /> Friends ·{" "}
                   {editingPost
                     ? `Expires ${dateLabel(editingPost.expiresAt)}`
                     : "Disappears after 30 days"}
@@ -365,7 +368,7 @@ export function PostComposer({
                       update("replacements", replacements);
                     }}
                   >
-                    <X aria-hidden="true" />
+                    <Close aria-hidden="true" />
                   </Button>
                 </div>
               ))}
@@ -426,7 +429,7 @@ export function PostComposer({
                   disabled={!canAddPhoto}
                   onClick={() => setPicking(true)}
                 >
-                  <ImagePlus aria-hidden="true" />
+                  <ImageIcon aria-hidden="true" />
                   Add photograph
                 </Button>
               )}
@@ -454,8 +457,7 @@ export function PostComposer({
             </div>
             <details className="margin-compose-rules">
               <summary>
-                Posting guidelines{" "}
-                <ChevronDown aria-hidden="true" strokeWidth={1.5} />
+                Posting guidelines <ChevronDown aria-hidden="true" />
               </summary>
               <div>
                 {editingPost && (
@@ -527,57 +529,5 @@ export function PostComposer({
         }}
       />
     </ComposerSurface>
-  );
-}
-
-function ComposerSurface({
-  inline,
-  feed,
-  onActivate,
-  onReturnFocus,
-  onCancel,
-  children,
-}: {
-  inline: boolean;
-  feed: boolean;
-  onActivate: () => void;
-  onReturnFocus?: () => void;
-  onCancel?: () => void;
-  children: ReactNode;
-}) {
-  if (inline)
-    return (
-      <section
-        className="margin-compose-inline"
-        aria-label="New Post"
-        onKeyDown={(event) => {
-          if (event.key === "Escape" && !event.defaultPrevented && onCancel) {
-            event.preventDefault();
-            event.stopPropagation();
-            onCancel();
-          }
-        }}
-      >
-        {children}
-      </section>
-    );
-  return (
-    <DialogContent
-      className={cn("margin-compose-dialog", feed && "margin-compose-feed")}
-      onOpenAutoFocus={(event) => {
-        event.preventDefault();
-        onActivate();
-      }}
-      onCloseAutoFocus={
-        onReturnFocus
-          ? (event) => {
-              event.preventDefault();
-              onReturnFocus();
-            }
-          : undefined
-      }
-    >
-      {children}
-    </DialogContent>
   );
 }

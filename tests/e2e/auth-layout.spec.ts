@@ -17,6 +17,12 @@ test("centers account cards and offers a single direct preview action", async ({
       await page.goto(route);
       const card = page.getByRole("main");
       await expect(card).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      const headingFont = await page
+        .getByRole("heading", { level: 1 })
+        .evaluate((heading) => getComputedStyle(heading).fontFamily);
+      expect(headingFont.toLowerCase()).toContain("hinge");
+      expect(headingFont.toLowerCase()).not.toContain("caudex");
       const geometry = await card.evaluate((node) => {
         const box = node.getBoundingClientRect();
         const shell = node.closest(".margin-auth-page")!;
@@ -65,7 +71,7 @@ test("centers account cards and offers a single direct preview action", async ({
         await expect(page.locator("details")).toHaveCount(0);
         await expect(
           page.getByRole("link", { name: "Join Margin", exact: true }),
-        ).toHaveCount(1);
+        ).toHaveCount(0);
         await expect(
           page.getByText("Continue to the preview", { exact: true }),
         ).toHaveCount(0);

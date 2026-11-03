@@ -42,10 +42,11 @@ export function PublicDocument({ document }: { document: PublicDocumentData }) {
           <strong>Draft · No effective date</strong>
           <p>
             For review before launch. The legal operator has not been confirmed;
-            margin is the platform name, not a statement of incorporation.{" "}
-            {publicSiteDetails.supportEmail} is a temporary placeholder, not a
-            monitored support inbox. Both must be replaced or confirmed before
-            publication.
+            margin is the platform name. General support:{" "}
+            <a href={`mailto:${publicSiteDetails.supportEmail}`}>
+              {publicSiteDetails.supportEmail}
+            </a>
+            . These policies still require review before publication.
           </p>
           {document.review && (
             <details className="margin-public-review">

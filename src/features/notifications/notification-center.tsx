@@ -1,4 +1,5 @@
 "use client";
+import type { ComponentType } from "react";
 import {
   useCallback,
   useEffect,
@@ -8,20 +9,19 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Bell,
   ChevronLeft,
   ChevronRight,
-  Settings2,
-  ShieldCheck,
-  X,
-  Clock3,
+  Settings,
+  Shield,
+  Close,
+  Clock,
   Heart,
-  MessageCircle,
+  Conversation,
   Reply,
-  UserCheck,
-  UserPlus,
-  type LucideIcon,
-} from "lucide-react";
+  AddFriend,
+  Friends,
+  type IconProps,
+} from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,15 +41,17 @@ import {
   notificationText,
   type LocalNotification,
 } from "./model";
+import { NotificationBellIcon } from "./notification-bell-icon";
+
 const DESKTOP = "(min-width: 1024px)";
 const notificationIcons = {
-  comment: MessageCircle,
+  comment: Conversation,
   reply: Reply,
-  friend_request: UserPlus,
-  friend_accepted: UserCheck,
+  friend_request: AddFriend,
+  friend_accepted: Friends,
   like: Heart,
-  account: ShieldCheck,
-} satisfies Record<LocalNotification["kind"], LucideIcon>;
+  account: Shield,
+} satisfies Record<LocalNotification["kind"], ComponentType<IconProps>>;
 function subscribe(callback: () => void) {
   const query = window.matchMedia?.(DESKTOP);
   query?.addEventListener("change", callback);
@@ -93,9 +95,10 @@ export function NotificationCenter({
   const navigating = useRef(false);
   const mode = useRef(false);
   const showing = useRef(false);
-  const unread = preview.notificationRows.filter(
-    (row) => !preview.notifications.readIds.includes(row.id),
-  ).length;
+  const unreadIds = preview.notificationRows
+    .filter((row) => !preview.notifications.readIds.includes(row.id))
+    .map((row) => row.id);
+  const unread = unreadIds.length;
   const flushNavigation = useCallback(() => {
     const action = pending.current;
     pending.current = null;
@@ -209,7 +212,10 @@ export function NotificationCenter({
           aria-label={`Notifications, ${unread} unread`}
           title="Notifications"
         >
-          <Bell aria-hidden="true" strokeWidth={1.5} />
+          <NotificationBellIcon
+            unreadIds={unreadIds}
+            paused={preview.preferences.motion === "reduced"}
+          />
           {placement === "navigation" && <span>Notifications</span>}
           {unread > 0 && (
             <span className="margin-notification-dot" aria-hidden="true" />
@@ -265,7 +271,7 @@ export function NotificationCenter({
                 )
               }
             >
-              <Settings2 aria-hidden="true" strokeWidth={1.5} />
+              <Settings aria-hidden="true" />
             </Button>
             <Button
               variant="ghost"
@@ -275,7 +281,7 @@ export function NotificationCenter({
               title="Close notifications (Esc)"
               onClick={close}
             >
-              <X aria-hidden="true" />
+              <Close aria-hidden="true" />
             </Button>
           </header>
           <DialogDescription className="sr-only">
@@ -331,11 +337,7 @@ export function NotificationCenter({
                     <div className="margin-notification-row">
                       {!available ? (
                         <span className="margin-notification-symbol">
-                          <Clock3
-                            size={18}
-                            aria-hidden="true"
-                            strokeWidth={1.5}
-                          />
+                          <Clock size={18} aria-hidden="true" />
                         </span>
                       ) : actor ? (
                         <PersonLink
@@ -346,20 +348,12 @@ export function NotificationCenter({
                         >
                           <Avatar person={actor} small />
                           <span className="margin-notification-type">
-                            <TypeIcon
-                              size={12}
-                              aria-hidden="true"
-                              strokeWidth={2}
-                            />
+                            <TypeIcon size={12} aria-hidden="true" />
                           </span>
                         </PersonLink>
                       ) : (
                         <span className="margin-notification-symbol">
-                          <ShieldCheck
-                            size={18}
-                            aria-hidden="true"
-                            strokeWidth={1.5}
-                          />
+                          <Shield size={18} aria-hidden="true" />
                         </span>
                       )}
                       <span className="margin-notification-copy">
@@ -400,7 +394,6 @@ export function NotificationCenter({
                         size={16}
                         className="margin-notification-chevron"
                         aria-hidden="true"
-                        strokeWidth={1.5}
                       />
                     </div>
                     {row.kind === "friend_request" &&

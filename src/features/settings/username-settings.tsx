@@ -12,17 +12,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { usePreview } from "@/features/local-preview/provider";
+import { useOptionalPreview } from "@/features/local-preview/provider";
 import { previewMessage } from "@/features/local-preview/model";
-import {
-  checkUsername,
-  nextUsernameChange,
-  usernameChangeDate,
-  USERNAME_COOLDOWN_DAYS,
-} from "@/features/profile/username";
+import { checkUsername } from "@/features/profile/username";
 
-export function UsernameSettings() {
-  const preview = usePreview();
+export function UsernameSettings({
+  account,
+}: {
+  account?: {
+    id: string;
+    username: string;
+    usernameChangedAt: string | null;
+    onChange: (value: string) => Promise<void>;
+  };
+} = {}) {
+  const preview = useOptionalPreview();
+  const [working, setWorking] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [touched, setTouched] = useState(false);
@@ -37,20 +42,27 @@ export function UsernameSettings() {
   useEffect(() => {
     if (editing) input.current?.focus();
   }, [editing]);
-  const profile = preview.state.profiles.find(
-    (profile) => profile.person.id === preview.bootstrap.viewerId,
-  );
-  if (!profile) return null;
-  const next = nextUsernameChange(preview.state.usernameChangedAt);
-  const locked =
-    next !== null && (!Number.isFinite(next) || preview.now < next);
+  const profile = account
+    ? { person: { id: account.id }, handle: account.username }
+    : preview?.state.profiles.find(
+        (profile) => profile.person.id === preview.bootstrap.viewerId,
+      );
+  const changedAt = account
+    ? account.usernameChangedAt
+    : preview?.state.usernameChangedAt;
+  const [mountedAt] = useState(() => Date.now());
+  const now = preview?.now ?? mountedAt;
+  const locked = changedAt != null;
   const check = checkUsername(
     draft,
-    preview.state.profiles,
-    preview.bootstrap.viewerId,
-    preview.state.usernameChangedAt,
-    new Date(preview.now),
+    account
+      ? [{ person: { id: account.id }, handle: account.username }]
+      : (preview?.state.profiles ?? []),
+    account?.id ?? preview?.bootstrap.viewerId ?? "",
+    changedAt ?? undefined,
+    new Date(now),
   );
+  if (!profile) return null;
   const validationError =
     error || (touched && !check.available ? check.message : "");
   function cancelEditing() {
@@ -116,7 +128,9 @@ export function UsernameSettings() {
                 className="margin-field-hint"
               >
                 {check.available
-                  ? `@${check.username} is available in this preview.`
+                  ? account
+                    ? `@${check.username} will be checked when you confirm.`
+                    : `@${check.username} is available in this preview.`
                   : ""}
               </p>
             )}
@@ -152,9 +166,9 @@ export function UsernameSettings() {
         </Button>
       )}
       <p className="margin-field-hint">
-        {locked && next !== null && Number.isFinite(next)
-          ? `You can change your username again on ${usernameChangeDate(new Date(next).toISOString())}.`
-          : `You can change your username once every ${USERNAME_COOLDOWN_DAYS} days.`}
+        {locked
+          ? "Your one username change has been used."
+          : "You can change your username once after account setup. This change is permanent."}
       </p>
       <p role="status" className="margin-status">
         {status}
@@ -162,7 +176,7 @@ export function UsernameSettings() {
       <Dialog
         open={pending !== null}
         onOpenChange={(open) => {
-          if (!open) setPending(null);
+          if (!open && !working) setPending(null);
         }}
       >
         <DialogContent
@@ -185,29 +199,39 @@ export function UsernameSettings() {
             <DialogTitle>Change username?</DialogTitle>
             <DialogDescription>
               Change @{profile.handle} to @{pending}? Your friends and profile
-              links stay the same. You’ll need to wait {USERNAME_COOLDOWN_DAYS}{" "}
-              days before changing it again.
+              links stay the same. This is your only username change; you cannot
+              change it again.
             </DialogDescription>
           </DialogHeader>
           <div className="margin-username-actions">
             <Button
               ref={cancelConfirmation}
               variant="outline"
+              disabled={working}
               onClick={() => setPending(null)}
             >
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                if (!pending) return;
+              disabled={working}
+              onClick={async () => {
+                if (!pending || working) return;
+                setWorking(true);
                 try {
-                  preview.changeUsername(pending);
+                  if (account) await account.onChange(pending);
+                  else preview?.changeUsername(pending);
                   setStatus(`Username changed to @${pending}.`);
                   setPending(null);
                   setEditing(false);
                 } catch (error) {
-                  setError(previewMessage(error));
+                  setError(
+                    account && error instanceof Error
+                      ? error.message
+                      : previewMessage(error),
+                  );
                   setPending(null);
+                } finally {
+                  setWorking(false);
                 }
               }}
             >

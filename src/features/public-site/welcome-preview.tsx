@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Mail } from "lucide-react";
+import { Message } from "@/components/margin-icons";
 import coffeeShop from "@/assets/fixtures/coffee-shop.jpg";
 import { Avatar } from "@/features/feed/post-content";
 import { WelcomeReveal } from "./welcome-reveal";
@@ -100,7 +100,7 @@ export function WelcomeMessages() {
             <strong>{robin.name}</strong>
             <span>Messages</span>
           </div>
-          <Mail aria-hidden="true" />
+          <Message aria-hidden="true" />
         </header>
         <div className="margin-welcome-message-history">
           <p className="margin-welcome-message-date">A few minutes later</p>

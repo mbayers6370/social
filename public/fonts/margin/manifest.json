@@ -1,0 +1,126 @@
+{
+  "version": "0.100",
+  "unitsPerEm": 1000,
+  "faces": [
+    {
+      "family": "Margin Hinge",
+      "style": "Light",
+      "weight": 300,
+      "fixedPitch": false,
+      "glyphCount": 304,
+      "files": [
+        {
+          "path": "margin-hinge-light.ttf",
+          "sha256": "bb76c200061e4a03fbdf4aaa726d4e6445aa5290d92e5be2e06ecc97caedfc01",
+          "bytes": 46908
+        },
+        {
+          "path": "margin-hinge-light.woff2",
+          "sha256": "6c2778ed49574719d289ea3bf848c40c5ce21820b1c53d10eaf5b7af27bedc12",
+          "bytes": 11360
+        }
+      ],
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"
+    },
+    {
+      "family": "Margin Hinge",
+      "style": "Medium",
+      "weight": 500,
+      "fixedPitch": false,
+      "glyphCount": 304,
+      "files": [
+        {
+          "path": "margin-hinge-medium.ttf",
+          "sha256": "22d7493e30ba0196c41785aeb4def43dc6856cb01dbff0104f4a1a83dfab5ada",
+          "bytes": 47600
+        },
+        {
+          "path": "margin-hinge-medium.woff2",
+          "sha256": "8cf50cbecc690f8a1c08322ee9d19c697982a1f03a4eea6e94b0330bd68fffa6",
+          "bytes": 11480
+        }
+      ],
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"
+    },
+    {
+      "family": "Margin Hinge",
+      "style": "Bold",
+      "weight": 700,
+      "fixedPitch": false,
+      "glyphCount": 304,
+      "files": [
+        {
+          "path": "margin-hinge-bold.ttf",
+          "sha256": "7d02b3c90c0be97288f3bf17e206813c945149863bb730558ed1f2c24b60ab34",
+          "bytes": 48020
+        },
+        {
+          "path": "margin-hinge-bold.woff2",
+          "sha256": "4ce66e2bfda4929ae4ac8885ff4adaf6c3fb193036cc46e311f41957a53f428d",
+          "bytes": 12144
+        }
+      ],
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"
+    },
+    {
+      "family": "Margin Loose Mono",
+      "style": "Light",
+      "weight": 300,
+      "fixedPitch": true,
+      "glyphCount": 304,
+      "files": [
+        {
+          "path": "margin-loose-mono-light.ttf",
+          "sha256": "ae2378e06f749701c56f1a994f46cdd7aa8bc980969ef5c2d1bb556cf4ef5f3b",
+          "bytes": 46532
+        },
+        {
+          "path": "margin-loose-mono-light.woff2",
+          "sha256": "ab439eec193a569ddfc076cdcb3b26318ce7cd565102ea025fd90175b8f4dd08",
+          "bytes": 11244
+        }
+      ],
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"
+    },
+    {
+      "family": "Margin Loose Mono",
+      "style": "Medium",
+      "weight": 500,
+      "fixedPitch": true,
+      "glyphCount": 304,
+      "files": [
+        {
+          "path": "margin-loose-mono-medium.ttf",
+          "sha256": "5a0d0cbd894d8e2813c2dd98a88d0e6ee7d7ab3f5762a62dd4aab856526ebf60",
+          "bytes": 47300
+        },
+        {
+          "path": "margin-loose-mono-medium.woff2",
+          "sha256": "ac6003af2681f971750cbccc4a62317da6f0ce3ca15040aaeb2323db063753ed",
+          "bytes": 11268
+        }
+      ],
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"
+    },
+    {
+      "family": "Margin Loose Mono",
+      "style": "Bold",
+      "weight": 700,
+      "fixedPitch": true,
+      "glyphCount": 304,
+      "files": [
+        {
+          "path": "margin-loose-mono-bold.ttf",
+          "sha256": "a3d0531a8d57a9bf7c0c19bb36642583d1681e2c05ffe22f408c67c034616360",
+          "bytes": 48848
+        },
+        {
+          "path": "margin-loose-mono-bold.woff2",
+          "sha256": "8d70c4c2b246d63d803faba3c8be8d7983cdb960292587fd1af019eab20c2b30",
+          "bytes": 11744
+        }
+      ],
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"
+    }
+  ]
+}

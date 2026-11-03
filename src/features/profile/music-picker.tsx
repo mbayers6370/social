@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Add, Close } from "@/components/margin-icons";
 import { z } from "zod";
 import {
   DialogContent,
@@ -11,7 +11,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/ui/field";
-import { usePreview } from "@/features/local-preview/provider";
+import { useOptionalPreview } from "@/features/local-preview/provider";
+import { useSpaceClient } from "@/features/spaces/client";
+import { memberChanged } from "@/features/social/member-client";
 import {
   musicSelectionSchema,
   profileTrackSchema,
@@ -23,8 +25,17 @@ import { AppleSongBadge } from "./apple-song-badge";
 const searchResponse = z.strictObject({
   tracks: z.array(profileTrackSchema).max(20),
 });
-export function MusicPicker({ tracks }: { tracks: ProfileTrack[] }) {
-  const preview = usePreview();
+export function MusicPicker({
+  tracks,
+  live = false,
+  onSaved,
+}: {
+  tracks: ProfileTrack[];
+  live?: boolean;
+  onSaved?: (tracks: ProfileTrack[]) => void;
+}) {
+  const preview = useOptionalPreview();
+  const client = useSpaceClient();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProfileTrack[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,10 +57,10 @@ export function MusicPicker({ tracks }: { tracks: ProfileTrack[] }) {
       }
       setLoading(true);
       try {
-        const response = await fetch(
-          `/api/development/music?q=${encodeURIComponent(term)}`,
+        const response = await client.request(
+          `${live ? "/api/music" : "/api/development/music"}?q=${encodeURIComponent(term)}`,
           {
-            headers: { "X-Margin-Preview": "1" },
+            headers: live ? undefined : { "X-Margin-Preview": "1" },
             signal: controller.signal,
             cache: "no-store",
           },
@@ -73,23 +84,26 @@ export function MusicPicker({ tracks }: { tracks: ProfileTrack[] }) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [term]);
+  }, [term, live, client]);
   async function change(track: ProfileTrack, remove: boolean) {
     setPending(true);
     setError("");
     setStatus("");
     try {
-      const response = await fetch("/api/development/music/selections", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Margin-Preview": "1",
+      const response = await client.request(
+        live ? "/api/music/selections" : "/api/development/music/selections",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(!live ? { "X-Margin-Preview": "1" } : {}),
+          },
+          body: JSON.stringify({
+            action: remove ? "remove" : "add",
+            trackId: track.id,
+          }),
         },
-        body: JSON.stringify({
-          action: remove ? "remove" : "add",
-          trackId: track.id,
-        }),
-      });
+      );
       if (!response.ok) {
         setError("Your music couldn’t be saved. Please try again.");
         return;
@@ -98,7 +112,10 @@ export function MusicPicker({ tracks }: { tracks: ProfileTrack[] }) {
       const saved = z
         .strictObject({ tracks: musicSelectionSchema })
         .parse(data);
-      preview.setMusic(saved.tracks);
+      if (live) {
+        onSaved?.(saved.tracks);
+        memberChanged();
+      } else preview?.setMusic(saved.tracks);
       setStatus(
         `${track.title} ${remove ? "removed from" : "added to"} On Repeat.`,
       );
@@ -127,7 +144,7 @@ export function MusicPicker({ tracks }: { tracks: ProfileTrack[] }) {
                 onClick={() => change(track, true)}
               >
                 {track.title}
-                <X aria-hidden="true" strokeWidth={1.5} />
+                <Close aria-hidden="true" />
               </button>
             </li>
           ))}
@@ -174,9 +191,9 @@ export function MusicPicker({ tracks }: { tracks: ProfileTrack[] }) {
               >
                 <TrackIdentity track={track} />
                 {selected.has(track.id) ? (
-                  <Check aria-hidden="true" strokeWidth={1.5} />
+                  <Check aria-hidden="true" />
                 ) : (
-                  <Plus aria-hidden="true" strokeWidth={1.5} />
+                  <Add aria-hidden="true" />
                 )}
               </button>
               <AppleSongBadge track={track} />

@@ -22,17 +22,17 @@ export function PublicHome() {
             </p>
             <div className="margin-welcome-actions">
               <Link
-                href="/sign-up"
+                href="/how-it-works"
                 className={buttonVariants({ className: "margin-welcome-cta" })}
               >
-                Join Margin
+                Membership by invitation
               </Link>
               <PublicTextLink href="#welcome-preview">
                 See how it feels
               </PublicTextLink>
             </div>
             <p className="margin-public-status">
-              A small community. An invitation code to begin.
+              A small community, grown through personal invitations.
             </p>
           </div>
         </header>
@@ -121,9 +121,12 @@ export function PublicHome() {
             <span>For the people</span> <span>you think of first.</span>
           </h2>
           <p className="margin-welcome-invitation">
-            Have someone in mind? Start with your invitation.
+            Margin grows through invitations from existing members. Open a link
+            from someone you know to begin.
           </p>
-          <PublicTextLink href="/sign-up">Join Margin</PublicTextLink>
+          <PublicTextLink href="/how-it-works">
+            Membership by invitation
+          </PublicTextLink>
         </div>
       </section>
     </>

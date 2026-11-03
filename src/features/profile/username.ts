@@ -1,9 +1,6 @@
 import { z } from "zod";
-import { FEED_TIME_ZONE } from "@/features/feed/format";
 import type { ProfilePreviewData } from "./schema";
 
-export const USERNAME_COOLDOWN_DAYS = 7;
-export const USERNAME_COOLDOWN_MS = USERNAME_COOLDOWN_DAYS * 86_400_000;
 const reserved = new Set([
   "admin",
   "administrator",
@@ -34,45 +31,33 @@ export const usernameSchema = z
       ),
   );
 
-export function usernameChangeDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: FEED_TIME_ZONE,
-  }).format(new Date(value));
-}
-
-export function nextUsernameChange(changedAt?: string) {
-  return changedAt ? Date.parse(changedAt) + USERNAME_COOLDOWN_MS : null;
-}
-
 type UsernameCheck =
   { available: true; username: string } | { available: false; message: string };
 
 /** Local preview availability only; real accounts require an atomic server-side claim. */
 export function checkUsername(
   input: unknown,
-  profiles: readonly ProfilePreviewData[],
+  profiles: readonly (Pick<ProfilePreviewData, "handle"> & {
+    person: { id: string };
+  })[],
   viewerId: string,
   changedAt: string | undefined,
   now: Date,
 ): UsernameCheck {
   const current = profiles.find((profile) => profile.person.id === viewerId);
-  const next = nextUsernameChange(changedAt);
   if (
     !current ||
     !Number.isFinite(now.getTime()) ||
-    (next !== null && !Number.isFinite(next))
+    (changedAt !== undefined && !Number.isFinite(Date.parse(changedAt)))
   )
     return {
       available: false,
       message: "Username changes are unavailable right now.",
     };
-  if (next !== null && now.getTime() < next)
+  if (changedAt !== undefined)
     return {
       available: false,
-      message: `You can change your username again on ${usernameChangeDate(new Date(next).toISOString())}.`,
+      message: "Your one username change has already been used.",
     };
   const parsed = usernameSchema.safeParse(input);
   if (!parsed.success)

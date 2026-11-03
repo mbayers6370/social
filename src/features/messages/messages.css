@@ -103,6 +103,7 @@
 .margin-thread {
   display: none;
   min-width: 0;
+  border: 1px solid hsl(var(--button-border));
   background: hsl(var(--conversation));
 }
 .margin-messages[data-thread-open="true"] .margin-inbox {
@@ -110,11 +111,11 @@
 }
 .margin-messages[data-thread-open="true"] .margin-thread {
   position: fixed;
-  inset: 0;
+  inset: var(--margin-viewport-top, 0px) 0 auto;
   z-index: 25;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: var(--margin-viewport-height, 100dvh);
 }
 .margin-app:has(.margin-messages[data-thread-open="true"]) .margin-header,
 .margin-app:has(.margin-messages[data-thread-open="true"]) .margin-mobile-nav {
@@ -128,6 +129,10 @@
   padding: max(12px, env(safe-area-inset-top)) 16px 12px;
   min-height: 76px;
   background: hsl(var(--conversation));
+}
+.margin-thread[data-notebook="true"] .margin-thread-header {
+  background: hsl(var(--blackened-olive));
+  color: #fff;
 }
 .margin-thread-header :is(.margin-avatar, .margin-notebook-icon) {
   width: 34px;
@@ -151,10 +156,45 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.margin-message-retention {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: var(--text-meta);
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
 .margin-thread-back {
   width: 44px;
   height: 44px;
   padding: 0;
+}
+.margin-message-options {
+  position: relative;
+  flex-shrink: 0;
+}
+.margin-message-options-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 1;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 4px;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-control);
+  background: hsl(var(--card));
+  box-shadow: 0 8px 24px hsl(var(--foreground) / 0.1);
+}
+.margin-message-options-panel:not([hidden]) {
+  display: grid;
+}
+.margin-message-options-panel > button {
+  justify-content: flex-start;
+  min-height: 44px;
+  padding-inline: 12px;
+  font-size: var(--text-control);
+  font-weight: 400;
 }
 .margin-thread-scroll {
   flex: 1;
@@ -259,10 +299,10 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1px solid hsl(var(--blackened-olive) / 0.2);
+  border: 1px solid currentColor;
   border-radius: 50%;
-  background: hsl(var(--surface-heading));
-  color: hsl(var(--blackened-olive));
+  background: transparent;
+  color: inherit;
 }
 .margin-notebook-icon svg {
   width: 22px;
@@ -374,6 +414,7 @@
   }
   .margin-thread-choice[data-active="true"] {
     --muted-foreground: var(--ink);
+    border-color: hsl(var(--button-border));
     background: hsl(var(--citron));
     color: hsl(var(--ink));
   }
@@ -381,6 +422,10 @@
     margin-inline: 32px;
     padding: 16px 0;
     min-height: 76px;
+  }
+  .margin-thread[data-notebook="true"] .margin-thread-header {
+    margin-inline: 0;
+    padding-inline: 32px;
   }
   .margin-thread-header .margin-thread-back {
     display: none;
@@ -391,6 +436,9 @@
     font-size: var(--text-body);
   }
   .margin-thread-scroll {
+    padding-inline: 32px;
+  }
+  .margin-message-retention {
     padding-inline: 32px;
   }
   .margin-message-composer {

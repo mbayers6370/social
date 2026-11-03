@@ -7,9 +7,16 @@ next-env.d.ts
 *.tsbuildinfo
 
 # Test reports, traces, coverage and temporary output
+/tests/
+/experiments/
 coverage/
+.nyc_output/
 playwright-report/
+blob-report/
 test-results/
+test-reports/
+/reports/
+/screenshots/
 playwright/.auth/
 artifacts/
 *.log
@@ -20,6 +27,7 @@ tmp/
 *.tmp
 *.bak
 *.orig
+docs/
 
 # Local configuration, credentials and database state
 .env

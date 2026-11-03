@@ -3,13 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, type CSSProperties } from "react";
 import {
-  Aperture,
+  Gallery,
   ChevronLeft,
   ChevronRight,
-  Plus,
-  SlidersHorizontal,
-  Trash2,
-} from "lucide-react";
+  Add,
+  Filter,
+  Trash,
+} from "@/components/margin-icons";
 import { PersonLink } from "@/components/shared/person-link";
 import { Button } from "@/components/ui/button";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
@@ -148,7 +148,7 @@ export function GalleryPage({ personId }: { personId?: string }) {
             id="gallery-title"
             ref={heading}
             tabIndex={-1}
-            motif={<SectionMotif icon={Aperture} />}
+            motif={<SectionMotif icon={Gallery} />}
           >
             {own ? (
               "Your Gallery"
@@ -185,7 +185,7 @@ export function GalleryPage({ personId }: { personId?: string }) {
                   setEditor({});
                 }}
               >
-                <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />
+                <Filter aria-hidden="true" />
                 Arrange
               </Button>
               <Button
@@ -195,7 +195,7 @@ export function GalleryPage({ personId }: { personId?: string }) {
                   setPicking(true);
                 }}
               >
-                <Plus aria-hidden="true" />
+                <Add aria-hidden="true" />
                 Add photo
               </Button>
             </div>
@@ -336,7 +336,22 @@ export function GalleryPage({ personId }: { personId?: string }) {
           }}
         >
           <DialogTitle>Photograph</DialogTitle>
-          {selected && <PhotoViewerFigure photo={selected} sizes="960px" />}
+          {selected && (
+            <PhotoViewerFigure
+              photo={selected}
+              sizes="960px"
+              onPrevious={
+                !deleting && viewedIndex > 0
+                  ? () => moveViewedPhoto(-1)
+                  : undefined
+              }
+              onNext={
+                !deleting && viewedIndex < ordered.length - 1
+                  ? () => moveViewedPhoto(1)
+                  : undefined
+              }
+            />
+          )}
           <footer className="margin-gallery-viewer-footer">
             <div className="margin-photo-viewer-navigation">
               <Button
@@ -372,7 +387,7 @@ export function GalleryPage({ personId }: { personId?: string }) {
                     setViewing(false);
                   }}
                 >
-                  <SlidersHorizontal aria-hidden="true" strokeWidth={1.5} />
+                  <Filter aria-hidden="true" />
                   Arrange
                 </Button>
                 <Button
@@ -385,7 +400,7 @@ export function GalleryPage({ personId }: { personId?: string }) {
                     setDeleting(true);
                   }}
                 >
-                  <Trash2 aria-hidden="true" strokeWidth={1.5} />
+                  <Trash aria-hidden="true" />
                   Delete
                 </Button>
                 <Button variant="outline" onClick={() => setViewing(false)}>

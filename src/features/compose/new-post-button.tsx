@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Add } from "@/components/margin-icons";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export function NewPostButton({
           aria-label="New Post"
         >
           <>
-            <Plus aria-hidden="true" strokeWidth={1.5} />
+            <Add aria-hidden="true" />
             <span className={header ? "sr-only" : "margin-deferred-label"}>
               New Post
             </span>

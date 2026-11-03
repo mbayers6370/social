@@ -1,7 +1,7 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { Close } from "@/components/margin-icons";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ export function DialogContent({
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-foreground/30" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 grid max-h-[85dvh] w-[calc(100%_-_2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg",
+          "margin-dialog-content fixed left-1/2 z-50 grid w-[calc(100%_-_2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg",
           className,
         )}
         {...props}
@@ -37,7 +37,7 @@ export function DialogContent({
               className="absolute right-2 top-2"
               aria-label="Close dialog"
             >
-              <X aria-hidden="true" />
+              <Close aria-hidden="true" />
             </Button>
           </DialogPrimitive.Close>
         )}

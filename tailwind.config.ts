@@ -36,6 +36,7 @@ export default {
           foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
         },
         border: "hsl(var(--border) / <alpha-value>)",
+        "button-border": "hsl(var(--button-border) / <alpha-value>)",
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
       },

@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight } from "@/components/margin-icons";
 import type { ReactNode } from "react";
-import { PublicHomeLink } from "./public-home-link";
-import { publicSiteDetails } from "./site-details";
+import { PublicNavigation } from "./public-navigation";
 export const publicHomeHref = () =>
   process.env.NODE_ENV === "development" ? "/welcome" : "/";
 const groups = [
@@ -35,24 +34,6 @@ const groups = [
     ],
   },
 ];
-function PublicLinks({ label }: { label: string }) {
-  return (
-    <nav aria-label={label} className="margin-public-primary">
-      <Link href="/why-margin" className="margin-public-information">
-        Why margin
-      </Link>
-      <Link href="/how-it-works" className="margin-public-information">
-        How it works
-      </Link>
-      <Link href="/sign-in" className="margin-public-sign-in">
-        Sign in
-      </Link>
-      <Link href="/sign-up" className="margin-public-join">
-        {publicSiteDetails.joiningLabel}
-      </Link>
-    </nav>
-  );
-}
 export function PublicFooter() {
   return (
     <footer className="margin-public-footer">
@@ -83,12 +64,7 @@ export function PublicFooter() {
   );
 }
 export function PublicHeader() {
-  return (
-    <header className="margin-public-header margin-topbar margin-navigation-theme">
-      <PublicHomeLink signedOutHref={publicHomeHref()} />
-      <PublicLinks label="Public navigation" />
-    </header>
-  );
+  return <PublicNavigation homeHref={publicHomeHref()} />;
 }
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
@@ -113,7 +89,7 @@ export function PublicTextLink({
   return (
     <Link href={href} className="margin-public-text-link" {...props}>
       {children}
-      <ChevronRight aria-hidden="true" strokeWidth={1.5} />
+      <ChevronRight aria-hidden="true" />
     </Link>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 import { AccountDownload } from "./account-download";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Trash2 } from "lucide-react";
+import { ChevronDown, Trash } from "@/components/margin-icons";
+import { SettingsHelp } from "./settings-help";
 export function PreviewDataControls() {
   return (
     <div
@@ -14,10 +15,11 @@ export function PreviewDataControls() {
         Choose what to keep. Get a readable PDF or an archive with your original
         photographs.
       </p>
+      <SettingsHelp />
       <details className="margin-settings-record">
         <summary>
           <span>Account removal</span>
-          <ChevronDown aria-hidden="true" strokeWidth={1.5} />
+          <ChevronDown aria-hidden="true" />
         </summary>
         <div>
           <p className="margin-field-hint" id="account-deletion-status">
@@ -30,7 +32,7 @@ export function PreviewDataControls() {
             disabled
             aria-describedby="account-deletion-status"
           >
-            <Trash2 aria-hidden="true" />
+            <Trash aria-hidden="true" />
             Delete account · Not available yet
           </Button>
         </div>

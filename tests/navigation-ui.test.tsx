@@ -170,7 +170,7 @@ it("switches exclusively between the desktop avatar menu and notifications, and 
     within(menu).queryByRole("link", { name: "Feed" }),
   ).not.toBeInTheDocument();
   expect(screen.getByRole("navigation", { name: "Primary" })).toHaveTextContent(
-    "FeedMessages",
+    "FeedSpacesMessages",
   );
   await user.click(bell);
   expect(screen.getByRole("dialog", { name: "Notifications" })).toBeVisible();
@@ -200,7 +200,7 @@ it("switches exclusively between the desktop avatar menu and notifications, and 
 it("applies reading and motion settings across the local tab and restores them on unmount", async () => {
   const user = userEvent.setup();
   const { unmount } = render(
-    <AccountSession enabled={false}>
+    <AccountSession enabled={false} previewAllowed>
       <PreviewProvider bootstrap={bootstrap()}>
         <SettingsPage />
       </PreviewProvider>
@@ -232,7 +232,9 @@ it("applies reading and motion settings across the local tab and restores them o
     "href",
     "/sign-in",
   );
-  expect(screen.getByRole("button", { name: "Exit preview" })).toBeVisible();
+  expect(
+    screen.queryByRole("button", { name: "Exit preview" }),
+  ).not.toBeInTheDocument();
   unmount();
   expect(document.documentElement).not.toHaveAttribute("data-motion");
 });

@@ -212,8 +212,8 @@ it("starts onboarding with no sample activity and a small-circle invitation", as
   expect(
     screen.getByRole("heading", { name: "It starts with your people." }),
   ).toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Invite a friend" }));
+  await user.click(screen.getByRole("button", { name: "Invite someone" }));
   expect(screen.getByRole("dialog")).toHaveTextContent(
-    "Access requires an invitation code",
+    "Your three invitations become available when you finish joining",
   );
 });

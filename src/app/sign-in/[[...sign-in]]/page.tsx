@@ -1,20 +1,19 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { AuthShell, authAppearance } from "@/features/account/auth-shell";
+import { accountConfiguration } from "@/server/account/config";
+import { ManagedAuthForm } from "@/features/account/managed-auth-form";
+import { AuthShell } from "@/features/account/auth-shell";
 export const metadata: Metadata = {
   title: "Sign in to Margin",
   description: "Sign in to your Margin account.",
 };
 export default function SignInPage() {
-  const configured = Boolean(
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-    process.env.CLERK_SECRET_KEY,
-  );
+  const { configured } = accountConfiguration();
   return (
     <AuthShell
+      providerHeading={configured}
       title="Welcome back."
       intro={
         configured
@@ -26,15 +25,7 @@ export default function SignInPage() {
     >
       {configured ? (
         <Suspense fallback={<p role="status">Loading sign-in…</p>}>
-          <SignIn
-            withSignUp={false}
-            transferable={false}
-            routing="path"
-            path="/sign-in"
-            signUpUrl="/sign-up"
-            forceRedirectUrl="/onboarding"
-            appearance={authAppearance}
-          />
+          <ManagedAuthForm kind="sign-in" />
         </Suspense>
       ) : (
         <div className="margin-auth-unavailable">
@@ -58,7 +49,7 @@ export default function SignInPage() {
         </div>
       )}
       <p className="margin-auth-next">
-        Have an invitation? <Link href="/sign-up">Join Margin</Link>
+        New to Margin? Open the invitation link someone sent you.
       </p>
     </AuthShell>
   );

@@ -2,6 +2,7 @@ import { dayKey, FEED_TIME_ZONE } from "@/features/feed/format";
 export const MINIMUM_AGE = 18;
 export const DAILY_REGULAR_POSTS = 3;
 export const DAILY_IMAGES = 3;
+export const SPACE_PHOTO_LIMIT = 20;
 export const POSTING_TIME_ZONE = FEED_TIME_ZONE;
 export const POSTING_RULE_SUMMARY =
   "Up to three regular posts per calendar day, or one link-containing post as your only post that day. Up to three photographs total per day, shared between posts and Gallery.";

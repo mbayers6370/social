@@ -1,9 +1,8 @@
-// Approved draft identity. This is not a representation that an entity has been formed.
+// Owner-confirmed domain/contact. The legal operator and policies remain drafts.
 export const publicSiteDetails = {
   brand: "margin",
-  joiningLabel: "Join Margin",
-  supportEmail: "support@example.com",
-  supportIsTemporary: true,
+  domain: "margin.social",
+  supportEmail: "support@margin.social",
   operatorConfirmed: false,
   status: "Draft for review",
 } as const;

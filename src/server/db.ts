@@ -1,5 +1,5 @@
 import "server-only";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { createDatabaseAdapter } from "./database-adapter";
 import { PrismaClient } from "@/generated/prisma/client";
 import { getDatabaseEnv } from "@/server/env";
 
@@ -9,12 +9,7 @@ let client: PrismaClient | undefined;
 export function getDb() {
   if (client) return client;
   const { DATABASE_URL } = getDatabaseEnv();
-  const adapter = new PrismaPg({
-    connectionString: DATABASE_URL,
-    max: 5,
-    connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 30000,
-  });
+  const adapter = createDatabaseAdapter(DATABASE_URL);
   client = globalForPrisma.prisma ?? new PrismaClient({ adapter });
   if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = client;
   return client;

@@ -9,6 +9,11 @@ export function EmptyFeed() {
       pair.status === "accepted" &&
       pair.people.includes(preview.bootstrap.viewerId),
   );
+  return <EmptyFeedContent hasFriends={hasFriends} />;
+}
+
+/** Shared presentation; the caller supplies its actual relationship state. */
+export function EmptyFeedContent({ hasFriends }: { hasFriends: boolean }) {
   return (
     <section className="margin-empty-feed" aria-labelledby="empty-feed-title">
       <BrandBrackets>
@@ -19,11 +24,12 @@ export function EmptyFeed() {
           ? "A quiet day in your circle."
           : "It starts with your people."}
       </h2>
-      <p>
-        {hasFriends
-          ? "Nothing new to catch up on. When your friends share a little of their day, you’ll find it here."
-          : "Bring someone you’d take the long way for. A good conversation doesn’t need a crowd."}
-      </p>
+      {hasFriends && (
+        <p>
+          Nothing new to catch up on. When your friends share a little of their
+          day, you’ll find it here.
+        </p>
+      )}
       {!hasFriends && <InviteFriends />}
       <p className="margin-field-hint">
         {hasFriends

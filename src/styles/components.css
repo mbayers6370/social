@@ -1,3 +1,10 @@
+/* Center shared dialogs inside the visible mobile area above the keyboard. */
+.margin-dialog-content {
+  top: calc(
+    var(--margin-viewport-top, 0px) + var(--margin-viewport-height, 100dvh) / 2
+  );
+  max-height: calc(var(--margin-viewport-height, 100dvh) * 0.85);
+}
 /* Shared avatars, section links, forms and feedback.
    Feature-specific variants belong with their owning feature. */
 .margin-navigation-theme {
@@ -237,4 +244,11 @@
     );
     height: auto;
   }
+}
+
+/* Horizontal photo browsing leaves vertical scrolling and pinch zoom native. */
+.margin-photo-viewer-figure[data-swipe="true"] > img {
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
 }

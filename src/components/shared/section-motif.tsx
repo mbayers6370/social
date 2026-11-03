@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import type { ComponentProps, ReactNode } from "react";
+import type { IconProps } from "@/components/margin-icons";
+import type { ComponentProps, ComponentType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** One leading artwork slot and one text slot at every viewport width. */
@@ -24,12 +24,15 @@ export function SectionTitle({
 }
 
 /** Decorative heading artwork; the adjacent text supplies the accessible name. */
-export function SectionMotif({ icon: Icon }: { icon: LucideIcon }) {
+export function SectionMotif({
+  icon: Icon,
+}: {
+  icon: ComponentType<IconProps>;
+}) {
   return (
     <Icon
       className="margin-section-motif"
       size={20}
-      strokeWidth={1.5}
       aria-hidden="true"
       focusable="false"
     />

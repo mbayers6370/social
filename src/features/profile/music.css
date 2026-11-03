@@ -12,42 +12,8 @@
     height: 64px;
   }
 }
-/* Decorative rhythm, independent of playback; transforms reserve the full icon size. */
-.margin-music-equalizer rect {
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  animation: margin-music-bars 1400ms ease-in-out infinite;
-}
-.margin-music-equalizer rect:nth-child(2) {
-  animation-delay: -450ms;
-  animation-duration: 1200ms;
-}
-.margin-music-equalizer rect:nth-child(3) {
-  animation-delay: -850ms;
-  animation-duration: 1600ms;
-}
-.margin-music-equalizer rect:nth-child(4) {
-  animation-delay: -200ms;
-  animation-duration: 1300ms;
-}
-@keyframes margin-music-bars {
-  0%,
-  100% {
-    transform: scaleY(0.45);
-  }
-  50% {
-    transform: scaleY(1);
-  }
-}
-html[data-motion="reduced"] .margin-music-equalizer rect {
+html[data-motion="reduced"] .margin-profile-music .margin-eq-bar {
   animation: none;
-  transform: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .margin-music-equalizer rect {
-    animation: none;
-    transform: none;
-  }
 }
 .margin-on-repeat-list {
   display: grid;
@@ -58,9 +24,10 @@ html[data-motion="reduced"] .margin-music-equalizer rect {
 }
 .margin-music-results {
   display: grid;
-  gap: 4px;
+  gap: 8px;
   list-style: none;
   padding: 0 var(--menu-inset);
+  margin-top: 0;
 }
 .margin-track-row,
 .margin-track-choice {
@@ -114,10 +81,6 @@ html[data-motion="reduced"] .margin-music-equalizer rect {
   position: absolute;
   inset: 0;
   border-radius: 8px;
-}
-.margin-music-results > li {
-  position: relative;
-  border-radius: var(--radius-control);
 }
 .margin-song-card:hover .margin-track-chevron,
 .margin-song-card:focus-within .margin-track-chevron {
@@ -236,10 +199,6 @@ html[data-motion="reduced"] .margin-music-equalizer rect {
 .margin-music-picker input {
   margin-top: 8px;
 }
-.margin-music-results {
-  gap: 8px;
-  margin-top: 0;
-}
 .margin-track-choice {
   width: 100%;
   padding: 10px;
@@ -321,6 +280,8 @@ html[data-motion="reduced"] .margin-music-equalizer rect {
   row-gap: 0;
 }
 .margin-music-results > li {
+  position: relative;
+  border-radius: var(--radius-control);
   padding: 10px;
 }
 .margin-song-card > .margin-track-card,

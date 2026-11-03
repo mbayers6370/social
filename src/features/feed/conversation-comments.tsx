@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./post-content";
 import { relativeTime } from "./format";
@@ -19,6 +19,9 @@ import {
 import { SafetyReportButton } from "@/features/safety/report-button";
 
 type RowProps = {
+  live?: boolean;
+  profileLive?: boolean;
+  readOnly?: boolean;
   postId: string;
   postAuthorId: string;
   referenceTime: string;
@@ -128,11 +131,15 @@ function CommentRow({
   postAuthorId,
   referenceTime,
   onReply,
+  live = false,
+  profileLive = live,
+  readOnly = false,
 }: RowProps & {
   comment: FeedComment;
   parentAuthor?: Person;
 }) {
-  const preview = useOptionalPreview();
+  const previewContext = useOptionalPreview();
+  const preview = live ? null : previewContext;
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [body, setBody] = useState(comment.body);
@@ -151,11 +158,13 @@ function CommentRow({
   const inputId = useId();
   return (
     <div className="margin-comment" id={`comment-${postId}-${comment.id}`}>
-      <Avatar person={author} small linked />
+      <Avatar person={author} small linked live={profileLive} />
       <div className="margin-comment-main">
         <div className="margin-comment-meta">
           <strong>
-            <PersonLink person={author}>{author.name}</PersonLink>
+            <PersonLink live={profileLive} person={author}>
+              {author.name}
+            </PersonLink>
           </strong>
           {author.id === postAuthorId ? (
             <span className="margin-author-label">Author</span>
@@ -172,7 +181,9 @@ function CommentRow({
           <span className="margin-reply-context">
             In reply to{" "}
             {parentAuthor ? (
-              <PersonLink person={parentAuthor}>{parentAuthor.name}</PersonLink>
+              <PersonLink live={profileLive} person={parentAuthor}>
+                {parentAuthor.name}
+              </PersonLink>
             ) : (
               "a comment"
             )}
@@ -231,7 +242,7 @@ function CommentRow({
         ) : (
           <p>{comment.body}</p>
         )}
-        {!comment.deletedAt && !editing && (
+        {!readOnly && !comment.deletedAt && !editing && (
           <div
             className="margin-comment-actions"
             role="group"
@@ -263,14 +274,16 @@ function CommentRow({
                 </Button>
               </>
             )}
-            <SafetyReportButton
-              target={{
-                kind: "comment",
-                id: comment.id,
-                personId: author.id,
-                label: `Comment by ${author.name}`,
-              }}
-            />
+            {!live && (
+              <SafetyReportButton
+                target={{
+                  kind: "comment",
+                  id: comment.id,
+                  personId: author.id,
+                  label: `Comment by ${author.name}`,
+                }}
+              />
+            )}
           </div>
         )}
         <Dialog open={deleting} onOpenChange={setDeleting}>

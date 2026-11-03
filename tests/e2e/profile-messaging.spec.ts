@@ -62,9 +62,8 @@ test("a friend's profile has compact friendship and message controls and opens t
   await expect(message).toHaveAttribute("href", "/?view=messages&thread=mara");
   for (const control of [friend, message])
     await expect(control).toHaveCSS("border-radius", "8px");
-  await expect(friend.locator(".lucide-users")).toHaveCount(1);
-  await expect(friend.locator(".lucide-check")).toHaveCount(0);
-  await expect(message.locator(".lucide-mail")).toHaveCount(1);
+  await expect(friend.locator(".margin-icon circle")).toHaveCount(2);
+  await expect(message.locator(".margin-icon")).toHaveCount(1);
   if (testInfo.project.name === "mobile") {
     await page.setViewportSize({ width: 320, height: 700 });
     const avatar = (await identity
@@ -84,7 +83,7 @@ test("a friend's profile has compact friendship and message controls and opens t
       page
         .getByRole("navigation", { name: "Mobile navigation" })
         .getByRole("link", { name: "Messages", exact: true })
-        .locator(".lucide-mail"),
+        .locator(".margin-icon"),
     ).toHaveCount(1);
   }
   await page.screenshot({

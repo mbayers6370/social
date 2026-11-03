@@ -1,7 +1,7 @@
 "use client";
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -40,7 +40,7 @@ export function ProfileSearch() {
           title="Search profiles"
           disabled={!hydrated}
         >
-          <Search aria-hidden="true" strokeWidth={1.5} />
+          <Search aria-hidden="true" />
         </Button>
       </DialogTrigger>
       <DialogContent className="margin-search-dialog">

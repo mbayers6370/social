@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { Pencil } from "lucide-react";
+import { Edit } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -47,7 +47,7 @@ export function ProfilePhotoEditor() {
         aria-label="Change profile photograph"
         onClick={() => setPicking(true)}
       >
-        <Pencil aria-hidden="true" />
+        <Edit aria-hidden="true" />
       </Button>
       <PhotoPicker
         open={picking}

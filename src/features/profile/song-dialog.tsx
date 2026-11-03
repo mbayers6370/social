@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight } from "@/components/margin-icons";
 import {
   Dialog,
   DialogContent,
@@ -31,11 +31,7 @@ export function SongDialog({ track }: { track: ProfileTrack }) {
             aria-label={`Open ${track.title} by ${track.artist}`}
           >
             <TrackIdentity track={track} />
-            <ChevronRight
-              className="margin-track-chevron"
-              aria-hidden="true"
-              strokeWidth={1.5}
-            />
+            <ChevronRight className="margin-track-chevron" aria-hidden="true" />
           </button>
         </DialogTrigger>
         <AppleSongBadge track={track} />
@@ -81,7 +77,7 @@ export function SongDialog({ track }: { track: ProfileTrack }) {
                     ? "Find on Spotify"
                     : `Open in ${link.name}`}
                 </span>
-                <ChevronRight aria-hidden="true" strokeWidth={1.5} />
+                <ChevronRight aria-hidden="true" />
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
             ))}

@@ -1,10 +1,7 @@
-import Image from "next/image";
+import { AvatarPhoto } from "@/components/shared/avatar-photo";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import {
-  AvatarFrame,
-  avatarImageStyle,
-} from "@/components/shared/avatar-frame";
+import { AvatarFrame } from "@/components/shared/avatar-frame";
 import type { FeedPost, Person } from "./schema";
 import { FEED_TIME_ZONE, postTime } from "./format";
 import { PostPhotos } from "./post-photos";
@@ -15,12 +12,14 @@ export function Avatar({
   small = false,
   sizes,
   linked = false,
+  live = false,
   onNavigate,
 }: {
   person: Person;
   small?: boolean;
   sizes?: string;
   linked?: boolean;
+  live?: boolean;
   onNavigate?: ComponentProps<typeof PersonLink>["onNavigate"];
 }) {
   const avatar = (
@@ -33,14 +32,12 @@ export function Avatar({
       )}
     >
       {person.photo ? (
-        <Image
+        <AvatarPhoto
+          key={person.photo.src}
           src={person.photo.src}
-          fill
-          alt=""
-          className="margin-avatar-image"
+          initials={person.initials}
           sizes={sizes ?? (small ? "29px" : "76px")}
-          loading="eager"
-          style={avatarImageStyle}
+          live={live}
         />
       ) : (
         person.initials
@@ -49,6 +46,7 @@ export function Avatar({
   );
   return linked ? (
     <PersonLink
+      live={live}
       person={person}
       className="margin-avatar-link"
       aria-label={`View ${person.name}’s profile`}
@@ -64,20 +62,29 @@ export function Avatar({
 export function PostAuthor({
   post,
   actions,
+  source,
+  live = false,
 }: {
   post: FeedPost;
   actions?: ReactNode;
+  source?: ReactNode;
+  live?: boolean;
 }) {
   return (
     <header className="margin-post-author">
-      <Avatar person={post.author} linked />
+      <Avatar person={post.author} linked live={live} />
       <div>
         <h2 className="margin-person-name" id={`author-${post.id}`}>
-          <PersonLink person={post.author}>{post.author.name}</PersonLink>
+          <PersonLink person={post.author} live={live}>
+            {post.author.name}
+          </PersonLink>
         </h2>
-        <time className="margin-post-time" dateTime={post.createdAt}>
-          {postTime(post.createdAt)}
-        </time>
+        <div className="margin-post-metadata">
+          <time className="margin-post-time" dateTime={post.createdAt}>
+            {postTime(post.createdAt)}
+          </time>
+          {source}
+        </div>
       </div>
       {actions}
     </header>
@@ -87,9 +94,11 @@ export function PostAuthor({
 export function PostContent({
   post,
   highPriority = false,
+  privateMedia = false,
 }: {
   post: FeedPost;
   highPriority?: boolean;
+  privateMedia?: boolean;
 }) {
   return (
     <>
@@ -99,6 +108,7 @@ export function PostContent({
           postId={post.id}
           authorName={post.author.name}
           highPriority={highPriority}
+          privateMedia={privateMedia}
         />
       )}
       <div className="margin-post-prose">

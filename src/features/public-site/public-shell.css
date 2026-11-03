@@ -7,6 +7,9 @@
 .margin-public-site > main {
   flex: 1;
 }
+.margin-public-site:has(> .margin-mobile-nav) {
+  padding-bottom: var(--margin-mobile-nav-height);
+}
 .margin-public-site > main:focus {
   outline: none;
   box-shadow: none;
@@ -30,6 +33,11 @@
   color: hsl(var(--muted-foreground));
 }
 .margin-public-primary > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.margin-public-account-loading {
   display: inline-flex;
   align-items: center;
   min-height: 44px;

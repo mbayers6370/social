@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Users, Search } from "lucide-react";
+import { ChevronLeft, Friends, Search } from "@/components/margin-icons";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { searchProfiles } from "@/features/local-preview/model";
 import { FriendActions } from "./friend-actions";
 import { useFriendFeedback } from "./use-friend-feedback";
 import { friendStatus } from "./model";
+import { InviteFriends } from "@/features/account/invite-friends";
 
 export function FriendsPage() {
   const { state, bootstrap } = usePreview();
@@ -71,7 +72,7 @@ export function FriendsPage() {
           <SectionTitle
             as="h1"
             id="friends-title"
-            motif={<SectionMotif icon={Users} />}
+            motif={<SectionMotif icon={Friends} />}
             ref={heading}
             tabIndex={-1}
           >
@@ -82,10 +83,14 @@ export function FriendsPage() {
             <ProfileSearch />
           </div>
         </div>
-        <p className="margin-field-hint">
-          Friendship goes both ways. Only accepted friends can see your posts
-          and gallery.
-        </p>
+        <div className="margin-friends-intro">
+          {" "}
+          <p className="margin-field-hint">
+            Friendship goes both ways. Only accepted friends can see your posts
+            and gallery.
+          </p>
+          <InviteFriends />
+        </div>
       </header>
       <div
         className="margin-friends-switch"
@@ -110,7 +115,7 @@ export function FriendsPage() {
       <Field>
         <Label htmlFor="friends-search">Filter friends and requests</Label>
         <div className="margin-friends-search">
-          <Search aria-hidden="true" strokeWidth={1.5} />
+          <Search aria-hidden="true" />
           <Input
             id="friends-search"
             value={query}

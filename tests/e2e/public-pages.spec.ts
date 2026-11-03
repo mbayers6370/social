@@ -1,6 +1,6 @@
 import { expect, test } from "./fixtures";
 
-test("closing invitation leads with two readable lines and a joining link", async ({
+test("closing invitation leads with two readable lines and membership information", async ({
   page,
 }, testInfo) => {
   await page.goto("/welcome");
@@ -17,13 +17,17 @@ test("closing invitation leads with two readable lines and a joining link", asyn
   );
   expect(lines).toBeCloseTo(2, 1);
   const note = section.getByText(
-    "Have someone in mind? Start with your invitation.",
+    "Margin grows through invitations from existing members. Open a link from someone you know to begin.",
     { exact: true },
   );
   expect((await note.boundingBox())!.y).toBeGreaterThan(
     (await heading.boundingBox())!.y,
   );
   await expect(section.getByRole("button")).toHaveCount(0);
+  await expect(
+    section.getByRole("link", { name: "Membership by invitation" }),
+  ).toHaveAttribute("href", "/how-it-works");
+  await expect(section.locator('a[href="/sign-up"]')).toHaveCount(0);
   await section.screenshot({
     path: testInfo.outputPath("personal-invitation.png"),
   });
@@ -119,7 +123,7 @@ test("public documents keep their content readable and their section links usabl
       await note.getByText("Still to be confirmed", { exact: true }).click();
       await expect(
         note.getByText(
-          "Legal operator, address, official domain and privacy contact.",
+          "Legal operator, address and dedicated privacy request process.",
         ),
       ).toBeVisible();
     }
@@ -250,14 +254,9 @@ test("public pages expose the footer, practical rules and draft policies on desk
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
-  await page
-    .getByRole("navigation", { name: "Public navigation" })
-    .getByRole("link", { name: "Join Margin", exact: true })
-    .click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "A place for your people.",
-  );
-  await expect(page.getByLabel("Your invitation code")).toBeVisible();
+  await expect(page.locator('a[href="/sign-up"]')).toHaveCount(0);
+  await page.locator(".margin-welcome-cta").click();
+  await expect(page).toHaveURL(/\/how-it-works$/);
   await page.goto("/how-it-works");
   const footer = page.getByRole("navigation", { name: "Footer", exact: true });
   await footer.getByRole("link", { name: "How it works" }).click();
@@ -276,7 +275,7 @@ test("public pages expose the footer, practical rules and draft policies on desk
     .click();
   await expect(
     page.getByRole("complementary", { name: "Policy draft status" }),
-  ).toContainText("support@example.com");
+  ).toContainText("support@margin.social");
   await expect(
     page.getByRole("complementary", { name: "Policy draft status" }),
   ).toContainText("legal operator has not been confirmed");

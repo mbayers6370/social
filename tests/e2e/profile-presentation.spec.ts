@@ -170,7 +170,9 @@ test("Nadia's scientist profile stays private until acceptance, then loads real 
     await expect(author).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await expect(author.getByRole("heading")).toBeVisible();
     await expect(
-      author.getByRole("button", { name: /^Conversation on/ }),
+      page
+        .locator(`#${id} .margin-post-footer`)
+        .getByRole("button", { name: /^Conversation on/ }),
     ).toBeVisible();
   }
 });

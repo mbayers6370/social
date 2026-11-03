@@ -1,7 +1,7 @@
 /* margin's palette and semantic tokens, shared by native elements and shadcn. */
 :root {
   --font-body: var(--font-inter, ui-sans-serif), system-ui, sans-serif;
-  --font-serif: var(--font-caudex, Georgia), Cambria, "Times New Roman", serif;
+  --font-serif: var(--font-hinge, Arial), sans-serif;
   /* HSL channels preserve exact brand colors and support existing alpha variants. */
   --parchment: 45 28.571429% 97.254902%; /* lighter warm white #FAF9F6 */
   --ink: 203.076923 11.926606% 21.372549%; /* smoky blue-black #30383D */
@@ -19,7 +19,8 @@
   --popover: var(--card);
   --popover-foreground: var(--foreground);
   --primary: var(--citron);
-  --primary-foreground: var(--ink);
+  --primary-foreground: var(--blackened-olive);
+  --button-border: 72 13.72549% 50%; /* muted olive #8A916E */
   --secondary: var(--card);
   --secondary-foreground: var(--foreground);
   --secondary-border: var(--border);

@@ -1,0 +1,43 @@
+/* Optional specimen/integration stylesheet. Not imported by the application. */
+@font-face {
+  font-family: "Margin Hinge";
+  src: url("./margin-hinge-light.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Margin Hinge";
+  src: url("./margin-hinge-medium.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Margin Hinge";
+  src: url("./margin-hinge-bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Margin Loose Mono";
+  src: url("./margin-loose-mono-light.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Margin Loose Mono";
+  src: url("./margin-loose-mono-medium.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Margin Loose Mono";
+  src: url("./margin-loose-mono-bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}

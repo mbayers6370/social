@@ -13,7 +13,7 @@ test("welcome connects invitation signup, login and local profile setup", async 
   ).toBeVisible();
   await expect(
     navigation.getByRole("link", { name: "Join Margin", exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(page.getByText(/coming soon/i)).toHaveCount(0);
   expect(
     await page.evaluate(
@@ -21,8 +21,13 @@ test("welcome connects invitation signup, login and local profile setup", async 
     ),
   ).toBe(true);
   await page.locator(".margin-welcome-cta").click();
-  await expect(page).toHaveURL(/\/sign-up$/);
-  await expect(page.getByLabel("Your invitation code")).toBeVisible();
+  await expect(page).toHaveURL(/\/how-it-works$/);
+  await expect(page.locator('a[href="/sign-up"]')).toHaveCount(0);
+  await page.goto("/sign-up");
+  await expect(page.getByRole("textbox")).toHaveCount(0);
+  await expect(
+    page.getByText(/Open the invitation link someone sent you/),
+  ).toBeVisible();
   await page.screenshot({
     path: `test-results/invitation-signup-${testInfo.project.name}.png`,
   });
@@ -43,7 +48,10 @@ test("welcome connects invitation signup, login and local profile setup", async 
   await page.screenshot({
     path: `test-results/sign-in-${testInfo.project.name}.png`,
   });
-  await page.getByRole("link", { name: "Join Margin", exact: true }).click();
+  await expect(
+    page.getByRole("link", { name: "Join Margin", exact: true }),
+  ).toHaveCount(0);
+  await page.goto("/sign-up");
   if (process.env.PLAYWRIGHT_PRODUCTION === "1") {
     await expect(
       page.getByRole("link", { name: "Preview profile setup", exact: true }),
@@ -63,7 +71,7 @@ test("welcome connects invitation signup, login and local profile setup", async 
     page.getByRole("heading", { name: "It starts with your people." }),
   ).toBeVisible();
 });
-test("account exit is visible in the menu and post flags stay quiet", async ({
+test("account exit is visible in the menu and reporting lives in post options", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -71,12 +79,12 @@ test("account exit is visible in the menu and post flags stay quiet", async ({
     "Account-free feed fixtures are development-only",
   );
   await page.goto("/");
-  const flag = page
-    .locator(".margin-feed-post")
-    .first()
-    .getByRole("button", { name: "Report post" });
-  await expect(flag).toHaveCSS("color", "rgb(139, 144, 146)");
-  await expect(flag).toHaveText("");
+  const post = page.locator("#post-book");
+  await post.getByRole("button", { name: /Post options for/ }).click();
+  await expect(
+    post.getByRole("menuitem", { name: "Report post", exact: true }),
+  ).toHaveText("Report post");
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Profile menu", exact: true }).click();
   const menu = page.getByRole("navigation", {
     name: "Profile menu",
@@ -97,5 +105,5 @@ test("account exit is visible in the menu and post flags stay quiet", async ({
     "A little less.A little closer.",
   );
   await page.goto("/join");
-  await expect(page).toHaveURL(/\/sign-up$/);
+  await expect(page).toHaveURL(/\/how-it-works$/);
 });

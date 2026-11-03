@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ProfileContactActions } from "./profile-contact-actions";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
-import { Pencil, Settings2 } from "lucide-react";
+import { Edit, Settings } from "@/components/margin-icons";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -26,12 +26,20 @@ export function ProfileIdentity({
   onUpdate,
   editRequested = false,
   onEditRequestHandled,
+  live = false,
+  composeAction,
+  contactActions,
+  portraitEditor,
 }: {
   profile: ProfilePreviewData;
   readOnly?: boolean;
-  onUpdate?: (value: ProfileInput) => void;
+  onUpdate?: (value: ProfileInput) => void | Promise<void>;
   editRequested?: boolean;
   onEditRequestHandled?: () => void;
+  live?: boolean;
+  composeAction?: ReactNode;
+  contactActions?: ReactNode;
+  portraitEditor?: ReactNode;
 }) {
   const [identity, setIdentity] = useState<ProfileInput>({
     name: profile.person.name,
@@ -71,9 +79,11 @@ export function ProfileIdentity({
         <EditProfileForm
           profile={profile}
           initial={identity}
+          live={live}
+          portraitEditor={portraitEditor}
           onCancel={finishEditing}
-          onSave={(value) => {
-            onUpdate?.(value);
+          onSave={async (value) => {
+            await onUpdate?.(value);
             setIdentity(value);
             setUpdated(true);
             finishEditing();
@@ -81,13 +91,13 @@ export function ProfileIdentity({
         />
       ) : (
         <>
-          <ProfileHeading profile={profile}>
+          <ProfileHeading profile={profile} live={live}>
             <h1>{identity.name}</h1>
           </ProfileHeading>
           <p className="margin-profile-bio">{identity.bio}</p>
           {!readOnly ? (
             <div className="margin-profile-actions">
-              <NewPostButton />
+              {live ? composeAction : <NewPostButton />}
               <Button
                 ref={editButton}
                 className="margin-profile-owner-action"
@@ -100,7 +110,7 @@ export function ProfileIdentity({
                   setEditing(true);
                 }}
               >
-                <Pencil aria-hidden="true" strokeWidth={1.5} />
+                <Edit aria-hidden="true" />
               </Button>
               <Button
                 className="margin-profile-owner-action"
@@ -109,21 +119,26 @@ export function ProfileIdentity({
                 asChild
               >
                 <Link
-                  href="/?view=settings"
+                  href={live ? "/app/settings" : "/?view=settings"}
                   aria-label="Settings"
                   title="Settings"
                 >
-                  <Settings2 aria-hidden="true" strokeWidth={1.5} />
+                  <Settings aria-hidden="true" />
                 </Link>
               </Button>
             </div>
           ) : (
-            <ProfileContactActions person={profile.person} />
+            (contactActions ??
+            (live ? null : <ProfileContactActions person={profile.person} />))
           )}
         </>
       )}
       <p role="status" className="margin-status">
-        {updated && !editing ? "Profile updated in this preview only." : ""}
+        {updated && !editing
+          ? live
+            ? "Profile saved."
+            : "Profile updated in this preview only."
+          : ""}
       </p>
     </header>
   );
@@ -133,19 +148,24 @@ function ProfileHeading({
   profile,
   children,
   editing = false,
+  live = false,
+  portraitEditor,
 }: {
   profile: ProfilePreviewData;
   children: ReactNode;
   editing?: boolean;
+  live?: boolean;
+  portraitEditor?: ReactNode;
 }) {
   return (
     <div className="margin-profile-heading">
       <div className="margin-profile-portrait">
         <Avatar
           person={profile.person}
+          live={live}
           sizes="(min-width: 1024px) 104px, 76px"
         />
-        {editing && <ProfilePhotoEditor />}
+        {editing && (live ? portraitEditor : <ProfilePhotoEditor />)}
       </div>
       <div className="margin-profile-name">
         {children}
@@ -153,7 +173,16 @@ function ProfileHeading({
         {editing && (
           <p className="margin-profile-username-hint">
             Your @username is editable in{" "}
-            <Link href="/?view=settings#profile-settings">Settings</Link>.
+            <Link
+              href={
+                live
+                  ? "/app/settings#profile-settings"
+                  : "/?view=settings#profile-settings"
+              }
+            >
+              Settings
+            </Link>
+            .
           </p>
         )}
       </div>
@@ -166,18 +195,23 @@ function EditProfileForm({
   initial,
   onSave,
   onCancel,
+  live,
+  portraitEditor,
 }: {
   profile: ProfilePreviewData;
   initial: ProfileInput;
-  onSave: (value: ProfileInput) => void;
+  onSave: (value: ProfileInput) => void | Promise<void>;
+  live: boolean;
+  portraitEditor?: ReactNode;
   onCancel: () => void;
 }) {
+  const [saveError, setSaveError] = useState("");
   const {
     register,
     handleSubmit,
     control,
     setFocus,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ProfileInput>({
     resolver: zodResolver(profileInputSchema),
     defaultValues: initial,
@@ -192,9 +226,21 @@ function EditProfileForm({
       noValidate
       aria-label="Edit profile"
       className="margin-profile-edit-form"
-      onSubmit={handleSubmit(onSave)}
+      onSubmit={handleSubmit(async (value) => {
+        setSaveError("");
+        try {
+          await onSave(value);
+        } catch (error) {
+          setSaveError(
+            error instanceof Error
+              ? error.message
+              : "Your profile could not be saved. Your changes are still here.",
+          );
+        }
+      })}
       onKeyDown={(event) => {
         if (
+          isSubmitting ||
           event.key !== "Escape" ||
           !event.currentTarget.contains(event.target as Node)
         )
@@ -205,13 +251,19 @@ function EditProfileForm({
       }}
     >
       <h1 className="sr-only">Edit profile</h1>
-      <ProfileHeading profile={profile} editing>
+      <ProfileHeading
+        profile={profile}
+        editing
+        live={live}
+        portraitEditor={portraitEditor}
+      >
         <Field>
           <Label htmlFor="profile-name">Name</Label>
           <Input
             id="profile-name"
             {...register("name")}
             maxLength={80}
+            disabled={isSubmitting}
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? "profile-name-error" : undefined}
           />
@@ -231,6 +283,7 @@ function EditProfileForm({
           {...register("bio")}
           maxLength={300}
           rows={4}
+          disabled={isSubmitting}
           aria-invalid={Boolean(errors.bio)}
           aria-describedby={
             [
@@ -250,14 +303,19 @@ function EditProfileForm({
           <FieldError id="profile-bio-error">{errors.bio.message}</FieldError>
         )}
       </Field>
+      {saveError && <FieldError>{saveError}</FieldError>}
       <div className="margin-profile-edit-actions">
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" disabled={isSubmitting} onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit">Save changes</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Saving…" : "Save changes"}
+        </Button>
       </div>
       <p className="margin-field-hint">
-        Changes stay in this tab and reset when you refresh.
+        {live
+          ? "Your name and bio are saved to your Margin account."
+          : "Changes stay in this tab and reset when you refresh."}
       </p>
     </form>
   );

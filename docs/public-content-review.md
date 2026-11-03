@@ -20,7 +20,7 @@ Source review is distinguished from execution evidence. Backend tests listed bel
 
 ## Publication decisions still required
 
-- Confirm legal operator, service address, official domain, working support/privacy/safety contacts and responsible owners. `support@example.com` remains a visibly labelled, unmonitored placeholder.
+- The owner confirmed `margin.social` and the general support inbox `support@margin.social` on 2 November 2026. Public contact links now use that address. Mail delivery, response coverage and specialist privacy/safety/legal processes have not been verified. Confirm the legal operator, service address and responsible owners before publication.
 - Decide launch jurisdictions and have qualified counsel establish applicable requirements. An 18+ product concept does not decide every child-safety obligation.
 - Complete the deployed provider/data/cookie inventory, purposes, legal grounds, storage/transfer arrangements and contracts.
 - Set and verify content, message, Notebook, security-record, report, account and backup retention; define restore/redeletion handling and narrow exceptions.

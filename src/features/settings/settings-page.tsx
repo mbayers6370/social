@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "@/components/margin-icons";
 import { PreviewDataControls } from "./preview-data-controls";
+import { ReadingSettings } from "./reading-settings";
 import { UsernameSettings } from "./username-settings";
 import { NotificationPreferences } from "@/features/notifications/notification-preferences";
 import { AppFooter } from "@/components/layout/app-footer";
@@ -36,7 +37,7 @@ export function SettingsPage() {
     <section className="margin-settings-page" aria-labelledby="settings-title">
       <header className="margin-settings-opening">
         <Link href="/?view=profile" className="margin-back-link">
-          <ChevronLeft aria-hidden="true" strokeWidth={1.5} />
+          <ChevronLeft aria-hidden="true" />
           Profile
         </Link>
         <h1 id="settings-title">Settings</h1>
@@ -50,67 +51,10 @@ export function SettingsPage() {
             aria-labelledby="reading-title"
           >
             <h2 id="reading-title">Reading & motion</h2>
-            <fieldset>
-              <legend>Text size</legend>
-              <div className="margin-setting-segments">
-                {(
-                  [
-                    { value: "standard", label: "Standard" },
-                    { value: "larger", label: "Larger" },
-                    { value: "extra-large", label: "Extra large" },
-                  ] as const
-                ).map((option) => (
-                  <label key={option.value}>
-                    <input
-                      type="radio"
-                      name="reading-size"
-                      value={option.value}
-                      checked={preferences.readingSize === option.value}
-                      onChange={() =>
-                        updatePreferences({ readingSize: option.value })
-                      }
-                    />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
-              </div>
-              <div
-                className="margin-text-size-preview"
-                role="group"
-                aria-label="Text size preview"
-              >
-                <p>A little room to read comfortably.</p>
-                <span>This is how your text will look.</span>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>Motion</legend>
-              <div className="margin-setting-segments">
-                {(
-                  [
-                    { value: "system", label: "Follow system" },
-                    { value: "reduced", label: "Reduce motion" },
-                  ] as const
-                ).map((option) => (
-                  <label key={option.value}>
-                    <input
-                      type="radio"
-                      name="motion"
-                      value={option.value}
-                      checked={preferences.motion === option.value}
-                      aria-describedby="motion-help"
-                      onChange={() =>
-                        updatePreferences({ motion: option.value })
-                      }
-                    />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
-              </div>
-              <p id="motion-help" className="margin-field-hint">
-                System follows your device’s reduced-motion preference.
-              </p>
-            </fieldset>
+            <ReadingSettings
+              preferences={preferences}
+              onChange={updatePreferences}
+            />
           </section>
           <section
             className="margin-settings-section"
@@ -120,13 +64,6 @@ export function SettingsPage() {
             <h2 id="activity-title">Notifications</h2>
             <NotificationPreferences />
           </section>
-          <p className="margin-settings-help">
-            Something you’re looking for?
-            <Link href="/help">
-              Help & safety
-              <ChevronRight aria-hidden="true" strokeWidth={1.5} />
-            </Link>
-          </p>
         </div>
         <div className="margin-settings-column">
           <section
@@ -147,7 +84,7 @@ export function SettingsPage() {
               </span>
               <span>
                 Edit profile
-                <ChevronRight aria-hidden="true" strokeWidth={1.5} />
+                <ChevronRight aria-hidden="true" />
               </span>
             </Link>
             <UsernameSettings />
@@ -164,7 +101,7 @@ export function SettingsPage() {
             <SafetySettings />
             <Link href="/privacy" className="margin-settings-inline-link">
               How sharing works
-              <ChevronRight aria-hidden="true" strokeWidth={1.5} />
+              <ChevronRight aria-hidden="true" />
             </Link>
           </section>
           <section

@@ -5,7 +5,7 @@ import { createLocalId } from "@/lib/local-id";
 import { useId, useState, type Dispatch } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
+import { Close } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
@@ -26,7 +26,13 @@ export function CommentForm({
   textareaRef,
   compact = false,
   onPosted,
+  submitComment,
+  disabled = false,
+  liveIdentity = Boolean(submitComment),
 }: {
+  disabled?: boolean;
+  liveIdentity?: boolean;
+  submitComment?: (body: string, replyTo: string | null) => Promise<string>;
   post: FeedPost;
   viewer: Person;
   state: PreviewPostState;
@@ -45,8 +51,9 @@ export function CommentForm({
     register,
     handleSubmit,
     reset,
+    setError,
     getValues,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<CommentInput>({
     resolver: zodResolver(commentInputSchema),
     defaultValues: { body: state.draft },
@@ -75,7 +82,25 @@ export function CommentForm({
           setEditing(false);
       }}
       noValidate
-      onSubmit={handleSubmit(({ body }) => {
+      onSubmit={handleSubmit(async ({ body }) => {
+        if (submitComment) {
+          try {
+            const id = await submitComment(body, state.replyTo?.id ?? null);
+            reset({ body: "" });
+            dispatch({ type: "draft", postId: post.id, body: "" });
+            dispatch({ type: "reply", postId: post.id, replyTo: null });
+            setSubmitted(true);
+            onPosted?.(id);
+          } catch (error) {
+            setError("root", {
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Couldn’t save this comment.",
+            });
+          }
+          return;
+        }
         const createdAt = new Date().toISOString();
         const commentId = `local-${createLocalId()}`;
         dispatch({
@@ -100,7 +125,9 @@ export function CommentForm({
           <span>
             Replying to{" "}
             {replyAuthor ? (
-              <PersonLink person={replyAuthor}>{state.replyTo.name}</PersonLink>
+              <PersonLink live={liveIdentity} person={replyAuthor}>
+                {state.replyTo.name}
+              </PersonLink>
             ) : (
               state.replyTo.name
             )}
@@ -114,7 +141,7 @@ export function CommentForm({
               textareaRef.current?.focus({ preventScroll: true });
             }}
           >
-            <X aria-hidden="true" />
+            <Close aria-hidden="true" />
           </Button>
         </div>
       )}
@@ -129,6 +156,7 @@ export function CommentForm({
             textareaRef.current = node;
           }}
           id={id}
+          disabled={disabled || isSubmitting}
           rows={expanded ? (compact ? 2 : 3) : 1}
           maxLength={2000}
           placeholder={
@@ -140,21 +168,29 @@ export function CommentForm({
           aria-describedby={`${id}-hint${errors.body ? ` ${id}-error` : ""}`}
         />
         {expanded && (
-          <Button type="submit" className="margin-comment-submit">
+          <Button
+            disabled={isSubmitting || disabled}
+            type="submit"
+            className="margin-comment-submit"
+          >
             Post
           </Button>
         )}
       </div>
       <span id={`${id}-hint`} className="sr-only">
-        Focus to expand the editor. Local preview only. Up to 2,000 characters.
-        Your comment will not be sent or saved.
+        {submitComment
+          ? "Up to 2,000 characters. Comments expire with the post."
+          : "Focus to expand the editor. Local preview only. Up to 2,000 characters. Your comment will not be sent or saved."}
       </span>
+      {errors.root && <FieldError>{errors.root.message}</FieldError>}
       {errors.body && (
         <FieldError id={`${id}-error`}>{errors.body.message}</FieldError>
       )}
       <p role="status" aria-live="polite" className="margin-status">
         {submitted
-          ? "Comment added to this local preview. It isn’t saved."
+          ? submitComment
+            ? "Comment saved."
+            : "Comment added to this local preview. It isn’t saved."
           : null}
       </p>
     </form>

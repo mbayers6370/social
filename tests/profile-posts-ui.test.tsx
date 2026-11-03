@@ -73,12 +73,18 @@ it("keeps profile editing visible, moves deletion into the editor and preserves 
   const conversation = within(feedPost).getByRole("button", {
     name: "Conversation on Theo Marchetti’s post",
   });
-  expect(feedPost.querySelector(".margin-post-author")).toContainElement(
+  expect(feedPost.querySelector(".margin-post-footer")).toContainElement(
     conversation,
   );
+  await user.click(
+    within(feedPost).getByRole("button", {
+      name: "Post options for Theo Marchetti",
+    }),
+  );
   expect(
-    within(feedPost).getByRole("button", { name: "Report post" }),
+    within(feedPost).getByRole("menuitem", { name: "Report post" }),
   ).toBeVisible();
+  await user.keyboard("{Escape}");
   expect(
     within(feedPost).queryByRole("button", { name: "Edit post" }),
   ).not.toBeInTheDocument();

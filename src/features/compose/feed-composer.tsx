@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type DragEvent,
-} from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import dynamic from "next/dynamic";
-import { ImagePlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Avatar } from "@/features/feed/post-content";
 import { usePreview } from "@/features/local-preview/provider";
@@ -19,26 +11,19 @@ import {
   previewMessage,
 } from "@/features/local-preview/model";
 import { validateLocalPhoto } from "@/features/local-preview/upload";
+import { ComposerEntry } from "./composer-entry";
+import { useComposerLayout } from "./use-composer-layout";
+
 const PostComposer = dynamic(
   () => import("./post-composer").then((module) => module.PostComposer),
   { ssr: false },
 );
-const DESKTOP = "(min-width: 1024px)";
-function subscribeDesktop(onChange: () => void) {
-  const query = window.matchMedia(DESKTOP);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-}
 
 /** Lightweight feed entry; the full composer loads only after activation. */
 export function FeedComposer() {
   const { state, bootstrap, now, draft } = usePreview();
   const [open, setOpen] = useState(false);
-  const desktop = useSyncExternalStore(
-    subscribeDesktop,
-    () => window.matchMedia(DESKTOP).matches,
-    () => false,
-  );
+  const desktop = useComposerLayout();
   const [startWithPhoto, setStartWithPhoto] = useState(false);
   const [file, setFile] = useState<File>();
   const [dragging, setDragging] = useState(false);
@@ -125,13 +110,23 @@ export function FeedComposer() {
         if (!next) closeComposer();
       }}
     >
-      <div
-        className="margin-feed-composer"
+      <ComposerEntry
+        avatar={<Avatar person={profile.person} linked />}
+        open={open}
+        desktop={desktop}
+        busy={checking}
+        promptRef={promptButton}
+        photoRef={photoButton}
+        onOpen={(photo) => {
+          returnTo.current = photo ? "photo" : "prompt";
+          setStartWithPhoto(photo);
+          setNotice("");
+          setOpen(true);
+        }}
         role="group"
         aria-label="Create a post"
         aria-busy={checking}
         data-dragging={dragging || undefined}
-        data-expanded={(open && desktop) || undefined}
         onDragOver={(event) => {
           if (!acceptsDrop(event)) return;
           event.preventDefault();
@@ -146,43 +141,6 @@ export function FeedComposer() {
         }}
         onDrop={dropPhoto}
       >
-        {(!open || !desktop) && (
-          <>
-            <Avatar person={profile.person} linked />
-            <Button
-              ref={promptButton}
-              variant="ghost"
-              className="margin-feed-compose-prompt"
-              disabled={checking}
-              aria-expanded={open}
-              aria-haspopup={desktop ? undefined : "dialog"}
-              onClick={() => {
-                returnTo.current = "prompt";
-                setStartWithPhoto(false);
-                setNotice("");
-                setOpen(true);
-              }}
-            >
-              Share a thought…
-            </Button>
-            <Button
-              ref={photoButton}
-              variant="outline"
-              size="icon"
-              className="margin-feed-compose-photo"
-              aria-label="New photo post"
-              disabled={checking}
-              onClick={() => {
-                returnTo.current = "photo";
-                setStartWithPhoto(true);
-                setNotice("");
-                setOpen(true);
-              }}
-            >
-              <ImagePlus aria-hidden="true" strokeWidth={1.5} />
-            </Button>
-          </>
-        )}
         {open && (
           <PostComposer
             inline={desktop}
@@ -206,7 +164,7 @@ export function FeedComposer() {
             {notice}
           </p>
         )}
-      </div>
+      </ComposerEntry>
     </Dialog>
   );
 }

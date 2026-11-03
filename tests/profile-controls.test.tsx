@@ -102,8 +102,7 @@ it("shows a two-person status and icon-only message, and moves unfriend feedback
   const user = userEvent.setup();
   profile();
   const status = screen.getByRole("img", { name: "Friends with Theo" });
-  expect(status.querySelector(".lucide-users")).toBeInTheDocument();
-  expect(status.querySelector(".lucide-check")).not.toBeInTheDocument();
+  expect(status.querySelectorAll(".margin-icon circle")).toHaveLength(2);
   expect(screen.getByRole("link", { name: "Message Theo" })).toHaveAttribute(
     "href",
     "/?view=messages&thread=theo",
@@ -125,7 +124,7 @@ it("shows a two-person status and icon-only message, and moves unfriend feedback
   expect(
     screen
       .getByRole("button", { name: "Add friend" })
-      .querySelector(".lucide-user-plus"),
+      .querySelector(".margin-icon"),
   ).toBeInTheDocument();
   expect(
     screen.queryByRole("link", { name: "Message Theo" }),
@@ -154,7 +153,9 @@ it("supports standard desktop menu keys, dismissal, and focus handoff to a form"
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   expect(more).toHaveFocus();
   await user.click(more);
-  await user.click(screen.getByRole("menuitem", { name: "Report profile" }));
+  const report = screen.getByRole("menuitem", { name: "Report profile" });
+  expect(report).toHaveTextContent("Report profile");
+  await user.click(report);
   expect(screen.getByRole("dialog", { name: "Report Theo" })).toBeVisible();
   await waitFor(() =>
     expect(screen.getByRole("combobox", { name: "Reason" })).toHaveFocus(),
@@ -174,6 +175,9 @@ it("uses a dismissible mobile action sheet with labeled choices and Cancel", asy
   expect(
     within(sheet).getByRole("button", { name: "Block profile" }),
   ).toBeVisible();
+  expect(
+    within(sheet).getByRole("button", { name: "Report profile" }),
+  ).toHaveTextContent("Report profile");
   await user.click(within(sheet).getByRole("button", { name: "Cancel" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   await waitFor(() => expect(more).toHaveFocus());

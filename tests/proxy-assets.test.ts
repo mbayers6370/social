@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 const { protect } = vi.hoisted(() => ({ protect: vi.fn() }));
@@ -19,6 +19,7 @@ vi.mock("@clerk/nextjs/server", () => ({
 import proxy, { config } from "@/proxy";
 import { PUBLIC_PAGE_PATHS } from "@/lib/public-routes";
 
+beforeEach(() => vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://margin.example"));
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.clearAllMocks();
@@ -60,10 +61,10 @@ it("does not exempt private paths that resemble public asset filenames", () => {
 it("marks protected responses noncacheable and nonindexable with and without Clerk", async () => {
   vi.stubEnv("NODE_ENV", "production");
   for (const credentials of [false, true]) {
-    vi.stubEnv("CLERK_SECRET_KEY", credentials ? "test-secret" : "");
+    vi.stubEnv("CLERK_SECRET_KEY", credentials ? "sk_live_fixture" : "");
     vi.stubEnv(
       "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-      credentials ? "test-key" : "",
+      credentials ? "pk_live_fixture" : "",
     );
     const response = await request("/api/private.json");
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
@@ -103,8 +104,8 @@ for (const mode of ["development", "production"] as const) {
   });
   it(`keeps Clerk authorization for protected paths while serving brand images in ${mode}`, async () => {
     vi.stubEnv("NODE_ENV", mode);
-    vi.stubEnv("CLERK_SECRET_KEY", "test-secret");
-    vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "test-publishable");
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_live_fixture");
+    vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "pk_live_fixture");
     await request("/brands/apple-music.svg");
     await request("/brands/spotify.svg");
     expect(protect).not.toHaveBeenCalled();
@@ -118,10 +119,10 @@ for (const mode of ["development", "production"] as const) {
 for (const credentials of [false, true]) {
   it(`serves only exact public content paths and keeps their siblings protected (Clerk: ${credentials})`, async () => {
     vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("CLERK_SECRET_KEY", credentials ? "test-secret" : "");
+    vi.stubEnv("CLERK_SECRET_KEY", credentials ? "sk_live_fixture" : "");
     vi.stubEnv(
       "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-      credentials ? "test-key" : "",
+      credentials ? "pk_live_fixture" : "",
     );
     for (const path of PUBLIC_PAGE_PATHS)
       expect((await request(path)).status).toBe(200);
@@ -148,3 +149,65 @@ for (const credentials of [false, true]) {
     }
   });
 }
+
+it("offers the exact development Spaces preview without opening the private APIs", async () => {
+  vi.stubEnv("NODE_ENV", "development");
+  vi.stubEnv("CLERK_SECRET_KEY", "");
+  vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "");
+  expect(
+    (await request("/preview/spaces")).headers.get("x-middleware-next"),
+  ).toBe("1");
+  const redirect = await request("/app/spaces");
+  expect(redirect.status).toBe(307);
+  expect(redirect.headers.get("location")).toBe(
+    "http://localhost:3000/preview/spaces",
+  );
+  for (const path of [
+    "/preview/spaces/private",
+    "/preview/spaces.json",
+    "/api/spaces",
+    "/api/spaces/example/posts",
+    "/api/photos/example",
+  ])
+    expect((await request(path)).status).toBe(503);
+});
+for (const credentials of [false, true])
+  it(`hides the Spaces preview in production (Clerk: ${credentials})`, async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("CLERK_SECRET_KEY", credentials ? "sk_live_fixture" : "");
+    vi.stubEnv(
+      "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+      credentials ? "pk_live_fixture" : "",
+    );
+    expect((await request("/preview/spaces")).status).toBe(404);
+    expect((await request("/app/spaces")).headers.get("location")).toBeNull();
+  });
+
+it("fails closed with a readable unavailable page when Clerk fails during route protection", async () => {
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("CLERK_SECRET_KEY", "sk_live_fixture");
+  vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "pk_live_fixture");
+  protect.mockRejectedValueOnce(Error("PRIVATE_PROVIDER_CANARY"));
+  const response = await proxy(
+    new NextRequest("https://margin.example/app", {
+      headers: { accept: "text/html" },
+    }),
+    {} as NextFetchEvent,
+  );
+  expect(response?.status).toBe(503);
+  expect(await response!.text()).toContain("Account access is unavailable");
+  expect(response!.headers.get("Cache-Control")).toBe("private, no-store");
+});
+it("keeps the independently verified session probe out of Clerk page redirects", async () => {
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("CLERK_SECRET_KEY", "sk_live_fixture");
+  vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "pk_live_fixture");
+  const response = await request("/api/auth/session");
+  expect(response.status).toBe(200);
+  expect(protect).not.toHaveBeenCalled();
+  expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+});
+it("never exposes the authentication fixture in production", async () => {
+  vi.stubEnv("NODE_ENV", "production");
+  expect((await request("/preview/auth")).status).toBe(404);
+});

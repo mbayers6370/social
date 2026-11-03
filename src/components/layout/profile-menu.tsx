@@ -8,28 +8,74 @@ import {
   useId,
   useLayoutEffect,
   useRef,
+  useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import {
-  CircleHelp,
-  Copyright,
-  Pencil,
-  ScrollText,
-  Settings2,
-  ShieldCheck,
-  UserRound,
-  Users,
-} from "lucide-react";
+  Menu,
+  Close,
+  Info,
+  Edit,
+  Reading,
+  Settings,
+  Shield,
+  Profile,
+  Friends,
+} from "@/components/margin-icons";
+import { Copyright } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePreview } from "@/features/local-preview/provider";
+import { useMember } from "@/features/social/member-provider";
 import { AccountControls } from "@/features/account/account-controls";
 
 /** Account utilities use a disclosure with ordinary links and tab order. */
 export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
   const preview = usePreview();
   const router = useRouter();
-  const open = preview.headerPanel === "profile";
   const setPanel = preview.setHeaderPanel;
+  const changeOpen = useCallback(
+    (open: boolean) =>
+      setPanel((current) =>
+        open ? "profile" : current === "profile" ? null : current,
+      ),
+    [setPanel],
+  );
+  return (
+    <AccountMenu
+      avatar={avatar}
+      open={preview.headerPanel === "profile"}
+      onOpenChange={changeOpen}
+      onEdit={() => {
+        preview.requestProfileEdit();
+        router.push("/?view=profile", { scroll: false });
+      }}
+    />
+  );
+}
+
+/** The same disclosure, with real member destinations and no preview context. */
+export function LiveProfileMenu({ avatar }: { avatar: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <AccountMenu live avatar={avatar} open={open} onOpenChange={setOpen} />
+  );
+}
+
+function AccountMenu({
+  avatar,
+  open,
+  onOpenChange,
+  onEdit,
+  live = false,
+}: {
+  avatar: ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
+  live?: boolean;
+}) {
+  const member = useMember();
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -66,12 +112,12 @@ export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
         !root.current?.contains(event.target) &&
         !panel.current?.contains(event.target)
       )
-        setPanel((current) => (current === "profile" ? null : current));
+        onOpenChange(false);
     };
     const escape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      setPanel((current) => (current === "profile" ? null : current));
+      onOpenChange(false);
       trigger.current?.focus();
     };
     document.addEventListener("pointerdown", outside);
@@ -81,9 +127,8 @@ export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
       document.removeEventListener("pointerdown", outside);
       document.removeEventListener("keydown", escape);
     };
-  }, [open, setPanel]);
-  const close = () =>
-    setPanel((current) => (current === "profile" ? null : current));
+  }, [open, onOpenChange]);
+  const close = () => onOpenChange(false);
   return (
     <div
       className="margin-profile-menu-root"
@@ -105,31 +150,19 @@ export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
         aria-label="Profile menu"
         aria-expanded={open}
         aria-controls={id}
-        onClick={() =>
-          setPanel((current) => (current === "profile" ? null : "profile"))
-        }
+        onClick={() => onOpenChange(!open)}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") {
             event.preventDefault();
-            setPanel("profile");
+            onOpenChange(true);
           }
         }}
       >
-        <svg
-          className="margin-header-menu-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
-          focusable="false"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path data-line="top" d="M4 12h16" />
-          <path data-line="middle" d="M4 12h16" />
-          <path data-line="bottom" d="M4 12h16" />
-        </svg>
+        {open ? (
+          <Close className="margin-header-menu-icon" />
+        ) : (
+          <Menu className="margin-header-menu-icon" />
+        )}
         <span className="margin-header-menu-avatar">{avatar}</span>
       </Button>
       {open &&
@@ -141,40 +174,69 @@ export function ProfileMenu({ avatar }: { avatar: ReactNode }) {
             className="margin-profile-menu"
             data-profile-menu
           >
-            <Link ref={first} href="/?view=profile" onClick={close}>
-              <UserRound aria-hidden="true" />
+            <Link
+              ref={first}
+              href={live ? "/app" : "/?view=profile"}
+              prefetch={live ? false : undefined}
+              onClick={close}
+            >
+              <Profile aria-hidden="true" />
               View profile
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                close();
-                preview.requestProfileEdit();
-                router.push("/?view=profile", { scroll: false });
-              }}
+            {live && (
+              <Link
+                href="/app?edit=1"
+                prefetch={false}
+                onClick={() => {
+                  member?.requestProfileEdit();
+                  close();
+                }}
+              >
+                <Edit aria-hidden="true" />
+                Edit profile
+              </Link>
+            )}
+            {!live && (
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  onEdit?.();
+                }}
+              >
+                <Edit aria-hidden="true" />
+                Edit profile
+              </button>
+            )}
+            <Link
+              href={live ? "/app/friends" : "/?view=friends"}
+              prefetch={live ? false : undefined}
+              onClick={close}
             >
-              <Pencil aria-hidden="true" />
-              Edit profile
-            </button>
-            <Link href="/?view=friends" onClick={close}>
-              <Users aria-hidden="true" />
+              <Friends aria-hidden="true" />
               Friends
             </Link>
-            <Link href="/?view=settings" onClick={close}>
-              <Settings2 aria-hidden="true" />
-              Settings
-            </Link>
+            {
+              <Link
+                href={live ? "/app/settings" : "/?view=settings"}
+                prefetch={live ? false : undefined}
+                onClick={close}
+              >
+                <Settings aria-hidden="true" />
+                Settings
+              </Link>
+            }
             <div className="margin-profile-menu-utilities">
               <Link href="/help" onClick={close}>
-                <CircleHelp aria-hidden="true" />
+                <Info aria-hidden="true" />
                 Help &amp; safety
               </Link>
               <Link href="/privacy" onClick={close}>
-                <ShieldCheck aria-hidden="true" />
+                <Shield aria-hidden="true" />
                 Privacy
               </Link>
               <Link href="/terms" onClick={close}>
-                <ScrollText aria-hidden="true" />
+                <Reading aria-hidden="true" />
                 Terms
               </Link>
               <Link href="/copyright" onClick={close}>

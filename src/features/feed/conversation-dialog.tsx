@@ -8,9 +8,10 @@ import {
   ChevronLeft,
   ChevronDown,
   Heart,
-  MessageCircle,
-  X,
-} from "lucide-react";
+  MoreHorizontal,
+  Conversation,
+  Close,
+} from "@/components/margin-icons";
 import {
   useCallback,
   useEffect,
@@ -19,6 +20,7 @@ import {
   useState,
   useSyncExternalStore,
   type Dispatch,
+  type ReactNode,
 } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,16 +29,22 @@ import { PostAuthor, PostContent, PostFooter } from "./post-content";
 import { CommentForm } from "./comment-form";
 import { ConversationComments } from "./conversation-comments";
 import { groupCommentThreads } from "./comment-threads";
-import type { FeedPost, Person } from "./schema";
+import type { Person } from "./schema";
 import type { PreviewAction, PreviewPostState } from "./state";
+import type { ConversationSelection } from "./conversation-selection";
+export type { ConversationSelection } from "./conversation-selection";
 
-export type ConversationSelection = {
-  commentId?: string;
-  post: FeedPost;
-  trigger: HTMLElement;
-  scrollY: number;
-  documentTop: number;
-  rect: { left: number; top: number; width: number; height: number };
+/** The transport supplies live discussion controls; geometry and presentation
+ * remain identical to the development conversation. */
+export type ConversationContent = {
+  action: ReactNode;
+  discussion: ReactNode;
+  composer: (
+    desktop: boolean,
+    onPosted: (commentId: string) => void,
+  ) => ReactNode;
+  description: string;
+  empty: boolean;
 };
 const DESKTOP = "(min-width: 1024px)";
 function subscribeViewport(callback: () => void) {
@@ -55,6 +63,11 @@ export function ConversationDialog({
   onClosing,
   onClosed,
   forceFlip = false,
+  profileDate = forceFlip,
+  live = false,
+  content,
+  source,
+  closeDisabled = false,
 }: {
   selection: ConversationSelection;
   viewer: Person;
@@ -65,6 +78,11 @@ export function ConversationDialog({
   onClosing: () => void;
   onClosed: () => void;
   forceFlip?: boolean;
+  profileDate?: boolean;
+  live?: boolean;
+  content?: ConversationContent;
+  source?: ReactNode;
+  closeDisabled?: boolean;
 }) {
   const wideScreen = useSyncExternalStore(
     subscribeViewport,
@@ -79,7 +97,10 @@ export function ConversationDialog({
   const [frame, setFrame] = useState<HTMLDivElement | null>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
-  const pendingComment = useRef<string | null>(selection.commentId ?? null);
+  const [pendingComment, setPendingComment] = useState<string | null>(
+    selection.commentId ?? null,
+  );
+  const scrolledComment = useRef<string | null>(null);
   const animation = useRef<Animation | null>(null);
   const slotAnimation = useRef<Animation | null>(null);
   const closing = useRef(false);
@@ -91,12 +112,13 @@ export function ConversationDialog({
   const threads = groupCommentThreads(comments);
 
   useLayoutEffect(() => {
-    if (!frame || !pendingComment.current) return;
+    if (!frame || !pendingComment || scrolledComment.current === pendingComment)
+      return;
     const scroll = frame.querySelector<HTMLDivElement>(
       ".margin-conversation-scroll",
     );
     const target = document.getElementById(
-      `comment-${post.id}-${pendingComment.current}`,
+      `comment-${post.id}-${pendingComment}`,
     );
     // Wait for both the comment and its expanded thread to commit before scrolling.
     if (!scroll || !target || target.closest("[hidden]")) return;
@@ -104,9 +126,16 @@ export function ConversationDialog({
       target.getBoundingClientRect().top -
       scroll.getBoundingClientRect().top -
       16;
-    pendingComment.current = null;
+    scrolledComment.current = pendingComment;
+    // Live comments arrive after the dialog's initial autofocus has run.
+    // Move focus only while it remains on the dialog's initial Back control.
+    if (document.activeElement === closeButton.current) {
+      target.tabIndex = -1;
+      target.focus({ preventScroll: true });
+    }
   }, [
     frame,
+    pendingComment,
     post.id,
     state.comments.length,
     state.expandedReplies,
@@ -116,7 +145,7 @@ export function ConversationDialog({
   const conversationMeta = (
     <footer className="margin-conversation-footer">
       <span data-like-count>
-        <Heart aria-hidden="true" fill="currentColor" strokeWidth={1.5} />
+        <Heart aria-hidden="true" fill="currentColor" />
         {post.likes + Number(state.liked)}{" "}
         {post.likes + Number(state.liked) === 1 ? "like" : "likes"}
       </span>
@@ -137,7 +166,7 @@ export function ConversationDialog({
 
   const requestClose = useCallback(
     (fromHistory = false) => {
-      if (closing.current) return;
+      if (closing.current || closeDisabled) return;
       closing.current = true;
       onClosing();
       if (
@@ -154,7 +183,7 @@ export function ConversationDialog({
         animation.current.reverse();
       } else onClosed();
     },
-    [onClosed, onClosing],
+    [onClosed, onClosing, closeDisabled],
   );
 
   useEffect(() => {
@@ -347,9 +376,9 @@ export function ConversationDialog({
                 {
                   offset: 1,
                   left: "0px",
-                  top: "0px",
+                  top: "var(--margin-viewport-top, 0px)",
                   width: "100vw",
-                  height: "100dvh",
+                  height: "var(--margin-viewport-height, 100dvh)",
                   transform: "perspective(1200px) rotateY(-180deg)",
                   borderRadius: "0px",
                 },
@@ -395,7 +424,7 @@ export function ConversationDialog({
 
   const conversationPreview = (
     <span className="margin-conversation-trigger">
-      <MessageCircle size={20} aria-hidden="true" strokeWidth={1.5} />
+      <Conversation size={20} aria-hidden="true" />
       <span>Conversation</span>
     </span>
   );
@@ -413,7 +442,7 @@ export function ConversationDialog({
         <Dialog.Content
           ref={setFrame}
           data-layout={layout}
-          data-profile-flip={forceFlip || undefined}
+          data-profile-flip={profileDate || undefined}
           aria-modal={!wideScreen || undefined}
           className={cn(
             "margin-conversation-frame",
@@ -444,7 +473,19 @@ export function ConversationDialog({
             }
             closeButton.current?.focus({ preventScroll: true });
           }}
-          onCloseAutoFocus={(event) => event.preventDefault()}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            // Let Radix release its scope and React reveal the original post.
+            // Check connectivity in that frame: the trigger may unmount meanwhile.
+            requestAnimationFrame(() => {
+              const target = selection.trigger.isConnected
+                ? selection.trigger
+                : (document.getElementById(
+                    profileDate ? "recent-posts-title" : "feed-title",
+                  ) ?? document.getElementById("main-content"));
+              target?.focus({ preventScroll: true });
+            });
+          }}
           onEscapeKeyDown={(event) => {
             event.preventDefault();
             requestClose();
@@ -482,24 +523,28 @@ export function ConversationDialog({
         >
           <div
             className="margin-conversation-front margin-post-card"
-            data-profile-snapshot={forceFlip || undefined}
+            data-profile-snapshot={profileDate || undefined}
             aria-hidden="true"
             inert
           >
-            {!forceFlip && (
+            {!profileDate && (
               <PostAuthor
+                live={live}
+                source={source}
                 post={{ ...post, id: `snapshot-${post.id}` }}
-                actions={conversationPreview}
+                actions={
+                  <span className="margin-post-menu-preview">
+                    <MoreHorizontal aria-hidden="true" />
+                  </span>
+                }
               />
             )}
-            <PostContent post={post} />
-            {forceFlip && (
-              <PostFooter
-                post={post}
-                profileDate
-                actions={conversationPreview}
-              />
-            )}
+            <PostContent post={post} privateMedia={live} />
+            <PostFooter
+              post={post}
+              profileDate={profileDate}
+              actions={conversationPreview}
+            />
           </div>
           <div className="margin-conversation-back">
             <header className="margin-conversation-header">
@@ -509,27 +554,31 @@ export function ConversationDialog({
                 className="margin-conversation-trigger margin-conversation-back-button"
                 onClick={() => requestClose()}
                 aria-label="Back to post"
+                disabled={closeDisabled}
               >
-                <ChevronLeft aria-hidden="true" strokeWidth={1.5} />
+                <ChevronLeft aria-hidden="true" />
                 <span>Post</span>
               </Button>
               <Dialog.Title className="margin-conversation-title lg:sr-only">
                 Conversation
                 <span className="sr-only"> on {post.author.name}’s post</span>
               </Dialog.Title>
-              <Button
-                variant="ghost"
-                className="margin-like"
-                aria-pressed={state.liked}
-                onClick={() => dispatch({ type: "like", postId: post.id })}
-              >
-                <Heart
-                  aria-hidden="true"
-                  fill={state.liked ? "currentColor" : "none"}
-                  strokeWidth={1.5}
-                />
-                <span>{state.liked ? "Liked" : "Like"}</span>
-              </Button>
+              {content ? (
+                content.action
+              ) : (
+                <Button
+                  variant="ghost"
+                  className="margin-like"
+                  aria-pressed={state.liked}
+                  onClick={() => dispatch({ type: "like", postId: post.id })}
+                >
+                  <Heart
+                    aria-hidden="true"
+                    fill={state.liked ? "currentColor" : "none"}
+                  />
+                  <span>{state.liked ? "Liked" : "Like"}</span>
+                </Button>
+              )}
               <div className="margin-conversation-close-slot">
                 <Button
                   ref={desktop ? closeButton : undefined}
@@ -538,8 +587,9 @@ export function ConversationDialog({
                   className="margin-conversation-close"
                   onClick={() => requestClose()}
                   aria-label="Close conversation"
+                  disabled={closeDisabled}
                 >
-                  <X aria-hidden="true" />
+                  <Close aria-hidden="true" />
                 </Button>
               </div>
             </header>
@@ -547,14 +597,20 @@ export function ConversationDialog({
               id={`conversation-description-${post.id}`}
               className="sr-only"
             >
-              Parent comments in chronological order, with expandable replies
-              grouped beneath them. Likes and comments in this local preview are
-              not saved. Escape or Back to post returns to your place in the
-              feed.
+              {content?.description ?? (
+                <>
+                  Parent comments in chronological order, with expandable
+                  replies grouped beneath them. Likes and comments in this local
+                  preview are not saved. Escape or Back to post returns to your
+                  place in the feed.
+                </>
+              )}
             </Dialog.Description>
             <div
               className="margin-conversation-scroll"
-              data-empty={!comments.length || undefined}
+              data-empty={
+                (content ? content.empty : !comments.length) || undefined
+              }
               tabIndex={0}
               role="region"
               aria-label="Conversation content"
@@ -564,6 +620,7 @@ export function ConversationDialog({
                   {post.media ? (
                     <Image
                       {...post.media[0].image}
+                      unoptimized={live}
                       alt=""
                       sizes="56px"
                       loading="eager"
@@ -574,81 +631,95 @@ export function ConversationDialog({
                 </div>
                 <div>
                   <strong>
-                    <PersonLink person={post.author}>
+                    <PersonLink person={post.author} live={live}>
                       {post.author.name}
                     </PersonLink>
                   </strong>
                   <p>{post.paragraphs[0]}</p>
                 </div>
               </div>
-              {!comments.length && (
-                <p className="margin-no-comments">
-                  No comments yet. Be the first to leave a thought.
-                </p>
-              )}
-              <ConversationComments
-                threads={threads}
-                visibleCount={state.visibleCount}
-                expandedReplies={state.expandedReplies ?? []}
-                postId={post.id}
-                postAuthorId={post.author.id}
-                referenceTime={referenceTime}
-                onReply={(comment) => {
-                  dispatch({
-                    type: "reply",
-                    postId: post.id,
-                    replyTo: { id: comment.id, name: comment.author.name },
-                  });
-                  textarea.current?.focus({ preventScroll: !desktop });
-                }}
-                onExpandedChange={(commentId, expanded) =>
-                  dispatch({
-                    type: "replies",
-                    postId: post.id,
-                    commentId,
-                    expanded,
-                  })
-                }
-              />
-              {threads.length > state.visibleCount && (
-                <Button
-                  variant="ghost"
-                  className="margin-load-more"
-                  onClick={() => dispatch({ type: "more", postId: post.id })}
-                >
-                  Load more comments
-                  <ChevronDown aria-hidden="true" />
-                </Button>
-              )}
-            </div>
-            <div className="margin-conversation-composer">
-              <CommentForm
-                viewer={viewer}
-                post={post}
-                state={state}
-                dispatch={dispatch}
-                textareaRef={textarea}
-                compact={desktop}
-                onPosted={(commentId) => {
-                  pendingComment.current = commentId;
-                  const replyTo = state.replyTo;
-                  if (replyTo) {
-                    const thread = threads.find(
-                      ({ comment, replies }) =>
-                        comment.id === replyTo.id ||
-                        replies.some((reply) => reply.id === replyTo.id),
-                    );
-                    if (thread)
+              {content ? (
+                content.discussion
+              ) : (
+                <>
+                  {!comments.length && (
+                    <p className="margin-no-comments">
+                      No comments yet. Be the first to leave a thought.
+                    </p>
+                  )}
+                  <ConversationComments
+                    threads={threads}
+                    visibleCount={state.visibleCount}
+                    expandedReplies={state.expandedReplies ?? []}
+                    postId={post.id}
+                    postAuthorId={post.author.id}
+                    referenceTime={referenceTime}
+                    onReply={(comment) => {
+                      dispatch({
+                        type: "reply",
+                        postId: post.id,
+                        replyTo: { id: comment.id, name: comment.author.name },
+                      });
+                      textarea.current?.focus({ preventScroll: !desktop });
+                    }}
+                    onExpandedChange={(commentId, expanded) =>
                       dispatch({
                         type: "replies",
                         postId: post.id,
-                        commentId: thread.comment.id,
-                        expanded: true,
-                      });
-                  }
-                }}
-              />
-              {conversationMeta}
+                        commentId,
+                        expanded,
+                      })
+                    }
+                  />
+                  {threads.length > state.visibleCount && (
+                    <Button
+                      variant="ghost"
+                      className="margin-load-more"
+                      onClick={() =>
+                        dispatch({ type: "more", postId: post.id })
+                      }
+                    >
+                      Load more comments
+                      <ChevronDown aria-hidden="true" />
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="margin-conversation-composer">
+              {content ? (
+                content.composer(desktop, setPendingComment)
+              ) : (
+                <>
+                  <CommentForm
+                    viewer={viewer}
+                    post={post}
+                    state={state}
+                    dispatch={dispatch}
+                    textareaRef={textarea}
+                    compact={desktop}
+                    onPosted={(commentId) => {
+                      setPendingComment(commentId);
+                      const replyTo = state.replyTo;
+                      if (replyTo) {
+                        const thread = threads.find(
+                          ({ comment, replies }) =>
+                            comment.id === replyTo.id ||
+                            replies.some((reply) => reply.id === replyTo.id),
+                        );
+                        if (thread)
+                          dispatch({
+                            type: "replies",
+                            postId: post.id,
+                            commentId: thread.comment.id,
+                            expanded: true,
+                          });
+                      }
+                    }}
+                  />
+                  {conversationMeta}
+                </>
+              )}
             </div>
           </div>
         </Dialog.Content>

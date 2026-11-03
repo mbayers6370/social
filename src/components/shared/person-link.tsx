@@ -14,14 +14,20 @@ export function PersonLink({
   person,
   className,
   onNavigate,
+  live = false,
   ...props
 }: Omit<ComponentProps<typeof Link>, "href"> & {
   person: Pick<Person, "id">;
+  live?: boolean;
 }) {
   return (
     <Link
       {...props}
-      href={profileHref(person.id)}
+      href={
+        live
+          ? `/app?person=${encodeURIComponent(person.id)}`
+          : profileHref(person.id)
+      }
       className={cn("margin-person-link", className)}
       onNavigate={(event) => {
         if (onNavigate) return onNavigate(event);

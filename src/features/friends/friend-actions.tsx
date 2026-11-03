@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Users, ChevronDown, UserPlus } from "lucide-react";
+import { Friends, ChevronDown, AddFriend } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,23 +15,42 @@ import type { Person } from "@/features/feed/schema";
 import { useFriendFeedback } from "./use-friend-feedback";
 import { friendStatus, type FriendAction } from "./model";
 
-export function FriendActions({
-  person,
-  onComplete,
-  onStatusChange,
-  compact = false,
-}: {
+type FriendControlsProps = {
   person: Person;
   onComplete?: (message: string) => void;
   onStatusChange?: (message: string) => void;
   compact?: boolean;
-}) {
+};
+export function FriendActions(props: FriendControlsProps) {
   const { state, bootstrap, changeFriend } = usePreview();
-  const relationship = friendStatus(
-    bootstrap.viewerId,
-    person.id,
-    state.friendships,
+  return (
+    <FriendControls
+      {...props}
+      relationship={friendStatus(
+        bootstrap.viewerId,
+        props.person.id,
+        state.friendships,
+      )}
+      changeFriend={changeFriend}
+    />
   );
+}
+export function FriendControls({
+  person,
+  onComplete,
+  onStatusChange,
+  compact = false,
+  relationship,
+  changeFriend,
+  live = false,
+}: FriendControlsProps & {
+  relationship: ReturnType<typeof friendStatus>;
+  changeFriend: (
+    personId: string,
+    action: FriendAction,
+  ) => void | Promise<void>;
+  live?: boolean;
+}) {
   const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useFriendFeedback();
   const [error, setError] = useState("");
@@ -62,8 +81,12 @@ export function FriendActions({
         decline: `Friend request from ${person.name} declined.`,
         cancel: `Friend request to ${person.name} cancelled.`,
         remove: `${person.name} removed from friends.`,
-        block: `${person.name} blocked in this preview.`,
-        unblock: `${person.name} unblocked in this preview.`,
+        block: live
+          ? `${person.name} blocked.`
+          : `${person.name} blocked in this preview.`,
+        unblock: live
+          ? `${person.name} unblocked.`
+          : `${person.name} unblocked in this preview.`,
       };
       setError("");
       setStatus(messages[action]);
@@ -71,7 +94,9 @@ export function FriendActions({
       onComplete?.(messages[action]);
       onStatusChange?.(messages[action]);
     } catch (error) {
-      setError(previewMessage(error));
+      setError(
+        live && error instanceof Error ? error.message : previewMessage(error),
+      );
     } finally {
       setWorking(false);
     }
@@ -91,9 +116,10 @@ export function FriendActions({
             size={compact ? "icon" : "default"}
             aria-label={compact ? "Add friend" : undefined}
             title={compact ? "Add friend" : undefined}
+            disabled={working}
             onClick={() => act("send")}
           >
-            <UserPlus aria-hidden="true" strokeWidth={1.5} />
+            <AddFriend aria-hidden="true" />
             <span className={compact ? "sr-only" : undefined}>Add friend</span>
           </Button>
         )}
@@ -120,7 +146,11 @@ export function FriendActions({
             <span className="margin-friend-label margin-friend-request-status">
               Request sent
             </span>
-            <Button variant="outline" onClick={() => act("cancel")}>
+            <Button
+              variant="outline"
+              disabled={working}
+              onClick={() => act("cancel")}
+            >
               Cancel request
             </Button>
           </>
@@ -137,7 +167,7 @@ export function FriendActions({
             aria-label={`Friends with ${person.name}`}
             title="Friends"
           >
-            <Users aria-hidden="true" strokeWidth={1.5} />
+            <Friends aria-hidden="true" />
             <span>Friends</span>
           </span>
         )}
@@ -149,13 +179,9 @@ export function FriendActions({
                 variant="outline"
                 aria-label={`Manage friendship with ${person.name}`}
               >
-                <Users
-                  className="margin-friends-icon"
-                  aria-hidden="true"
-                  strokeWidth={1.5}
-                />
+                <Friends className="margin-friends-icon" aria-hidden="true" />
                 Friends
-                <ChevronDown aria-hidden="true" strokeWidth={1.5} />
+                <ChevronDown aria-hidden="true" />
               </Button>
             </DialogTrigger>
             <DialogContent
@@ -183,7 +209,9 @@ export function FriendActions({
                 >
                   Cancel
                 </Button>
-                <Button onClick={() => act("remove")}>Remove friend</Button>
+                <Button disabled={working} onClick={() => act("remove")}>
+                  Remove friend
+                </Button>
               </div>
               {error && (
                 <p role="alert" className="margin-field-hint">

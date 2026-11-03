@@ -50,6 +50,14 @@ it("pins the notebook above newer and unread conversations, including after savi
       <MessagesPreview threads={threads} />
     </PreviewProvider>,
   );
+  expect(
+    screen.getByText("Notes are intended to expire 90 days after saving."),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("region", { name: "Notebook history" }),
+  ).toHaveAccessibleDescription(
+    "Notes are intended to expire 90 days after saving.",
+  );
   const first = () =>
     within(screen.getByRole("list", { name: "Conversations" })).getAllByRole(
       "listitem",
