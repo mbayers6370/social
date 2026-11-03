@@ -41,6 +41,7 @@ function isPublic(pathname: string) {
         "/preview/spaces",
         "/preview/auth",
         "/preview/invitations",
+        "/preview/onboarding",
       ].includes(pathname))
   );
 }
@@ -98,6 +99,7 @@ export default async function proxy(
       "/preview/spaces",
       "/preview/auth",
       "/preview/invitations",
+      "/preview/onboarding",
     ].includes(request.nextUrl.pathname) &&
     process.env.NODE_ENV !== "development"
   )

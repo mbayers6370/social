@@ -210,4 +210,15 @@ it("keeps the independently verified session probe out of Clerk page redirects",
 it("never exposes the authentication fixture in production", async () => {
   vi.stubEnv("NODE_ENV", "production");
   expect((await request("/preview/auth")).status).toBe(404);
+  expect((await request("/preview/onboarding")).status).toBe(404);
+});
+
+it("allows the exact onboarding preview only during development", async () => {
+  vi.stubEnv("NODE_ENV", "development");
+  vi.stubEnv("CLERK_SECRET_KEY", "");
+  vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "");
+  expect(
+    (await request("/preview/onboarding")).headers.get("x-middleware-next"),
+  ).toBe("1");
+  expect((await request("/preview/onboarding/private")).status).toBe(503);
 });
