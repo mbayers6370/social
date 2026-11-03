@@ -17,14 +17,7 @@ export default async function OnboardingPage() {
   const { configured: managed, registrationEnabled } = accountConfiguration();
   if (!managed) {
     if (process.env.NODE_ENV !== "development") redirect("/sign-in");
-    return (
-      <AuthShell
-        title="Make yourself at home."
-        intro="A name, a little introduction, and room for the people you’ll bring."
-      >
-        <OnboardingForm managed={false} saveAction={saveOnboarding} />
-      </AuthShell>
-    );
+    redirect("/preview/onboarding");
   }
   let setup;
   try {

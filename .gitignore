@@ -6,8 +6,8 @@ generated/
 next-env.d.ts
 *.tsbuildinfo
 
+# Test source and fixtures are versioned; generated reports stay local.
 # Test reports, traces, coverage and temporary output
-/tests/
 /experiments/
 coverage/
 .nyc_output/

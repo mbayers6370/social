@@ -45,6 +45,11 @@ export function MessageComposer({
   }, [draft]);
 
   useLayoutEffect(() => {
+    // Submission disables the field; restore focus after it is enabled again.
+    if (sent && !isSubmitting) textarea.current?.focus({ preventScroll: true });
+  }, [sent, isSubmitting]);
+
+  useLayoutEffect(() => {
     const input = textarea.current;
     if (!input) return;
     // Refit wrapped drafts after resizing or opening a hidden mobile thread.
@@ -63,17 +68,13 @@ export function MessageComposer({
     <form
       className="margin-message-composer"
       noValidate
-      onSubmit={handleSubmit(async ({ body }, event) => {
+      onSubmit={handleSubmit(async ({ body }) => {
         setError("");
         try {
           await onSend(body);
           onDraft("");
           reset({ body: "" });
           setSent(true);
-          if (event?.target instanceof HTMLFormElement)
-            event.target
-              .querySelector("textarea")
-              ?.focus({ preventScroll: true });
         } catch (error) {
           setError(
             error instanceof Error

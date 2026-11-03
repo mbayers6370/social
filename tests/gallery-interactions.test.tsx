@@ -68,7 +68,10 @@ it("opens photographs without filenames, and arranges three featured slots with 
     }),
   );
   const viewer = screen.getByRole("dialog", { name: "Photograph" });
-  expect(viewer).toHaveTextContent("Morning photograph");
+  expect(
+    within(viewer).getByRole("img", { name: "Morning photograph" }),
+  ).toBeVisible();
+  expect(viewer.querySelector("figcaption")).toHaveTextContent("Morning");
   expect(document.body).not.toHaveTextContent("private-file-name.jpg");
   expect(
     within(viewer).getByRole("button", { name: "Previous photograph" }),
@@ -78,7 +81,9 @@ it("opens photographs without filenames, and arranges three featured slots with 
   );
   expect(viewer).toHaveTextContent("Architecture");
   await user.keyboard("{ArrowLeft}");
-  expect(viewer).toHaveTextContent("Morning photograph");
+  expect(
+    within(viewer).getByRole("img", { name: "Morning photograph" }),
+  ).toBeVisible();
   await user.keyboard("{Escape}");
   await user.click(screen.getByRole("button", { name: "Arrange gallery" }));
   await user.click(
