@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   Spaces,
   Lock,
-  Gathering,
   EventSpace,
   Add,
   ChevronRight,
@@ -25,6 +24,7 @@ import { SpaceInvitationAction } from "./space-invitation-action";
 import { preserveTimeZoneMenu } from "./time-zone-picker";
 import { spaceKindLabel } from "./lifecycle";
 import { EventSearch } from "./event-search";
+import { SpaceDates } from "./space-dates";
 
 function SpaceRows({
   spaces,
@@ -40,13 +40,7 @@ function SpaceRows({
         <li key={space.id}>
           <Link href={client.href(`/app/spaces/${space.id}`)}>
             <span className="margin-space-row-icon" aria-hidden="true">
-              {space.kind === "PRIVATE" ? (
-                <Spaces />
-              ) : space.kind === "GATHERING" ? (
-                <Gathering />
-              ) : (
-                <EventSpace />
-              )}
+              {space.kind === "EVENT" ? <EventSpace /> : <Spaces />}
             </span>
             <span className="margin-space-row-copy">
               <strong>{space.name}</strong>
@@ -54,14 +48,9 @@ function SpaceRows({
                 {spaceKindLabel(space.kind)} · {space.memberCount}{" "}
                 {space.memberCount === 1 ? "member" : "members"}
               </span>
-              {space.startsAt && (
-                <time className="margin-space-date" dateTime={space.startsAt}>
-                  {new Intl.DateTimeFormat("en-US", {
-                    dateStyle: "medium",
-                    timeZone: space.timeZone!,
-                  }).format(new Date(space.startsAt))}
-                  {space.location ? ` · ${space.location}` : ""}
-                </time>
+              <SpaceDates space={space} />
+              {space.location && (
+                <span className="margin-space-meta">{space.location}</span>
               )}
             </span>
             <ChevronRight
@@ -99,8 +88,7 @@ export function SpacesList({ data }: { data: SpaceListData }) {
           <DialogContent onEscapeKeyDown={preserveTimeZoneMenu}>
             <DialogTitle>Create a Space</DialogTitle>
             <DialogDescription>
-              Private Spaces and Gathering Spaces are invitation-only. Find
-              public events in event search below.
+              A private place for your people, shared thoughts, and plans.
             </DialogDescription>
             <SpaceForm
               onSaved={() => setCreate(false)}
@@ -111,10 +99,8 @@ export function SpacesList({ data }: { data: SpaceListData }) {
       </header>
       <p className="margin-space-privacy">
         <Lock aria-hidden="true" size={14} />
-        Private Spaces and Gathering Spaces are invitation-only. Event Spaces
-        are public to Margin members.
+        Spaces are invitation-only. Event Spaces are open to Margin members.
       </p>
-      <EventSearch />
       {data.invitations.length > 0 && (
         <section
           id="space-invitations"
@@ -147,7 +133,7 @@ export function SpacesList({ data }: { data: SpaceListData }) {
         <section className="margin-spaces-group">
           <h2>Archived</h2>
           <p className="margin-space-meta">
-            Past Gathering Spaces, kept read-only.
+            Spaces you’ve archived, kept read-only.
           </p>
           <SpaceRows spaces={archived} label="Archived Spaces" />
         </section>
@@ -157,8 +143,8 @@ export function SpacesList({ data }: { data: SpaceListData }) {
           <Spaces aria-hidden="true" size={32} />
           <h2>A shared place starts here</h2>
           <p>
-            You haven’t joined a Space yet. Find an Event Space, create one for
-            people you know, or join through an invitation.
+            You haven’t joined a Space yet. Create one for people you know, join
+            through an invitation, or find an Event Space below.
           </p>
           <Button variant="outline" onClick={() => setCreate(true)}>
             Create your first Space
@@ -176,6 +162,7 @@ export function SpacesList({ data }: { data: SpaceListData }) {
           <ChevronRight aria-hidden="true" />
         </Link>
       )}
+      <EventSearch />
     </section>
   );
 }

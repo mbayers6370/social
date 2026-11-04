@@ -32,9 +32,13 @@ for (const example of [
     await page.goto(example.url);
     const notice = page.locator(".margin-message-retention");
     const copy = example.notebook
-      ? "Notes are intended to expire 90 days after saving."
-      : "Messages are intended to expire 30 days after sending.";
-    await expect(notice).toHaveText(copy);
+      ? "Notes expire 90 days after saving."
+      : "Messages expire 30 days after sending.";
+    await expect(page.locator("#message-retention")).toHaveText(copy);
+    if (!example.notebook)
+      await expect(
+        notice.getByRole("button", { name: "Export conversation" }),
+      ).toBeVisible();
     await expect(notice).toBeInViewport({ ratio: 1 });
     const history = page.getByRole("region", {
       name: example.notebook ? "Notebook history" : "Message history",

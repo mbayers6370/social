@@ -147,6 +147,7 @@ export async function synchronizeInvitations(
   db: PrismaClient,
   provider: Pick<InvitationProvider, "find" | "revoke">,
   now = new Date(),
+  options: { limit?: number; signal?: AbortSignal } = {},
 ) {
   await db.$executeRaw`UPDATE "Invitation" i SET "revokedAt" = ${now}
     FROM "InvitationLink" l LEFT JOIN "Account" a ON a."userId" = l."createdBy"
@@ -175,14 +176,17 @@ export async function synchronizeInvitations(
       { providerCheckedAt: { sort: "asc", nulls: "first" } },
       { id: "asc" },
     ],
-    take: 100,
+    take: Math.min(100, Math.max(1, options.limit ?? 100)),
   });
+  let checked = 0;
   for (const invitation of pending) {
+    if (options.signal?.aborted) break;
     // Rotate unresolved deliveries through the bounded batch rather than starving later work.
     await db.invitation.update({
       where: { id: invitation.id },
       data: { providerCheckedAt: now },
     });
+    checked++;
     const matches = await provider.find(
       invitation.clerkInvitationId ?? invitation.email!,
     );
@@ -202,7 +206,7 @@ export async function synchronizeInvitations(
       },
     });
   }
-  return pending.length;
+  return checked;
 }
 
 export async function checkProviderInvitation(

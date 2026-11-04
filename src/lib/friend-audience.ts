@@ -3,6 +3,7 @@ export type Friendship = {
   status: "accepted" | "pending" | "blocked";
   requestedBy?: string;
   blockedBy?: string;
+  acceptedAt?: string;
 };
 
 /** Call with identities/relationships loaded by the server for real user data. */

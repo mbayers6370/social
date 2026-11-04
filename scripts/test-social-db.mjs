@@ -8,15 +8,18 @@ import { resolve, join } from "node:path";
 if (Number(process.versions.node.split(".")[0]) !== 22)
   throw new Error("Use Node 22");
 const root = resolve(import.meta.dirname, "..");
-const authOnly = process.argv.slice(2).includes("--auth");
-const adapterOnly = process.argv.slice(2).includes("--database-adapter");
-const memberOnly = process.argv.slice(2).includes("--member");
-const notificationOnly = process.argv.slice(2).includes("--notification-links");
-const communicationOnly = process.argv.slice(2).includes("--communication");
-const spaceInvitationOnly = process.argv
-  .slice(2)
-  .includes("--space-invitations");
-const invitationOnly = process.argv.slice(2).includes("--invitations");
+// Arguments after -- go only to Vitest, allowing focused regression checks.
+const argv = process.argv.slice(2);
+const separator = argv.indexOf("--");
+const options = separator < 0 ? argv : argv.slice(0, separator);
+const testArgs = separator < 0 ? [] : argv.slice(separator + 1);
+const authOnly = options.includes("--auth");
+const adapterOnly = options.includes("--database-adapter");
+const memberOnly = options.includes("--member");
+const notificationOnly = options.includes("--notification-links");
+const communicationOnly = options.includes("--communication");
+const spaceInvitationOnly = options.includes("--space-invitations");
+const invitationOnly = options.includes("--invitations");
 if (
   [
     authOnly,
@@ -27,20 +30,18 @@ if (
     invitationOnly,
     spaceInvitationOnly,
   ].filter(Boolean).length > 1 ||
-  process.argv
-    .slice(2)
-    .some(
-      (argument) =>
-        ![
-          "--auth",
-          "--database-adapter",
-          "--member",
-          "--notification-links",
-          "--communication",
-          "--invitations",
-          "--space-invitations",
-        ].includes(argument),
-    )
+  options.some(
+    (argument) =>
+      ![
+        "--auth",
+        "--database-adapter",
+        "--member",
+        "--notification-links",
+        "--communication",
+        "--invitations",
+        "--space-invitations",
+      ].includes(argument),
+  )
 )
   throw new Error("Unknown database-test option");
 const bin =
@@ -129,6 +130,7 @@ try {
       "node_modules/vitest/vitest.mjs",
       "run",
       "--no-file-parallelism",
+      ...testArgs,
       ...(spaceInvitationOnly
         ? ["tests/space-invitation-db.integration.test.ts"]
         : notificationOnly
@@ -152,6 +154,7 @@ try {
                         "tests/member-db.integration.test.ts",
                         "tests/notification-links-db.integration.test.ts",
                         "tests/communication-db.integration.test.ts",
+                        "tests/retention-db.integration.test.ts",
                       ]),
     ],
     { cwd: root, env: { ...env, RUN_PRIVATE_DB_TESTS: "1" }, stdio: "inherit" },

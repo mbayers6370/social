@@ -1,7 +1,14 @@
 import { beforeEach, afterEach, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemberMessages } from "@/features/social/member-messages";
+import { MemberConversationExport } from "@/features/social/member-conversation-export";
 import { SpaceClientProvider } from "@/features/spaces/client";
 import { sampleConversation } from "@/features/social/member-preview";
 const router = vi.hoisted(() => ({
@@ -30,7 +37,10 @@ beforeEach(() => {
     },
   );
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 const client = {
   request,
   href: (url: string) => url,
@@ -53,12 +63,23 @@ it("returns keyboard focus to the original mobile conversation trigger after Esc
   const user = userEvent.setup();
   const rendered = render(view());
   expect(
-    screen.getByText("Messages are intended to expire 30 days after sending."),
+    screen.getByText("Messages expire 30 days after sending."),
   ).toBeVisible();
   expect(
     screen.getByRole("region", { name: "Message history" }),
-  ).toHaveAccessibleDescription(
-    "Messages are intended to expire 30 days after sending.",
+  ).toHaveAccessibleDescription("Messages expire 30 days after sending.");
+  const retention = screen
+    .getByText("Messages expire 30 days after sending.")
+    .closest("p")!;
+  expect(
+    within(retention).getByRole("button", { name: "Export conversation" }),
+  ).toBeVisible();
+  const composer = screen.getByRole("textbox", {
+    name: "Message to Alex Example",
+  });
+  expect(composer).toHaveAttribute("placeholder", "Write to Alex…");
+  expect(document.querySelector('label[for="message-body"]')).toHaveClass(
+    "sr-only",
   );
   const trigger = screen.getByRole("button", {
     name: "Open conversation with Alex Example",
@@ -136,7 +157,54 @@ it("omits conversation options from Notebook while retaining its notes and compo
   expect(
     screen.getByRole("region", { name: "Notebook history" }),
   ).toBeVisible();
+  expect(screen.getByText("Notes expire 90 days after saving.")).toBeVisible();
   expect(
-    screen.getByText("Notes are intended to expire 90 days after saving."),
-  ).toBeVisible();
+    screen.queryByRole("button", { name: "Export conversation" }),
+  ).not.toBeInTheDocument();
+});
+
+it("exports through the existing endpoint and allows retry after an inline failure", async () => {
+  const user = userEvent.setup();
+  const createObjectURL = vi.fn(() => "blob:conversation-export");
+  vi.stubGlobal(
+    "URL",
+    class extends URL {
+      static createObjectURL = createObjectURL;
+      static revokeObjectURL = vi.fn();
+    },
+  );
+  const clicked = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(() => {});
+  request
+    .mockResolvedValueOnce(
+      Response.json(
+        { error: "Export temporarily unavailable." },
+        { status: 503 },
+      ),
+    )
+    .mockResolvedValueOnce(
+      Response.json({ messages: sampleConversation.messages }),
+    );
+  render(
+    <SpaceClientProvider client={client}>
+      <MemberConversationExport threadId="fictional-friend" />
+    </SpaceClientProvider>,
+  );
+  await user.click(screen.getByRole("button", { name: "Export conversation" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Export temporarily unavailable.",
+  );
+  expect(createObjectURL).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Export conversation" }));
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Your conversation download is ready.",
+  );
+  expect(request.mock.calls.map(([url]) => url)).toEqual([
+    "/api/messages/fictional-friend/export",
+    "/api/messages/fictional-friend/export",
+  ]);
+  expect(clicked).toHaveBeenCalledOnce();
+  expect(createObjectURL).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });

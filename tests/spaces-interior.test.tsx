@@ -64,7 +64,7 @@ it("keeps Gathering date, location and RSVP immediately available while hiding a
     </SpaceDetails>,
   );
   const info = screen.getByRole("region", {
-    name: "Gathering and event details",
+    name: "Date and place",
   });
   expect(within(info).getByText("Kyoto, Japan")).toBeVisible();
   expect(screen.getByRole("group", { name: "Your RSVP" })).toBeVisible();
@@ -73,18 +73,18 @@ it("keeps Gathering date, location and RSVP immediately available while hiding a
   ).not.toBeInTheDocument();
   expect(screen.queryByText("About this Space")).not.toBeInTheDocument();
   expect(
-    screen.queryByRole("button", { name: "Space settings" }),
+    screen.queryByRole("button", { name: "Edit details" }),
   ).not.toBeVisible();
   expect(
     screen.queryByRole("button", {
-      name: "Archive Gathering Space",
+      name: "Archive Space",
     }),
   ).not.toBeVisible();
   await user.click(screen.getByText("Space options", { exact: true }));
-  expect(screen.getByRole("button", { name: "Space settings" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Edit details" })).toBeVisible();
   expect(
     screen.getByRole("button", {
-      name: "Archive Gathering Space",
+      name: "Archive Space",
     }),
   ).toBeVisible();
 });
@@ -100,7 +100,7 @@ it("keeps Private Space posts and members in view without an event-control panel
     screen.queryByRole("group", { name: "Your RSVP" }),
   ).not.toBeInTheDocument();
   expect(
-    screen.queryByRole("region", { name: "Gathering and event details" }),
+    screen.queryByRole("region", { name: "Date and place" }),
   ).not.toBeInTheDocument();
 });
 it("saves RSVP buttons through the membership action and preserves the saved response on failure", async () => {
@@ -197,4 +197,47 @@ it("replaces content with an explicit unavailable message at the Event Space dea
   expect(
     screen.getByText(/photos can no longer be viewed through this Space/),
   ).toBeVisible();
+});
+
+it("hides RSVP controls when disabled and lets public Event admins change RSVP without editing official details", async () => {
+  const user = userEvent.setup();
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetcher);
+  render(
+    <SpaceDetails data={{ ...event(), rsvpEnabled: false, role: "ADMIN" }} />,
+  );
+  expect(
+    screen.queryByRole("group", { name: "Your RSVP" }),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByText("Space options", { exact: true }));
+  expect(
+    screen.queryByRole("button", { name: "Edit details" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Edit end time" })).toBeVisible();
+  const toggle = screen.getByRole("checkbox", { name: "Allow RSVPs" });
+  expect(toggle).not.toBeChecked();
+  await user.click(toggle);
+  expect(fetcher).toHaveBeenCalledWith(
+    `/api/spaces/public/members`,
+    expect.objectContaining({
+      method: "PATCH",
+      body: JSON.stringify({ action: "rsvp-settings", rsvpEnabled: true }),
+    }),
+  );
+});
+
+it("shows a location even when a Space has no date", () => {
+  render(
+    <SpaceDetails
+      data={{ ...spacesFixture().spaces[0], location: "The library" }}
+    />,
+  );
+  expect(
+    screen.getByRole("region", { name: "Date and place" }),
+  ).toHaveTextContent("The library");
+  expect(
+    screen.queryByRole("group", { name: "Your RSVP" }),
+  ).not.toBeInTheDocument();
 });

@@ -171,3 +171,21 @@ it("Space feed inclusion needs current membership and unexpired content, while p
   );
   expect(visibleSpacePosts(data, [], data.now)).toEqual([]);
 });
+
+it("keeps your own Space posts inside the Space while excluding them from your main feed", () => {
+  const data = spacesFixture();
+  data.spaces[0].includeInFeed = true;
+  data.posts.push({
+    ...data.posts[0],
+    id: "my-space-post",
+    author: data.viewer,
+  });
+  expect(visibleSpacePosts(data, [], data.now).map((post) => post.id)).toEqual([
+    "space-canonical",
+  ]);
+  expect(
+    visibleSpacePosts(data, [], data.now, data.spaces[0].id).map(
+      (post) => post.id,
+    ),
+  ).toEqual(["space-canonical", "my-space-post"]);
+});

@@ -66,7 +66,11 @@ test("uses the responsive navigation and manages local friendships across screen
   await expect(page.getByRole("status")).toContainText(
     "You and Nadia Haddad are now friends.",
   );
-  await page.getByRole("button", { name: /^Friends \d+$/ }).click();
+  await page.getByRole("button", { name: /^Friends · \d+$/ }).click();
+  await page.getByRole("link", { name: /Nadia Haddad/ }).click();
+  await page
+    .getByRole("button", { name: "More options for Nadia Haddad" })
+    .click();
   const manage = page.getByRole("button", {
     name: "Manage friendship with Nadia Haddad",
   });
@@ -76,13 +80,17 @@ test("uses the responsive navigation and manages local friendships across screen
   await confirm
     .getByRole("button", { name: "Remove friend", exact: true })
     .click();
-  await expect(manage).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Friends", exact: true }),
-  ).toBeFocused();
+    page.getByRole("button", { name: "Add friend", exact: true }),
+  ).toBeVisible();
+  await header.getByRole("button", { name: "Profile menu" }).click();
+  await page
+    .getByRole("navigation", { name: "Profile menu", exact: true })
+    .getByRole("link", { name: "Friends", exact: true })
+    .click();
   await page.getByRole("button", { name: /Requests/ }).click();
   await page
     .getByRole("button", { name: "Cancel request", exact: true })
     .click();
-  await expect(page.getByText("No outgoing requests.")).toBeVisible();
+  await expect(page.getByText("No requests right now.")).toBeVisible();
 });

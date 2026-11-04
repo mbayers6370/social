@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
 });
 
-test("conversation actions share one disclosure and restore focus after dialogs", async ({
+test("exports beside the expiry rule and restores focus after conversation dialogs", async ({
   page,
 }, testInfo) => {
   await page.goto("/?view=messages&thread=june");
@@ -14,11 +14,13 @@ test("conversation actions share one disclosure and restore focus after dialogs"
   ).toBeEnabled();
   const header = page.locator(".margin-thread-header");
   const options = header.getByRole("button", { name: "Conversation options" });
-  const download = header.getByRole("button", {
-    name: "Download conversation",
-  });
+  const download = page
+    .locator(".margin-message-retention")
+    .getByRole("button", {
+      name: "Export conversation",
+    });
   const report = header.getByRole("button", { name: "Report conversation" });
-  await expect(download).toBeHidden();
+  await expect(download).toBeVisible();
   await expect(report).toBeHidden();
   if (testInfo.project.name === "mobile")
     await expect(
@@ -26,8 +28,6 @@ test("conversation actions share one disclosure and restore focus after dialogs"
     ).toBeFocused();
   await options.focus();
   await page.keyboard.press("ArrowDown");
-  await expect(download).toBeFocused();
-  await page.keyboard.press("Tab");
   await expect(report).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(options).toBeFocused();
@@ -47,7 +47,7 @@ test("conversation actions share one disclosure and restore focus after dialogs"
     exportDialog.getByRole("checkbox", { name: /^Messages / }),
   ).toBeChecked();
   await page.keyboard.press("Escape");
-  await expect(options).toBeFocused();
+  await expect(download).toBeFocused();
   await expect(options).toHaveAttribute("aria-expanded", "false");
 
   await options.click();

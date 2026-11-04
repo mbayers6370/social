@@ -83,10 +83,7 @@ test("shows a device image during review and in a retained draft without uploadi
   await expect(review).toHaveCSS("object-fit", "contain");
   await expect(review).toHaveCSS("height", "220px");
   await picker
-    .getByLabel("Describe the photograph (alt text)")
-    .fill("Tea beside the window");
-  await picker
-    .getByRole("button", { name: "Use Photograph", exact: true })
+    .getByRole("button", { name: "Use photograph", exact: true })
     .click();
   const draft = page.locator(".margin-compose-photo > img");
   await draft.scrollIntoViewIfNeeded();

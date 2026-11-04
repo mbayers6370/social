@@ -30,7 +30,7 @@ export function SafetySettings() {
       <details className="margin-settings-record">
         <summary>
           <span>Blocked people</span>
-          <span>{blocked.length}</span>
+          <span>{blocked.length || "None"}</span>
           <ChevronDown aria-hidden="true" />
         </summary>
         <div>
@@ -69,7 +69,7 @@ export function SafetySettings() {
       <details className="margin-settings-record">
         <summary>
           <span>Your reports</span>
-          <span>{reports.length}</span>
+          <span>{reports.length || "None"}</span>
           <ChevronDown aria-hidden="true" />
         </summary>
         <div>

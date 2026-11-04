@@ -41,7 +41,7 @@ it("delegates credentials/recovery to Clerk and fixes post-auth destinations to 
     expect.objectContaining({
       withSignUp: false,
       transferable: false,
-      forceRedirectUrl: "/onboarding",
+      forceRedirectUrl: "/app/feed",
       path: "/sign-in",
     }),
   );

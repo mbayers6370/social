@@ -42,7 +42,7 @@ export const sampleIdentity: MemberIdentity = {
     readingSize: "standard",
     motion: "system",
     notifyComments: true,
-    notifyLikes: true,
+    notifyLikes: false,
     notifyFriends: true,
     notifyMessages: true,
     messagingEnabled: true,
@@ -121,6 +121,19 @@ export function MemberPreview({
   profileMessagingEnabled?: boolean;
 }) {
   const [selected, setSelected] = useState(thread);
+  const featuredCount = /^(?:profile|gallery)-featured-([123])$/.exec(
+    area,
+  )?.[1];
+  const featuredProfile = featuredCount
+    ? {
+        ...sampleProfile,
+        gallery: Array.from({ length: Number(featuredCount) }, (_, index) => ({
+          ...sampleProfile.posts[0].photos[0],
+          id: `featured-photo-${index + 1}`,
+          featured: true,
+        })),
+      }
+    : sampleProfile;
   const notebook: MemberConversation = {
     thread: {
       ...sampleConversation.thread,
@@ -140,7 +153,9 @@ export function MemberPreview({
           preferences: { ...sampleIdentity.preferences, messagingEnabled },
         }}
       >
-        {area === "profile" || area === "friend-profile" ? (
+        {area === "profile" ||
+        area === "friend-profile" ||
+        (Boolean(featuredCount) && area.startsWith("profile-")) ? (
           <PrivateProfile
             data={
               area === "friend-profile"
@@ -155,12 +170,25 @@ export function MemberPreview({
                       relationship: "friends",
                     },
                   }
-                : sampleProfile
+                : featuredProfile
             }
             conversationTarget={conversationTarget}
           />
-        ) : area === "gallery" ? (
-          <MemberGallery data={sampleProfile} />
+        ) : area === "gallery" ||
+          area === "gallery-photos" ||
+          (Boolean(featuredCount) && area.startsWith("gallery-")) ? (
+          <MemberGallery
+            data={
+              featuredCount
+                ? featuredProfile
+                : area === "gallery-photos"
+                  ? {
+                      ...sampleProfile,
+                      gallery: sampleProfile.posts[0].photos,
+                    }
+                  : sampleProfile
+            }
+          />
         ) : area === "friends" ? (
           <MemberFriends
             initial={{
@@ -169,6 +197,7 @@ export function MemberPreview({
                   person: friend,
                   username: "alex_example",
                   relationship: "friends",
+                  friendsSince: "2026-03-12T12:00:00Z",
                 },
               ],
               nextCursor: null,
@@ -183,7 +212,9 @@ export function MemberPreview({
           <MemberMessages
             initialThreads={[notebook.thread, sampleConversation.thread]}
             initialConversation={
-              selected === notebook.thread.id ? notebook : sampleConversation
+              !selected || selected === notebook.thread.id
+                ? notebook
+                : sampleConversation
             }
             selectedId={selected}
             onSelect={setSelected}

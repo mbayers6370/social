@@ -83,6 +83,9 @@ it("starts with an empty artist-only search and joins directly with a four-hour 
     await screen.findByRole("heading", { name: calvinEvent.name }),
   ).toBeVisible();
   expect(screen.getByText(/10:30 PM PST/)).toBeVisible();
+  expect(
+    screen.getByRole("list", { name: "Event search results" }),
+  ).toHaveTextContent("Disappears 10 Nov 2026 · 48 hours after the event ends");
   expect(screen.queryByText("Japan 2027")).not.toBeInTheDocument();
   await user.click(
     screen.getByRole("button", { name: `Join ${calvinEvent.name}` }),

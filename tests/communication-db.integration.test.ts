@@ -95,7 +95,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         kind === "PRIVATE"
           ? { kind, name: "Our Space" }
           : {
-              kind,
+              kind: "PRIVATE",
               name: "Dinner plans",
               startsAt: "2026-11-30T20:00:00Z",
               timeZone: "UTC",

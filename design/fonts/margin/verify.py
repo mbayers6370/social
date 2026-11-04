@@ -75,6 +75,13 @@ def verify():
         else:
             assert len(advances) > 3
             assert ttf["hmtx"][cmap[ord("i")]][0] < ttf["hmtx"][cmap[ord("m")]][0]
+            for char in ".,:;'‘’‚":
+                assert ttf["hmtx"][cmap[ord(char)]][0] < 250, (
+                    face,
+                    char,
+                    "Punctuation must not look separated by spaces.",
+                )
+            assert ttf["hmtx"][cmap[ord("…")]][0] == 3 * ttf["hmtx"][cmap[ord(".")]][0]
             assert "GPOS" in ttf, "Hinge's kerning feature must be available."
         if coverage is None:
             coverage = expected

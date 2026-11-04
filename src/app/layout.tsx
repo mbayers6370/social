@@ -47,6 +47,24 @@ export const metadata: Metadata = {
   title: { default: "margin", template: "%s · margin" },
   description: "A considered space for people and ideas.",
   robots: { index: false, follow: false },
+  icons: {
+    icon: [
+      {
+        url: "/icon?theme=light",
+        type: "image/svg+xml",
+        sizes: "any",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/icon?theme=dark",
+        type: "image/svg+xml",
+        sizes: "any",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    shortcut: "/icon",
+    apple: { url: "/apple-icon", sizes: "180x180", type: "image/png" },
+  },
 };
 
 export default async function RootLayout({
@@ -74,7 +92,7 @@ export default async function RootLayout({
             dynamic
             signInUrl="/sign-in"
             signUpUrl="/sign-up"
-            signInForceRedirectUrl="/onboarding"
+            signInForceRedirectUrl="/app/feed"
             signUpForceRedirectUrl="/onboarding"
             afterSignOutUrl="/welcome"
             appearance={clerkAppearance}

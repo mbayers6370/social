@@ -11,7 +11,7 @@ const responses = [
 
 export function SpaceRsvp({ data }: { data: SpaceDetails }) {
   const action = useSpaceAction();
-  if (data.kind === "PRIVATE") return null;
+  if (!data.startsAt || data.rsvpEnabled === false) return null;
   const disabled = action.busy || Boolean(data.archivedAt);
   function respond(rsvp: SpaceDetails["rsvp"]) {
     return action.run(`/api/spaces/${data.id}/members`, "PATCH", {

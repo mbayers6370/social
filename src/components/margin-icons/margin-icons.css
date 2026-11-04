@@ -9,6 +9,9 @@
   transform-box: view-box;
   transform-origin: 12px 12px;
 }
+.margin-icon .margin-page {
+  opacity: 0;
+}
 .margin-icon[data-animate="true"] .margin-eq-bar {
   animation: margin-equalize 1.15s ease-in-out infinite alternate;
 }
@@ -48,14 +51,15 @@
   animation: margin-aperture 480ms ease-out both;
 }
 .margin-icon[data-animate="true"] .margin-send {
-  animation: margin-send 360ms ease-out both;
+  animation: margin-send 760ms ease-in-out both;
 }
 .margin-icon[data-animate="true"] .margin-shackle {
   transform-origin: 8px 10px;
   animation: margin-shackle 720ms ease-in-out both;
 }
 .margin-icon[data-animate="true"] .margin-page {
-  animation: margin-page 440ms ease-out both;
+  transform-origin: 12px 13px;
+  animation: margin-page 900ms ease-in-out both;
 }
 .margin-icon[data-animate="true"] .margin-draw {
   animation: margin-draw 360ms ease-out both;
@@ -130,11 +134,18 @@
   }
 }
 @keyframes margin-send {
-  from {
-    transform: translate(-0.8px, 0.5px);
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
   }
-  to {
-    transform: translate(0, 0);
+  70% {
+    transform: translate(12px, -12px) scale(0.12);
+    opacity: 0;
+  }
+  71% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
   }
 }
 @keyframes margin-shackle {
@@ -147,11 +158,29 @@
   }
 }
 @keyframes margin-page {
-  from {
-    transform: scaleX(0.92);
+  0% {
+    transform: scaleX(1) skewY(0deg);
+    opacity: 0;
   }
-  to {
-    transform: scaleX(1);
+  12% {
+    transform: scaleX(0.98) skewY(-1deg);
+    opacity: 1;
+  }
+  48% {
+    transform: scaleX(0.04) skewY(-7deg);
+    opacity: 1;
+  }
+  52% {
+    transform: scaleX(-0.04) skewY(7deg);
+    opacity: 1;
+  }
+  88% {
+    transform: scaleX(-0.98) skewY(1deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(-1) skewY(0deg);
+    opacity: 0;
   }
 }
 @keyframes margin-draw {

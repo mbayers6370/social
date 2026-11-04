@@ -22,6 +22,19 @@ it("exports only the viewer's relationships without another person's profile or 
     { personId: "nadia", status: "pending", direction: "received" },
   ]);
 });
+it("records the acceptance time for preview friendships", () => {
+  const state = initialLocalState(notificationFixture().bootstrap);
+  const now = new Date("2026-03-12T12:00:00Z");
+  const next = changeFriendship(
+    state,
+    "ines",
+    { personId: "nadia", action: "accept" },
+    now,
+  );
+  expect(
+    next.friendships.find((pair) => pair.people.includes("nadia"))?.acceptedAt,
+  ).toBe(now.toISOString());
+});
 it("requires mutual consent, supports cancellation, decline, removal and a fresh request", () => {
   let state = initialLocalState(notificationFixture().bootstrap);
   expect(friendStatus("ines", "nadia", state.friendships)).toBe("incoming");

@@ -17,6 +17,7 @@ import {
   issueInvitationLink,
   invitationToken,
   digestToken,
+  availableInvitationSlots,
 } from "@/server/account/invitation-links";
 import {
   checkProviderInvitation,
@@ -65,8 +66,6 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           account: {
             create: {
               status: "ACTIVE",
-              invitationsRemaining: 3,
-              invitationAllowanceGrantedAt: now,
             },
           },
         },
@@ -112,9 +111,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       vi.unstubAllEnvs();
     });
     afterAll(async () => db.$disconnect());
-    const remaining = async () =>
-      (await db.account.findUniqueOrThrow({ where: { userId: owner.id } }))
-        .invitationsRemaining;
+    const remaining = (at = now) => availableInvitationSlots(db, owner.id, at);
     async function claim(
       token: string,
       email: string,
@@ -168,6 +165,46 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         }),
       ).toBe(0);
     });
+    it("stores optional personal labels, preserves them on retry and rejects changed retry details", async () => {
+      const named = input({ label: "  Sam  " });
+      const first = await issueInvitationLink(db, owner.clerkId, named, now);
+      expect(first.link.label).toBe("Sam");
+      const stored = await db.invitationLink.findUniqueOrThrow({
+        where: { id: first.link.id },
+      });
+      expect(stored.label).toBe("Sam");
+      const retry = await issueInvitationLink(
+        db,
+        owner.clerkId,
+        { ...named, label: "Sam" },
+        now,
+      );
+      expect(retry.link.id).toBe(first.link.id);
+      expect(await remaining()).toBe(2);
+      await expect(
+        issueInvitationLink(
+          db,
+          owner.clerkId,
+          { ...named, label: "Alex" },
+          now,
+        ),
+      ).rejects.toMatchObject({ status: 409 });
+      const unnamed = await issueInvitationLink(
+        db,
+        owner.clerkId,
+        input({ label: "  " }),
+        now,
+      );
+      expect(unnamed.link.label).toBeNull();
+      await expect(
+        issueInvitationLink(
+          db,
+          owner.clerkId,
+          input({ label: "a".repeat(81) }),
+          now,
+        ),
+      ).rejects.toThrow();
+    });
     it("allows unlimited founder issuance and denies member community settings or forged roles", async () => {
       await expect(
         issueInvitationLink(
@@ -206,9 +243,11 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         label: "Private launch",
       });
       await issueInvitationLink(db, owner.clerkId, input(), now);
-      expect(await remaining()).toBe(0);
+      expect(
+        await db.invitationLink.count({ where: { createdBy: owner.id } }),
+      ).toBe(2);
     });
-    it("rolls back allowance consumption when link signing is unavailable and denies pending/deactivated issuers", async () => {
+    it("does not hold a slot when link signing fails and denies pending/deactivated issuers", async () => {
       vi.stubEnv("INVITATION_LINK_SECRET", "");
       await expect(
         issueInvitationLink(db, owner.clerkId, input(), now),
@@ -224,6 +263,66 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           issueInvitationLink(db, owner.clerkId, input(), now),
         ).rejects.toMatchObject({ status: 403 });
       }
+    });
+    it("reuses expired and withdrawn slots immediately, ignoring the legacy lifetime balance", async () => {
+      await db.account.update({
+        where: { userId: owner.id },
+        data: { invitationsRemaining: 0, invitationAllowanceGrantedAt: now },
+      });
+      const links = await Promise.all(
+        [1, 2, 3].map(() =>
+          issueInvitationLink(db, owner.clerkId, input(), now),
+        ),
+      );
+      await expect(
+        issueInvitationLink(db, owner.clerkId, input(), now),
+      ).rejects.toMatchObject({ status: 409 });
+      await db.invitationLink.update({
+        where: { id: links[0].link.id },
+        data: { revokedAt: now },
+      });
+      expect(await remaining()).toBe(1);
+      const replacements = await Promise.allSettled(
+        [1, 2, 3].map(() =>
+          issueInvitationLink(db, owner.clerkId, input(), now),
+        ),
+      );
+      expect(
+        replacements.filter((result) => result.status === "fulfilled"),
+      ).toHaveLength(1);
+      expect(await remaining()).toBe(0);
+      const deadline = links[1].link.expiresAt;
+      expect(await remaining(new Date(deadline.getTime() - 1))).toBe(0);
+      expect(await remaining(deadline)).toBe(3);
+      await issueInvitationLink(db, owner.clerkId, input(), deadline);
+      expect(await remaining(deadline)).toBe(2);
+    });
+    it("frees exactly one slot on completed acceptance and never refills it on a repeated claim", async () => {
+      const links = await Promise.all(
+        [1, 2, 3].map(() =>
+          issueInvitationLink(db, owner.clerkId, input(), now),
+        ),
+      );
+      const { token } = links[0];
+      const email = "slot@example.test";
+      const subject = `recipient-${randomUUID()}`;
+      await requestInvitationEmail(
+        db,
+        provider,
+        token,
+        email,
+        "http://localhost:3000",
+        now,
+      );
+      expect(await remaining()).toBe(0);
+      await claim(token, email, subject);
+      expect(await remaining()).toBe(1);
+      await issueInvitationLink(db, owner.clerkId, input(), now);
+      await claim(token, email, subject);
+      expect(await remaining()).toBe(0);
+      await expect(
+        issueInvitationLink(db, owner.clerkId, input(), now),
+      ).rejects.toMatchObject({ status: 409 });
     });
     it("never consumes capacity for views or abandoned email claims and binds each Clerk invitation to one email", async () => {
       const { token, link } = await issueInvitationLink(
@@ -356,7 +455,6 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           where: {
             user: { clerkId: { in: createdSubjects.slice(1) } },
             status: "ACTIVE",
-            invitationsRemaining: 3,
           },
         }),
       ).toBe(2);
@@ -444,7 +542,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         (await db.invitation.findUniqueOrThrow({ where: { id: revoked.id } }))
           .providerRevokedAt,
       ).not.toBeNull();
-      expect(await remaining()).toBe(2);
+      expect(await remaining(later)).toBe(3);
     });
     it("activates a verified invited account with three invitations atomically, once, without creating a friendship", async () => {
       const { token } = await issueInvitationLink(
@@ -480,19 +578,17 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         include: { account: true },
       });
       expect(member.account).toMatchObject({
-        invitationsRemaining: 3,
-        invitationAllowanceGrantedAt: now,
         status: "ACTIVE",
         role: "MEMBER",
       });
+      expect(await availableInvitationSlots(db, member.id, now)).toBe(3);
+      expect(await remaining()).toBe(3);
       await activateAccount(db, { subject, verifiedEmail: email }, now);
       await issueInvitationLink(db, subject, input(), now);
       await claim(token, email, subject);
       await activateAccount(db, { subject, verifiedEmail: email }, now);
-      expect(
-        (await db.account.findUniqueOrThrow({ where: { userId: member.id } }))
-          .invitationsRemaining,
-      ).toBe(2);
+      expect(await availableInvitationSlots(db, member.id, now)).toBe(2);
+      expect(await remaining()).toBe(3);
       await db.invitationLink.deleteMany({ where: { createdBy: member.id } });
       expect(
         await db.friendship.count({

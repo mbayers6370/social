@@ -30,7 +30,7 @@ test("groups the Friends invitation action with clear spacing and bold selected 
       ((await intro.boundingBox())!.y + (await intro.boundingBox())!.height),
   ).toBeGreaterThanOrEqual(23);
   await expect(tabs).toHaveCSS("border-bottom-width", "0px");
-  const friends = tabs.getByRole("tab", { name: "Friends", exact: true });
+  const friends = tabs.getByRole("tab", { name: "Friends · 1", exact: true });
   const requests = tabs.getByRole("tab", { name: "Requests", exact: true });
   await expect(friends).toHaveCSS("font-weight", "700");
   await requests.click();

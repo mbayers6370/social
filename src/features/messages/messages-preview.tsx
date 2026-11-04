@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { MessageComposer } from "./message-composer";
 import { MessageRetention } from "./message-retention";
 import { ConversationActions } from "./conversation-actions";
+import { AccountDownload } from "@/features/settings/account-download";
 import { MessageLog } from "./message-log";
 import {
   Dialog,
@@ -192,7 +193,7 @@ export function MessagesPreview({
           {previewNotice("inbox")}
         </div>
         <p className="margin-inbox-description">
-          A little space for a conversation.
+          Your conversations and private notes.
         </p>
         <ul className="margin-thread-list" aria-label="Conversations">
           {threads.map((thread) => {
@@ -208,7 +209,7 @@ export function MessagesPreview({
                 <div
                   className="margin-thread-choice"
                   data-notebook={self || undefined}
-                  data-active={selectedId === thread.id}
+                  data-active={active.id === thread.id}
                   data-unread={unread}
                 >
                   {self ? (
@@ -248,9 +249,7 @@ export function MessagesPreview({
                       onClick={() => openThread(thread.id)}
                     >
                       {latest?.body ??
-                        (self
-                          ? "A little space for your thoughts."
-                          : "Start a conversation.")}
+                        (self ? "Notes to self" : "Start a conversation.")}
                     </button>
                   </span>
                   {latest && (
@@ -277,13 +276,7 @@ export function MessagesPreview({
           notebook ? "Notebook" : `Conversation with ${active.contact.name}`
         }
       >
-        <header
-          className={
-            notebook
-              ? "margin-thread-header margin-navigation-theme"
-              : "margin-thread-header"
-          }
-        >
+        <header className="margin-thread-header">
           <Button
             ref={back}
             variant="ghost"
@@ -322,7 +315,22 @@ export function MessagesPreview({
           </div>
           {!notebook && <ConversationActions key={active.id} thread={active} />}
         </header>
-        <MessageRetention notebook={notebook} />
+        <MessageRetention
+          notebook={notebook}
+          exportAction={
+            !notebook && (
+              <AccountDownload
+                key={active.id}
+                conversationId={active.id}
+                trigger={
+                  <button type="button" className="margin-message-export">
+                    Export conversation
+                  </button>
+                }
+              />
+            )
+          }
+        />
         <div
           ref={scroll}
           className="margin-thread-scroll"

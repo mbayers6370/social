@@ -21,8 +21,8 @@ export function isSpaceExpired(
   return Boolean(space.expiresAt && Date.parse(space.expiresAt) <= now);
 }
 export const spaceKindLabel = (kind: SpaceSummary["kind"]) =>
-  kind === "EVENT"
-    ? "Event Space"
-    : kind === "GATHERING"
-      ? "Gathering Space"
-      : "Private Space";
+  kind === "EVENT" ? "Event Space" : "Space";
+
+/** Existing database constraints distinguish scheduled private rooms internally. */
+export const privateSpaceStorageKind = (startsAt?: string) =>
+  startsAt ? ("GATHERING" as const) : ("PRIVATE" as const);

@@ -15,7 +15,7 @@ it("keeps the native file control accessible and identifies a chosen or replaced
   );
   const dialog = screen.getByRole("dialog", { name: "Choose a photograph" });
   const input = within(dialog).getByLabelText(
-    "Photograph from your device",
+    "Or upload a new one",
   ) as HTMLInputElement;
   expect(input).toHaveAttribute("type", "file");
   expect(input).not.toHaveAttribute("tabindex", "-1");
@@ -39,7 +39,7 @@ it("keeps the native file control accessible and identifies a chosen or replaced
   expect(choose).not.toHaveBeenCalled();
 });
 
-it("uses a compact footer associated with the upload form, explains alt text, and cancels without choosing a photograph", async () => {
+it("uses a compact footer associated with the upload form, requires no description, and cancels without choosing a photograph", async () => {
   const user = userEvent.setup();
   const onChoose = vi.fn();
   const onOpenChange = vi.fn();
@@ -58,15 +58,11 @@ it("uses a compact footer associated with the upload form, explains alt text, an
     "margin-photo-picker",
     "margin-photo-picker-gallery",
   );
-  const input = within(dialog).getByRole("textbox", {
-    name: "Describe the photograph (alt text)",
-  });
-  expect(input).toHaveAccessibleDescription(
-    "Describe what’s visible for people using screen readers. Add any story in your post.",
-  );
+  const input = within(dialog).getByLabelText("Or upload a new one");
+  expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
   const cancel = within(dialog).getByRole("button", { name: "Cancel" });
   const submit = within(dialog).getByRole("button", {
-    name: "Use Photograph",
+    name: "Use photograph",
   }) as HTMLButtonElement;
   expect(cancel.parentElement).toBe(submit.parentElement);
   expect(submit.parentElement).toHaveClass("margin-photo-picker-footer");
@@ -80,7 +76,7 @@ it("uses a compact footer associated with the upload form, explains alt text, an
   expect(onChoose).not.toHaveBeenCalled();
 });
 
-it("shows a deliberate selection and preserves a reused photograph’s saved description", async () => {
+it("shows a deliberate selection and allows a saved photograph without any text entry", async () => {
   const { previewBootstrap } = await import("./helpers/local-preview-fixture");
   const data = previewBootstrap();
   const user = userEvent.setup();
@@ -90,26 +86,21 @@ it("shows a deliberate selection and preserves a reused photograph’s saved des
       <PhotoPicker open onOpenChange={vi.fn()} onChoose={choose} />
     </PreviewProvider>,
   );
-  const use = screen.getByRole("button", { name: "Use Photograph" });
+  const use = screen.getByRole("button", { name: "Use photograph" });
   expect(use).toBeDisabled();
   const morning = screen.getByRole("button", { name: "Select Morning" });
   await user.click(morning);
   expect(morning).toHaveAttribute("aria-pressed", "true");
   expect(morning.querySelector(".margin-photo-selected-mark")).not.toBeNull();
-  const description = screen.getByRole("textbox", {
-    name: "Describe the photograph (alt text)",
-  });
-  expect(description).toHaveValue("Morning photograph");
-  expect(description).toHaveAttribute("readonly");
+  expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(use).toBeEnabled();
   expect(choose).not.toHaveBeenCalled();
   await user.click(screen.getByRole("button", { name: "Select Coffee" }));
   expect(morning).toHaveAttribute("aria-pressed", "false");
-  expect(description).toHaveValue("Coffee photograph");
   await user.click(use);
   expect(choose).toHaveBeenCalledWith(data.photos[2]);
 });
-it("clears the saved description when switching to a new file and restores it on reuse", async () => {
+it("switches between a device photo and the library without requesting a description", async () => {
   const { previewBootstrap } = await import("./helpers/local-preview-fixture");
   const user = userEvent.setup();
   const choose = vi.fn();
@@ -119,24 +110,17 @@ it("clears the saved description when switching to a new file and restores it on
     </PreviewProvider>,
   );
   await user.click(screen.getByRole("button", { name: "Select Morning" }));
-  const description = screen.getByRole("textbox", {
-    name: "Describe the photograph (alt text)",
-  });
   await user.upload(
-    screen.getByLabelText("Photograph from your device"),
+    screen.getByLabelText("Or upload a new one"),
     new File(["photo"], "new.png", { type: "image/png" }),
   );
-  expect(description).toHaveValue("");
-  expect(description).not.toHaveAttribute("readonly");
+  expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: "Select Morning" }),
   ).toHaveAttribute("aria-pressed", "false");
-  await user.type(description, "The new view");
   await user.click(screen.getByRole("button", { name: "Select Morning" }));
-  expect(description).toHaveValue("Morning photograph");
   expect(
-    (screen.getByLabelText("Photograph from your device") as HTMLInputElement)
-      .value,
+    (screen.getByLabelText("Or upload a new one") as HTMLInputElement).value,
   ).toBe("");
   expect(choose).not.toHaveBeenCalled();
 });

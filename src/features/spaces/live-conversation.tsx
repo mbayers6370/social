@@ -413,7 +413,6 @@ export function LiveConversation({
             <footer className="margin-conversation-footer">
               {data?.likeCount !== undefined && (
                 <span data-like-count>
-                  <Heart aria-hidden="true" fill="currentColor" />
                   {data.likeCount} {data.likeCount === 1 ? "like" : "likes"}
                 </span>
               )}

@@ -108,7 +108,7 @@ test("keeps photo selection actions reachable and enlarges the narrow gallery gr
   await page.evaluate(() => window.setTestVisualViewport(440, 10));
   const picker = page.getByRole("dialog", { name: "Choose a photograph" });
   const use = picker.getByRole("button", {
-    name: "Use Photograph",
+    name: "Use photograph",
     exact: true,
   });
   await expect

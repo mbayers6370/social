@@ -179,9 +179,11 @@ export function FriendControls({
                 variant="outline"
                 aria-label={`Manage friendship with ${person.name}`}
               >
-                <Friends className="margin-friends-icon" aria-hidden="true" />
-                Friends
-                <ChevronDown aria-hidden="true" />
+                <>
+                  <Friends className="margin-friends-icon" aria-hidden="true" />
+                  Friends
+                  <ChevronDown aria-hidden="true" />
+                </>
               </Button>
             </DialogTrigger>
             <DialogContent

@@ -16,7 +16,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("keeps the selected file readable until replacement or unmount and preserves alt text", () => {
+it("keeps the selected file readable until replacement or unmount without a description field", () => {
   const create = vi
     .spyOn(URL, "createObjectURL")
     .mockReturnValueOnce("blob:first")
@@ -24,24 +24,18 @@ it("keeps the selected file readable until replacement or unmount and preserves 
   const revoke = vi.spyOn(URL, "revokeObjectURL");
   const first = new File(["first"], "first.jpg", { type: "image/jpeg" });
   const second = new File(["second"], "second.jpg", { type: "image/jpeg" });
-  const { rerender, unmount } = render(
-    <DevicePhotoPreview file={first} description="A morning walk" />,
-  );
-  expect(screen.getByRole("img", { name: "A morning walk" })).toHaveAttribute(
-    "src",
-    "blob:first",
-  );
-  rerender(
-    <DevicePhotoPreview file={first} description="A walk by the river" />,
-  );
+  const { rerender, unmount } = render(<DevicePhotoPreview file={first} />);
+  expect(
+    screen.getByRole("img", { name: "Selected photograph" }),
+  ).toHaveAttribute("src", "blob:first");
+  rerender(<DevicePhotoPreview file={first} />);
   expect(create).toHaveBeenCalledTimes(1);
   expect(revoke).not.toHaveBeenCalled();
-  rerender(<DevicePhotoPreview file={second} description="An evening walk" />);
+  rerender(<DevicePhotoPreview file={second} />);
   expect(revoke).toHaveBeenCalledExactlyOnceWith("blob:first");
-  expect(screen.getByRole("img", { name: "An evening walk" })).toHaveAttribute(
-    "src",
-    "blob:second",
-  );
+  expect(
+    screen.getByRole("img", { name: "Selected photograph" }),
+  ).toHaveAttribute("src", "blob:second");
   unmount();
   expect(revoke).toHaveBeenLastCalledWith("blob:second");
 });
@@ -49,15 +43,15 @@ it("keeps the selected file readable until replacement or unmount and preserves 
 it("explains an unreadable image and recovers when a different file is selected", () => {
   vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:selected");
   const first = new File(["invalid"], "first.jpg", { type: "image/jpeg" });
-  const { rerender } = render(
-    <DevicePhotoPreview file={first} description="" />,
-  );
+  const { rerender } = render(<DevicePhotoPreview file={first} />);
   fireEvent.error(screen.getByRole("img", { name: "Selected photograph" }));
   expect(screen.getByRole("alert")).toHaveTextContent("couldn’t be previewed");
   const second = new File(["replacement"], "second.jpg", {
     type: "image/jpeg",
   });
-  rerender(<DevicePhotoPreview file={second} description="A replacement" />);
+  rerender(<DevicePhotoPreview file={second} />);
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  expect(screen.getByRole("img", { name: "A replacement" })).toBeVisible();
+  expect(
+    screen.getByRole("img", { name: "Selected photograph" }),
+  ).toBeVisible();
 });

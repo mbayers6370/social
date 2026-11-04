@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { render, screen, within, waitFor } from "@testing-library/react";
+import { act, render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemberProvider } from "@/features/social/member-provider";
 import { MemberSettings } from "@/features/social/member-settings";
@@ -103,8 +103,14 @@ it("starts enabled, keeps messaging on after a save failure, and restores naviga
     "Settings could not be saved",
   );
   expect(toggle).toBeChecked();
+  expect(screen.queryByText("Saved", { exact: true })).not.toBeInTheDocument();
   await user.click(toggle);
   await waitFor(() => expect(toggle).not.toBeChecked());
+  expect(
+    within(
+      toggle.closest(".margin-setting-with-feedback") as HTMLElement,
+    ).getByRole("status"),
+  ).toHaveTextContent("Saved");
   expect(screen.queryAllByRole("link", { name: "Messages" })).toHaveLength(0);
   expect(
     screen.getByRole("checkbox", { name: /^Messages New private/ }),
@@ -113,6 +119,59 @@ it("starts enabled, keeps messaging on after a save failure, and restores naviga
   await waitFor(() => expect(toggle).toBeChecked());
   expect(screen.getAllByRole("link", { name: "Messages" })).toHaveLength(2);
 });
+it.each([
+  ["radio", "Larger", "readingSize", "larger"],
+  ["radio", "Reduce motion", "motion", "reduced"],
+  ["checkbox", "Likes Activity on your posts", "notifyLikes", true],
+  [
+    "checkbox",
+    "Allow messaging Send and receive private messages with friends",
+    "messagingEnabled",
+    false,
+  ],
+] as const)(
+  "confirms %s %s beside its option only after the server saves",
+  async (role, name, key, value) => {
+    const user = userEvent.setup();
+    let complete!: (response: Response) => void;
+    request.mockImplementation(async (url) => {
+      if (url === "/api/member/preferences")
+        return new Promise<Response>((resolve) => {
+          complete = resolve;
+        });
+      if (url === "/api/member/context") return Response.json(identity);
+      return Response.json({ activity: [], nextCursor: null });
+    });
+    render(
+      view(
+        <MemberSettings
+          initial={identity}
+          safety={{ blocked: [], reports: [] }}
+        />,
+      ),
+    );
+    const input = screen.getByRole(role, { name });
+    const group = input.closest(
+      "fieldset, .margin-setting-with-feedback",
+    ) as HTMLElement;
+    expect(
+      screen.getByRole("checkbox", { name: "Likes Activity on your posts" }),
+    ).not.toBeChecked();
+    await user.click(input);
+    expect(within(group).getByRole("status")).toHaveTextContent("Saving…");
+    expect(
+      screen.queryByText("Saved", { exact: true }),
+    ).not.toBeInTheDocument();
+    expect(input).toBeDisabled();
+    identity = {
+      ...identity,
+      preferences: { ...identity.preferences, [key]: value },
+    };
+    await act(async () => complete(Response.json(identity)));
+    expect(within(group).getByRole("status")).toHaveTextContent(/^Saved$/);
+    expect(input).not.toBeDisabled();
+  },
+);
 it.each([
   [false, true],
   [true, false],

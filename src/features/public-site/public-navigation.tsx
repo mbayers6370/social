@@ -56,7 +56,7 @@ export function PublicNavigation({ homeHref }: { homeHref: string }) {
       <PublicHomeLink signedOutHref={homeHref} />
       <nav aria-label="Public navigation" className="margin-public-primary">
         <Link href="/why-margin" className="margin-public-information">
-          Why margin
+          Why Margin
         </Link>
         <Link href="/how-it-works" className="margin-public-information">
           How it works

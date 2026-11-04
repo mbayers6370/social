@@ -179,8 +179,9 @@ def repertoire(draw):
     for char, factor in [("–", 0.78), ("—", 1.2)]:
         width = 620 if draw.mono else round(1000 * factor)
         glyphs[char] = (draw.stroke(f"M75 290 H{width-75}"), width)
-    width = 620 if draw.mono else 850
-    glyphs["…"] = (merge([draw.dot(width * x, 40) for x in [0.22, 0.5, 0.78]]), width)
+    width = 620 if draw.mono else 540
+    positions = [0.22, 0.5, 0.78] if draw.mono else [1 / 6, 1 / 2, 5 / 6]
+    glyphs["…"] = (merge([draw.dot(width * x, 40) for x in positions]), width)
     for char, letter in [("©", "C"), ("®", "R")]:
         p, _ = glyphs[letter]
         glyphs[char] = (

@@ -2,7 +2,11 @@ import "server-only";
 import { memberPerson } from "@/lib/member-person";
 import { profileTrackFromRow } from "@/server/music/selections";
 import { randomUUID } from "node:crypto";
-import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import {
+  Prisma,
+  type PrismaClient,
+  type Photo,
+} from "@/generated/prisma/client";
 import {
   containsPostLink,
   DAILY_IMAGES,
@@ -20,6 +24,16 @@ import {
 import { spaceAccess, liveSpaceWhere } from "@/server/spaces/access";
 import { notifySpacePost } from "@/server/spaces/post-notifications";
 import type { PrivateProfileData } from "@/features/social/contracts";
+import { messageCutoff } from "@/lib/message-policy";
+
+const purgedPhoto = (id: string) => ({
+  state: "PURGED" as const,
+  description: "",
+  objectKey: `purged/${id}`,
+  width: 1,
+  height: 1,
+  byteLength: 1,
+});
 
 type Tx = Prisma.TransactionClient;
 const active = { account: { is: { status: "ACTIVE" as const } } };
@@ -270,6 +284,21 @@ export class SocialService {
     now: Date,
     replacingId?: string,
   ) {
+    const allowance = await this.dailyPostAllowance(
+      tx,
+      ownerId,
+      now,
+      replacingId,
+    );
+    if (hasLink ? !allowance.linkAllowed : allowance.regularRemaining === 0)
+      throw new SocialError(409, "Daily post allowance reached");
+  }
+  protected async dailyPostAllowance(
+    tx: Tx,
+    ownerId: string,
+    now: Date,
+    replacingId?: string,
+  ) {
     const posts = await tx.post.findMany({
       where: {
         ownerId,
@@ -280,12 +309,12 @@ export class SocialService {
       },
       select: { hasLink: true },
     });
-    if (
-      (hasLink && posts.length) ||
-      posts.some((p) => p.hasLink) ||
-      posts.length >= DAILY_REGULAR_POSTS
-    )
-      throw new SocialError(409, "Daily post allowance reached");
+    return {
+      regularRemaining: posts.some((post) => post.hasLink)
+        ? 0
+        : Math.max(0, DAILY_REGULAR_POSTS - posts.length),
+      linkAllowed: posts.length === 0,
+    };
   }
   protected postData(ownerId: string, body: string, now: Date) {
     return {
@@ -521,6 +550,7 @@ export class SocialService {
         const message = await tx.memberMessage.findFirst({
           where: {
             id: input.target.id,
+            createdAt: { gt: messageCutoff(this.clock()) },
             OR: [
               { senderId: reporter, hiddenBySender: false },
               { recipientId: reporter, hiddenByRecipient: false },
@@ -676,7 +706,7 @@ export class SocialService {
     subject: string,
     bytes: Uint8Array,
     type: string,
-    description: string,
+    description = "Photograph",
     spaceId?: string,
   ) {
     return (await this.uploadPhoto(subject, bytes, type, description, spaceId))
@@ -686,7 +716,7 @@ export class SocialService {
     subject: string,
     bytes: Uint8Array,
     type: string,
-    description: string,
+    description = "Photograph",
     spaceId?: string,
     galleryOnly = false,
     replacementPhotoId?: string,
@@ -848,11 +878,27 @@ export class SocialService {
         return { post, photo: savedPhoto };
       });
     } catch (error) {
+      await this.queueFailedUploads([reservation]);
+      throw error;
+    }
+  }
+  protected async queueFailedUploads(reservations: Photo[]) {
+    // A suspended uploader can write after maintenance erases its reservation.
+    // Recreate only a deletion intent, never a readable asset or its description.
+    for (const reservation of reservations) {
+      await this.db.photo.upsert({
+        where: { id: reservation.id },
+        create: { ...reservation, description: "", state: "DELETE_PENDING" },
+        update: {},
+      });
       await this.db.photo.updateMany({
         where: { id: reservation.id, state: { not: "READY" } },
-        data: { state: "DELETE_PENDING" },
+        data: {
+          state: "DELETE_PENDING",
+          objectKey: reservation.objectKey,
+          description: "",
+        },
       });
-      throw error;
     }
   }
   async readPost(subject: string, id: string) {
@@ -876,7 +922,7 @@ export class SocialService {
       return this.store.get(photo.objectKey);
     });
   }
-  async deletePost(subject: string, id: string) {
+  async deletePost(subject: string, id: string, deletePhotos = false) {
     return this.transaction(async (tx) => {
       const ownerId = await this.actor(tx, subject);
       await this.lock(tx, [ownerId]);
@@ -891,12 +937,20 @@ export class SocialService {
       });
       if (!post) throw unavailable();
       if (post.spaceId) await this.postAudience(tx, ownerId, post, true);
-      await tx.postComment.deleteMany({ where: { postId: id } });
-      await tx.post.update({
-        where: { id },
-        data: { deletedAt: this.clock(), body: "" },
-      });
-      await tx.postPhoto.deleteMany({ where: { postId: id } });
+      // FK cascades erase comments, likes, notifications and attachment references.
+      await tx.post.delete({ where: { id } });
+      if (deletePhotos) {
+        const photos = await tx.photo.findMany({
+          where: {
+            id: { in: post.photos.map((photo) => photo.photoId) },
+            ownerId,
+          },
+          select: { id: true },
+          orderBy: { id: "asc" },
+        });
+        for (const photo of photos)
+          await this.retirePhoto(tx, ownerId, photo.id);
+      }
       if (post.spaceId)
         await releaseSpacePhotoReferences(tx, post.spaceId, this.clock());
       await retireUnreferencedPhotos(
@@ -904,7 +958,7 @@ export class SocialService {
         post.photos.map((p) => p.photoId),
         this.clock(),
       );
-      // Gallery references deliberately survive deleting a post.
+      // Gallery references survive unless the owner explicitly deletes the photos too.
     });
   }
   async deletePhoto(subject: string, id: string) {
@@ -918,7 +972,7 @@ export class SocialService {
       await this.store.delete(objectKey);
       await this.db.photo.updateMany({
         where: { id, state: "DELETE_PENDING" },
-        data: { state: "PURGED", description: "" },
+        data: purgedPhoto(id),
       });
     }
   }
@@ -982,10 +1036,7 @@ export class SocialService {
       await tx.friendship.deleteMany({
         where: { OR: [{ lowId: id }, { highId: id }] },
       });
-      await tx.post.updateMany({
-        where: { ownerId: id },
-        data: { deletedAt: this.clock(), body: "" },
-      });
+      await tx.post.deleteMany({ where: { ownerId: id } });
       await tx.photo.updateMany({
         where: { ownerId: id, state: { not: "PURGED" } },
         data: { state: "DELETE_PENDING" },
@@ -1001,7 +1052,7 @@ export class SocialService {
     });
   }
   /** Trusted maintenance call only; no public job endpoint. Retry-safe after object-store failures. */
-  async purgeDeletedPhotos(limit = 20) {
+  async purgeDeletedPhotos(limit = 20, signal?: AbortSignal) {
     const eligible = {
       OR: [
         { state: "DELETE_PENDING" as const },
@@ -1011,10 +1062,17 @@ export class SocialService {
     const rows = await this.db.photo.findMany({
       where: eligible,
       take: Math.min(100, Math.max(1, limit)),
+      orderBy: [
+        { purgeAttemptedAt: { sort: "asc", nulls: "first" } },
+        { createdAt: "asc" },
+        { id: "asc" },
+      ],
       select: { id: true, ownerId: true, objectKey: true },
     });
     let purged = 0;
+    let failure: unknown;
     for (const row of rows) {
+      if (signal?.aborted) break;
       const claimed = await this.transaction(async (tx) => {
         await this.lock(tx, [row.ownerId]);
         const current = await tx.photo.findFirst({
@@ -1022,12 +1080,16 @@ export class SocialService {
             id: row.id,
             ...eligible,
             gallery: { is: null },
+            portraits: { none: {} },
             posts: {
               none: {
                 post: {
                   deletedAt: null,
                   expiresAt: { gt: this.clock() },
-                  OR: [{ spaceId: null }, { space: { deletedAt: null } }],
+                  OR: [
+                    { spaceId: null },
+                    { space: liveSpaceWhere(this.clock()) },
+                  ],
                 },
               },
             },
@@ -1037,47 +1099,115 @@ export class SocialService {
         if (!current) return false;
         await tx.photo.update({
           where: { id: row.id },
-          data: { state: "DELETE_PENDING" },
+          data: { state: "DELETE_PENDING", purgeAttemptedAt: this.clock() },
         });
         await tx.spacePhoto.deleteMany({ where: { photoId: row.id } });
         return true;
       });
       if (!claimed) continue;
-      await this.store.delete(row.objectKey);
+      try {
+        await this.store.delete(row.objectKey);
+      } catch (error) {
+        failure ??= error;
+        continue;
+      }
       const result = await this.db.photo.updateMany({
         where: { id: row.id, state: "DELETE_PENDING" },
-        data: { state: "PURGED", description: "" },
+        data: purgedPhoto(row.id),
       });
       purged += result.count;
     }
+    if (failure) throw failure;
     return purged;
   }
+  /** Only today's minimal upload quota markers survive object deletion. */
+  async erasePurgedPhotoRecords(limit = 100) {
+    const rows = await this.db.photo.findMany({
+      where: {
+        state: "PURGED",
+        OR: [
+          { uploadedAt: null },
+          { dayKey: { lt: dayKey(this.clock().toISOString()) } },
+        ],
+      },
+      select: { id: true },
+      take: Math.min(100, Math.max(1, limit)),
+      orderBy: { createdAt: "asc" },
+    });
+    return (
+      await this.db.photo.deleteMany({
+        where: { id: { in: rows.map((row) => row.id) }, state: "PURGED" },
+      })
+    ).count;
+  }
+
+  async retireOrphanedPhotos(limit = 100) {
+    return this.transaction(async (tx) => {
+      const rows = await tx.photo.findMany({
+        where: {
+          state: "READY",
+          gallery: { is: null },
+          portraits: { none: {} },
+          posts: {
+            none: {
+              post: {
+                deletedAt: null,
+                expiresAt: { gt: this.clock() },
+                OR: [
+                  { spaceId: null },
+                  { space: liveSpaceWhere(this.clock()) },
+                ],
+              },
+            },
+          },
+        },
+        select: { id: true },
+        take: Math.min(100, Math.max(1, limit)),
+        orderBy: { createdAt: "asc" },
+      });
+      await retireUnreferencedPhotos(
+        tx,
+        rows.map((row) => row.id),
+        this.clock(),
+      );
+      return rows.length;
+    });
+  }
   /** Access expires synchronously; this bounded job erases expired text/references later. */
-  async expirePosts(limit = 20) {
+  async expirePosts(limit = 20, signal?: AbortSignal) {
     const expired = await this.db.post.findMany({
-      where: { deletedAt: null, expiresAt: { lte: this.clock() } },
+      where: {
+        OR: [
+          { deletedAt: { not: null } },
+          { expiresAt: { lte: this.clock() } },
+        ],
+      },
       take: Math.min(100, Math.max(1, limit)),
       select: { id: true, ownerId: true, spaceId: true },
     });
-    for (const post of expired)
-      await this.transaction(async (tx) => {
+    let erased = 0;
+    for (const post of expired) {
+      if (signal?.aborted) break;
+      erased += await this.transaction(async (tx) => {
         await this.lock(tx, [post.ownerId]);
         if (post.spaceId)
           await tx.$queryRaw`SELECT id FROM "Space" WHERE id = ${post.spaceId} FOR UPDATE`;
+        const current = await tx.post.findFirst({
+          where: {
+            id: post.id,
+            OR: [
+              { deletedAt: { not: null } },
+              { expiresAt: { lte: this.clock() } },
+            ],
+          },
+          select: { id: true },
+        });
+        if (!current) return 0;
         const attachments = await tx.postPhoto.findMany({
           where: { postId: post.id },
           select: { photoId: true },
         });
-        await tx.postComment.deleteMany({ where: { postId: post.id } });
-        await tx.post.updateMany({
-          where: {
-            id: post.id,
-            deletedAt: null,
-            expiresAt: { lte: this.clock() },
-          },
-          data: { deletedAt: this.clock(), body: "" },
-        });
-        await tx.postPhoto.deleteMany({ where: { postId: post.id } });
+        await tx.post.delete({ where: { id: post.id } });
         if (post.spaceId)
           await releaseSpacePhotoReferences(tx, post.spaceId, this.clock());
         await retireUnreferencedPhotos(
@@ -1085,7 +1215,9 @@ export class SocialService {
           attachments.map((p) => p.photoId),
           this.clock(),
         );
+        return 1;
       });
-    return expired.length;
+    }
+    return erased;
   }
 }

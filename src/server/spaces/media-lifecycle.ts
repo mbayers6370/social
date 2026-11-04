@@ -1,5 +1,6 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
+import { liveSpaceWhere } from "./access";
 /** References, not thumbnails or feed preferences, determine canonical asset retention. */
 export async function retireUnreferencedPhotos(
   tx: Prisma.TransactionClient,
@@ -18,7 +19,7 @@ export async function retireUnreferencedPhotos(
           post: {
             deletedAt: null,
             expiresAt: { gt: now },
-            OR: [{ spaceId: null }, { space: { deletedAt: null } }],
+            OR: [{ spaceId: null }, { space: liveSpaceWhere(now) }],
           },
         },
       },

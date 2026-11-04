@@ -115,9 +115,7 @@ export function SpaceDetails({
           )}
           {data.kind === "EVENT"
             ? "Event Space · Open to Margin members"
-            : data.kind === "GATHERING"
-              ? "Private Gathering Space"
-              : "Private Space"}
+            : "Space · Invitation-only"}
         </p>
         <div className="margin-space-title-row">
           <h1>{data.name}</h1>

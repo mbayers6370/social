@@ -261,10 +261,30 @@
   cursor: pointer;
 }
 .margin-notification-preference input {
+  appearance: none;
+  display: grid;
+  place-content: center;
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  accent-color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--input));
+  border-radius: 3px;
+  background-color: hsl(var(--card));
+}
+.margin-notification-preference input:checked {
+  border-color: hsl(var(--foreground));
+  background-color: hsl(var(--foreground));
+}
+.margin-notification-preference input:checked::after {
+  content: "";
+  width: 8px;
+  height: 5px;
+  border-bottom: 2px solid hsl(var(--card));
+  border-left: 2px solid hsl(var(--card));
+  transform: translateY(-1px) rotate(-45deg);
+}
+.margin-notification-preference input:disabled {
+  opacity: 0.5;
 }
 .margin-notification-preference > span {
   min-width: 0;
@@ -279,6 +299,20 @@
   font-size: var(--text-control);
   line-height: 1.5;
   color: hsl(var(--muted-foreground));
+}
+@media (forced-colors: active) {
+  .margin-notification-preference input {
+    forced-color-adjust: none;
+    border-color: ButtonText;
+    background-color: Canvas;
+  }
+  .margin-notification-preference input:checked {
+    border-color: Highlight;
+    background-color: Highlight;
+  }
+  .margin-notification-preference input:checked::after {
+    border-color: HighlightText;
+  }
 }
 @media (min-width: 1024px) {
   .margin-notifications-panel {

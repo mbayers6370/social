@@ -33,42 +33,99 @@ test("closing invitation leads with two readable lines and membership informatio
   });
 });
 
-test("conversation invitation animates while visible and remains clear with reduced motion", async ({
+test("conversation control sits at the top right and keeps keyboard access", async ({
   page,
 }, testInfo) => {
-  await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/welcome");
-  const button = page.getByRole("button", {
-    name: "Open conversation",
-    includeHidden: true,
-  });
-  await button.scrollIntoViewIfNeeded();
-  await expect(button).toHaveAttribute("data-hint", "active");
-  await expect(button.locator("svg")).toHaveCSS(
-    "animation-play-state",
-    "running",
-  );
-  await expect
-    .poll(() =>
-      button
-        .locator("svg")
-        .evaluate((icon) => getComputedStyle(icon).transform),
-    )
-    .not.toBe("none");
-  await expect(button.getByText("Open", { exact: true })).toBeVisible();
-  await page.screenshot({
-    path: testInfo.outputPath("conversation-invitation.png"),
-  });
-  await button.click();
-  await expect(button).not.toHaveAttribute("data-hint");
-  await page.getByRole("button", { name: "Close conversation" }).click();
-  await expect(button).not.toHaveAttribute("data-hint");
-
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.reload();
-  await button.scrollIntoViewIfNeeded();
-  await expect(button.getByText("Open", { exact: true })).toBeVisible();
-  await expect(button.locator("svg")).toHaveCSS("animation-name", "none");
+  const front = page.locator(".margin-welcome-post-front");
+  const button = page.getByRole("button", { name: "Open conversation" });
+  await expect(button).toHaveText("Conversation");
+  const author = (await front.locator(".margin-welcome-author").boundingBox())!;
+  const box = (await button.boundingBox())!;
+  expect(Math.abs(box.y - author.y)).toBeLessThanOrEqual(8);
+  const card = (await front.boundingBox())!;
+  expect(card.x + card.width - box.x - box.width).toBeLessThanOrEqual(24);
+  await expect(button).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await button.focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("button", { name: "Close conversation" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(button).toBeFocused();
+  await front.screenshot({
+    path: testInfo.outputPath("conversation-link.png"),
+  });
+});
+
+test("welcome refinements keep invitation copy, compact font punctuation and the differences strip", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/welcome");
+  await page.evaluate(() => document.fonts.ready);
+  await expect(
+    page.getByRole("link", { name: "Membership by invitation", exact: true }),
+  ).toHaveCount(2);
+  await expect(page.getByText("Newest first", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Footer" })
+      .getByRole("link", { name: "Why Margin", exact: true }),
+  ).toHaveAttribute("href", "/why-margin");
+  await expect(
+    page
+      .getByRole("navigation", { name: "Public navigation" })
+      .getByRole("link", { name: "Sign in", exact: true }),
+  ).toHaveCSS("font-weight", "600");
+  for (const id of [
+    "public-title",
+    "welcome-connection-title",
+    "welcome-gallery-title",
+    "welcome-joining-title",
+  ])
+    await expect(page.locator(`#${id}`)).toHaveCSS("color", "rgb(69, 77, 36)");
+  const strip = page.getByRole("list", { name: "What’s different" });
+  await expect(strip.getByRole("listitem")).toHaveText([
+    "No like counts in the feed",
+    "No ads",
+    "No algorithm",
+    "Posts disappear after 30 days",
+    "Up to three posts a day",
+  ]);
+  expect((await strip.boundingBox())!.y).toBeGreaterThanOrEqual(
+    (await page.locator(".margin-welcome-interlude").boundingBox())!.y +
+      (await page.locator(".margin-welcome-interlude").boundingBox())!.height,
+  );
+  expect(
+    (await page.locator(".margin-welcome-connection").boundingBox())!.y,
+  ).toBeGreaterThanOrEqual(
+    (await strip.boundingBox())!.y + (await strip.boundingBox())!.height,
+  );
+  const widths = await page
+    .locator(".margin-welcome-caught-up")
+    .evaluate((node) => {
+      const context = document.createElement("canvas").getContext("2d")!;
+      context.font = `300 40px ${getComputedStyle(node).fontFamily}`;
+      return Object.fromEntries(
+        [" ", "’", ",", ".", "…"].map((char) => [
+          char,
+          context.measureText(char).width,
+        ]),
+      );
+    });
+  for (const char of ["’", ",", "."])
+    expect(widths[char]).toBeLessThan(widths[" "]);
+  expect(widths["…"]).toBeCloseTo(3 * widths["."], 1);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: testInfo.outputPath("welcome-refinements.png"),
+    fullPage: true,
+  });
 });
 
 test("stacked hero centres the visible text group with left-aligned copy", async ({
@@ -136,6 +193,7 @@ test("welcome keeps its editorial layout usable and its public examples keyboard
 }, testInfo) => {
   await page.goto("/welcome");
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.evaluate(() => document.fonts.ready);
   for (const width of isMobile ? [320, 390] : [768, 1024, 1440, 1920]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(
@@ -146,12 +204,14 @@ test("welcome keeps its editorial layout usable and its public examples keyboard
       ),
     ).toBe(true);
     if (isMobile) {
-      const photos = await page.locator(".margin-welcome-gallery-photo").all();
-      const boxes = await Promise.all(
-        photos.map((photo) => photo.boundingBox()),
+      const photos = page.locator(".margin-welcome-gallery-photo");
+      await expect(photos).toHaveCount(3);
+      // Read every photo in the same layout frame. Separate boundingBox calls
+      // can straddle a layout shift and report false differences after a resize.
+      const tops = await photos.evaluateAll((nodes) =>
+        nodes.map((node) => node.getBoundingClientRect().top),
       );
-      for (const box of boxes)
-        expect(Math.abs(box!.y - boxes[0]!.y)).toBeLessThan(1);
+      expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(1);
     }
     if (width === 1440 || width === 390) {
       await page.screenshot({
@@ -285,4 +345,142 @@ test("public pages expose the footer, practical rules and draft policies on desk
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+});
+
+test("welcome copy and message illustration match the product", async ({
+  page,
+}, info) => {
+  await page.goto("/welcome");
+  await page.evaluate(() => document.fonts.ready);
+  const strip = page.getByRole("list", { name: "What’s different" });
+  await expect(strip.getByRole("listitem")).toHaveText([
+    "No like counts in the feed",
+    "No ads",
+    "No algorithm",
+    "Posts disappear after 30 days",
+    "Up to three posts a day",
+  ]);
+  const header = page.locator(".margin-welcome-message-thread > header");
+  await expect(header).toContainText("Robin Lee");
+  await expect(header).toContainText("View profile");
+  await expect(header.getByText("Messages", { exact: true })).toHaveCount(0);
+  await expect(header.locator(":scope > svg")).toHaveCount(0);
+  const caption = page.locator(".margin-welcome-message-afterword");
+  await expect(caption).toHaveCSS("text-wrap", "balance");
+  await page
+    .locator(".margin-welcome-message-stage")
+    .screenshot({ path: info.outputPath("welcome-message-caption.png") });
+});
+
+test("See how it feels shakes only the feed card and scrolls on mobile", async ({
+  page,
+  isMobile,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/welcome");
+  const trigger = page.getByRole("link", {
+    name: "See how it feels",
+    exact: true,
+  });
+  const card = page.getByRole("figure", { name: "Feed and conversation" });
+  await expect(trigger).toHaveAttribute("href", "#welcome-preview");
+  await trigger.scrollIntoViewIfNeeded();
+  const initialScroll = await page.evaluate(() => scrollY);
+  await trigger.click();
+  await expect
+    .poll(() =>
+      card.evaluate((node) =>
+        node
+          .getAnimations()
+          .some(
+            (animation) =>
+              animation.id === "welcome-preview-shake" &&
+              animation.playState === "running",
+          ),
+      ),
+    )
+    .toBe(true);
+  if (isMobile) {
+    await expect(card).toBeInViewport();
+    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(initialScroll);
+    await expect(page.locator("#welcome-preview")).toBeFocused();
+  } else {
+    expect(await page.evaluate(() => scrollY)).toBe(initialScroll);
+  }
+  const conversation = page.getByRole("button", {
+    name: "Open conversation",
+    includeHidden: true,
+  });
+  await card.evaluate(async (node) => {
+    const shake = node
+      .getAnimations()
+      .find((animation) => animation.id === "welcome-preview-shake");
+    await shake?.finished;
+  });
+  expect(
+    await conversation.evaluate((node) => node.getAnimations().length),
+  ).toBe(0);
+  expect(
+    await card.evaluate((node) =>
+      node
+        .getAnimations()
+        .some(
+          (animation) =>
+            animation.id === "welcome-preview-shake" &&
+            animation.playState === "running",
+        ),
+    ),
+  ).toBe(false);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByRole("link", { name: "Flip the card", exact: true }).click();
+  expect(
+    await card.evaluate((node) =>
+      node
+        .getAnimations()
+        .some((animation) => animation.id === "welcome-preview-shake"),
+    ),
+  ).toBe(false);
+  expect(
+    await conversation.evaluate((node) =>
+      node
+        .getAnimations()
+        .some((animation) => animation.playState === "running"),
+    ),
+  ).toBe(false);
+  if (isMobile) await expect(card).toBeInViewport();
+});
+
+test("hero demo link describes the next flip and shares state with Conversation", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/welcome");
+  await page
+    .getByRole("link", { name: "See how it feels", exact: true })
+    .click();
+  await expect(
+    page.getByRole("link", { name: "Flip the card", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Open conversation", exact: true })
+    .click();
+  const reverse = page.getByRole("link", { name: "Turn it back", exact: true });
+  await expect(reverse).toHaveCount(1);
+  await reverse.click();
+  await expect(page.locator(".margin-welcome-post-turn")).toHaveAttribute(
+    "data-open",
+    "false",
+  );
+  await page.getByRole("link", { name: "Flip the card", exact: true }).click();
+  await expect(page.locator(".margin-welcome-post-turn")).toHaveAttribute(
+    "data-open",
+    "true",
+  );
+  await expect(
+    page.getByRole("button", { name: "Close conversation", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("link", { name: "Flip the card", exact: true }),
+  ).toHaveCount(1);
 });

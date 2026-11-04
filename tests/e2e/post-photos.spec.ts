@@ -8,6 +8,32 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/?view=profile");
 });
 
+test("gives portrait post photos a taller frame at the existing full width", async ({
+  page,
+}, info) => {
+  await page.goto("/");
+  for (const [aspect, ratio] of [
+    ["portrait", 4 / 5],
+    ["landscape", 3 / 2],
+  ] as const) {
+    const frame = page
+      .locator(
+        `.margin-post-photos[data-multiple="false"] .margin-post-photo[data-aspect="${aspect}"]`,
+      )
+      .first();
+    await expect(frame).toBeVisible();
+    const photo = (await frame.boundingBox())!;
+    const container = (await frame.locator("..").boundingBox())!;
+    expect(photo.width).toBeCloseTo(container.width, 1);
+    expect(photo.width / photo.height).toBeCloseTo(ratio, 2);
+    if (aspect === "portrait") {
+      expect(photo.height).toBeGreaterThan(photo.width);
+      await frame.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: info.outputPath("portrait-post.png") });
+    }
+  }
+});
+
 test("shows Ines's three photos before text, supports mobile swiping, and returns from the viewer", async ({
   page,
   isMobile,
@@ -133,7 +159,7 @@ test("publishes three photographs together and preserves the image limit across 
       .nth(index)
       .click();
     await picker
-      .getByRole("button", { name: "Use Photograph", exact: true })
+      .getByRole("button", { name: "Use photograph", exact: true })
       .click();
   }
   await expect(

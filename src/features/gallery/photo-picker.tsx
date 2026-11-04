@@ -3,11 +3,9 @@ import Image from "next/image";
 import { DevicePhotoPreview } from "@/components/shared/device-photo-preview";
 import { Check, Image as ImageIcon, Upload } from "@/components/margin-icons";
 import { useEffect, useId, useRef, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -64,8 +62,9 @@ export function PhotoPicker({
         <DialogHeader className="margin-photo-picker-header">
           <DialogTitle>Choose a photograph</DialogTitle>
           <DialogDescription>
-            Select a saved photograph or choose one from your device, then
-            review it before continuing. Files stay in this tab.
+            {props.context === "gallery"
+              ? "Choose a saved photo or upload one. Photos are checked before you add them to your gallery."
+              : "Choose a saved photo or upload one. Nothing is shared until you publish, and photos are checked before others see them."}
           </DialogDescription>
         </DialogHeader>
         <PhotoSelection {...props} onCancel={() => onOpenChange(false)} />
@@ -132,19 +131,9 @@ function PhotoSelection({
       alive.current = false;
     };
   }, []);
-  const {
-    register,
-    control,
-    handleSubmit,
-    setValue,
-    clearErrors,
-    formState: { errors, isSubmitting },
-  } = useForm<{ description: string }>({ defaultValues: { description: "" } });
-  const description = useWatch({ control, name: "description" });
+  const [isSubmitting, setSubmitting] = useState(false);
   function chooseSaved(photo: Photo) {
     setSelection({ kind: "library", id: photo.id });
-    setValue("description", photo.description);
-    clearErrors();
     setError("");
     if (input.current) input.current.value = "";
   }
@@ -153,16 +142,16 @@ function PhotoSelection({
       className="margin-photo-source"
       aria-labelledby="photo-library-title"
     >
-      <h3 id="photo-library-title">Your Photographs</h3>
+      <h3 id="photo-library-title">Your photographs</h3>
       {!library.length && (
         <p className="margin-field-hint">No photographs here yet.</p>
       )}
       <div className="margin-photo-library">
-        {library.map((photo) => (
+        {library.map((photo, index) => (
           <button
             key={photo.id}
             type="button"
-            aria-label={`Select ${photoLabel(photo)}`}
+            aria-label={`Select ${photoLabel(photo) === "Photograph" ? `photograph ${index + 1}` : photoLabel(photo)}`}
             aria-pressed={selectedPhoto?.id === photo.id}
             disabled={isSubmitting || !allowed(photo)}
             onClick={() => chooseSaved(photo)}
@@ -198,30 +187,30 @@ function PhotoSelection({
           id={formId}
           className="margin-upload-form"
           noValidate
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
+            event.preventDefault();
             event.stopPropagation();
-            void handleSubmit(async ({ description }) => {
-              setError("");
-              if (!selectionAllowed) return;
-              if (selectedPhoto) {
-                onChoose(selectedPhoto);
-                return;
-              }
-              if (!selectedFile || !allowedRef.current) return;
-              try {
-                const photo = await preview.upload(selectedFile, description);
-                if (alive.current && allowedRef.current) onChoose(photo);
-              } catch (error) {
-                if (alive.current) setError(previewMessage(error));
-              }
-            })(event);
+            if (isSubmitting || !selectionAllowed) return;
+            setError("");
+            if (selectedPhoto) {
+              onChoose(selectedPhoto);
+              return;
+            }
+            if (!selectedFile || !allowedRef.current) return;
+            setSubmitting(true);
+            try {
+              const photo = await preview.upload(selectedFile);
+              if (alive.current && allowedRef.current) onChoose(photo);
+            } catch (error) {
+              if (alive.current) setError(previewMessage(error));
+            } finally {
+              if (alive.current) setSubmitting(false);
+            }
           }}
         >
-          {selectedFile && (
-            <DevicePhotoPreview file={selectedFile} description={description} />
-          )}
+          {selectedFile && <DevicePhotoPreview file={selectedFile} />}
           <Field>
-            <Label htmlFor="local-photo">Photograph from your device</Label>
+            <Label htmlFor="local-photo">Or upload a new one</Label>
             <div
               className="margin-file-picker"
               data-disabled={isSubmitting || !uploadAllowed || undefined}
@@ -231,7 +220,7 @@ function PhotoSelection({
               </span>
               <div className="margin-file-summary">
                 <span className="margin-file-name" role="status">
-                  {selectedFile?.name ?? "A photograph from your day"}
+                  {selectedFile?.name ?? "Upload from your device"}
                 </span>
                 <span id="photo-file-hint" className="margin-field-hint">
                   JPEG, PNG or WebP · Up to 8 MB
@@ -253,41 +242,10 @@ function PhotoSelection({
                   const file = event.target.files?.[0];
                   if (!file) return;
                   setSelection({ kind: "device", file });
-                  setValue("description", "");
-                  clearErrors();
                   setError("");
                 }}
               />
             </div>
-          </Field>
-          <Field>
-            <Label htmlFor="photo-description">
-              Describe the photograph (alt text)
-            </Label>
-            <Input
-              id="photo-description"
-              maxLength={300}
-              {...register("description", {
-                validate: (value) =>
-                  Boolean(value.trim()) ||
-                  "Describe the photograph for people who can’t see it.",
-                maxLength: 300,
-              })}
-              readOnly={Boolean(selectedPhoto)}
-              disabled={isSubmitting || !selection}
-              aria-invalid={Boolean(errors.description)}
-              aria-describedby={`photo-description-hint${errors.description ? " photo-description-error" : ""}`}
-            />
-            <p id="photo-description-hint" className="margin-field-hint">
-              {selectedPhoto
-                ? "The saved description is preserved when you reuse this photograph."
-                : "Describe what’s visible for people using screen readers. Add any story in your post."}
-            </p>
-            {errors.description && (
-              <FieldError id="photo-description-error">
-                {errors.description.message}
-              </FieldError>
-            )}
           </Field>
           {error && <FieldError>{error}</FieldError>}
           {!uploadAllowed && (
@@ -308,7 +266,7 @@ function PhotoSelection({
           form={formId}
           disabled={isSubmitting || !selectionAllowed}
         >
-          {isSubmitting ? "Checking photograph…" : "Use Photograph"}
+          {isSubmitting ? "Checking photograph…" : "Use photograph"}
         </Button>
       </footer>
     </>

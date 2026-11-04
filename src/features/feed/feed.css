@@ -39,6 +39,25 @@
   display: grid;
   gap: var(--space-group);
 }
+/* Main feed only: dividers stay on the reading grid when posts move. */
+:is(.margin-feed-list, .margin-space-timeline)[data-main-feed="true"] {
+  gap: 0;
+}
+[data-main-feed="true"]
+  > :is(.margin-post-slot, [data-day-start])
+  ~ :is(.margin-post-slot, [data-day-start]) {
+  position: relative;
+}
+[data-main-feed="true"]
+  > :is(.margin-post-slot, [data-day-start])
+  ~ :is(.margin-post-slot, [data-day-start])::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline: var(--margin-post-inline-padding);
+  height: 1px;
+  background: hsl(var(--border) / 0.65);
+}
 .margin-feed-intro {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -60,6 +79,9 @@
 }
 .margin-feed-list > [data-day-start="true"]:not(:first-child) {
   padding-top: calc(var(--space-section) - var(--space-group));
+}
+.margin-feed-list[data-main-feed="true"] > [data-day-start="true"] {
+  padding-top: var(--space-group);
 }
 .margin-day-heading {
   margin-block: 0 12px;

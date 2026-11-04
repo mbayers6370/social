@@ -112,7 +112,7 @@ test.describe("shared member feed presentation and personal composer", () => {
     await page.getByLabel("Your post").fill("Keep this draft");
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(
-      page.getByRole("button", { name: "Reload to check saved changes" }),
+      page.getByRole("button", { name: "Check saved posts" }),
     ).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(trigger).toBeFocused();
@@ -122,7 +122,7 @@ test.describe("shared member feed presentation and personal composer", () => {
     expect(calls).toBe(1);
   });
 
-  test("reviews a device photograph before publishing its bytes and Unicode description together", async ({
+  test("reviews a device photograph before publishing its bytes without a description field", async ({
     page,
   }) => {
     const bytes = readFileSync("src/assets/fixtures/tea.jpg");
@@ -154,9 +154,6 @@ test.describe("shared member feed presentation and personal composer", () => {
       mimeType: "image/jpeg",
       buffer: bytes,
     });
-    await picker
-      .getByLabel("Describe the photograph (alt text)")
-      .fill("Une rivière");
     await expect(picker.locator(".margin-dropped-photo")).toBeVisible();
     await expect
       .poll(() =>
@@ -167,7 +164,7 @@ test.describe("shared member feed presentation and personal composer", () => {
       )
       .toBe(true);
     await picker
-      .getByRole("button", { name: "Use Photograph", exact: true })
+      .getByRole("button", { name: "Use photograph", exact: true })
       .click();
     expect(calls).toBe(0);
     const attachment = page.locator(".margin-compose-photo > img");
@@ -196,7 +193,7 @@ test.describe("shared member feed presentation and personal composer", () => {
       page.getByRole("status").filter({ hasText: "Post shared with friends." }),
     ).toBeVisible();
     expect(calls).toBe(1);
-    expect(description).toBe("Une rivière");
+    expect(description).toBeNull();
     expect(Buffer.from(uploaded!)).toEqual(bytes);
   });
 });

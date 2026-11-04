@@ -9,6 +9,20 @@ export function useSpaceAction() {
   const [refreshing, startRefresh] = useTransition();
   const [error, setError] = useState("");
   const [uncertain, setUncertain] = useState(false);
+  const [checkedSavedChanges, setCheckedSavedChanges] = useState(false);
+  function checkSavedChanges() {
+    if (!uncertain || working || refreshing) return;
+    startRefresh(() => {
+      router.refresh();
+      setCheckedSavedChanges(true);
+    });
+  }
+  function resumeDraft() {
+    if (!checkedSavedChanges || working || refreshing) return;
+    setUncertain(false);
+    setCheckedSavedChanges(false);
+    setError("");
+  }
   async function run(
     url: string,
     method: string,
@@ -19,6 +33,7 @@ export function useSpaceAction() {
     if (working || refreshing || (create && uncertain)) return null;
     setWorking(true);
     setError("");
+    setCheckedSavedChanges(false);
     try {
       let response: Response;
       try {
@@ -44,7 +59,7 @@ export function useSpaceAction() {
         if (create) setUncertain(true);
         throw Error(
           create
-            ? "The result is uncertain. Reload to check saved changes before trying again."
+            ? "The result is uncertain. Check saved changes before trying again."
             : "Couldn’t complete the change. Please try again.",
         );
       }
@@ -53,7 +68,7 @@ export function useSpaceAction() {
         const data = await response.json().catch(() => null);
         throw Error(
           create && response.status >= 500
-            ? "The result is uncertain. Reload to check saved changes before trying again."
+            ? "The result is uncertain. Check saved changes before trying again."
             : data?.error || "Couldn’t complete the change.",
         );
       }
@@ -63,7 +78,7 @@ export function useSpaceAction() {
       } catch {
         if (create) setUncertain(true);
         throw Error(
-          "Couldn’t confirm the result. Reload to check saved changes.",
+          "Couldn’t confirm the result. Check saved changes before trying again.",
         );
       }
       if (!client.preview && options?.refresh !== false)
@@ -78,5 +93,13 @@ export function useSpaceAction() {
       setWorking(false);
     }
   }
-  return { run, busy: working || refreshing, error, uncertain };
+  return {
+    run,
+    busy: working || refreshing,
+    error,
+    uncertain,
+    checkedSavedChanges,
+    checkSavedChanges,
+    resumeDraft,
+  };
 }

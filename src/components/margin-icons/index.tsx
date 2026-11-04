@@ -1035,7 +1035,7 @@ export function GalleryAnimated({
   );
 }
 
-/** A short forward movement. Import margin-icons.css once. */
+/** Flies up and away, shrinking before returning to the resting glyph. Import margin-icons.css once. */
 export function SendAnimated({
   animate = false,
   paused = false,
@@ -1071,7 +1071,7 @@ export function LockAnimated({
   );
 }
 
-/** Pages ease into their resting position. Import margin-icons.css once. */
+/** One page turns across the spine of the stationary book. Import margin-icons.css once. */
 export function NotebookAnimated({
   animate = false,
   paused = false,
@@ -1079,9 +1079,10 @@ export function NotebookAnimated({
 }: AnimatedIconProps) {
   return renderIcon(
     <>
+      <path d="M12 6.5 C9.5 4.6 6.8 4.1 4.5 4.8 Q3.5 5.1 3.5 6.3 V17 Q3.5 18.2 4.8 17.9 C7.4 17.3 9.9 18.1 12 19.5 C14.1 18.1 16.6 17.3 19.2 17.9 Q20.5 18.2 20.5 17 V6.3 Q20.5 5.1 19.5 4.8 C17.2 4.1 14.5 4.6 12 6.5 Z" />
+      <path d="M12 6.5 V19.5" />
       <g className="margin-page">
-        <path d="M12 6.5 C9.5 4.6 6.8 4.1 4.5 4.8 Q3.5 5.1 3.5 6.3 V17 Q3.5 18.2 4.8 17.9 C7.4 17.3 9.9 18.1 12 19.5 C14.1 18.1 16.6 17.3 19.2 17.9 Q20.5 18.2 20.5 17 V6.3 Q20.5 5.1 19.5 4.8 C17.2 4.1 14.5 4.6 12 6.5 Z" />
-        <path d="M12 6.5 V19.5" />
+        <path d="M12 6.5 C14.5 4.6 17.2 4.1 19.5 4.8 Q20.5 5.1 20.5 6.3 V17 Q20.5 18.2 19.2 17.9 C16.6 17.3 14.1 18.1 12 19.5 Z" />
       </g>
     </>,
     props,

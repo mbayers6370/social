@@ -83,7 +83,6 @@ function Harness({ personId }: { personId?: string }) {
               new File(["local photograph"], "private-filename.png", {
                 type: "image/png",
               }),
-              "Sunrise",
             )
             .then((photo) => preview.place(photo.id));
         }}
@@ -298,7 +297,7 @@ it("releases a deleted local image's blob URL once it has no remaining reference
     screen.getByRole("button", { name: "Add local photograph" }),
   );
   await user.click(
-    await screen.findByRole("button", { name: /View Sunrise, photograph/ }),
+    await screen.findByRole("button", { name: /View Photograph, photograph/ }),
   );
   const viewer = screen.getByRole("dialog", { name: "Photograph" });
   await user.click(
@@ -408,7 +407,7 @@ it("adds a photograph through the sheet with explicit Done and Cancel, without c
   await user.click(
     within(
       screen.getByRole("dialog", { name: "Choose a photograph" }),
-    ).getByRole("button", { name: "Use Photograph" }),
+    ).getByRole("button", { name: "Use photograph" }),
   );
   let editor = await screen.findByRole("dialog", { name: "Add Photograph" });
   expect(snapshot().state.gallery).toHaveLength(1);
@@ -422,7 +421,7 @@ it("adds a photograph through the sheet with explicit Done and Cancel, without c
   await user.click(
     within(
       screen.getByRole("dialog", { name: "Choose a photograph" }),
-    ).getByRole("button", { name: "Use Photograph" }),
+    ).getByRole("button", { name: "Use photograph" }),
   );
   editor = await screen.findByRole("dialog", { name: "Add Photograph" });
   await user.click(within(editor).getByRole("button", { name: "Done" }));
@@ -440,7 +439,7 @@ it("requires a deliberate replacement in a full gallery and keeps the replaced p
   await user.click(
     within(
       screen.getByRole("dialog", { name: "Choose a photograph" }),
-    ).getByRole("button", { name: "Use Photograph" }),
+    ).getByRole("button", { name: "Use photograph" }),
   );
   const editor = await screen.findByRole("dialog", { name: "Add Photograph" });
   expect(within(editor).getByRole("button", { name: "Done" })).toBeDisabled();

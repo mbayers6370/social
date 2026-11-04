@@ -1,6 +1,10 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { invitationToken, digestToken } from "./invitation-links";
+import {
+  invitationToken,
+  digestToken,
+  isInvitationWriteConflict,
+} from "./invitation-links";
 import type { PrismaClient, Prisma } from "../../generated/prisma/client";
 
 type Identity = { subject: string; verifiedEmail: string };
@@ -60,7 +64,10 @@ async function transaction<T>(
     } catch (error) {
       const code =
         typeof error === "object" && error && "code" in error ? error.code : "";
-      if (code === "P2034" && attempt < 2) continue;
+      if (isInvitationWriteConflict(error) && attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 10 * 2 ** attempt));
+        continue;
+      }
       if (code === "P2002")
         throw new AccountSetupError(
           "That username is unavailable. Choose another one.",
@@ -173,17 +180,7 @@ export async function completeAccountOnboarding(
     const invitedMember = Boolean(
       invitation.linkId && !invitation.founderSubject,
     );
-    const activation = invitedMember
-      ? {
-          status: "ACTIVE" as const,
-          ...(!existing?.account?.invitationAllowanceGrantedAt
-            ? {
-                invitationsRemaining: 3,
-                invitationAllowanceGrantedAt: now,
-              }
-            : {}),
-        }
-      : {};
+    const activation = invitedMember ? { status: "ACTIVE" as const } : {};
     const account = await tx.account.upsert({
       where: { userId: owner.id },
       create: {
@@ -257,9 +254,6 @@ export async function activateAccount(
           ? { role: "FOUNDER" }
           : {}),
         emailVerifiedAt: now,
-        ...(!user.account.invitationAllowanceGrantedAt
-          ? { invitationsRemaining: 3, invitationAllowanceGrantedAt: now }
-          : {}),
       },
     });
     return { status: "ACTIVE" as const };

@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { usePreview } from "@/features/local-preview/provider";
+import { PostPhotoDeleteOption } from "./post-photo-delete-option";
 import {
   previewMessage,
   type FriendPost,
@@ -25,6 +26,7 @@ export function DeletePostButton({
   const preview = usePreview();
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
+  const [deletePhotos, setDeletePhotos] = useState(false);
   const cancel = useRef<HTMLButtonElement>(null);
   const deleted = useRef(false);
   if (post.author.id !== preview.bootstrap.viewerId) return null;
@@ -34,6 +36,7 @@ export function DeletePostButton({
       onOpenChange={(open) => {
         setConfirming(open);
         setError("");
+        if (open) setDeletePhotos(false);
       }}
     >
       <DialogTrigger asChild>
@@ -67,6 +70,12 @@ export function DeletePostButton({
             The post and its conversation will be removed. Photographs already
             in your gallery will stay.
           </DialogDescription>
+          {!!post.media?.length && (
+            <PostPhotoDeleteOption
+              checked={deletePhotos}
+              onChange={setDeletePhotos}
+            />
+          )}
           <div className="margin-form-actions">
             <Button
               ref={cancel}
@@ -80,7 +89,7 @@ export function DeletePostButton({
               onClick={() => {
                 try {
                   deleted.current = true;
-                  preview.deletePost(post.id);
+                  preview.deletePost(post.id, deletePhotos);
                   setConfirming(false);
                   onDeleted();
                 } catch (error) {

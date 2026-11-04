@@ -354,7 +354,17 @@ export function GalleryEditor({
       <footer className="margin-gallery-editor-footer" inert={saving}>
         {selected && (
           <div className="margin-editor-selection">
-            <p title={photoLabel(selected)}>{photoLabel(selected)}</p>
+            <div className="margin-editor-selected-photo">
+              <Image
+                {...selected.image}
+                alt=""
+                unoptimized
+                width={40}
+                height={40}
+                sizes="40px"
+              />
+              <p title={photoLabel(selected)}>{photoLabel(selected)}</p>
+            </div>
             {needsReplacement && addition ? (
               <Button
                 onClick={() => {
@@ -380,20 +390,20 @@ export function GalleryEditor({
               <div className="margin-editor-selection-actions">
                 <Button
                   variant="ghost"
-                  size="icon"
                   aria-label="Move earlier"
                   disabled={groupIndex <= 0}
                   onClick={() => move(-1)}
                 >
                   <ChevronLeft aria-hidden="true" />
+                  Earlier
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
                   aria-label="Move later"
                   disabled={groupIndex >= selectedGroup.length - 1}
                   onClick={() => move(1)}
                 >
+                  Later
                   <ChevronRight aria-hidden="true" />
                 </Button>
                 <Button
@@ -404,23 +414,26 @@ export function GalleryEditor({
                     groups[0].length >= FEATURED_LIMIT
                   }
                   aria-pressed={selectedEntry?.featured}
+                  aria-label={
+                    selectedEntry?.featured ? "Unfeature" : "Feature photograph"
+                  }
                   onClick={() => {
                     cancelDrag();
                     feature(selected.id);
                   }}
                 >
-                  {selectedEntry?.featured ? "Unfeature" : "Feature photograph"}
+                  {selectedEntry?.featured ? "Unfeature" : "Feature"}
                 </Button>
                 {base.some((entry) => entry.photoId === selected.id) && (
                   <Button
                     ref={deleteTrigger}
                     variant="ghost"
-                    size="icon"
                     className="margin-gallery-delete"
                     aria-label="Delete photograph"
                     onClick={() => setDeleting(selected)}
                   >
                     <Trash aria-hidden="true" />
+                    Delete
                   </Button>
                 )}
               </div>

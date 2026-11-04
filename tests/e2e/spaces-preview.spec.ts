@@ -133,7 +133,7 @@ test("opens Spaces without credentials and keeps canonical conversations in the 
   expect(errors).toEqual([]);
 });
 
-test("creates a sample Event, posts and photographs locally, then archives read-only", async ({
+test("creates a sample Space with plans, posts and photographs locally, then archives read-only", async ({
   page,
 }, info) => {
   const privateRequests: string[] = [];
@@ -144,11 +144,8 @@ test("creates a sample Event, posts and photographs locally, then archives read-
   await page.goto("/preview/spaces");
   await page.getByRole("button", { name: "New Space" }).click();
   const dialog = page.getByRole("dialog");
-  await dialog.getByText("Gathering Space", { exact: true }).click();
-  await expect(
-    dialog.getByRole("radio", { name: "Gathering Space" }),
-  ).toBeChecked();
-  await dialog.getByLabel("Gathering Space name").fill("Music with friends");
+  await dialog.getByRole("button", { name: "Add a date and time" }).click();
+  await dialog.getByLabel("Space name").fill("Music with friends");
   await dialog.getByLabel("Date", { exact: true }).fill("2027-04-04");
   await dialog.getByLabel("Time", { exact: true }).fill("19:00");
   await dialog
@@ -175,21 +172,18 @@ test("creates a sample Event, posts and photographs locally, then archives read-
   await page
     .getByLabel("Photograph from your device", { exact: true })
     .setInputFiles(path.resolve("src/assets/fixtures/dog.jpg"));
-  await page
-    .getByLabel("Describe the photograph (alt text)")
-    .fill("A sample photograph for our room");
-  await page.getByRole("button", { name: "Use Photograph" }).click();
+  await page.getByRole("button", { name: "Use photograph" }).click();
   await page.getByRole("button", { name: "Publish", exact: true }).click();
   await expect(
     page.getByRole("img", { name: "A sample photograph for our room" }),
   ).toBeVisible();
   await showSpaceOptions(page);
   await page
-    .getByRole("button", { name: "Archive Gathering Space", exact: true })
+    .getByRole("button", { name: "Archive Space", exact: true })
     .click();
   const archive = page.getByRole("alertdialog");
   await archive
-    .getByRole("button", { name: "Archive Gathering Space", exact: true })
+    .getByRole("button", { name: "Archive Space", exact: true })
     .click();
   await expect(
     page
@@ -219,19 +213,26 @@ test("creates a sample Event, posts and photographs locally, then archives read-
     .click();
   await expect(
     page.getByRole("article").filter({ hasText: "Meet outside at six?" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("img", { name: "A sample photograph for our room" }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("navigation", {
+      name: info.project.name === "mobile" ? "Mobile navigation" : "Primary",
+      exact: true,
+    })
+    .getByRole("link", { name: "Spaces", exact: true })
+    .click();
+  await page.getByRole("link", { name: /Music with friends/ }).click();
+  await expect(
+    page.getByRole("article").filter({ hasText: "Meet outside at six?" }),
   ).toBeVisible();
   const photograph = page.getByRole("img", {
     name: "A sample photograph for our room",
   });
   await expect(photograph).toBeVisible();
   expect(await photograph.getAttribute("src")).toMatch(/^blob:/);
-  await photograph
-    .locator("xpath=ancestor::article")
-    .getByRole("link", {
-      name: "Space: Music with friends",
-      exact: true,
-    })
-    .click();
   await expect(
     page
       .getByRole("group", { name: "Your RSVP" })

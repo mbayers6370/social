@@ -13,6 +13,7 @@ const methods = vi.hoisted(() => ({
   account: vi.fn(),
   conversation: vi.fn(),
   exportAccount: vi.fn(),
+  uploadGallery: vi.fn(),
 }));
 vi.mock("@/server/auth", async (original) => ({
   ...(await original<typeof import("@/server/auth")>()),
@@ -31,6 +32,7 @@ vi.mock("@/server/member/service", () => ({
     account = methods.account;
     conversation = methods.conversation;
     exportAccount = methods.exportAccount;
+    uploadGallery = methods.uploadGallery;
   },
 }));
 beforeEach(() => {
@@ -130,7 +132,6 @@ it("bounds multipart publishing, rejects unexpected identity fields, and passes 
       type: "image/jpeg",
     }),
   );
-  form.append("descriptions", "Une rivière");
   methods.publish.mockResolvedValue({ id: "saved-post" });
   const response = await memberRequest(
     new Request("http://localhost:3000/api/posts/publish", {
@@ -148,7 +149,7 @@ it("bounds multipart publishing, rejects unexpected identity fields, and passes 
       {
         bytes: new Uint8Array([255, 216, 255]),
         type: "image/jpeg",
-        description: "Une rivière",
+        description: "Photograph",
       },
     ],
   );
@@ -161,7 +162,8 @@ it("bounds multipart publishing, rejects unexpected identity fields, and passes 
       }),
     ),
   ).rejects.toThrow();
-  form.append("photos", new File(["x"], "b.jpg"));
+  for (const name of ["b.jpg", "c.jpg", "d.jpg"])
+    form.append("photos", new File(["x"], name));
   await expect(
     postDraftRequest(
       new Request("http://localhost:3000/api/posts/publish", {
@@ -171,6 +173,29 @@ it("bounds multipart publishing, rejects unexpected identity fields, and passes 
     ),
   ).rejects.toThrow("three photographs");
 });
+it("accepts a Gallery upload without description headers", async () => {
+  methods.uploadGallery.mockResolvedValue({ id: "photo" });
+  const response = await memberRequest(
+    new Request("http://localhost:3000/api/gallery/photo", {
+      method: "POST",
+      headers: {
+        Origin: "http://localhost:3000",
+        "Content-Type": "image/jpeg",
+      },
+      body: new Uint8Array([255, 216, 255]),
+    }),
+    "galleryUpload",
+  );
+  expect(response.status).toBe(201);
+  expect(methods.uploadGallery).toHaveBeenCalledWith(
+    "verified-subject",
+    new Uint8Array([255, 216, 255]),
+    "image/jpeg",
+    "Photograph",
+    undefined,
+  );
+});
+
 it("rejects a pending account before reading uploaded bytes", async () => {
   methods.account.mockResolvedValueOnce({ accountStatus: "PENDING" });
   const response = await memberRequest(

@@ -25,6 +25,7 @@ import { PHOTO_MAX_BYTES } from "@/lib/media-policy";
 import { MemberService } from "./service";
 
 type Operation =
+  | "postingAllowance"
   | "identity"
   | "profileUpdate"
   | "preferences"
@@ -51,6 +52,7 @@ type Operation =
   | "personalPhotos"
   | "postPublish";
 const reads = new Set<Operation>([
+  "postingAllowance",
   "identity",
   "portrait",
   "musicSearch",
@@ -117,6 +119,9 @@ export async function memberRequest(
     const service = new MemberService(getDb(), privatePhotoStore);
     let result: unknown;
     switch (operation) {
+      case "postingAllowance":
+        result = await service.postingAllowance(subject);
+        break;
       case "personalPhotos":
         result = await service.personalPhotos(subject, before);
         break;
@@ -164,22 +169,11 @@ export async function memberRequest(
       case "galleryUpload": {
         if ((await service.account(subject))?.accountStatus !== "ACTIVE")
           throw new SocialError(403, "Account is not active");
-        if (request.headers.get("x-photo-description-encoding") !== "percent")
-          throw new SocialError(400, "Encoded description required");
-        let description: string;
-        try {
-          description = decodeURIComponent(
-            request.headers.get("x-photo-description") ?? "",
-          );
-        } catch {
-          throw new SocialError(400, "Invalid photograph description");
-        }
-        description = z.string().trim().min(1).max(500).parse(description);
         result = await service.uploadGallery(
           subject,
           await boundedBody(request, PHOTO_MAX_BYTES),
           request.headers.get("content-type") ?? "",
-          description,
+          "Photograph",
           request.headers.has("x-gallery-replacement")
             ? memberId.parse(request.headers.get("x-gallery-replacement"))
             : undefined,

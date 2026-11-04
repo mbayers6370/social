@@ -63,6 +63,16 @@ it("expands and collapses a reply group by keyboard, retaining reply context and
   expect(button).toHaveAttribute("aria-expanded", "true");
   const replies = screen.getByRole("list", { name: "Replies to Samuel" });
   expect(within(replies).getAllByRole("listitem")).toHaveLength(2);
+  expect(replies.querySelectorAll("ol")).toHaveLength(0);
+  expect(replies.querySelectorAll(".margin-reply-context")).toHaveLength(1);
+  expect(
+    document.querySelector(
+      `#comment-post-fog-${reply.id} .margin-reply-context`,
+    ),
+  ).toBeNull();
+  expect(
+    document.querySelector(`#comment-post-fog-${reply.id} time`),
+  ).toHaveAttribute("datetime", reply.createdAt);
   const parentLink = within(replies).getByText("Ines", {
     selector: ".margin-reply-context a",
   });

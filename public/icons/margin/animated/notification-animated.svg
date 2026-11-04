@@ -1,45 +1,206 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="margin-icon" data-animate="true" data-paused="false" role="img" aria-label="Notification">
-<title>Notification</title>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="margin-icon" role="img" aria-hidden="false" aria-label="Notification" focusable="false" data-animate="true" data-paused="false"><title>Notification</title>
 <style>
 /* Margin Editorial Geometry — import once at your app root. */
-.margin-icon { display: inline-block; flex-shrink: 0; vertical-align: middle; }
-.margin-icon [class^="margin-"], .margin-icon [class*=" margin-"] {
-  transform-box: view-box; transform-origin: 12px 12px;
+.margin-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
-.margin-icon[data-animate="true"] .margin-eq-bar { animation: margin-equalize 1.15s ease-in-out infinite alternate; }
-.margin-icon[data-animate="true"] .margin-eq-bar-1 { animation-duration: 1.15s; animation-delay: -.35s; }
-.margin-icon[data-animate="true"] .margin-eq-bar-2 { animation-duration: .87s; animation-delay: -.55s; }
-.margin-icon[data-animate="true"] .margin-eq-bar-3 { animation-duration: 1.31s; animation-delay: -.8s; }
-.margin-icon[data-animate="true"] .margin-eq-bar-4 { animation-duration: .97s; animation-delay: -.18s; }
-.margin-icon[data-animate="true"] .margin-settle { animation: margin-settle 360ms ease-out both; }
-.margin-icon[data-animate="true"] .margin-pulse { animation: margin-pulse 420ms ease-in-out both; }
-.margin-icon[data-animate="true"] .margin-swing { transform-origin: 12px 5px; animation: margin-swing 540ms ease-in-out both; }
-.margin-icon[data-animate="true"] .margin-space-left { animation: margin-space-left 720ms ease-in-out both; }
-.margin-icon[data-animate="true"] .margin-space-right { animation: margin-space-right 720ms ease-in-out both; }
-.margin-icon[data-animate="true"] .margin-aperture { animation: margin-aperture 480ms ease-out both; }
-.margin-icon[data-animate="true"] .margin-send { animation: margin-send 360ms ease-out both; }
-.margin-icon[data-animate="true"] .margin-shackle { transform-origin: 8px 10px; animation: margin-shackle 720ms ease-in-out both; }
-.margin-icon[data-animate="true"] .margin-page { animation: margin-page 440ms ease-out both; }
-.margin-icon[data-animate="true"] .margin-draw { animation: margin-draw 360ms ease-out both; }
+.margin-icon [class^="margin-"],
+.margin-icon [class*=" margin-"] {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+}
+.margin-icon .margin-page {
+  opacity: 0;
+}
+.margin-icon[data-animate="true"] .margin-eq-bar {
+  animation: margin-equalize 1.15s ease-in-out infinite alternate;
+}
+.margin-icon[data-animate="true"] .margin-eq-bar-1 {
+  animation-duration: 1.15s;
+  animation-delay: -0.35s;
+}
+.margin-icon[data-animate="true"] .margin-eq-bar-2 {
+  animation-duration: 0.87s;
+  animation-delay: -0.55s;
+}
+.margin-icon[data-animate="true"] .margin-eq-bar-3 {
+  animation-duration: 1.31s;
+  animation-delay: -0.8s;
+}
+.margin-icon[data-animate="true"] .margin-eq-bar-4 {
+  animation-duration: 0.97s;
+  animation-delay: -0.18s;
+}
+.margin-icon[data-animate="true"] .margin-settle {
+  animation: margin-settle 360ms ease-out both;
+}
+.margin-icon[data-animate="true"] .margin-pulse {
+  animation: margin-pulse 420ms ease-in-out both;
+}
+.margin-icon[data-animate="true"] .margin-swing {
+  transform-origin: 12px 5px;
+  animation: margin-swing 540ms ease-in-out both;
+}
+.margin-icon[data-animate="true"] .margin-space-left {
+  animation: margin-space-left 720ms ease-in-out both;
+}
+.margin-icon[data-animate="true"] .margin-space-right {
+  animation: margin-space-right 720ms ease-in-out both;
+}
+.margin-icon[data-animate="true"] .margin-aperture {
+  animation: margin-aperture 480ms ease-out both;
+}
+.margin-icon[data-animate="true"] .margin-send {
+  animation: margin-send 760ms ease-in-out both;
+}
+.margin-icon[data-animate="true"] .margin-shackle {
+  transform-origin: 8px 10px;
+  animation: margin-shackle 720ms ease-in-out both;
+}
+.margin-icon[data-animate="true"] .margin-page {
+  transform-origin: 12px 13px;
+  animation: margin-page 900ms ease-in-out both;
+}
+.margin-icon[data-animate="true"] .margin-draw {
+  animation: margin-draw 360ms ease-out both;
+}
 /* Explicit pausing returns a legible, static glyph. */
 .margin-icon[data-paused="true"] *,
 .margin-icon[data-motion="off"] *,
-[data-margin-motion="off"] .margin-icon * { animation: none !important; }
-@keyframes margin-equalize { from { transform: scaleY(.65); } to { transform: scaleY(1.12); } }
-@keyframes margin-settle { from { transform: translateY(-1px); } to { transform: translateY(0); } }
-@keyframes margin-pulse { 0%,100% { transform: scale(1); } 45% { transform: scale(1.07); } }
-@keyframes margin-swing { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 65% { transform: rotate(5deg); } }
-@keyframes margin-space-left { 0%,12% { transform: translateX(-3.2px) scale(.68); } 100% { transform: translateX(0) scale(1); } }
-@keyframes margin-space-right { 0%,12% { transform: translateX(3.2px) scale(.68); } 100% { transform: translateX(0) scale(1); } }
-@keyframes margin-aperture { from { transform: rotate(-9deg) scale(.97); } to { transform: rotate(0) scale(1); } }
-@keyframes margin-send { from { transform: translate(-.8px,.5px); } to { transform: translate(0,0); } }
-@keyframes margin-shackle { 0%,18% { transform: rotate(-32deg); } 100% { transform: rotate(0); } }
-@keyframes margin-page { from { transform: scaleX(.92); } to { transform: scaleX(1); } }
-@keyframes margin-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1; stroke-dashoffset: 0; } }
-@media (prefers-reduced-motion: reduce) {
-  .margin-icon *, .margin-icon { animation: none !important; transition: none !important; }
+[data-margin-motion="off"] .margin-icon * {
+  animation: none !important;
 }
-
+@keyframes margin-equalize {
+  from {
+    transform: scaleY(0.65);
+  }
+  to {
+    transform: scaleY(1.12);
+  }
+}
+@keyframes margin-settle {
+  from {
+    transform: translateY(-1px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes margin-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.07);
+  }
+}
+@keyframes margin-swing {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-7deg);
+  }
+  65% {
+    transform: rotate(5deg);
+  }
+}
+@keyframes margin-space-left {
+  0%,
+  12% {
+    transform: translateX(-3.2px) scale(0.68);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+@keyframes margin-space-right {
+  0%,
+  12% {
+    transform: translateX(3.2px) scale(0.68);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+@keyframes margin-aperture {
+  from {
+    transform: rotate(-9deg) scale(0.97);
+  }
+  to {
+    transform: rotate(0) scale(1);
+  }
+}
+@keyframes margin-send {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(12px, -12px) scale(0.12);
+    opacity: 0;
+  }
+  71% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+}
+@keyframes margin-shackle {
+  0%,
+  18% {
+    transform: rotate(-32deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+@keyframes margin-page {
+  0% {
+    transform: scaleX(1) skewY(0deg);
+    opacity: 0;
+  }
+  12% {
+    transform: scaleX(0.98) skewY(-1deg);
+    opacity: 1;
+  }
+  48% {
+    transform: scaleX(0.04) skewY(-7deg);
+    opacity: 1;
+  }
+  52% {
+    transform: scaleX(-0.04) skewY(7deg);
+    opacity: 1;
+  }
+  88% {
+    transform: scaleX(-0.98) skewY(1deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(-1) skewY(0deg);
+    opacity: 0;
+  }
+}
+@keyframes margin-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .margin-icon *,
+  .margin-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 </style>
-<g class="margin-swing"><path d="M6.5 9 A5.5 5.5 0 0 1 17.5 9 V12.3 Q17.5 14.4 19 15.7 Q20.1 17 18.2 17 H5.8 Q3.9 17 5 15.7 Q6.5 14.4 6.5 12.3 Z"/><path d="M9.5 20 Q12 22 14.5 20"/></g>
-</svg>
+<g class="margin-swing"><path d="M6.5 9 A5.5 5.5 0 0 1 17.5 9 V12.3 Q17.5 14.4 19 15.7 Q20.1 17 18.2 17 H5.8 Q3.9 17 5 15.7 Q6.5 14.4 6.5 12.3 Z"></path><path d="M9.5 20 Q12 22 14.5 20"></path></g></svg>

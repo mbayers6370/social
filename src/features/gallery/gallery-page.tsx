@@ -233,9 +233,10 @@ export function GalleryPage({ personId }: { personId?: string }) {
                 <div
                   className={
                     groupIndex === 0
-                      ? "margin-gallery-featured"
+                      ? "margin-gallery-featured margin-gallery-mosaic"
                       : "margin-gallery-grid"
                   }
+                  data-count={groupIndex === 0 ? group.length : undefined}
                 >
                   {group.map((photo) => (
                     <div
@@ -252,6 +253,7 @@ export function GalleryPage({ personId }: { personId?: string }) {
                       <button
                         type="button"
                         className="margin-gallery-tile"
+                        data-photo-open
                         aria-label={`View ${photoLabel(photo)}, photograph ${ordered.indexOf(photo) + 1} of ${photos.length}`}
                         onClick={(event) => {
                           returnTo.current = event.currentTarget;

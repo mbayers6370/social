@@ -168,7 +168,7 @@ export function UsernameSettings({
       <p className="margin-field-hint">
         {locked
           ? "Your one username change has been used."
-          : "You can change your username once after account setup. This change is permanent."}
+          : "You can change your username once. After that, it’s permanent."}
       </p>
       <p role="status" className="margin-status">
         {status}

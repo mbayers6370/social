@@ -18,6 +18,26 @@ test("spaces Settings groups and account actions on desktop and mobile, includin
     "standard",
   );
   const content = page.locator(".margin-settings-page");
+  await expect(
+    page.getByRole("checkbox", { name: "Likes Activity on your posts" }),
+  ).not.toBeChecked();
+  await expect(
+    content.locator("summary").filter({ hasText: "Blocked people" }),
+  ).toHaveText("Blocked peopleNone");
+  await expect(
+    content.locator("summary").filter({ hasText: "Your reports" }),
+  ).toHaveText("Your reportsNone");
+  await expect(
+    content.getByText(
+      "You can change your username once. After that, it’s permanent.",
+    ),
+  ).toBeVisible();
+  await expect(content.locator("#messaging-settings")).toContainText(
+    "Messages are deleted after 30 days. You can export any conversation.",
+  );
+  await expect(content.locator("#messaging-settings")).toContainText(
+    "Notebook is your private space for notes to yourself",
+  );
   const opening = content.locator(".margin-settings-opening");
   const columns = content.locator(".margin-settings-columns");
   const title = content.getByRole("heading", {
@@ -52,7 +72,7 @@ test("spaces Settings groups and account actions on desktop and mobile, includin
   });
   await page.getByRole("radio", { name: "Extra large", exact: true }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Settings saved." }),
+    page.getByRole("status").filter({ hasText: "Saved" }),
   ).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute(
     "data-reading-size",

@@ -11,19 +11,16 @@ test("photographs stay selected until confirmed and retain saved alt text", asyn
   await page.getByRole("button", { name: "Change profile photograph" }).click();
   const picker = page.getByRole("dialog", { name: "Choose a photograph" });
   const use = picker.getByRole("button", {
-    name: "Use Photograph",
+    name: "Use photograph",
     exact: true,
   });
   await expect(use).toBeDisabled();
   const photo = picker.getByRole("button", { name: /^Select / }).first();
-  const description = await photo.locator("img").getAttribute("alt");
   await photo.click();
   await expect(photo).toHaveAttribute("aria-pressed", "true");
   await expect(photo.locator(".margin-photo-selected-mark")).toBeVisible();
   await expect(photo).toHaveCSS("border-top-width", "3px");
-  await expect(
-    picker.getByRole("textbox", { name: "Describe the photograph (alt text)" }),
-  ).toHaveValue(description!);
+  await expect(picker.getByRole("textbox")).toHaveCount(0);
   await expect(use).toBeEnabled();
   await page.screenshot({
     path: `test-results/selected-photo-${testInfo.project.name}.png`,

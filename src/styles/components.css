@@ -92,6 +92,11 @@
 .margin-avatar-link:hover .margin-avatar {
   box-shadow: 0 0 0 2px hsl(var(--citron));
 }
+[data-photo-open] > img {
+  cursor:
+    url("/brands/photo-open-cursor.svg") 22 22,
+    pointer;
+}
 .margin-status {
   font-size: var(--text-body);
   line-height: 1.5;

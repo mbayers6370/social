@@ -16,6 +16,9 @@ it("keeps development bytes private, rejects traversal, and handles repeated del
     expect(await store.get(key)).toEqual(Buffer.from([1, 2, 3]));
     expect((await stat(join(root, key))).mode & 0o777).toBe(0o600);
     expect((await stat(join(root, "social"))).mode & 0o777).toBe(0o700);
+    const listing = await store.list!();
+    expect(listing.objects).toEqual([{ key, lastModified: expect.any(Date) }]);
+    expect(await store.list!(key)).toEqual({ objects: [], hasMore: false });
     await expect(store.get("../.env")).rejects.toThrow(
       "Invalid private object key",
     );

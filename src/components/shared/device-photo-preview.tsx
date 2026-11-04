@@ -2,13 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /** Device previews stay in this tab; each URL lives as long as its selected file. */
-export function DevicePhotoPreview({
-  file,
-  description,
-}: {
-  file: File;
-  description: string;
-}) {
+export function DevicePhotoPreview({ file }: { file: File }) {
   const image = useRef<HTMLImageElement>(null);
   const [failed, setFailed] = useState<File>();
   useEffect(() => {
@@ -23,7 +17,7 @@ export function DevicePhotoPreview({
       <img
         ref={image}
         className="margin-dropped-photo"
-        alt={description.trim() || "Selected photograph"}
+        alt="Selected photograph"
         width={320}
         height={240}
         loading="eager"

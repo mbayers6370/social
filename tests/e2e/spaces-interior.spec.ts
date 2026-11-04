@@ -48,9 +48,7 @@ test("keeps Gathering RSVP responses in the sidebar and Share directly above pos
     page.getByRole("heading", { name: "Japan 2027", exact: true }),
   ).toBeVisible();
   await expect(
-    page
-      .getByRole("region", { name: "Gathering and event details" })
-      .locator("time"),
+    page.getByRole("region", { name: "Date and place" }).locator("time"),
   ).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Your RSVP" })).toHaveCount(
     0,
@@ -85,10 +83,10 @@ test("keeps Gathering RSVP responses in the sidebar and Share directly above pos
   });
   await page.getByText("Space options", { exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Space settings", exact: true }),
+    page.getByRole("button", { name: "Edit details", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Archive Gathering Space", exact: true }),
+    page.getByRole("button", { name: "Archive Space", exact: true }),
   ).toBeVisible();
 });
 

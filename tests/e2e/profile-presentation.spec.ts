@@ -29,11 +29,11 @@ test("keeps profile details before posts on small screens and preserves the desk
     const boxes = await Promise.all(
       (await images.all()).map((image) => image.boundingBox()),
     );
-    for (const box of boxes) {
-      expect(box!.width).toBeGreaterThanOrEqual(44);
-      expect(Math.abs(box!.width - box!.height)).toBeLessThan(1);
-      expect(Math.abs(box!.y - boxes[0]!.y)).toBeLessThan(1);
-    }
+    for (const box of boxes) expect(box!.width).toBeGreaterThanOrEqual(44);
+    expect(boxes[0]!.y).toBeCloseTo(boxes[1]!.y, 1);
+    expect(boxes[0]!.height).toBeGreaterThan(boxes[1]!.height);
+    expect(boxes[1]!.x).toBeCloseTo(boxes[2]!.x, 1);
+    expect(boxes[2]!.y).toBeGreaterThan(boxes[1]!.y);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,

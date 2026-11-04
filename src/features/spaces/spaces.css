@@ -63,8 +63,7 @@
   margin-bottom: 8px;
 }
 .margin-event-search > div > p,
-.margin-event-result-copy > p,
-.margin-event-result-copy > time {
+.margin-event-result-copy > p {
   color: hsl(var(--muted-foreground));
   font-size: var(--text-control);
   overflow-wrap: anywhere;
@@ -132,10 +131,6 @@
   font-weight: 500;
   overflow-wrap: anywhere;
 }
-.margin-event-result-copy > time {
-  display: block;
-  margin-block: 4px;
-}
 .margin-space-directory {
   list-style: none;
   padding: 0;
@@ -181,6 +176,9 @@
   margin-top: 4px;
   font-size: var(--text-control);
   color: hsl(var(--muted-foreground));
+}
+.margin-space-date > span {
+  display: block;
 }
 .margin-space-row-arrow {
   width: 20px;
@@ -481,6 +479,15 @@
 .margin-space-members .margin-space-rows {
   margin: -16px -16px 0;
 }
+/* Reserve the member controls their own column so they stay beside the person. */
+.margin-space-rows > .margin-space-member-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.margin-space-member-copy {
+  display: grid;
+  gap: 2px;
+}
 .margin-space-member-actions {
   display: flex;
   gap: 4px;
@@ -608,8 +615,4 @@
   flex-shrink: 0;
   width: 14px;
   height: 14px;
-}
-.margin-space-post-kind {
-  color: hsl(var(--muted-foreground));
-  text-decoration: none;
 }

@@ -55,6 +55,7 @@ export function changeFriendship(
   state: LocalState,
   viewerId: string,
   raw: unknown,
+  now = new Date(),
 ): LocalState {
   const result = friendActionSchema.safeParse(raw);
   if (!result.success)
@@ -102,6 +103,7 @@ export function changeFriendship(
       people: [viewerId, personId],
       status: action === "send" ? "pending" : "accepted",
       ...(action === "send" ? { requestedBy: viewerId } : {}),
+      ...(action === "accept" ? { acceptedAt: now.toISOString() } : {}),
     });
   return { ...state, friendships };
 }

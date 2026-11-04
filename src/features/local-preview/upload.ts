@@ -6,9 +6,7 @@ import {
   PHOTO_MAX_DIMENSION,
   PHOTO_MAX_PIXELS,
 } from "@/lib/media-policy";
-export async function validateLocalPhoto(file: File, description: string) {
-  if (!description.trim() || description.trim().length > 300)
-    throw new PreviewError("Describe the photograph in 1–300 characters.");
+export async function validateLocalPhoto(file: File) {
   if (!file.size || file.size > PHOTO_MAX_BYTES)
     throw new PreviewError("Choose a photograph smaller than 8 MB.");
   try {

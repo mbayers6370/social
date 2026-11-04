@@ -122,7 +122,7 @@ describe("isolated local application", () => {
     expect(
       localPostingEligibility(next, "ines", new Date(original.createdAt), false)
         .imagesRemaining,
-    ).toBe(1);
+    ).toBe(0);
     expect(
       localPostingEligibility(next, "ines", new Date(original.createdAt), false)
         .regularRemaining,
@@ -157,7 +157,7 @@ describe("isolated local application", () => {
     expect(next.posts).toHaveLength(state.posts.length);
     expect(
       next.galleryAdditions?.some((entry) => entry.photoId === photo.id),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       next.postingRecords?.find((record) => record.id === before.id)
         ?.imageCount,
@@ -209,6 +209,42 @@ describe("isolated local application", () => {
         .media,
     ).toBeUndefined();
   });
+  it("deletes a post and its photos only when explicitly requested, keeping upload quota used", () => {
+    const { state } = fixture();
+    const ids = state.photos.slice(0, 3).map((photo) => photo.id);
+    const published = publishLocalPost(
+      {
+        ...state,
+        posts: [],
+        postingRecords: [],
+        gallery: [],
+        galleryAdditions: [],
+      },
+      "ines",
+      { ...input, photoIds: ids },
+      "post-delete-photos",
+      now,
+    );
+    const kept = deleteLocalPost(published, "ines", "post-delete-photos", now);
+    expect(kept.gallery.map((photo) => photo.photoId)).toEqual(ids);
+    const removed = deleteLocalPost(
+      published,
+      "ines",
+      "post-delete-photos",
+      now,
+      true,
+    );
+    expect(removed.posts).toHaveLength(0);
+    expect(removed.gallery).toHaveLength(0);
+    expect(removed.photos.some((photo) => ids.includes(photo.id))).toBe(false);
+    expect(
+      localPostingEligibility(removed, "ines", now, false).imagesRemaining,
+    ).toBe(0);
+    expect(() =>
+      deleteLocalPost(published, "theo", "post-delete-photos", now, true),
+    ).toThrow("unavailable");
+  });
+
   it("lets three Gallery photographs become a post and keeps the shared allowance exhausted", () => {
     const { state } = fixture();
     const ids = state.photos.slice(0, 3).map((photo) => photo.id);
@@ -234,7 +270,7 @@ describe("isolated local application", () => {
       localPostingEligibility(deleted, "ines", now, false).imagesRemaining,
     ).toBe(0);
   });
-  it("automatically places all three post photographs in Gallery and denies a fourth Gallery addition", () => {
+  it("counts all three published photographs after deleting their post and denies a fourth upload until the next day", () => {
     const { state } = fixture();
     const ids = state.photos.slice(0, 4).map((photo) => photo.id);
     const next = publishLocalPost(
@@ -249,6 +285,32 @@ describe("isolated local application", () => {
     expect(() => placePhoto(next, "ines", ids[3], undefined, now)).toThrow(
       "three-photo allowance",
     );
+    const deleted = deleteLocalPost(next, "ines", "post-three-new", now);
+    expect(localPostingEligibility(deleted, "ines", now, false)).toMatchObject({
+      allowed: true,
+      regularRemaining: 3,
+      imagesRemaining: 0,
+    });
+    expect(() => placePhoto(deleted, "ines", ids[3], undefined, now)).toThrow(
+      "three-photo allowance",
+    );
+    const erased = ids
+      .slice(0, 3)
+      .reduce((current, id) => deleteLocalPhoto(current, "ines", id), deleted);
+    expect(erased.gallery).toHaveLength(0);
+    expect(
+      localPostingEligibility(erased, "ines", now, false).imagesRemaining,
+    ).toBe(0);
+    expect(() => placePhoto(erased, "ines", ids[3], undefined, now)).toThrow(
+      "three-photo allowance",
+    );
+    const nextDay = new Date("2026-10-29T07:00:00Z");
+    expect(
+      localPostingEligibility(deleted, "ines", nextDay, false).imagesRemaining,
+    ).toBe(3);
+    expect(() =>
+      placePhoto(deleted, "ines", ids[3], undefined, nextDay),
+    ).not.toThrow();
   });
   it("does not bypass today's shared allowance by adding a new image to an older post", () => {
     const { state } = fixture();
@@ -626,7 +688,7 @@ describe("browser-local media validation", () => {
       "private-name.png",
       { type: "image/png" },
     );
-  it("checks type, byte signature, size and description before image decoding", async () => {
+  it("checks type, byte signature and size before image decoding", async () => {
     const decode = vi.fn();
     vi.stubGlobal("createImageBitmap", decode);
     for (const file of [
@@ -636,8 +698,7 @@ describe("browser-local media validation", () => {
         type: "image/jpeg",
       }),
     ])
-      await expect(validateLocalPhoto(file, "A photograph")).rejects.toThrow();
-    await expect(validateLocalPhoto(png(), " ")).rejects.toThrow("Describe");
+      await expect(validateLocalPhoto(file)).rejects.toThrow();
     expect(decode).not.toHaveBeenCalled();
   });
   it("bounds decoded dimensions, releases bitmap memory, and returns generic decoding errors", async () => {
@@ -646,19 +707,17 @@ describe("browser-local media validation", () => {
       .fn()
       .mockResolvedValue({ width: 640, height: 480, close });
     vi.stubGlobal("createImageBitmap", decode);
-    await expect(validateLocalPhoto(png(), "A quiet beach")).resolves.toEqual({
+    await expect(validateLocalPhoto(png())).resolves.toEqual({
       width: 640,
       height: 480,
     });
     expect(close).toHaveBeenCalledOnce();
     decode.mockResolvedValueOnce({ width: 10001, height: 500, close });
-    await expect(validateLocalPhoto(png(), "A beach")).rejects.toThrow(
-      "10,000",
-    );
+    await expect(validateLocalPhoto(png())).rejects.toThrow("10,000");
     decode.mockRejectedValueOnce(
       new Error("internal decoder private-name.png"),
     );
-    await expect(validateLocalPhoto(png(), "A beach")).rejects.toThrow(
+    await expect(validateLocalPhoto(png())).rejects.toThrow(
       "That image couldn’t be read.",
     );
   });

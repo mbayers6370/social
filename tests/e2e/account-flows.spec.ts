@@ -59,14 +59,14 @@ test("changes a profile photograph and offers selected account downloads", async
     .first()
     .click();
   await picker
-    .getByRole("button", { name: "Use Photograph", exact: true })
+    .getByRole("button", { name: "Use photograph", exact: true })
     .click();
   const confirm = page.getByRole("dialog", { name: "Your Profile Photograph" });
   await expect(confirm.locator("img").first()).toBeVisible();
   await page.screenshot({
     path: `test-results/profile-photo-${test.info().project.name}.png`,
   });
-  await confirm.getByRole("button", { name: "Use Photograph" }).click();
+  await confirm.getByRole("button", { name: "Use photograph" }).click();
   await expect(confirm).toHaveCount(0);
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   // Keep client navigation so the same tab account state is available.

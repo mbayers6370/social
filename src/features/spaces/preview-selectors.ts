@@ -26,7 +26,9 @@ export function visibleSpacePosts(
       room.members.some((m) => m.userId === data.viewer.id) &&
       Date.parse(post.expiresAt) > now &&
       !blocked(relationships, data.viewer.id, post.author.id) &&
-      (spaceId ? room.id === spaceId : room.includeInFeed)
+      (spaceId
+        ? room.id === spaceId
+        : room.includeInFeed && post.author.id !== data.viewer.id)
     );
   });
 }
@@ -45,9 +47,13 @@ export function visibleSpaceDetails(
   if (!room) return undefined;
   return {
     ...room,
-    members: room.members.filter(
-      (m) => !blocked(relationships, data.viewer.id, m.userId),
-    ),
+    rsvp: room.startsAt && room.rsvpEnabled !== false ? room.rsvp : null,
+    members: room.members
+      .filter((m) => !blocked(relationships, data.viewer.id, m.userId))
+      .map((member) => ({
+        ...member,
+        rsvp: room.startsAt && room.rsvpEnabled !== false ? member.rsvp : null,
+      })),
     blockedMembers: room.members
       .filter((m) =>
         relationships.some(

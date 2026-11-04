@@ -34,6 +34,9 @@
     "account:invite": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types --env-file-if-exists=.env scripts/create-invitation.mjs",
     "account:founder": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types --env-file-if-exists=.env scripts/grant-founder.mjs",
     "invitations:sync": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types --env-file-if-exists=.env scripts/sync-invitations.mjs",
+    "maintenance:run": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-transform-types --env-file-if-exists=.env scripts/maintenance.mjs run",
+    "maintenance:work": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-transform-types --env-file-if-exists=.env scripts/maintenance.mjs work",
+    "maintenance:status": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-transform-types --env-file-if-exists=.env scripts/maintenance.mjs status",
     "account:bootstrap-founder": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types --env-file-if-exists=.env scripts/bootstrap-founder.mjs",
     "test:invitations:live": "RUN_LIVE_INVITATION_TESTS=1 node --env-file-if-exists=.env --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types scripts/test-invitations-live.mjs"
   },

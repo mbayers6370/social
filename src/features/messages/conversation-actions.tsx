@@ -9,10 +9,9 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { Download, Flag, MoreHorizontal } from "@/components/margin-icons";
+import { Flag, MoreHorizontal } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { SafetyReportButton } from "@/features/safety/report-button";
-import { AccountDownload } from "@/features/settings/account-download";
 import type { PreviewThread } from "./schema";
 
 /** A disclosure keeps ordinary button navigation and the existing action dialogs. */
@@ -97,16 +96,6 @@ export function ConversationActions({
       >
         {actions ?? (
           <>
-            <AccountDownload
-              conversationId={thread.id}
-              onCloseAutoFocus={restoreFocus}
-              trigger={
-                <Button variant="ghost" onClick={() => setOpen(false)}>
-                  <Download aria-hidden="true" />
-                  Download conversation
-                </Button>
-              }
-            />
             <SafetyReportButton
               target={{
                 kind: "message",

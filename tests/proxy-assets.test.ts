@@ -2,19 +2,31 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
-const { protect } = vi.hoisted(() => ({ protect: vi.fn() }));
+const { protect, clerkPolicy, clerkRoutes } = vi.hoisted(() => ({
+  protect: vi.fn(),
+  clerkPolicy: { strict: false, directives: {} as Record<string, string[]> },
+  clerkRoutes: { signInUrl: "", signUpUrl: "" },
+}));
 vi.mock("@clerk/nextjs/server", () => ({
-  clerkMiddleware:
-    (
-      handler: (
-        auth: { protect: typeof protect },
-        request: NextRequest,
-      ) => Promise<void>,
-    ) =>
-    async (request: NextRequest) => {
+  clerkMiddleware: (
+    handler: (
+      auth: { protect: typeof protect },
+      request: NextRequest,
+    ) => Promise<void>,
+    options: {
+      contentSecurityPolicy: typeof clerkPolicy;
+      signInUrl: string;
+      signUpUrl: string;
+    },
+  ) => {
+    Object.assign(clerkPolicy, options.contentSecurityPolicy);
+    clerkRoutes.signInUrl = options.signInUrl;
+    clerkRoutes.signUpUrl = options.signUpUrl;
+    return async (request: NextRequest) => {
       await handler({ protect }, request);
       return NextResponse.next();
-    },
+    };
+  },
 }));
 import proxy, { config } from "@/proxy";
 import { PUBLIC_PAGE_PATHS } from "@/lib/public-routes";
@@ -32,6 +44,21 @@ async function request(path: string) {
   expect(result).toBeInstanceOf(NextResponse);
   return result as NextResponse;
 }
+
+it("uses Margin's account pages for server authentication redirects", () => {
+  expect(clerkRoutes).toEqual({
+    signInUrl: "/sign-in",
+    signUpUrl: "/sign-up",
+  });
+});
+
+it("allows device image previews with Clerk while retaining the strict script and media policy", () => {
+  expect(clerkPolicy.strict).toBe(true);
+  expect(clerkPolicy.directives["img-src"]).toContain("blob:");
+  expect(clerkPolicy.directives["script-src"] ?? []).not.toContain("blob:");
+  expect(clerkPolicy.directives["media-src"]).toEqual(["'none'"]);
+  expect(clerkPolicy.directives["object-src"]).toEqual(["'none'"]);
+});
 
 it("does not exempt private paths that resemble public asset filenames", () => {
   for (const path of [
@@ -83,6 +110,7 @@ for (const mode of ["development", "production"] as const) {
       "/brands/apple-music.svg",
       "/brands/spotify.svg",
       "/brands/itunes-store.svg",
+      "/brands/photo-open-cursor.svg",
     ]) {
       const response = await request(asset);
       expect(response.status).toBe(200);

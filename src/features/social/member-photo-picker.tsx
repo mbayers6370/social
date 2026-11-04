@@ -36,7 +36,6 @@ export function MemberPhotoPicker({
   const client = useSpaceClient();
   const id = useId();
   const [file, setFile] = useState<File>();
-  const [description, setDescription] = useState("");
   const [selected, setSelected] = useState<PrivatePhoto | null>(null);
   const [replacement, setReplacement] = useState("");
   const [working, setWorking] = useState(false);
@@ -53,7 +52,6 @@ export function MemberPhotoPicker({
       onOpenChange(false);
       setSelected(null);
       setFile(undefined);
-      setDescription("");
     } catch (error) {
       setError(
         error instanceof Error
@@ -89,8 +87,6 @@ export function MemberPhotoPicker({
           body: file,
           headers: {
             "Content-Type": file.type,
-            "X-Photo-Description": encodeURIComponent(description),
-            "X-Photo-Description-Encoding": "percent",
             ...(replacement ? { "X-Gallery-Replacement": replacement } : {}),
           },
         },
@@ -102,7 +98,6 @@ export function MemberPhotoPicker({
         await onChoose(saved);
         onOpenChange(false);
         setSelected(null);
-        setDescription("");
       }
     } catch (error) {
       if (error instanceof MemberRequestError && error.uncertain)
@@ -134,6 +129,9 @@ export function MemberPhotoPicker({
               ? "Choose from your gallery or upload a photograph. Your profile uses a small crop; the original keeps its existing audience."
               : "Add a photograph to your gallery. You can keep twenty photographs, with up to three featured."}
           </DialogDescription>
+          <p className="margin-field-hint">
+            Photos are checked before others see them.
+          </p>
         </header>
         <div className="margin-photo-picker-body">
           {portrait && selected ? (
@@ -147,7 +145,7 @@ export function MemberPhotoPicker({
                 className="margin-profile-photo-preview"
               />
               <Button disabled={working} onClick={() => void choose(selected)}>
-                Use Photograph
+                Use photograph
               </Button>
               <Button
                 variant="ghost"
@@ -163,12 +161,12 @@ export function MemberPhotoPicker({
                 <section className="margin-photo-source">
                   <h3>Your photographs</h3>
                   <div className="margin-photo-library">
-                    {photos.map((photo) => (
+                    {photos.map((photo, index) => (
                       <button
                         type="button"
                         key={photo.id}
                         disabled={working}
-                        aria-label={`Use ${photo.description}`}
+                        aria-label={`Use ${photo.description === "Photograph" ? `photograph ${index + 1}` : photo.description}`}
                         onClick={() => setSelected(photo)}
                       >
                         <Image
@@ -184,9 +182,7 @@ export function MemberPhotoPicker({
                 </section>
               )}
               <form className="margin-upload-form" onSubmit={upload}>
-                {file && (
-                  <DevicePhotoPreview file={file} description={description} />
-                )}
+                {file && <DevicePhotoPreview file={file} />}
                 <Label htmlFor={`${id}-file`}>Photograph</Label>
                 <Input
                   id={`${id}-file`}
@@ -194,19 +190,6 @@ export function MemberPhotoPicker({
                   accept="image/jpeg,image/png,image/webp"
                   disabled={working || uncertain}
                   onChange={(event) => setFile(event.target.files?.[0])}
-                />
-                <Label htmlFor={`${id}-description`}>
-                  Describe the photograph (alt text)
-                </Label>
-                <textarea
-                  id={`${id}-description`}
-                  className="margin-profile-bio-input"
-                  rows={3}
-                  required
-                  maxLength={500}
-                  value={description}
-                  disabled={working || uncertain}
-                  onChange={(event) => setDescription(event.target.value)}
                 />
                 {photos.length >= 20 && (
                   <>
@@ -221,9 +204,11 @@ export function MemberPhotoPicker({
                       disabled={working || uncertain}
                     >
                       <option value="">Choose a photograph</option>
-                      {photos.map((photo) => (
+                      {photos.map((photo, index) => (
                         <option value={photo.id} key={photo.id}>
-                          {photo.description}
+                          {photo.description === "Photograph"
+                            ? `Photograph ${index + 1}`
+                            : photo.description}
                         </option>
                       ))}
                     </select>

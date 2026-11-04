@@ -3,10 +3,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { Add, ChevronLeft, Filter, Gallery } from "@/components/margin-icons";
+import {
+  Add,
+  ChevronLeft,
+  Filter,
+  Gallery,
+  Trash,
+} from "@/components/margin-icons";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { LiveAppShell } from "@/components/layout/live-app-shell";
 import { GalleryEditor } from "@/features/gallery/gallery-editor";
 import { PostPhotoViewer } from "@/features/feed/post-photo-viewer";
@@ -24,13 +35,18 @@ export function MemberGallery({ data }: { data: PrivateProfileData }) {
   const [arranging, setArranging] = useState(false);
   const [adding, setAdding] = useState(false);
   const [viewed, setViewed] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<Photo | null>(null);
+  const [removed, setRemoved] = useState<string[]>([]);
+  const [deletingPhoto, setDeletingPhoto] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const trigger = useRef<HTMLElement | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
-  const entries = data.gallery.map((photo) => ({
+  const gallery = data.gallery.filter((photo) => !removed.includes(photo.id));
+  const entries = gallery.map((photo) => ({
     photoId: photo.id,
     featured: photo.featured ?? false,
   }));
-  const photos: Photo[] = data.gallery.map((photo) => ({
+  const photos: Photo[] = gallery.map((photo) => ({
     id: photo.id,
     ownerId: data.profile.id,
     kind: "local",
@@ -162,9 +178,10 @@ export function MemberGallery({ data }: { data: PrivateProfileData }) {
                     <div
                       className={
                         groupIndex === 0
-                          ? "margin-gallery-featured"
+                          ? "margin-gallery-featured margin-gallery-mosaic"
                           : "margin-gallery-grid"
                       }
+                      data-count={groupIndex === 0 ? group.length : undefined}
                     >
                       {group.map((photo) => (
                         <div
@@ -181,6 +198,7 @@ export function MemberGallery({ data }: { data: PrivateProfileData }) {
                           <button
                             type="button"
                             className="margin-gallery-tile"
+                            data-photo-open
                             aria-label={`View ${photo.description}, photograph ${ordered.indexOf(photo) + 1} of ${photos.length}`}
                             onClick={(event) => {
                               trigger.current = event.currentTarget;
@@ -195,6 +213,21 @@ export function MemberGallery({ data }: { data: PrivateProfileData }) {
                               sizes="(max-width: 639px) 45vw, 320px"
                             />
                           </button>
+                          {own && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="margin-gallery-photo-delete"
+                              aria-label={`Delete photograph ${ordered.indexOf(photo) + 1}`}
+                              onClick={(event) => {
+                                trigger.current = event.currentTarget;
+                                setDeleteError("");
+                                setDeleting(photo);
+                              }}
+                            >
+                              <Trash aria-hidden="true" />
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -207,6 +240,7 @@ export function MemberGallery({ data }: { data: PrivateProfileData }) {
       {viewed !== null && (
         <PostPhotoViewer
           privateMedia
+          context="gallery"
           photos={ordered}
           initialIndex={viewed}
           postId={`gallery-${data.profile.id}`}
@@ -217,6 +251,86 @@ export function MemberGallery({ data }: { data: PrivateProfileData }) {
       )}
       {own && (
         <>
+          <Dialog
+            open={Boolean(deleting)}
+            onOpenChange={(open) => {
+              if (!open && !deletingPhoto) setDeleting(null);
+            }}
+          >
+            <DialogContent
+              showCloseButton={!deletingPhoto}
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                (trigger.current?.isConnected
+                  ? trigger.current
+                  : heading.current
+                )?.focus();
+              }}
+            >
+              <DialogTitle>Delete this photograph?</DialogTitle>
+              <DialogDescription>
+                This removes the photograph from your Gallery, profile and
+                posts. Post text and conversations stay. It still counts toward
+                today’s upload allowance.
+              </DialogDescription>
+              {deleting && (
+                <div className="margin-gallery-delete-preview">
+                  <Image
+                    unoptimized
+                    {...deleting.image}
+                    alt="Photograph to delete"
+                    width={80}
+                    height={80}
+                    sizes="80px"
+                  />
+                  <p>
+                    Photograph{" "}
+                    {ordered.findIndex((photo) => photo.id === deleting.id) + 1}
+                  </p>
+                </div>
+              )}
+              {deleteError && <p role="alert">{deleteError}</p>}
+              <div className="margin-form-actions">
+                <Button
+                  variant="ghost"
+                  disabled={deletingPhoto}
+                  onClick={() => setDeleting(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={deletingPhoto}
+                  onClick={async () => {
+                    if (!deleting || deletingPhoto) return;
+                    setDeletingPhoto(true);
+                    setDeleteError("");
+                    try {
+                      await requestMember(
+                        client,
+                        `/api/photos/${encodeURIComponent(deleting.id)}`,
+                        { method: "DELETE" },
+                      );
+                      setRemoved((ids) => [...ids, deleting.id]);
+                      setDeleting(null);
+                      memberChanged();
+                      router.refresh();
+                    } catch (error) {
+                      setDeleteError(
+                        error instanceof Error
+                          ? error.message
+                          : "Couldn’t delete this photograph. Please try again.",
+                      );
+                    } finally {
+                      setDeletingPhoto(false);
+                    }
+                  }}
+                >
+                  {deletingPhoto ? "Deleting…" : "Delete photograph"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <MemberPhotoPicker
             open={adding}
             onOpenChange={setAdding}

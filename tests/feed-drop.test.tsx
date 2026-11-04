@@ -68,7 +68,7 @@ function drop(target: HTMLElement, files: File[]) {
   return fireEvent.drop(target, { dataTransfer: { types: ["Files"], files } });
 }
 
-it("starts a post with the dropped file, requires its description and attaches it without publishing automatically", async () => {
+it("starts a post with the dropped file, needs no description and attaches it without publishing automatically", async () => {
   const user = userEvent.setup();
   const target = openFeed();
   expect(drop(target, [photograph()])).toBe(false);
@@ -80,22 +80,7 @@ it("starts a post with the dropped file, requires its description and attaches i
     within(picker).getByRole("img", { name: /Selected photograph/ }),
   ).toHaveAttribute("src", "blob:local-photo");
   await user.click(
-    within(picker).getByRole("button", { name: "Use Photograph" }),
-  );
-  expect(await within(picker).findByRole("alert")).toHaveTextContent(
-    "Describe the photograph",
-  );
-  expect(
-    JSON.parse(screen.getByTestId("state").textContent!).photos,
-  ).toHaveLength(0);
-  await user.type(
-    within(picker).getByRole("textbox", {
-      name: "Describe the photograph (alt text)",
-    }),
-    "A quiet morning by the sea",
-  );
-  await user.click(
-    within(picker).getByRole("button", { name: "Use Photograph" }),
+    within(picker).getByRole("button", { name: "Use photograph" }),
   );
   await waitFor(() =>
     expect(
@@ -104,7 +89,7 @@ it("starts a post with the dropped file, requires its description and attaches i
   );
   const composer = screen.getByRole("region", { name: "New Post" });
   expect(
-    within(composer).getByRole("img", { name: "A quiet morning by the sea" }),
+    within(composer).getByRole("img", { name: "Photograph" }),
   ).toBeInTheDocument();
   const state = JSON.parse(screen.getByTestId("state").textContent!);
   expect(state.draft.photoIds).toHaveLength(1);
@@ -122,7 +107,7 @@ it("starts a post with the dropped file, requires its description and attaches i
   expect(
     JSON.parse(screen.getByTestId("state").textContent!).posts[0].media[0]
       .description,
-  ).toBe("A quiet morning by the sea");
+  ).toBe("Photograph");
 });
 
 it.each(["posts", "images", "gallery"])(

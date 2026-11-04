@@ -228,11 +228,10 @@ test("opens sample threads, validates and escapes local messages without sending
       }),
     ).toBeFocused();
   } else {
-    const optionsButton = thread.getByRole("button", {
-      name: "Conversation options",
+    const exportButton = thread.getByRole("button", {
+      name: "Export conversation",
     });
-    await optionsButton.click();
-    await thread.getByRole("button", { name: "Download conversation" }).click();
+    await exportButton.click();
     await expect(
       page.getByRole("dialog", { name: "Download this conversation" }),
     ).toBeVisible();
@@ -243,7 +242,7 @@ test("opens sample threads, validates and escapes local messages without sending
       page.getByRole("checkbox", { name: /^Profile & music / }),
     ).not.toBeChecked();
     await page.keyboard.press("Escape");
-    await expect(optionsButton).toBeFocused();
+    await expect(exportButton).toBeFocused();
   }
   await page
     .getByRole("button", {

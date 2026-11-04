@@ -20,6 +20,7 @@ function isPublic(pathname: string) {
     pathname === "/brands/apple-music.svg" ||
     pathname === "/brands/spotify.svg" ||
     pathname === "/brands/itunes-store.svg" ||
+    pathname === "/brands/photo-open-cursor.svg" ||
     pathname === "/sign-in" ||
     pathname.startsWith("/sign-in/") ||
     pathname === "/sign-up" ||
@@ -56,12 +57,16 @@ const clerkProxy = clerkMiddleware(
       await auth.protect();
   },
   {
+    signInUrl: "/sign-in",
+    signUpUrl: "/sign-up",
     authorizedParties: [
       accountConfiguration().origin ?? "https://unconfigured.invalid",
     ],
     contentSecurityPolicy: {
       strict: true,
       directives: {
+        // Device photographs stay in the tab as blob URLs until Publish.
+        "img-src": ["blob:"],
         "object-src": ["'none'"],
         "media-src": ["'none'"],
         "base-uri": ["'self'"],

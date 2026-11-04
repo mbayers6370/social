@@ -9,14 +9,21 @@ test.beforeEach(async ({ page }) => {
   await memberFixture(page);
 });
 
-test("keeps Notebook neutral until selected and uses the shared lime/olive selection and thread border", async ({
+test("highlights the displayed conversation from entry with the light green selection and olive border", async ({
   page,
   isMobile,
 }, info) => {
   await page.goto("/preview/auth?view=member&area=messages");
   const notebook = page.locator('.margin-thread-choice[data-notebook="true"]');
-  await expect(notebook).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  await expect(notebook).toHaveCSS("border-top-color", "rgb(223, 227, 229)");
+  await expect(notebook).toHaveAttribute("data-active", "true");
+  await expect(notebook).toHaveCSS(
+    "background-color",
+    isMobile ? "rgb(255, 255, 255)" : "rgba(185, 198, 90, 0.35)",
+  );
+  await expect(notebook).toHaveCSS(
+    "border-top-color",
+    isMobile ? "rgb(223, 227, 229)" : "rgb(138, 145, 110)",
+  );
   await page
     .getByRole("button", { name: "Open conversation with Alex Example" })
     .click();
@@ -27,7 +34,7 @@ test("keeps Notebook neutral until selected and uses the shared lime/olive selec
   if (!isMobile) {
     await expect(
       page.locator('.margin-thread-choice[data-active="true"]'),
-    ).toHaveCSS("background-color", "rgb(185, 198, 90)");
+    ).toHaveCSS("background-color", "rgba(185, 198, 90, 0.35)");
     await expect(notebook).toHaveCSS("background-color", "rgb(255, 255, 255)");
   } else await page.getByRole("button", { name: "Back to messages" }).click();
   await page.getByRole("button", { name: "Open notebook" }).click();
@@ -40,7 +47,10 @@ test("keeps Notebook neutral until selected and uses the shared lime/olive selec
     page.getByRole("button", { name: "Conversation options", exact: true }),
   ).toHaveCount(0);
   if (!isMobile) {
-    await expect(notebook).toHaveCSS("background-color", "rgb(185, 198, 90)");
+    await expect(notebook).toHaveCSS(
+      "background-color",
+      "rgba(185, 198, 90, 0.35)",
+    );
     await expect(notebook).toHaveCSS("border-top-color", "rgb(138, 145, 110)");
   }
   await page.screenshot({

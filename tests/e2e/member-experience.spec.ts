@@ -108,9 +108,7 @@ test("keeps Friends, Gallery, Settings and Spaces consistent with member navigat
         page.getByRole("link", { name: /Alex Example @alex_example/ }),
       ).toHaveAttribute("href", "/app?person=fictional-friend");
       await page.getByRole("tab", { name: "Requests" }).click();
-      await expect(
-        page.getByText("No requests waiting for you."),
-      ).toBeVisible();
+      await expect(page.getByText("No requests right now.")).toBeVisible();
     }
     if (area === "settings") {
       await page.getByRole("radio", { name: "Larger", exact: true }).click();
@@ -122,7 +120,7 @@ test("keeps Friends, Gallery, Settings and Spaces consistent with member navigat
         "larger",
       );
       await expect(
-        page.getByRole("status").filter({ hasText: "Settings saved." }),
+        page.getByRole("status").filter({ hasText: "Saved" }),
       ).toBeVisible();
     }
   }

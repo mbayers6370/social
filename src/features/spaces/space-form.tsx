@@ -2,7 +2,6 @@
 import { useSpaceClient } from "./client";
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Gathering, Check } from "@/components/margin-icons";
 import { TimeZonePicker } from "./time-zone-picker";
 import { EventDateTimeField } from "./event-date-time-field";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,36 @@ import { Label } from "@/components/ui/label";
 import { eventLocalValue, eventTimeCandidates } from "./event-time";
 import type { SpaceDetails } from "./contracts";
 import { useSpaceAction } from "./use-space-action";
+
+function RepeatedTime({
+  candidates,
+  name,
+  end = false,
+}: {
+  candidates: string[];
+  name: string;
+  end?: boolean;
+}) {
+  const id = useId();
+  if (candidates.length < 2) return null;
+  return (
+    <>
+      <Label htmlFor={id}>
+        {end ? "This end time occurs twice" : "This clock time occurs twice"}
+      </Label>
+      <select id={id} name={name} required defaultValue="">
+        <option value="">Choose an occurrence</option>
+        {candidates.map((candidate, index) => (
+          <option key={candidate} value={candidate}>
+            {index === 0 ? "First" : "Second"} occurrence (
+            {candidate.slice(11, 16)} UTC)
+          </option>
+        ))}
+      </select>
+    </>
+  );
+}
+
 export function SpaceForm({
   space,
   onSaved,
@@ -24,9 +53,11 @@ export function SpaceForm({
   const router = useRouter();
   const client = useSpaceClient();
   const action = useSpaceAction();
-  const [kind, setKind] = useState<"PRIVATE" | "GATHERING">(
-    space?.kind === "GATHERING" ? "GATHERING" : "PRIVATE",
-  );
+  const [hasPlans, setHasPlans] = useState(Boolean(space?.startsAt));
+  const [hasEnd, setHasEnd] = useState(Boolean(space?.endsAt));
+  const [hasLocation, setHasLocation] = useState(Boolean(space?.location));
+  const [location, setLocation] = useState(space?.location ?? "");
+  const [rsvpEnabled, setRsvpEnabled] = useState(space?.rsvpEnabled ?? true);
   const [zone, setZone] = useState(
     space?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
@@ -35,22 +66,34 @@ export function SpaceForm({
       ? eventLocalValue(space.startsAt, space.timeZone)
       : "",
   );
+  const [endLocal, setEndLocal] = useState(
+    space?.endsAt && space.timeZone
+      ? eventLocalValue(space.endsAt, space.timeZone)
+      : "",
+  );
   const [validation, setValidation] = useState("");
   let candidates: string[] = [];
+  let endCandidates: string[] = [];
   try {
     candidates = eventTimeCandidates(local, zone);
+    endCandidates = eventTimeCandidates(endLocal, zone);
   } catch {
-    /* Invalid zones are explained on submit. */
+    // Invalid wall-clock times and zones are explained on submit.
   }
   return (
     <form
       className="margin-space-form"
-      onSubmit={async (e) => {
-        e.preventDefault();
+      onSubmit={async (event) => {
+        event.preventDefault();
         setValidation("");
-        const f = new FormData(e.currentTarget);
-        let input: object = { kind, name: String(f.get("name")) };
-        if (kind === "GATHERING") {
+        const fields = new FormData(event.currentTarget);
+        let input: object = {
+          kind: "PRIVATE",
+          name: String(fields.get("name")),
+          location: hasLocation ? location : "",
+          rsvpEnabled,
+        };
+        if (hasPlans) {
           if (!candidates.length) {
             setValidation(
               "Check the time zone and choose a local time that exists.",
@@ -60,18 +103,35 @@ export function SpaceForm({
           const startsAt =
             candidates.length === 1
               ? candidates[0]
-              : String(f.get("occurrence") ?? "");
+              : String(fields.get("occurrence") ?? "");
           if (!candidates.includes(startsAt)) {
             setValidation(
               "Choose which occurrence of this repeated clock time you mean.",
             );
             return;
           }
+          let endsAt: string | undefined;
+          if (hasEnd) {
+            endsAt =
+              endCandidates.length === 1
+                ? endCandidates[0]
+                : String(fields.get("endOccurrence") ?? "");
+            if (!endCandidates.includes(endsAt)) {
+              setValidation(
+                "Choose an end time that exists, including its occurrence if the clock time repeats.",
+              );
+              return;
+            }
+            if (Date.parse(endsAt) <= Date.parse(startsAt)) {
+              setValidation("The end time must be after the start time.");
+              return;
+            }
+          }
           input = {
             ...input,
             startsAt,
             timeZone: zone,
-            location: String(f.get("location") ?? ""),
+            ...(endsAt ? { endsAt } : {}),
           };
         }
         const saved = await action.run(
@@ -86,103 +146,94 @@ export function SpaceForm({
         }
       }}
     >
-      <fieldset
-        className="margin-space-kind-field"
-        disabled={Boolean(space) || action.busy}
-      >
-        <legend className="margin-field-label">Type of Space</legend>
-        <div className="margin-space-kinds">
-          {(
-            [
-              {
-                value: "PRIVATE",
-                label: "Private Space",
-                description: "An invitation-only place for your people.",
-                Icon: Lock,
-              },
-              {
-                value: "GATHERING",
-                label: "Gathering Space",
-                description: "Private plans with a date and time.",
-                Icon: Gathering,
-              },
-            ] as const
-          ).map(({ value, label, description, Icon }) => (
-            <label className="margin-space-kind" key={value}>
-              <input
-                type="radio"
-                className="sr-only"
-                name={`${id}-kind`}
-                value={value}
-                aria-label={label}
-                checked={kind === value}
-                onChange={() => setKind(value)}
-                aria-describedby={`${id}-${value}-hint`}
-              />
-              <span className="margin-space-kind-option">
-                <Icon size={22} aria-hidden="true" />
-                <span>
-                  <strong>{label}</strong>
-                  <span id={`${id}-${value}-hint`}>{description}</span>
-                </span>
-                <Check
-                  size={18}
-                  className="margin-space-kind-check"
-                  aria-hidden="true"
-                />
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      {kind === "GATHERING" && !space && (
-        <p className="margin-field-hint">
-          Gathering Spaces are invitation-only. Public events are in Find an
-          Event Space.
-        </p>
-      )}
-      <Label htmlFor={`${id}-name`}>
-        {kind === "GATHERING" ? "Gathering Space name" : "Space name"}
-      </Label>
+      <Label htmlFor={`${id}-name`}>Space name</Label>
       <Input
         id={`${id}-name`}
         name="name"
         defaultValue={space?.name}
         required
         maxLength={100}
+        disabled={action.busy}
       />
-      {kind === "GATHERING" && (
-        <>
+      <Button
+        variant="outline"
+        disabled={action.busy}
+        aria-expanded={hasPlans}
+        aria-controls={`${id}-plans`}
+        onClick={() => setHasPlans((current) => !current)}
+      >
+        {hasPlans ? "Remove date and time" : "Add a date and time"}
+      </Button>
+      {!hasPlans && space?.startsAt && (
+        <p className="margin-field-hint">
+          The dates, times and RSVPs will be removed when you save. Your Space,
+          location and posts stay.
+        </p>
+      )}
+      {hasPlans && (
+        <fieldset
+          id={`${id}-plans`}
+          className="margin-space-plan-fields"
+          disabled={action.busy}
+        >
+          <legend className="sr-only">Date and time</legend>
           <EventDateTimeField value={local} onChange={setLocal} />
           <Label htmlFor={`${id}-zone`}>Time zone</Label>
           <TimeZonePicker id={`${id}-zone`} value={zone} onChange={setZone} />
-          {candidates.length > 1 && (
+          <RepeatedTime candidates={candidates} name="occurrence" />
+          <label className="margin-space-preference">
+            <input
+              type="checkbox"
+              checked={hasEnd}
+              onChange={(event) => setHasEnd(event.target.checked)}
+            />
+            <span>Set an end time</span>
+          </label>
+          {hasEnd && (
             <>
-              <Label htmlFor={`${id}-occurrence`}>
-                This clock time occurs twice
-              </Label>
-              <select
-                id={`${id}-occurrence`}
-                name="occurrence"
-                required
-                defaultValue=""
-              >
-                <option value="">Choose an occurrence</option>
-                {candidates.map((c, i) => (
-                  <option key={c} value={c}>
-                    {i === 0 ? "First" : "Second"} occurrence ({c.slice(11, 16)}{" "}
-                    UTC)
-                  </option>
-                ))}
-              </select>
+              <EventDateTimeField end value={endLocal} onChange={setEndLocal} />
+              <RepeatedTime
+                end
+                candidates={endCandidates}
+                name="endOccurrence"
+              />
             </>
           )}
-          <Label htmlFor={`${id}-location`}>Location (optional)</Label>
+          <label className="margin-space-preference">
+            <input
+              type="checkbox"
+              checked={rsvpEnabled}
+              onChange={(event) => setRsvpEnabled(event.target.checked)}
+            />
+            <span>Allow RSVPs</span>
+          </label>
+          {!rsvpEnabled && space && (
+            <p className="margin-field-hint">
+              Existing responses stay saved while RSVPs are off.
+            </p>
+          )}
+        </fieldset>
+      )}
+      <label className="margin-space-preference">
+        <input
+          type="checkbox"
+          checked={hasLocation}
+          disabled={action.busy}
+          onChange={(event) => setHasLocation(event.target.checked)}
+        />
+        <span>Show a location</span>
+      </label>
+      {hasLocation && (
+        <>
+          <Label htmlFor={`${id}-location`}>Location</Label>
           <Input
             id={`${id}-location`}
             name="location"
-            defaultValue={space?.location ?? ""}
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            required
             maxLength={300}
+            disabled={action.busy}
           />
         </>
       )}

@@ -22,7 +22,11 @@ export type Photo = PostMedia & {
   fromPostId?: string;
 };
 export type GalleryEntry = { photoId: string; featured: boolean };
-export type GalleryAddition = { photoId: string; createdAt: string };
+export type GalleryAddition = {
+  photoId: string;
+  createdAt: string;
+  ownerId?: string;
+};
 export function photoLabel(photo: Photo) {
   return photo.kind === "local" ? photo.description : photo.title;
 }
@@ -239,8 +243,8 @@ export function deleteLocalPhoto(
     ...state,
     photos: state.photos.filter((item) => !ids.has(item.id)),
     gallery: state.gallery.filter((entry) => !ids.has(entry.photoId)),
-    galleryAdditions: state.galleryAdditions?.filter(
-      (entry) => !ids.has(entry.photoId),
+    galleryAdditions: state.galleryAdditions?.map((entry) =>
+      ids.has(entry.photoId) ? { ...entry, ownerId: viewerId } : entry,
     ),
     postingRecords: state.postingRecords?.map((record) =>
       record.authorId === viewerId &&
@@ -277,7 +281,7 @@ export function placePhoto(
         record.photoId !== photoId ||
         dayKey(record.createdAt) !== dayKey(now.toISOString()),
     ),
-    { photoId, createdAt: now.toISOString() },
+    { photoId, ownerId: viewerId, createdAt: now.toISOString() },
   ];
   if (replacement) {
     const index = state.gallery.findIndex(
@@ -425,8 +429,21 @@ export function deleteLocalPost(
   viewerId: string,
   id: string,
   now: Date,
+  deletePhotos = false,
 ): LocalState {
-  ownedPost(state, viewerId, id, now);
+  const post = ownedPost(state, viewerId, id, now);
+  if (deletePhotos) {
+    const sources = new Set(post.media?.map((photo) => photo.image.src));
+    const ids = state.photos
+      .filter(
+        (photo) => photo.ownerId === viewerId && sources.has(photo.image.src),
+      )
+      .map((photo) => photo.id);
+    for (const photoId of ids) {
+      if (state.photos.some((photo) => photo.id === photoId))
+        state = deleteLocalPhoto(state, viewerId, photoId);
+    }
+  }
   return {
     ...state,
     posts: state.posts.filter((post) => post.id !== id),
@@ -495,8 +512,8 @@ export function localPostingEligibility(
       (record) => record.id === replacingId && record.authorId === viewerId,
     )?.createdAt ?? now.toISOString(),
   );
-  // A photograph in a post is also placed in Gallery; that is one addition,
-  // not a second image. Gallery-only images still consume the shared allowance.
+  // A photo shared in a post and Gallery counts once. Successful additions
+  // still consume the daily allowance after their image or Gallery entry is removed.
   const galleryOnly = new Set(
     (state.galleryAdditions ?? [])
       .filter((record) => {
@@ -505,13 +522,12 @@ export function localPostingEligibility(
           selectedPhotoIds.includes(record.photoId)
         )
           return false;
-        if (!state.gallery.some((entry) => entry.photoId === record.photoId))
-          return false;
         const photo = state.photos.find(
           (item) => item.id === record.photoId && item.ownerId === viewerId,
         );
+        if ((record.ownerId ?? photo?.ownerId) !== viewerId) return false;
         return (
-          photo &&
+          !photo ||
           !state.posts.some(
             (post) =>
               post.id !== replacingId &&

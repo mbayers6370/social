@@ -145,7 +145,6 @@ export function ConversationDialog({
   const conversationMeta = (
     <footer className="margin-conversation-footer">
       <span data-like-count>
-        <Heart aria-hidden="true" fill="currentColor" />
         {post.likes + Number(state.liked)}{" "}
         {post.likes + Number(state.liked) === 1 ? "like" : "likes"}
       </span>
@@ -442,6 +441,7 @@ export function ConversationDialog({
         <Dialog.Content
           ref={setFrame}
           data-layout={layout}
+          data-feed-dividers={selection.mainFeed || undefined}
           data-profile-flip={profileDate || undefined}
           aria-modal={!wideScreen || undefined}
           className={cn(

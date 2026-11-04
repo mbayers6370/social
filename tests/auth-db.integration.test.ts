@@ -13,6 +13,7 @@ import {
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { availableInvitationSlots } from "@/server/account/invitation-links";
 const provider = vi.hoisted(() => ({
   auth: vi.fn(),
   session: vi.fn(),
@@ -546,17 +547,11 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         status: "revoked",
       });
       expect((await issueInvitation(invitationRequest())).status).toBe(401);
-      expect(
-        (await db.account.findUniqueOrThrow({ where: { userId: owner.id } }))
-          .invitationsRemaining,
-      ).toBe(3);
+      expect(await availableInvitationSlots(db, owner.id)).toBe(3);
       const accepted = await issueInvitation(invitationRequest());
       expect(accepted.status).toBe(201);
       expect(accepted.headers.get("Cache-Control")).toBe("private, no-store");
-      expect(
-        (await db.account.findUniqueOrThrow({ where: { userId: owner.id } }))
-          .invitationsRemaining,
-      ).toBe(2);
+      expect(await availableInvitationSlots(db, owner.id)).toBe(2);
       await db.account.update({
         where: { userId: owner.id },
         data: { status: "DEACTIVATED" },
@@ -659,10 +654,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           })
         ).status,
       ).toBe(201);
-      expect(
-        (await db.account.findUniqueOrThrow({ where: { userId: owner.id } }))
-          .invitationsRemaining,
-      ).toBe(2);
+      expect(await availableInvitationSlots(db, owner.id)).toBe(2);
     });
     it("uses the same 30-minute cookie and pending approval for explicitly reserved first-founder setup", async () => {
       const token = await prepareFounderInvitation(db, {
@@ -780,6 +772,13 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           .revokedAt,
       ).not.toBeNull();
       expect((await revoke()).status).toBe(200);
+      const refreshed = await listInvitations(
+        new Request("http://localhost:3000/api/invitations"),
+      );
+      expect(await refreshed.json()).toMatchObject({
+        remaining: 3,
+        links: [{ id: link.id, revoked: true }],
+      });
     });
     it("recovers founder setup only for the reserved verified identity while its invitation remains live", async () => {
       const token = await prepareFounderInvitation(db, {
