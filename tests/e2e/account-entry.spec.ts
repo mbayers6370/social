@@ -74,12 +74,13 @@ test("welcome connects invitation signup and login", async ({
 test("invitation signup opens the fictional profile setup and completes it", async ({
   page,
 }) => {
+  // A fresh CI server compiles signup, onboarding and the feed on this journey.
+  // Keep compiler startup outside the normal five-second UI assertion budget.
+  test.setTimeout(60_000);
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION === "1",
     "Profile setup fixture is development-only",
   );
-  // Keep onboarding separate from the multi-route public journey so cold
-  // compilation cannot consume its interaction timeout before the form opens.
   await page.goto("/sign-up");
   const preview = page.getByRole("link", {
     name: "Preview profile setup",
@@ -94,7 +95,10 @@ test("invitation signup opens the fictional profile setup and completes it", asy
   await page.getByLabel("Your name", { exact: true }).fill("Alex River");
   await page.getByLabel("Username", { exact: true }).fill("alexriver");
   await page.getByRole("checkbox", { name: "I am 18 or older." }).check();
-  await page.getByRole("button", { name: "Start your space" }).click();
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === "/" && !url.search),
+    page.getByRole("button", { name: "Start your space" }).click(),
+  ]);
   await expect(
     page.getByRole("heading", { name: "It starts with your people." }),
   ).toBeVisible();
