@@ -12,7 +12,7 @@ import {
   vi,
 } from "vitest";
 import { randomUUID } from "node:crypto";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { createDatabaseAdapter } from "@/server/database-adapter";
 import { PrismaClient } from "@/generated/prisma/client";
 import {
   issueInvitationLink,
@@ -46,7 +46,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
     beforeAll(() => {
       const url = privateTestDatabaseUrl();
       db = new PrismaClient({
-        adapter: new PrismaPg({ connectionString: url.href, max: 8 }),
+        adapter: createDatabaseAdapter(url.href, 8),
       });
     });
     beforeEach(async () => {
@@ -106,6 +106,14 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
     });
     afterAll(async () => db.$disconnect());
     const remaining = (at = now) => availableInvitationSlots(db, owner.id, at);
+    async function fillPersonalSlots() {
+      // Lifecycle tests need three existing links, not contention during setup.
+      // Dedicated issuance/last-slot tests below retain their concurrent calls.
+      const links = [];
+      for (let slot = 0; slot < 3; slot++)
+        links.push(await issueInvitationLink(db, owner.clerkId, input(), now));
+      return links;
+    }
     async function claim(
       token: string,
       email: string,
@@ -263,11 +271,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         where: { userId: owner.id },
         data: { invitationsRemaining: 0, invitationAllowanceGrantedAt: now },
       });
-      const links = await Promise.all(
-        [1, 2, 3].map(() =>
-          issueInvitationLink(db, owner.clerkId, input(), now),
-        ),
-      );
+      const links = await fillPersonalSlots();
       await expect(
         issueInvitationLink(db, owner.clerkId, input(), now),
       ).rejects.toMatchObject({ status: 409 });
@@ -292,11 +296,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       expect(await remaining(deadline)).toBe(2);
     });
     it("frees exactly one slot on completed acceptance and never refills it on a repeated claim", async () => {
-      const links = await Promise.all(
-        [1, 2, 3].map(() =>
-          issueInvitationLink(db, owner.clerkId, input(), now),
-        ),
-      );
+      const links = await fillPersonalSlots();
       const { token } = links[0];
       const email = "slot@example.test";
       const subject = `recipient-${randomUUID()}`;

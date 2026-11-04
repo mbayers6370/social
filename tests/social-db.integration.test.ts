@@ -17,7 +17,7 @@ import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { createDatabaseAdapter } from "@/server/database-adapter";
 import { PrismaClient } from "@/generated/prisma/client";
 import { SpaceService } from "@/server/spaces/service";
 import { calvinEvent } from "./helpers/ticketmaster-fixture";
@@ -53,7 +53,7 @@ describe.skipIf(!enabled)(
     beforeAll(async () => {
       const url = privateTestDatabaseUrl();
       db = new PrismaClient({
-        adapter: new PrismaPg({ connectionString: url.href, max: 10 }),
+        adapter: createDatabaseAdapter(url.href, 10),
       });
       directory = await mkdtemp(join(tmpdir(), "margin-private-photo-test-"));
       store = {

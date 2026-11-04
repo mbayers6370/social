@@ -12,7 +12,7 @@ import {
   vi,
 } from "vitest";
 import { randomUUID } from "node:crypto";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { createDatabaseAdapter } from "@/server/database-adapter";
 import { PrismaClient } from "@/generated/prisma/client";
 import { MemberService } from "@/server/member/service";
 import { spaceInvitationNotificationKey } from "@/server/spaces/invitation-notifications";
@@ -42,7 +42,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
     beforeAll(() => {
       const url = privateTestDatabaseUrl();
       db = new PrismaClient({
-        adapter: new PrismaPg({ connectionString: url.href, max: 3 }),
+        adapter: createDatabaseAdapter(url.href, 3),
       });
       service = new MemberService(
         db,
