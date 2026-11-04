@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { resolve, join } from "node:path";
+import { isolatedEnvironment } from "./testing/environment.mjs";
 
 // Uses the existing, password-protected local cluster. Never reads/writes .env,
 // never migrates margin_local, and always creates a new disposable database.
@@ -107,7 +108,10 @@ sql(
 );
 try {
   const env = {
-    ...process.env,
+    ...isolatedEnvironment(
+      process.env,
+      readFileSync(join(root, ".env.example"), "utf8"),
+    ),
     DATABASE_URL: url("margin_runtime", secrets.runtime),
     MIGRATION_DATABASE_URL: url("margin_owner", secrets.owner),
   };
@@ -129,7 +133,15 @@ try {
     [
       "node_modules/vitest/vitest.mjs",
       "run",
+      "--project=database",
       "--no-file-parallelism",
+      ...(process.env.MARGIN_TEST_REPORT
+        ? [
+            "--reporter=default",
+            "--reporter=json",
+            `--outputFile.json=${process.env.MARGIN_TEST_REPORT}`,
+          ]
+        : []),
       ...testArgs,
       ...(spaceInvitationOnly
         ? ["tests/space-invitation-db.integration.test.ts"]

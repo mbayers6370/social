@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 test("main feed uses a ruled stream in both preview and member layouts", async ({
@@ -66,7 +66,7 @@ test("main feed uses a ruled stream in both preview and member layouts", async (
     expect(await stream.evaluate((node) => getComputedStyle(node).rowGap)).toBe(
       "0px",
     );
-    await page.screenshot({
+    await captureScreenshot(page, {
       path: info.outputPath(`${name}-feed-dividers.png`),
       fullPage: false,
     });
@@ -102,7 +102,7 @@ test("main feed uses a ruled stream in both preview and member layouts", async (
         }),
       ).toEqual(colors);
       await expect(post).toHaveCSS("border-top-width", "0px");
-      await page.screenshot({
+      await captureScreenshot(page, {
         path: info.outputPath("conversation-inset-from-dividers.png"),
         fullPage: false,
       });

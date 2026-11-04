@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 test.beforeEach(() =>
@@ -33,7 +33,7 @@ test("borders lime action buttons consistently without boxing quiet controls", a
   await expect(primary).toBeFocused();
   await primary.hover();
   await expect(primary).toHaveCSS("border-top-color", "rgb(138, 145, 110)");
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("button-borders.png"),
     fullPage: true,
   });
@@ -69,11 +69,13 @@ test("shows a device image during review and in a retained draft without uploadi
   await page.goto("/preview/auth?view=member");
   await page.getByRole("button", { name: "New photo post" }).click();
   const picker = page.getByRole("dialog", { name: "Choose a photograph" });
-  await picker.locator('input[type="file"]').setInputFiles({
-    name: "tea.jpg",
-    mimeType: "image/jpeg",
-    buffer: readFileSync("src/assets/fixtures/tea.jpg"),
-  });
+  await picker
+    .getByLabel("Or upload a new one", { exact: true })
+    .setInputFiles({
+      name: "tea.jpg",
+      mimeType: "image/jpeg",
+      buffer: readFileSync("src/assets/fixtures/tea.jpg"),
+    });
   const review = picker.locator(".margin-dropped-photo");
   await expect
     .poll(() =>
@@ -94,7 +96,7 @@ test("shows a device image during review and in a retained draft without uploadi
     .toBeGreaterThan(0);
   await expect(draft).toHaveCSS("height", "160px");
   await expect(draft).toHaveCSS("object-fit", "contain");
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("photo-draft.png"),
     caret: "initial",
   });
@@ -149,7 +151,7 @@ test("shows and replaces a gallery device preview before any upload", async ({
       preview.evaluate((node) => (node as HTMLImageElement).naturalWidth),
     )
     .toBeGreaterThan(0);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("gallery-device-preview.png"),
     caret: "initial",
   });

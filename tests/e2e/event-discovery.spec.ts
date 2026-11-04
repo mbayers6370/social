@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { mockTicketmasterCatalog } from "./helpers/ticketmaster";
 
 test("starts with artist-only search, joins directly with a four-hour end, and lets an admin adjust it", async ({
@@ -64,7 +64,7 @@ test("starts with artist-only search, joins directly with a four-hour end, and l
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("ticketmaster-search-card.png"),
     fullPage: true,
   });
@@ -103,7 +103,7 @@ test("starts with artist-only search, joins directly with a four-hour end, and l
   ).toContainText("4:00 AM");
   await expect(about).toContainText("48 hours after the event ends");
   await expect(page.locator(".margin-space-composer")).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("joined-public-event.png"),
     fullPage: true,
   });

@@ -1,5 +1,5 @@
-import { expect, test } from "./fixtures";
-test("welcome connects invitation signup, login and local profile setup", async ({
+import { captureScreenshot, expect, test } from "./fixtures";
+test("welcome connects invitation signup and login", async ({
   page,
 }, testInfo) => {
   if (testInfo.project.name === "mobile")
@@ -20,15 +20,21 @@ test("welcome connects invitation signup, login and local profile setup", async 
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.locator(".margin-welcome-cta").click();
-  await expect(page).toHaveURL(/\/how-it-works$/);
+  await expect(
+    navigation.getByRole("link", { name: "Sign in", exact: true }),
+  ).toHaveCSS("border-top-width", "1px");
+  const membership = page
+    .getByRole("link", { name: "Membership by invitation", exact: true })
+    .first();
+  await expect(membership).toHaveAttribute("href", "/how-it-works");
+  await Promise.all([page.waitForURL(/\/how-it-works$/), membership.click()]);
   await expect(page.locator('a[href="/sign-up"]')).toHaveCount(0);
   await page.goto("/sign-up");
   await expect(page.getByRole("textbox")).toHaveCount(0);
   await expect(
     page.getByText(/Open the invitation link someone sent you/),
   ).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/invitation-signup-${testInfo.project.name}.png`,
   });
   await page
@@ -45,7 +51,7 @@ test("welcome connects invitation signup, login and local profile setup", async 
         : "Live sign-in isn’t available in this preview.",
     ),
   ).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/sign-in-${testInfo.project.name}.png`,
   });
   await expect(
@@ -60,9 +66,31 @@ test("welcome connects invitation signup, login and local profile setup", async 
     await expect(page).toHaveURL(/\/sign-in$/);
     return;
   }
-  await page
-    .getByRole("link", { name: "Preview profile setup", exact: true })
-    .click();
+  await expect(
+    page.getByRole("link", { name: "Preview profile setup", exact: true }),
+  ).toBeVisible();
+});
+
+test("invitation signup opens the fictional profile setup and completes it", async ({
+  page,
+}) => {
+  test.skip(
+    process.env.PLAYWRIGHT_PRODUCTION === "1",
+    "Profile setup fixture is development-only",
+  );
+  // Keep onboarding separate from the multi-route public journey so cold
+  // compilation cannot consume its interaction timeout before the form opens.
+  await page.goto("/sign-up");
+  const preview = page.getByRole("link", {
+    name: "Preview profile setup",
+    exact: true,
+  });
+  const href = await preview.getAttribute("href");
+  expect(href).toBeTruthy();
+  await Promise.all([
+    page.waitForURL((url) => url.pathname + url.search === href),
+    preview.click(),
+  ]);
   await page.getByLabel("Your name", { exact: true }).fill("Alex River");
   await page.getByLabel("Username", { exact: true }).fill("alexriver");
   await page.getByRole("checkbox", { name: "I am 18 or older." }).check();
@@ -96,7 +124,7 @@ test("account exit is visible in the menu and reporting lives in post options", 
   await expect(
     menu.getByRole("button", { name: "Exit preview", exact: true }),
   ).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/account-menu-${testInfo.project.name}.png`,
   });
   await menu.getByRole("button", { name: "Exit preview", exact: true }).click();

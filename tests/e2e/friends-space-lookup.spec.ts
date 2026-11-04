@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 test.beforeEach(() =>
@@ -44,7 +44,7 @@ test("groups the Friends invitation action with clear spacing and bold selected 
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("friends-spacing.png"),
     fullPage: true,
     caret: "initial",
@@ -100,7 +100,7 @@ test("looks up Space invitees, puts friends first and sends the chosen invitatio
     page.viewportSize()!.width,
   );
   expect(bounds.height).toBeLessThanOrEqual(page.viewportSize()!.height * 0.86);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-invite-lookup.png"),
     caret: "initial",
   });

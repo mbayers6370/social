@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 test("Notebook uses an animated outlined book and the shared light conversation header", async ({
   page,
   isMobile,
@@ -48,7 +48,7 @@ test("Notebook uses an animated outlined book and the shared light conversation 
     "animation-name",
     "margin-page",
   );
-  await page.screenshot({ path: info.outputPath("notebook.png") });
+  await captureScreenshot(page, { path: info.outputPath("notebook.png") });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(header.locator(".margin-page")).toHaveCSS(
     "animation-name",

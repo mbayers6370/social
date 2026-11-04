@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  render,
-  screen,
-  within,
-  waitFor,
-} from "@testing-library/react";
+import { act, render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PreviewProvider } from "@/features/local-preview/provider";
 import { NotificationCenter } from "@/features/notifications/notification-center";
@@ -40,8 +33,6 @@ beforeEach(() => {
   vi.spyOn(window, "scrollBy").mockImplementation(() => {});
 });
 afterEach(() => {
-  // Unmount subscribers and flush React effects before removing browser APIs.
-  cleanup();
   window.history.replaceState({}, "", "/");
   vi.unstubAllGlobals();
 });

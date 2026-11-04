@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }, testInfo) => {
   test.skip(
@@ -44,7 +44,7 @@ test("preserves the selected post colors and photograph brightness", async ({
   expect(imageEffects.length).toBeGreaterThan(0);
   for (const effect of imageEffects)
     expect(effect).toEqual({ opacity: "1", filter: "none" });
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("muted-post-pair.png"),
   });
@@ -109,7 +109,7 @@ test("keeps the editor reachable when a tall profile post flips into its convers
   await expect(
     dialog.getByRole("button", { name: "Post", exact: true }),
   ).toBeInViewport();
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("tall-profile-flip-editor.png"),
   });

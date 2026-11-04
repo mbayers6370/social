@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 test.beforeEach(() =>
@@ -52,7 +52,7 @@ test("feed writing is full width and three lines with the avatar beside posting 
       "You’ve posted today",
     );
   }
-  await page.screenshot({ path: info.outputPath("feed-composer.png") });
+  await captureScreenshot(page, { path: info.outputPath("feed-composer.png") });
 });
 
 test("profile thumbnails open independently and only openable images use the branded cursor", async ({
@@ -89,7 +89,9 @@ test("profile thumbnails open independently and only openable images use the bra
     await expect(viewer).toHaveCount(0);
     await expect(thumbnails.nth(index)).toBeFocused();
   }
-  await page.screenshot({ path: info.outputPath("profile-thumbnails.png") });
+  await captureScreenshot(page, {
+    path: info.outputPath("profile-thumbnails.png"),
+  });
   await more.click();
   await expect(page).toHaveURL(/view=gallery/);
 });
@@ -124,7 +126,9 @@ test("Arrange Gallery groups selected-photo tools and separates save actions", a
   expect((await done.boundingBox())!.y).toBeGreaterThan(
     Math.max(...boxes.map((box) => box.bottom)),
   );
-  await page.screenshot({ path: info.outputPath("arrange-gallery.png") });
+  await captureScreenshot(page, {
+    path: info.outputPath("arrange-gallery.png"),
+  });
 });
 
 test("post deletion offers photo removal as an unchecked opt-in", async ({
@@ -156,7 +160,7 @@ test("post deletion offers photo removal as an unchecked opt-in", async ({
     await expect(option).not.toBeChecked();
     if (removePhotos) await option.check();
     if (removePhotos)
-      await page.screenshot({
+      await captureScreenshot(page, {
         path: info.outputPath("delete-post-photos.png"),
       });
     await dialog

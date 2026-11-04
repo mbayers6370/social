@@ -115,7 +115,7 @@ npm run check -- tests/profile-posts-ui.test.tsx
 npm run verify
 ```
 
-`check` and `verify` run code checks in isolated, credential-free copies under `.local/`, leaving the working development server undisturbed. Full verification also runs disposable PostgreSQL tests, a production build, development and production browser suites, and dependency audits. The pre-push hook requires a clean working tree and verifies the commit being pushed; GitHub Actions runs the same workflow.
+`check` and `verify` run in isolated, credential-free copies under `.local/`, leaving the working development server undisturbed. Fast checks select the unit/component projects. Full verification retains real disposable PostgreSQL, security and integration checks, a production build, essential desktop/mobile browser journeys in development and production, and dependency audits. `npm run verify:extended` adds presentation exploration and Firefox/WebKit journeys. See [the testing guide](tests/README.md) and [audit evidence](tests/AUDIT.md) for the test levels, inventory and measurements. The pre-push hook still requires a clean working tree and full verification of the commit being pushed; GitHub Actions runs the same full workflow.
 
 Install the browser dependency and local Git hook with:
 

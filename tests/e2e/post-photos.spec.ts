@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   test.skip(
@@ -29,7 +29,9 @@ test("gives portrait post photos a taller frame at the existing full width", asy
     if (aspect === "portrait") {
       expect(photo.height).toBeGreaterThan(photo.width);
       await frame.scrollIntoViewIfNeeded();
-      await page.screenshot({ path: info.outputPath("portrait-post.png") });
+      await captureScreenshot(page, {
+        path: info.outputPath("portrait-post.png"),
+      });
     }
   }
 });
@@ -74,7 +76,7 @@ test("shows Ines's three photos before text, supports mobile swiping, and return
       .toBeGreaterThan(0);
     await expect(page.getByRole("dialog")).toHaveCount(0);
   }
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("three-photo-post.png"),
   });
@@ -93,7 +95,7 @@ test("shows Ines's three photos before text, supports mobile swiping, and return
   await expect(dialog.getByText("3 of 3", { exact: true })).toBeVisible();
   await page.keyboard.press("ArrowLeft");
   await expect(dialog.getByText("2 of 3", { exact: true })).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("full-photo-viewer.png"),
   });

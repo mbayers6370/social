@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 for (const area of ["profile", "gallery"]) {
@@ -75,7 +75,7 @@ for (const area of ["profile", "gallery"]) {
         expect(cells[2].bottom).toBeCloseTo(frame.bottom, 1);
       }
       await mosaic.scrollIntoViewIfNeeded();
-      await page.screenshot({
+      await captureScreenshot(page, {
         path: info.outputPath(`${area}-${count}-photos.png`),
       });
     }

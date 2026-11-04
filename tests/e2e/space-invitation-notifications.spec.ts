@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture, friend } from "./helpers/member-fixture";
 
 test.beforeEach(async ({ page }) => {
@@ -44,7 +44,7 @@ test("keeps the invitation card compact and borderless inside, with a usable Joi
       Math.abs(action.y + action.height / 2 - (copy.y + copy.height / 2)),
     ).toBeLessThan(2);
   }
-  await card.screenshot({
+  await captureScreenshot(card, {
     path: info.outputPath("space-invitation-card.png"),
     caret: "initial",
   });
@@ -143,7 +143,7 @@ test("announces an unread Space invitation in Notifications, keeps a failed Join
   );
   await expect(panel).toBeVisible();
   await expect(join).toBeEnabled();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-invitation-notification.png"),
     caret: "initial",
   });

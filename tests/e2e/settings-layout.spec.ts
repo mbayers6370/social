@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 test.beforeEach(() =>
@@ -65,7 +65,7 @@ test("spaces Settings groups and account actions on desktop and mobile, includin
   expect((await profile.boundingBox())!.width).toBeLessThanOrEqual(
     (await content.boundingBox())!.width,
   );
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("settings-spacing.png"),
     fullPage: true,
     caret: "initial",
@@ -87,7 +87,7 @@ test("spaces Settings groups and account actions on desktop and mobile, includin
   await expect(
     page.getByRole("button", { name: "Deactivate account", exact: true }),
   ).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("settings-larger-text.png"),
     fullPage: true,
     caret: "initial",

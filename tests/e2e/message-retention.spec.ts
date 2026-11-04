@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 test.beforeEach(() => {
@@ -55,7 +55,7 @@ for (const example of [
     ).toBeInViewport({ ratio: 1 });
     expect((await history.boundingBox())!.height).toBeGreaterThan(0);
     await expect(notice).toBeInViewport({ ratio: 1 });
-    await page.screenshot({
+    await captureScreenshot(page, {
       path: info.outputPath("retention-guidance.png"),
       caret: "initial",
     });

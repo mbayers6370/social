@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 test("offers direct Gallery deletion, preserves the photo on failure and removes it after confirmation", async ({
@@ -39,7 +39,9 @@ test("offers direct Gallery deletion, preserves the photo on failure and removes
   expect(calls).toBe(0);
   await expect(remove).toBeFocused();
   await remove.click();
-  await page.screenshot({ path: info.outputPath("gallery-delete.png") });
+  await captureScreenshot(page, {
+    path: info.outputPath("gallery-delete.png"),
+  });
   await dialog
     .getByRole("button", { name: "Delete photograph", exact: true })
     .click();

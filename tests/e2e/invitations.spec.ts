@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 declare global {
   interface Window {
@@ -195,7 +195,7 @@ test.describe("invitation interaction fixtures, not live provider delivery", () 
     );
     await dialog.getByRole("button", { name: "Share", exact: true }).click();
     expect(issues).toBe(0);
-    await page.screenshot({
+    await captureScreenshot(page, {
       path: test.info().outputPath("invitation-full-slots.png"),
       fullPage: true,
     });
@@ -347,7 +347,7 @@ test.describe("invitation interaction fixtures, not live provider delivery", () 
     expect(statusBox.x + statusBox.width).toBeLessThanOrEqual(
       cardBox.x + cardBox.width,
     );
-    await page.screenshot({
+    await captureScreenshot(page, {
       path: test.info().outputPath("invitation-email-recovery.png"),
       fullPage: true,
     });

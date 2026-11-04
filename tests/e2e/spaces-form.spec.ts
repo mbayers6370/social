@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 test("Create a Space offers optional plans and a keyboard-accessible calendar", async ({
   page,
 }, info) => {
@@ -13,7 +13,7 @@ test("Create a Space offers optional plans and a keyboard-accessible calendar", 
   const create = page.getByRole("dialog", { name: "Create a Space" });
   await expect(create.getByRole("radio")).toHaveCount(0);
   await expect(create.getByLabel("Date", { exact: true })).toHaveCount(0);
-  await page.screenshot({ path: info.outputPath("simple-space.png") });
+  await captureScreenshot(page, { path: info.outputPath("simple-space.png") });
   await create.getByRole("button", { name: "Add a date and time" }).click();
   await create.getByLabel("Space name").fill("Dinner with friends");
   await create.getByLabel("Date", { exact: true }).fill("2028-02-28");
@@ -27,7 +27,9 @@ test("Create a Space offers optional plans and a keyboard-accessible calendar", 
   await create
     .getByRole("combobox", { name: "Time zone" })
     .fill("America/Los_Angeles");
-  await page.screenshot({ path: info.outputPath("time-zone-dropdown.png") });
+  await captureScreenshot(page, {
+    path: info.outputPath("time-zone-dropdown.png"),
+  });
   await create
     .getByRole("option", { name: "America / Los Angeles", exact: true })
     .click();
@@ -45,9 +47,9 @@ test("Create a Space offers optional plans and a keyboard-accessible calendar", 
   expect(trigger!.y + trigger!.height).toBeLessThan(
     dateInput!.y + dateInput!.height - 1,
   );
-  await create
-    .locator(".margin-space-date-control")
-    .screenshot({ path: info.outputPath("calendar-hover.png") });
+  await captureScreenshot(create.locator(".margin-space-date-control"), {
+    path: info.outputPath("calendar-hover.png"),
+  });
   await create.getByRole("button", { name: "Choose date" }).click();
   const calendar = page.getByRole("dialog", {
     name: "Choose date",
@@ -62,7 +64,9 @@ test("Create a Space offers optional plans and a keyboard-accessible calendar", 
       exact: true,
     }),
   ).toBeFocused();
-  await page.screenshot({ path: info.outputPath("space-calendar.png") });
+  await captureScreenshot(page, {
+    path: info.outputPath("space-calendar.png"),
+  });
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Enter");
   await expect(create.getByLabel("Date", { exact: true })).toHaveValue(
@@ -71,7 +75,7 @@ test("Create a Space offers optional plans and a keyboard-accessible calendar", 
   await expect(
     create.getByRole("button", { name: "Choose date" }),
   ).toBeFocused();
-  await page.screenshot({ path: info.outputPath("create-space.png") });
+  await captureScreenshot(page, { path: info.outputPath("create-space.png") });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -161,7 +165,7 @@ test("creates a name-only Space, adds and removes plans, and archives without lo
   await expect(
     page.getByRole("button", { name: "Share a thought…" }),
   ).toHaveCount(0);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-without-plans-archived.png"),
     fullPage: true,
   });

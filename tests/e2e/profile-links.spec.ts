@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Local profiles only");
@@ -21,13 +21,16 @@ test("messages and profile hard loads hydrate cleanly during screenshots", async
     "/?view=messages&thread=theo",
   ].entries()) {
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    await page.screenshot({
+    await captureScreenshot(page, {
       caret: "initial",
       path: testInfo.outputPath(`hydration-${index}.png`),
     });
     // Exercise a React event handler to establish that hydration has completed.
     const back = page.getByRole("button", { name: "Back to messages" });
     if (await back.isVisible()) {
+      // The thread focuses Back when its React effects mount. Visibility alone
+      // also matches server-rendered HTML before the click handler is attached.
+      await expect(back).toBeFocused();
       await back.click();
       await expect(
         page.getByRole("heading", { name: "Messages", exact: true }),

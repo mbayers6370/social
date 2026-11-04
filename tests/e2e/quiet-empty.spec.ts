@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 test("centers empty conversation copy and keeps menu buttons compact", async ({
   page,
 }, testInfo) => {
@@ -37,7 +37,7 @@ test("centers empty conversation copy and keeps menu buttons compact", async ({
     };
   });
   expect(Math.abs(center.expected - center.actual)).toBeLessThan(2);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/empty-centered-${testInfo.project.name}.png`,
   });
   await page.keyboard.press("Escape");
@@ -64,7 +64,7 @@ test("centers empty conversation copy and keeps menu buttons compact", async ({
   }
   expect(first.height).toBeGreaterThanOrEqual(44);
   expect(second.height).toBeGreaterThanOrEqual(44);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/menu-buttons-${testInfo.project.name}.png`,
   });
 });

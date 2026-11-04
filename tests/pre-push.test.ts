@@ -19,6 +19,8 @@ function probe({
   fail = false,
   differentCommit = false,
   deletion = false,
+  dirtyAfter = false,
+  headAfter = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), "margin-push-guard-"));
   try {
@@ -30,7 +32,7 @@ function probe({
     );
     writeFileSync(
       join(root, "bin/git"),
-      `#!/bin/sh\nif [ "$1" = "status" ]; then\n  if [ "$MARGIN_PROBE_DIRTY" = "1" ]; then echo " M example.ts"; fi\nelif [ "$2" = "HEAD" ]; then\n  echo "${head}"\nelse\n  echo "$MARGIN_PROBE_COMMIT"\nfi\n`,
+      `#!/bin/sh\nif [ "$1" = "status" ]; then\n  if [ "$MARGIN_PROBE_DIRTY" = "1" ] || { [ "$MARGIN_PROBE_DIRTY_AFTER" = "1" ] && [ -f verification.json ]; }; then echo " M example.ts"; fi\nelif [ "$2" = "HEAD" ]; then\n  if [ "$MARGIN_PROBE_HEAD_AFTER" = "1" ] && [ -f verification.json ]; then echo "${"4".repeat(40)}"; else echo "${head}"; fi\nelse\n  echo "$MARGIN_PROBE_COMMIT"\nfi\n`,
       { mode: 0o755 },
     );
     writeFileSync(
@@ -53,6 +55,8 @@ function probe({
         MARGIN_PROBE_DIRTY: dirty ? "1" : "",
         MARGIN_PROBE_COMMIT: oid,
         MARGIN_PROBE_FAIL: fail ? "1" : "0",
+        MARGIN_PROBE_DIRTY_AFTER: dirtyAfter ? "1" : "0",
+        MARGIN_PROBE_HEAD_AFTER: headAfter ? "1" : "0",
       },
     });
     return {
@@ -93,3 +97,12 @@ it("does not run application verification for a branch deletion", () => {
     verificationArgs: null,
   });
 });
+it.each([{ dirtyAfter: true }, { headAfter: true }])(
+  "rejects files or HEAD changing during full verification (%j)",
+  (change) => {
+    const result = probe(change);
+    expect(result.status).toBe(1);
+    expect(result.error).toContain("Files changed during verification");
+    expect(result.verificationArgs).toEqual([]);
+  },
+);

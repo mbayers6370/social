@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Development preview");
@@ -34,10 +34,14 @@ test("exports beside the expiry rule and restores focus after conversation dialo
   await expect(options).toHaveAttribute("aria-expanded", "false");
 
   await options.click();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: testInfo.outputPath("conversation-options.png"),
     caret: "initial",
   });
+  // The options popover covers the retention control on narrow screens.
+  // Dismiss it as a user would before opening the separate export dialog.
+  await page.keyboard.press("Escape");
+  await expect(options).toHaveAttribute("aria-expanded", "false");
   await download.click();
   const exportDialog = page.getByRole("dialog", {
     name: "Download this conversation",
@@ -121,7 +125,7 @@ test("feed cards keep utility actions in the header and Conversation in a compac
   });
   await expect(report).toBeFocused();
   await expect(report.locator("svg")).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("feed-card-menu.png"),
     caret: "initial",
   });
@@ -206,7 +210,7 @@ test("Space cards show their audience, support reporting, and opt out without le
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await expect(options).toBeFocused();
   await options.click();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-card-menu.png"),
     caret: "initial",
   });

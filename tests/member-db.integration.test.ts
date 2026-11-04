@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { privateTestDatabaseUrl } from "./helpers/database";
 // Real disposable PostgreSQL, real image normalization/cropping and private file
 // bytes. Music catalogue lookups are doubles; no Clerk/Redis/cloud calls.
 import {
@@ -42,14 +43,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       spotifyUrl: "https://open.spotify.com/search/Sample%20artist",
     };
     beforeAll(async () => {
-      const url = new URL(process.env.DATABASE_URL!);
-      if (
-        url.hostname !== "127.0.0.1" ||
-        url.port !== "55432" ||
-        !/^\/margin_slice_test_[a-f0-9]{32}$/.test(url.pathname) ||
-        url.username !== "margin_runtime"
-      )
-        throw Error("Refusing non-disposable database");
+      const url = privateTestDatabaseUrl();
       db = new PrismaClient({ adapter: createDatabaseAdapter(url.href, 5) });
       root = await mkdtemp(join(tmpdir(), "margin-member-"));
       store = localPhotoStore(root);

@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   test.skip(
@@ -41,7 +41,7 @@ test("desktop messages and footer fit without page scrolling, including a growin
     await page.mouse.wheel(0, 1000);
     expect(await page.evaluate(() => scrollY)).toBe(0);
   }
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("desktop-messages-footer.png"),
   });
@@ -86,7 +86,7 @@ test("a friend's profile has compact friendship and message controls and opens t
         .locator(".margin-icon"),
     ).toHaveCount(1);
   }
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("profile-contact-actions.png"),
   });

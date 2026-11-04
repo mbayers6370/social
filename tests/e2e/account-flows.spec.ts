@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { unzipSync, strFromU8 } from "fflate";
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 test.beforeEach(() =>
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION === "1",
@@ -29,7 +29,7 @@ test("sets up a new profile with an empty feed and invitation", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/account-invitation-${test.info().project.name}.png`,
   });
 });
@@ -49,21 +49,26 @@ test("changes a profile photograph and offers selected account downloads", async
   const overlayBox = (await overlay.boundingBox())!;
   for (const key of ["x", "y", "width", "height"] as const)
     expect(Math.abs(portraitBox[key] - overlayBox[key])).toBeLessThan(0.5);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/profile-edit-${test.info().project.name}.png`,
   });
   await overlay.click();
   const picker = page.getByRole("dialog", { name: "Choose a photograph" });
-  await picker
-    .getByRole("button", { name: /^Select / })
-    .first()
-    .click();
+  const selected = picker.getByRole("button", { name: /^Select / }).first();
+  await expect(
+    picker.getByRole("button", { name: "Use photograph", exact: true }),
+  ).toBeDisabled();
+  await selected.click();
+  await expect(selected).toHaveAttribute("aria-pressed", "true");
+  await expect(selected.locator(".margin-photo-selected-mark")).toBeVisible();
+  await expect(selected).toHaveCSS("border-top-width", "3px");
+  await expect(picker.getByRole("textbox")).toHaveCount(0);
   await picker
     .getByRole("button", { name: "Use photograph", exact: true })
     .click();
   const confirm = page.getByRole("dialog", { name: "Your Profile Photograph" });
   await expect(confirm.locator("img").first()).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/profile-photo-${test.info().project.name}.png`,
   });
   await confirm.getByRole("button", { name: "Use photograph" }).click();
@@ -98,7 +103,7 @@ test("changes a profile photograph and offers selected account downloads", async
   await download
     .getByRole("radio", { name: "Complete archive (.zip)", exact: true })
     .check();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/account-download-${test.info().project.name}.png`,
   });
   const [bundle] = await Promise.all([
@@ -148,7 +153,7 @@ test("keeps frequent settings visible and secondary records expandable", async (
   ).toBe(true);
   await page.getByRole("heading", { name: "Settings", exact: true }).click();
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/settings-revised-${testInfo.project.name}.png`,
     fullPage: true,
   });
@@ -179,7 +184,7 @@ test("edits an older account-owned reply on a profile and leaves a deletion plac
     .fill("Yes, that’s the trail. An updated reply.");
   await reply.getByRole("button", { name: "Save changes" }).click();
   await expect(reply).toContainText("Edited");
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/comment-actions-${test.info().project.name}.png`,
   });
   const label = dialog.locator("label").filter({ hasText: "Add a comment" });

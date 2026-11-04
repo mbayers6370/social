@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { privateTestDatabaseUrl } from "./helpers/database";
 // Real disposable PostgreSQL + real image decoder/private filesystem bytes.
 // Clerk sessions and Redis are mocked: this does not verify hosted identity/rate limits/R2.
 import {
@@ -50,14 +51,7 @@ describe.skipIf(!enabled)(
     let actors: { id: string; clerkId: string }[];
     let now = new Date("2026-10-29T17:00:00Z");
     beforeAll(async () => {
-      const url = new URL(process.env.DATABASE_URL!);
-      if (
-        url.hostname !== "127.0.0.1" ||
-        url.port !== "55432" ||
-        !/^\/margin_slice_test_[a-f0-9]{32}$/.test(url.pathname) ||
-        url.username !== "margin_runtime"
-      )
-        throw new Error("Refusing non-disposable database");
+      const url = privateTestDatabaseUrl();
       db = new PrismaClient({
         adapter: new PrismaPg({ connectionString: url.href, max: 10 }),
       });

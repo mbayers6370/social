@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "./fixtures";
+import { captureScreenshot, expect, test, type Page } from "./fixtures";
 
 test.beforeEach(() =>
   test.skip(
@@ -76,7 +76,7 @@ test("text-size preferences scale content and portal fields and survive navigati
     if (label === "Standard" || label === "Extra large") {
       await settingsHeading.click();
       await page.evaluate(() => window.scrollTo(0, 0));
-      await page.screenshot({
+      await captureScreenshot(page, {
         path: `test-results/settings-type-${size}-${page.viewportSize()!.width}.png`,
         fullPage: true,
       });
@@ -123,7 +123,7 @@ test("navigation opens Messages and Profile with the correct current page", asyn
   await expect(
     navigation(page).getByRole("link", { name: "Messages", exact: true }),
   ).toHaveAttribute("aria-current", "page");
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("messages.png"),
   });
@@ -158,7 +158,7 @@ test("navigation opens Messages and Profile with the correct current page", asyn
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("profile.png"),
     fullPage: true,
@@ -215,7 +215,7 @@ test("opens sample threads, validates and escapes local messages without sending
   ).toBeVisible();
   expect(await page.evaluate(() => "compromised" in window)).toBe(false);
   expect(mutations).toEqual([]);
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("message-thread.png"),
   });
@@ -379,89 +379,93 @@ test("edits the profile inline, validates input and updates only the preview", a
   );
 });
 
-test("uses all supplied photos through Next image optimization", async ({
-  page,
-  request,
-}) => {
-  await page.goto("/");
-  for (const id of ["post-fog", "post-porch", "post-tea"]) {
-    await page.goto(id === "post-fog" ? "/?view=profile" : "/");
-    const images = page.locator(`#${id} .margin-post-image`);
-    const multiple = (await images.count()) > 1;
-    for (const image of await images.all()) {
+test(
+  "uses all supplied photos through Next image optimization",
+  { tag: "@extended" },
+  async ({ page, request }) => {
+    await page.goto("/");
+    for (const id of ["post-fog", "post-porch", "post-tea"]) {
+      await page.goto(id === "post-fog" ? "/?view=profile" : "/");
+      const images = page.locator(`#${id} .margin-post-image`);
+      const multiple = (await images.count()) > 1;
+      for (const image of await images.all()) {
+        await image.scrollIntoViewIfNeeded();
+        await expect
+          .poll(() =>
+            image.evaluate((node) => (node as HTMLImageElement).naturalWidth),
+          )
+          .toBeGreaterThan(0);
+        const source = await image.evaluate(
+          (node) => (node as HTMLImageElement).currentSrc,
+        );
+        expect(source).toContain("/_next/image?");
+        expect((await request.get(source)).status()).toBe(200);
+        expect(await image.getAttribute("alt")).toBeTruthy();
+        await expect(image).toHaveCSS("object-fit", "cover");
+        await expect(image).toHaveCSS("object-position", "50% 50%");
+        await expect(image).toHaveCSS("border-radius", "12px");
+        const bounds = (await image.boundingBox())!;
+        const post = (await page.locator(`#${id}`).boundingBox())!;
+        expect(bounds.width).toBeLessThan(post.width);
+        const ratio = await image.locator("..").getAttribute("data-aspect");
+        expect(
+          Math.abs(
+            bounds.width / bounds.height -
+              (ratio === "portrait" ? 4 / 5 : 3 / 2),
+          ),
+        ).toBeLessThan(0.01);
+        if (!multiple) {
+          const media = (await page
+            .locator(`#${id} .margin-media`)
+            .boundingBox())!;
+          expect(Math.abs(bounds.width - media.width)).toBeLessThan(1);
+        }
+        if (multiple)
+          expect(
+            Number(new URL(source).searchParams.get("w")),
+          ).toBeLessThanOrEqual(1080);
+      }
+    }
+    await page.goto("/?view=profile");
+    const authorPhoto = page.locator("#post-fog .margin-avatar-image");
+    await expect(authorPhoto).toHaveCount(0);
+    await page.goto("/?view=profile");
+    const avatar = page.locator(
+      ".margin-profile-identity .margin-avatar-image",
+    );
+    await expect(avatar).toHaveAttribute("src", /Ines_Coffee\./);
+    await expect
+      .poll(() =>
+        avatar.evaluate((node) => (node as HTMLImageElement).naturalWidth),
+      )
+      .toBeGreaterThan(0);
+    const gallery = page.locator(".margin-gallery-preview img");
+    await expect(gallery).toHaveCount(3);
+    for (const [index, name] of [
+      "morning_beach",
+      "architecture_Mexico",
+      "Ines_Coffee",
+    ].entries()) {
+      const image = gallery.nth(index);
       await image.scrollIntoViewIfNeeded();
+      await expect(image).toHaveAttribute("src", new RegExp(`${name}\\.`));
       await expect
         .poll(() =>
           image.evaluate((node) => (node as HTMLImageElement).naturalWidth),
         )
         .toBeGreaterThan(0);
-      const source = await image.evaluate(
-        (node) => (node as HTMLImageElement).currentSrc,
-      );
-      expect(source).toContain("/_next/image?");
-      expect((await request.get(source)).status()).toBe(200);
-      expect(await image.getAttribute("alt")).toBeTruthy();
-      await expect(image).toHaveCSS("object-fit", "cover");
-      await expect(image).toHaveCSS("object-position", "50% 50%");
-      await expect(image).toHaveCSS("border-radius", "12px");
-      const bounds = (await image.boundingBox())!;
-      const post = (await page.locator(`#${id}`).boundingBox())!;
-      expect(bounds.width).toBeLessThan(post.width);
-      const ratio = await image.locator("..").getAttribute("data-aspect");
       expect(
-        Math.abs(
-          bounds.width / bounds.height - (ratio === "portrait" ? 4 / 5 : 3 / 2),
-        ),
-      ).toBeLessThan(0.01);
-      if (!multiple) {
-        const media = (await page
-          .locator(`#${id} .margin-media`)
-          .boundingBox())!;
-        expect(Math.abs(bounds.width - media.width)).toBeLessThan(1);
-      }
-      if (multiple)
-        expect(
-          Number(new URL(source).searchParams.get("w")),
-        ).toBeLessThanOrEqual(1080);
+        (await request.get((await image.getAttribute("src"))!)).status(),
+      ).toBe(200);
     }
-  }
-  await page.goto("/?view=profile");
-  const authorPhoto = page.locator("#post-fog .margin-avatar-image");
-  await expect(authorPhoto).toHaveCount(0);
-  await page.goto("/?view=profile");
-  const avatar = page.locator(".margin-profile-identity .margin-avatar-image");
-  await expect(avatar).toHaveAttribute("src", /Ines_Coffee\./);
-  await expect
-    .poll(() =>
-      avatar.evaluate((node) => (node as HTMLImageElement).naturalWidth),
-    )
-    .toBeGreaterThan(0);
-  const gallery = page.locator(".margin-gallery-preview img");
-  await expect(gallery).toHaveCount(3);
-  for (const [index, name] of [
-    "morning_beach",
-    "architecture_Mexico",
-    "Ines_Coffee",
-  ].entries()) {
-    const image = gallery.nth(index);
-    await image.scrollIntoViewIfNeeded();
-    await expect(image).toHaveAttribute("src", new RegExp(`${name}\\.`));
-    await expect
-      .poll(() =>
-        image.evaluate((node) => (node as HTMLImageElement).naturalWidth),
-      )
-      .toBeGreaterThan(0);
-    expect(
-      (await request.get((await image.getAttribute("src"))!)).status(),
-    ).toBe(200);
-  }
-  await expect(
-    page.locator("#post-profile-beach .margin-post-image"),
-  ).toHaveAttribute("src", /morning_beach\./);
-  await expect(
-    page.locator("#post-profile-architecture .margin-post-image"),
-  ).toHaveAttribute("src", /architecture_Mexico\./);
-});
+    await expect(
+      page.locator("#post-profile-beach .margin-post-image"),
+    ).toHaveAttribute("src", /morning_beach\./);
+    await expect(
+      page.locator("#post-profile-architecture .margin-post-image"),
+    ).toHaveAttribute("src", /architecture_Mexico\./);
+  },
+);
 
 test("screens fit a 320px viewport and a mobile thread keeps its composer accessible", async ({
   page,

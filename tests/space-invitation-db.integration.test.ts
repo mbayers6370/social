@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { privateTestDatabaseUrl } from "./helpers/database";
 // Real disposable PostgreSQL; session/rate-limit adapters are controlled doubles.
 import {
   afterAll,
@@ -39,14 +40,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
     let room: { id: string };
     const now = new Date("2026-11-03T12:00:00Z");
     beforeAll(() => {
-      const url = new URL(process.env.DATABASE_URL!);
-      if (
-        url.hostname !== "127.0.0.1" ||
-        url.port !== "55432" ||
-        !/^\/margin_slice_test_[a-f0-9]{32}$/.test(url.pathname) ||
-        url.username !== "margin_runtime"
-      )
-        throw Error("Disposable runtime database required");
+      const url = privateTestDatabaseUrl();
       db = new PrismaClient({
         adapter: new PrismaPg({ connectionString: url.href, max: 3 }),
       });

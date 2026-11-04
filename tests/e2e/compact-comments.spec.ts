@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "./fixtures";
+import { captureScreenshot, expect, test, type Page } from "./fixtures";
 import { memberFixture, friend, identity } from "./helpers/member-fixture";
 
 const roots = Array.from({ length: 5 }, (_, index) => ({
@@ -81,5 +81,7 @@ test("keeps replies at one indent and aligns the thread control with the text", 
     1,
   );
   await expect(dialog.locator("[data-like-count] svg")).toHaveCount(0);
-  await page.screenshot({ path: info.outputPath("compact-replies.png") });
+  await captureScreenshot(page, {
+    path: info.outputPath("compact-replies.png"),
+  });
 });

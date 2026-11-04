@@ -1,6 +1,6 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 
 test.beforeEach(() =>
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Local Space composer"),
@@ -91,7 +91,7 @@ test("matches the feed entry and preserves a text/photo draft until one Publish"
   await expect(text).toHaveValue("A thought to keep with our photographs.");
   await expect(page.locator(".margin-compose-photos img")).toHaveCount(2);
   await expect(page.locator("article")).toHaveCount(originalPosts);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-composer-open.png"),
     fullPage: info.project.name !== "mobile",
   });

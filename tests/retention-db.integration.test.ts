@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { privateTestDatabaseUrl } from "./helpers/database";
 // Actual disposable PostgreSQL; object storage and Clerk are controlled doubles.
 import {
   afterAll,
@@ -56,14 +57,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       }),
     };
     beforeAll(() => {
-      const url = new URL(process.env.DATABASE_URL!);
-      if (
-        url.hostname !== "127.0.0.1" ||
-        url.port !== "55432" ||
-        !/^\/margin_slice_test_[a-f0-9]{32}$/.test(url.pathname) ||
-        url.username !== "margin_runtime"
-      )
-        throw Error("Disposable runtime database required");
+      const url = privateTestDatabaseUrl();
       db = new PrismaClient({ adapter: createDatabaseAdapter(url.href, 8) });
     });
     beforeEach(async () => {

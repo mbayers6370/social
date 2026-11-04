@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 declare global {
   interface Window {
@@ -135,7 +135,7 @@ test("keeps photo selection actions reachable and enlarges the narrow gallery gr
   await expect(
     editor.getByRole("button", { name: "Done", exact: true }),
   ).toBeInViewport({ ratio: 1 });
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("mobile-gallery-arrange.png"),
   });

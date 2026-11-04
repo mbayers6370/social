@@ -10,14 +10,19 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
+import { isolatedEnvironment, localTestPort } from "./testing/environment.mjs";
 
 const root = process.cwd();
 const codeOnly = process.argv.includes("--code-only");
 const quick = process.argv.includes("--quick");
+const extended = process.argv.includes("--extended");
 const testFiles = process.argv
   .slice(2)
-  .filter((argument) => !["--code-only", "--quick"].includes(argument));
-if (codeOnly && quick) throw new Error("Choose either --quick or --code-only.");
+  .filter(
+    (argument) => !["--code-only", "--quick", "--extended"].includes(argument),
+  );
+if ([codeOnly, quick, extended].filter(Boolean).length > 1)
+  throw new Error("Choose one verification level.");
 if (
   testFiles.length &&
   (!quick ||
@@ -55,24 +60,47 @@ if (tracked.stdout.split("\0").some((name) => name && sensitive(name)))
   throw new Error(
     "Private or generated files are tracked. Review git ls-files before publishing.",
   );
-// Private-backend regressions must pass against actual PostgreSQL on every push.
-// This runner creates/drops its own database; .env and the preview DB are untouched.
-if (!codeOnly && !quick) {
-  process.stdout.write(
-    "\nChecking isolated private-backend PostgreSQL tests…\n",
-  );
-  const database = spawnSync("npm", ["run", "test:social-db"], {
-    cwd: root,
-    env: process.env,
+mkdirSync(path.join(root, ".local", "verification"), { recursive: true });
+const report = mkdtempSync(path.join(root, ".local", "verification", "run-"));
+const snapshot = mkdtempSync(path.join(root, ".local", "verify-"));
+const env = isolatedEnvironment(
+  process.env,
+  readFileSync(path.join(root, ".env.example"), "utf8"),
+);
+if (!codeOnly && !quick) env.PLAYWRIGHT_PORT = String(await localTestPort());
+env.PLAYWRIGHT_EXTENDED = extended ? "1" : "";
+env.PLAYWRIGHT_CAPTURE =
+  extended && process.env.PLAYWRIGHT_CAPTURE === "1" ? "1" : "";
+const phases = [];
+const started = performance.now();
+const run = (label, args, extra = {}, cwd = snapshot) => {
+  process.stdout.write(`\nChecking ${label}…\n`);
+  const start = performance.now();
+  const result = spawnSync("npm", args, {
+    cwd,
+    env: { ...env, ...extra },
     stdio: "inherit",
   });
-  if (database.status !== 0)
-    throw new Error("Private-backend database verification failed.");
-}
-mkdirSync(path.join(root, ".local"), { recursive: true });
-const snapshot = mkdtempSync(path.join(root, ".local", "verify-"));
+  phases.push({
+    phase: label,
+    seconds: Number(((performance.now() - start) / 1000).toFixed(2)),
+    exitCode: result.status ?? 1,
+  });
+  if (result.status !== 0)
+    throw new Error(
+      `${label} failed${result.error ? `: ${result.error.message}` : ""}.`,
+    );
+};
 let passed = false;
 try {
+  // The existing real database gate remains mandatory for full and extended runs.
+  if (!codeOnly && !quick)
+    run(
+      "isolated PostgreSQL",
+      ["run", "test:social-db"],
+      { MARGIN_TEST_REPORT: path.join(report, "database.json") },
+      root,
+    );
   for (const name of new Set(git.stdout.split("\0").filter(Boolean))) {
     if (sensitive(name) || !existsSync(path.join(root, name))) continue;
     mkdirSync(path.dirname(path.join(snapshot, name)), { recursive: true });
@@ -101,32 +129,6 @@ try {
       `const nextConfig: NextConfig = {\n  devIndicators: false,\n  turbopack: { root: ${JSON.stringify(root)} },`,
     ),
   );
-  const env = {
-    ...process.env,
-    PLAYWRIGHT_PRODUCTION: "",
-    RUN_LOCAL_DB_TESTS: "",
-    RUN_LIVE_MUSIC_TEST: "",
-    RUN_PRIVATE_DB_TESTS: "",
-  };
-  delete env.PLAYWRIGHT_BASE_URL;
-  for (const [, key] of readFileSync(
-    path.join(root, ".env.example"),
-    "utf8",
-  ).matchAll(/^([A-Z][A-Z0-9_]*)=/gm))
-    env[key] = "";
-  env.SENTRY_AUTH_TOKEN = "";
-  const run = (label, args, extra = {}) => {
-    process.stdout.write(`\nChecking ${label}…\n`);
-    const result = spawnSync("npm", args, {
-      cwd: snapshot,
-      env: { ...env, ...extra },
-      stdio: "inherit",
-    });
-    if (result.status !== 0)
-      throw new Error(
-        `${label} failed${result.error ? `: ${result.error.message}` : ""}.`,
-      );
-  };
   if (Number(process.versions.node.split(".")[0]) !== 22)
     process.stdout.write(
       `Using Node ${process.versions.node}; CI uses the Node 22 version declared in .nvmrc.\n`,
@@ -136,12 +138,16 @@ try {
   run("unit tests", [
     "run",
     "test",
-    ...(testFiles.length ? ["--", ...testFiles] : []),
+    "--",
+    "--reporter=default",
+    "--reporter=json",
+    `--outputFile.json=${path.join(report, "unit.json")}`,
+    ...testFiles,
   ]);
   if (!quick) run("build", ["run", "build"]);
   if (!codeOnly && !quick) {
-    run("development browsers", ["run", "test:e2e", "--", "--workers=2"]);
-    run("production browsers", ["run", "test:e2e", "--", "--workers=2"], {
+    run("development browsers", ["run", "test:e2e"]);
+    run("production browsers", ["run", "test:e2e"], {
       PLAYWRIGHT_PRODUCTION: "1",
     });
   }
@@ -167,5 +173,35 @@ try {
   );
   process.exitCode = 1;
 } finally {
+  const browserReports = path.join(snapshot, "test-reports");
+  if (existsSync(browserReports))
+    cpSync(browserReports, path.join(report, "browsers"), { recursive: true });
+  if (
+    env.PLAYWRIGHT_CAPTURE === "1" &&
+    existsSync(path.join(snapshot, "test-results"))
+  )
+    cpSync(path.join(snapshot, "test-results"), path.join(report, "captures"), {
+      recursive: true,
+    });
+  writeFileSync(
+    path.join(report, "summary.json"),
+    JSON.stringify(
+      {
+        level: quick
+          ? "fast"
+          : codeOnly
+            ? "code-only"
+            : extended
+              ? "extended"
+              : "full",
+        passed,
+        seconds: Number(((performance.now() - started) / 1000).toFixed(2)),
+        phases,
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  process.stdout.write(`Verification timings and test results: ${report}\n`);
   if (passed) rmSync(snapshot, { recursive: true, force: true });
 }

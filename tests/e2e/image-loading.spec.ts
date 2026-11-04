@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(() =>
   test.skip(
@@ -70,7 +70,7 @@ test("photo viewer preserves source proportions and stays contained without dime
     viewer.y + viewer.height + 1,
   );
   await expect(image).toHaveCSS("object-fit", "contain");
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("contained-photo.png"),
   });

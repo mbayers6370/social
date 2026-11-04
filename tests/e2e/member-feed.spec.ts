@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 import { readFileSync } from "node:fs";
 
@@ -42,7 +42,7 @@ test.describe("shared member feed presentation and personal composer", () => {
         () => document.documentElement.scrollWidth <= window.innerWidth,
       ),
     ).toBe(true);
-    await page.screenshot({
+    await captureScreenshot(page, {
       caret: "initial",
       path: info.outputPath("member-feed.png"),
       fullPage: true,
@@ -81,7 +81,7 @@ test.describe("shared member feed presentation and personal composer", () => {
     await expect(page.getByLabel("Your post")).toHaveValue(
       "A thought for friends",
     );
-    await page.screenshot({
+    await captureScreenshot(page, {
       caret: "initial",
       path: info.outputPath("member-composer.png"),
       fullPage: true,
@@ -149,11 +149,13 @@ test.describe("shared member feed presentation and personal composer", () => {
     await page.goto("/preview/auth?view=member");
     await page.getByRole("button", { name: "New photo post" }).click();
     const picker = page.getByRole("dialog", { name: "Choose a photograph" });
-    await picker.locator('input[type="file"]').setInputFiles({
-      name: "tea.jpg",
-      mimeType: "image/jpeg",
-      buffer: bytes,
-    });
+    await picker
+      .getByLabel("Or upload a new one", { exact: true })
+      .setInputFiles({
+        name: "tea.jpg",
+        mimeType: "image/jpeg",
+        buffer: bytes,
+      });
     await expect(picker.locator(".margin-dropped-photo")).toBeVisible();
     await expect
       .poll(() =>

@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import path from "node:path";
 import type { Page } from "@playwright/test";
 async function showSpaceOptions(page: Page) {
@@ -81,7 +81,7 @@ test("opens Spaces without credentials and keeps canonical conversations in the 
       .count(),
   ).toBe(1);
   await expect(page.locator(`article[id="${canonicalId}"]`)).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("spaces-main-feed.png"),
     fullPage: true,
   });
@@ -94,7 +94,7 @@ test("opens Spaces without credentials and keeps canonical conversations in the 
       .getByRole("dialog")
       .getByText("Let’s stay near the station.", { exact: true }),
   ).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("spaces-preview-conversation.png"),
   });
   await page
@@ -191,7 +191,7 @@ test("creates a sample Space with plans, posts and photographs locally, then arc
       .getByRole("button", { name: "Going", exact: true }),
   ).toBeDisabled();
   await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("spaces-preview-archived.png"),
     fullPage: true,
   });
@@ -287,7 +287,7 @@ test("retains an unfinished conversation and lets a member cancel or confirm lea
   await expect(
     confirmation.getByRole("button", { name: "Cancel", exact: true }),
   ).toBeFocused();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("leave-space-confirmation.png"),
     caret: "initial",
   });

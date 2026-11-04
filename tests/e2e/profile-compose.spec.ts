@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
 test.beforeEach(() =>
@@ -41,14 +41,20 @@ for (const profile of ["local", "member"] as const) {
       expect(bounds.height).toBeLessThanOrEqual(viewport.height * 0.9 + 1);
       expect(bounds.x).toBeGreaterThan(0);
       expect(bounds.y).toBeGreaterThan(0);
-      const contentWidth = await page.evaluate(
-        () => document.documentElement.clientWidth,
+      // clientWidth becomes the viewport width during scroll lock on Linux,
+      // even while the stable scrollbar gutter reserves layout space. Measure
+      // the actual root box, which is also the dialog's containing area.
+      const content = (await page.locator("html").boundingBox())!;
+      expect(bounds.x + bounds.width / 2).toBeCloseTo(
+        content.x + content.width / 2,
+        0,
       );
-      expect(bounds.x + bounds.width / 2).toBeCloseTo(contentWidth / 2, 0);
       expect(bounds.y + bounds.height / 2).toBeCloseTo(viewport.height / 2, 0);
     }
     await input.fill("A thought from my profile.");
-    await page.screenshot({ path: info.outputPath("profile-compose.png") });
+    await captureScreenshot(page, {
+      path: info.outputPath("profile-compose.png"),
+    });
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await expect(trigger).toBeFocused();
@@ -100,7 +106,9 @@ for (const profile of ["local", "member"] as const) {
         )
         .toBeGreaterThan(0);
     }
-    await page.screenshot({ path: info.outputPath("profile-photo-draft.png") });
+    await captureScreenshot(page, {
+      path: info.outputPath("profile-photo-draft.png"),
+    });
     await compose.getByRole("button", { name: "Cancel", exact: true }).click();
     await page.getByRole("button", { name: "New Post", exact: true }).click();
     await expect(compose.locator(".margin-compose-photos img")).toHaveCount(3);

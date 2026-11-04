@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test("post skeleton preview announces loading, respects reduced motion, and restores content", async ({
   page,
@@ -28,7 +28,7 @@ test("post skeleton preview announces loading, respects reduced motion, and rest
     )
     .toBe("none");
   await preview.scrollIntoViewIfNeeded();
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("post-skeleton.png"),
   });

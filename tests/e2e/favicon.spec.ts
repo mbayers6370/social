@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 
 test("favicon head links select the matching monogram for light and dark mode", async ({
   page,
@@ -45,7 +45,7 @@ test("favicon head links select the matching monogram for light and dark mode", 
       );
     }),
   ).toBe(true);
-  await page
-    .locator("main")
-    .screenshot({ path: info.outputPath("favicon-light-dark.png") });
+  await captureScreenshot(page.locator("main"), {
+    path: info.outputPath("favicon-light-dark.png"),
+  });
 });

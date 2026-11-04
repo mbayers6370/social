@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page, isMobile }) => {
   test.skip(
@@ -30,7 +30,7 @@ test("keeps the mobile bars compact, preserves tap targets, and accounts for saf
       ),
     ).toBe(true);
   }
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("compact-bars.png"),
   });
@@ -54,7 +54,7 @@ test("keeps the mobile bars compact, preserves tap targets, and accounts for saf
     "content",
     /viewport-fit=cover/,
   );
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("simulated-safe-areas.png"),
   });
@@ -88,7 +88,7 @@ test("keeps enlarged navigation readable and puts utility links under Settings",
     (await utilities.boundingBox())!.y +
       (await utilities.boundingBox())!.height,
   );
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("settings-utilities.png"),
   });
