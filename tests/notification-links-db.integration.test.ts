@@ -84,6 +84,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       process.env.MARGIN_PRIVATE_BACKEND_ENABLED = "1";
     });
     afterEach(async () => {
+      vi.useRealTimers();
       delete process.env.MARGIN_PRIVATE_BACKEND_ENABLED;
       await db.user.deleteMany({
         where: { id: { in: users.map((u) => u.id) } },
@@ -284,6 +285,10 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       ).toEqual([]);
     });
     it("validates exact target query parameters at the authenticated HTTP boundary", async () => {
+      // The HTTP adapter constructs its own service using Date. Share the
+      // fixture clock so this post stays valid regardless of the CI run date.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(now);
       const { reply } = await thread();
       const read = (query: string) =>
         socialRequest(
