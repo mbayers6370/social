@@ -110,8 +110,8 @@ for (const area of ["feed-posts", "profile"]) {
       const source = (await post.boundingBox())!;
       const panel = (await dialog.boundingBox())!;
       expect(source.x).toBeLessThan(before.x - 100);
-      expect(panel.y).toBeCloseTo(source.y, 0);
-      expect(panel.height).toBeCloseTo(source.height, 0);
+      expect(panel.y).toBeCloseTo(source.y + 16, 0);
+      expect(panel.height).toBeCloseTo(source.height - 32, 0);
       expect(panel.x + panel.width).toBeLessThanOrEqual(
         page.viewportSize()!.width,
       );

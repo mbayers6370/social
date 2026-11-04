@@ -71,15 +71,14 @@ test("uses the responsive navigation and manages local friendships across screen
   await page
     .getByRole("button", { name: "More options for Nadia Haddad" })
     .click();
-  const manage = page.getByRole("button", {
-    name: "Manage friendship with Nadia Haddad",
+  const manage = page.getByRole(mobile ? "button" : "menuitem", {
+    name: "Unfriend",
+    exact: true,
   });
   await manage.click();
   const confirm = page.getByRole("alertdialog");
   await expect(confirm.getByRole("button", { name: "Cancel" })).toBeFocused();
-  await confirm
-    .getByRole("button", { name: "Remove friend", exact: true })
-    .click();
+  await confirm.getByRole("button", { name: "Unfriend", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Add friend", exact: true }),
   ).toBeVisible();

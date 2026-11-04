@@ -170,12 +170,12 @@ test("creates a sample Space with plans, posts and photographs locally, then arc
   ).toBeVisible();
   await page.getByRole("button", { name: "New photo post" }).click();
   await page
-    .getByLabel("Photograph from your device", { exact: true })
+    .getByLabel("Or upload a new one", { exact: true })
     .setInputFiles(path.resolve("src/assets/fixtures/dog.jpg"));
   await page.getByRole("button", { name: "Use photograph" }).click();
   await page.getByRole("button", { name: "Publish", exact: true }).click();
   await expect(
-    page.getByRole("img", { name: "A sample photograph for our room" }),
+    page.getByRole("img", { name: "Photograph", exact: true }),
   ).toBeVisible();
   await showSpaceOptions(page);
   await page
@@ -215,7 +215,7 @@ test("creates a sample Space with plans, posts and photographs locally, then arc
     page.getByRole("article").filter({ hasText: "Meet outside at six?" }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("img", { name: "A sample photograph for our room" }),
+    page.getByRole("img", { name: "Photograph", exact: true }),
   ).toHaveCount(0);
   await page
     .getByRole("navigation", {
@@ -229,7 +229,8 @@ test("creates a sample Space with plans, posts and photographs locally, then arc
     page.getByRole("article").filter({ hasText: "Meet outside at six?" }),
   ).toBeVisible();
   const photograph = page.getByRole("img", {
-    name: "A sample photograph for our room",
+    name: "Photograph",
+    exact: true,
   });
   await expect(photograph).toBeVisible();
   expect(await photograph.getAttribute("src")).toMatch(/^blob:/);

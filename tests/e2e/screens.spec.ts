@@ -407,7 +407,12 @@ test("uses all supplied photos through Next image optimization", async ({
       const bounds = (await image.boundingBox())!;
       const post = (await page.locator(`#${id}`).boundingBox())!;
       expect(bounds.width).toBeLessThan(post.width);
-      expect(Math.abs(bounds.width / bounds.height - 3 / 2)).toBeLessThan(0.01);
+      const ratio = await image.locator("..").getAttribute("data-aspect");
+      expect(
+        Math.abs(
+          bounds.width / bounds.height - (ratio === "portrait" ? 4 / 5 : 3 / 2),
+        ),
+      ).toBeLessThan(0.01);
       if (!multiple) {
         const media = (await page
           .locator(`#${id} .margin-media`)

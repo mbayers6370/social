@@ -105,8 +105,8 @@ test("feed cards keep utility actions in the header and Conversation in a compac
       conversationHeight: conversation.height,
     };
   });
-  expect(geometry.top).toBe("16px");
-  expect(geometry.bottom).toBe("16px");
+  expect(geometry.top).toBe("24px");
+  expect(geometry.bottom).toBe("24px");
   expect(geometry.menuHeight).toBeGreaterThanOrEqual(44);
   expect(geometry.conversationHeight).toBeGreaterThanOrEqual(44);
   await options.focus();

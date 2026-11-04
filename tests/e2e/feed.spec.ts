@@ -87,7 +87,7 @@ test("shows the reference feed in chronological order with mobile-first navigati
     await page
       .locator("#post-porch")
       .evaluate((node) => getComputedStyle(node).borderBottomWidth),
-  ).toBe("1px");
+  ).toBe("0px");
   await expect(page.locator(".margin-feed-list figcaption")).toHaveCount(0);
   await expect(page.locator("#post-fog")).toHaveCount(0);
   await expect(page.locator("#post-porch .margin-post-image")).toHaveAttribute(
@@ -161,8 +161,8 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
     const panel = await dialog.boundingBox();
     expect(moved!.x).toBeLessThan(before.post.x - 100);
     expect(moved!.y).toBeCloseTo(before.post.y - scrollDelta, 1);
-    expect(panel!.height).toBeCloseTo(moved!.height, 1);
-    expect(panel!.y).toBeCloseTo(moved!.y, 1);
+    expect(panel!.height).toBeCloseTo(moved!.height - 32, 1);
+    expect(panel!.y).toBeCloseTo(moved!.y + 16, 1);
     const content = (await page.locator(".margin-main").boundingBox())!;
     expect((moved!.x + panel!.x + panel!.width) / 2).toBeCloseTo(
       content.x + content.width / 2,
@@ -360,7 +360,7 @@ test("keeps the active experience usable when switching between desktop and mobi
     .poll(async () => {
       const panel = await dialog.boundingBox();
       const post = await page.locator("#post-porch").boundingBox();
-      return Math.abs(panel!.height - post!.height);
+      return Math.abs(panel!.height - (post!.height - 32));
     })
     .toBeLessThan(1);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -398,7 +398,7 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
     const dialog = await openPost(page, id);
     const panelBounds = (await dialog.boundingBox())!;
     const postBounds = (await post.boundingBox())!;
-    expect(panelBounds.height).toBeCloseTo(postBounds.height, 1);
+    expect(panelBounds.height).toBeCloseTo(postBounds.height - 32, 1);
     expect(postBounds.height).toBeGreaterThanOrEqual(
       Math.max(original.height, 640) - 1,
     );
@@ -490,7 +490,7 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
   const headerHeight = (await page.locator(".margin-header").boundingBox())!
     .height;
   const postHeight = (await page.locator("#post-porch").boundingBox())!.height;
-  expect((await dialog.boundingBox())!.height).toBeCloseTo(postHeight, 1);
+  expect((await dialog.boundingBox())!.height).toBeCloseTo(postHeight - 32, 1);
   expect(postHeight).toBeGreaterThanOrEqual(500 - headerHeight - 64);
   await expect(
     dialog.getByRole("button", { name: "Close conversation", exact: true }),
@@ -512,6 +512,11 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
     dialog.getByRole("button", { name: "Post", exact: true }),
   ).toBeInViewport();
   await dialog.getByRole("button", { name: "Post", exact: true }).click();
+  // Posting reveals the saved comment; return to the composer to check its
+  // position while only the discussion region scrolls.
+  await dialog
+    .locator(".margin-conversation-composer")
+    .scrollIntoViewIfNeeded();
   const scroll = dialog.getByRole("region", { name: "Conversation content" });
   await scroll.evaluate((node) => {
     node.scrollTop = 0;

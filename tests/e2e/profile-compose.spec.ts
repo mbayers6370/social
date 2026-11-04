@@ -41,7 +41,10 @@ for (const profile of ["local", "member"] as const) {
       expect(bounds.height).toBeLessThanOrEqual(viewport.height * 0.9 + 1);
       expect(bounds.x).toBeGreaterThan(0);
       expect(bounds.y).toBeGreaterThan(0);
-      expect(bounds.x + bounds.width / 2).toBeCloseTo(viewport.width / 2, 0);
+      const contentWidth = await page.evaluate(
+        () => document.documentElement.clientWidth,
+      );
+      expect(bounds.x + bounds.width / 2).toBeCloseTo(contentWidth / 2, 0);
       expect(bounds.y + bounds.height / 2).toBeCloseTo(viewport.height / 2, 0);
     }
     await input.fill("A thought from my profile.");

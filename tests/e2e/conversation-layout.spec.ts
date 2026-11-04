@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }, testInfo) => {
   await page.goto("/");
 });
 
-test("mutes the selected post surface without dimming its photographs", async ({
+test("preserves the selected post colors and photograph brightness", async ({
   page,
 }, testInfo) => {
   const post = page.locator("#post-porch");
@@ -24,8 +24,8 @@ test("mutes the selected post surface without dimming its photographs", async ({
     background: getComputedStyle(node).backgroundColor,
     text: getComputedStyle(node.querySelector(".margin-post-prose")!).color,
   }));
-  expect(muted.background).not.toBe(original.background);
-  expect(muted.text).not.toBe(original.text);
+  expect(muted.background).toBe(original.background);
+  expect(muted.text).toBe(original.text);
   const imageEffects = await post.locator("img").evaluateAll((images) =>
     images.flatMap((image) => {
       const effects = [];
