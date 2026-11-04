@@ -2,6 +2,8 @@ import { captureScreenshot, expect, test } from "./fixtures";
 test("welcome connects invitation signup and login", async ({
   page,
 }, testInfo) => {
+  // Cold CI compilation belongs to navigation, not the five-second UI assertion.
+  test.setTimeout(60_000);
   if (testInfo.project.name === "mobile")
     await page.setViewportSize({ width: 320, height: 800 });
   await page.goto("/welcome");
@@ -37,10 +39,10 @@ test("welcome connects invitation signup and login", async ({
   await captureScreenshot(page, {
     path: `test-results/invitation-signup-${testInfo.project.name}.png`,
   });
-  await page
-    .getByRole("link", { name: "Sign in", exact: true })
-    .first()
-    .click();
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === "/sign-in"),
+    page.getByRole("link", { name: "Sign in", exact: true }).first().click(),
+  ]);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Welcome back.",
   );

@@ -165,10 +165,28 @@ test("edits an older account-owned reply on a profile and leaves a deletion plac
   await page.goto("/?view=profile");
   await page.locator("#post-fog [data-conversation-trigger]").click();
   const dialog = page.getByRole("dialog", { name: /Conversation on/ });
-  await dialog
-    .getByRole("button", { name: "Show 1 reply", exact: true })
-    .first()
-    .click();
+  // The profile conversation flips into place. Wait for its actual animation,
+  // so a pointer click cannot land on the front face during the turn.
+  await expect
+    .poll(() =>
+      dialog.evaluate((node) =>
+        node
+          .getAnimations()
+          .every((animation) => animation.playState !== "running"),
+      ),
+    )
+    .toBe(true);
+  const thread = dialog.getByRole("listitem").filter({
+    has: page.locator("#comment-post-fog-fog-3"),
+  });
+  const toggle = thread.getByRole("button", {
+    name: "Show 1 reply",
+    exact: true,
+  });
+  await toggle.click();
+  await expect(
+    thread.getByRole("button", { name: "Hide replies", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
   const reply = page.locator("#comment-post-fog-fog-4");
   await expect(
     reply.getByRole("button", { name: "Edit", exact: true }),
