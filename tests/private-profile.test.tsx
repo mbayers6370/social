@@ -96,7 +96,7 @@ it("preserves drafts after a rejection and stops resubmission when a create resu
   );
   expect(input).toHaveValue("Keep this draft");
   expect(
-    screen.getByRole("button", { name: "Reload to check saved changes" }),
+    screen.getByRole("button", { name: "Check saved posts" }),
   ).toBeVisible();
   expect(request).toHaveBeenCalledTimes(2);
 });
