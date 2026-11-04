@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Message } from "@/components/margin-icons";
 import coffeeShop from "@/assets/fixtures/coffee-shop.jpg";
 import { Avatar } from "@/features/feed/post-content";
 import { WelcomeReveal } from "./welcome-reveal";
@@ -32,7 +31,7 @@ export function WelcomePreview() {
         <div className="margin-welcome-feed-content">
           <div className="margin-welcome-example-label">
             <span>Your feed</span>
-            <span>Newest First</span>
+            <span>Newest first</span>
           </div>
           <WelcomePost
             discussion={
@@ -98,9 +97,8 @@ export function WelcomeMessages() {
           <Avatar person={robin} />
           <div>
             <strong>{robin.name}</strong>
-            <span>Messages</span>
+            <span>View profile</span>
           </div>
-          <Message aria-hidden="true" />
         </header>
         <div className="margin-welcome-message-history">
           <p className="margin-welcome-message-date">A few minutes later</p>

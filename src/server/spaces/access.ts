@@ -25,7 +25,7 @@ export async function spaceAccess(
   )
     throw unavailable();
   if (write && membership.space.archivedAt)
-    throw new SocialError(409, "This event is archived and read-only");
+    throw new SocialError(409, "This Space is archived and read-only");
   return membership;
 }
 export function requireSpaceAdmin(member: { role: string }) {

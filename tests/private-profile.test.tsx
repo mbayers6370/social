@@ -10,7 +10,13 @@ const request = vi.fn();
 afterEach(() => vi.unstubAllGlobals());
 beforeEach(() => {
   request.mockReset();
-  vi.stubGlobal("fetch", request);
+  vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
+    url === "/api/posts/allowance"
+      ? Promise.resolve(
+          Response.json({ regularRemaining: 3, linkAllowed: true }),
+        )
+      : request(url, init),
+  );
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
     addEventListener: vi.fn(),
@@ -90,7 +96,7 @@ it("preserves drafts after a rejection and stops resubmission when a create resu
   );
   expect(input).toHaveValue("Keep this draft");
   expect(
-    screen.getByRole("button", { name: "Reload to check saved changes" }),
+    screen.getByRole("button", { name: "Check saved posts" }),
   ).toBeVisible();
   expect(request).toHaveBeenCalledTimes(2);
 });
@@ -119,11 +125,11 @@ it("stages an owned saved photograph and sends only its ID when publishing", asy
   );
   render(<PrivateProfile data={profile()} />);
   await user.click(screen.getByRole("button", { name: "New Post" }));
-  await user.click(screen.getByRole("button", { name: "Add Photographs" }));
+  await user.click(screen.getByRole("button", { name: "Add photographs" }));
   await user.click(
     await screen.findByRole("button", { name: "Select River bank" }),
   );
-  await user.click(screen.getByRole("button", { name: "Use Photograph" }));
+  await user.click(screen.getByRole("button", { name: "Use photograph" }));
   expect(
     request.mock.calls.filter(([url]) => url === "/api/posts/publish"),
   ).toHaveLength(0);
@@ -136,6 +142,66 @@ it("stages an owned saved photograph and sends only its ID when publishing", asy
     }),
   );
 });
+it("uploads a gallery photograph without an image-description field or header", async () => {
+  const user = userEvent.setup();
+  request.mockResolvedValue(
+    Response.json({
+      id: "uploaded",
+      description: "Photograph",
+      width: 400,
+      height: 300,
+    }),
+  );
+  render(<MemberGallery data={profile()} />);
+  await user.click(screen.getByRole("button", { name: "Add photo" }));
+  const picker = screen.getByRole("dialog", { name: "Add Photograph" });
+  expect(within(picker).queryByRole("textbox")).not.toBeInTheDocument();
+  await user.upload(
+    within(picker).getByLabelText("Photograph"),
+    new File(["image"], "photo.jpg", { type: "image/jpeg" }),
+  );
+  await user.click(
+    within(picker).getByRole("button", { name: "Upload photograph" }),
+  );
+  await waitFor(() =>
+    expect(request).toHaveBeenCalledWith(
+      "/api/gallery/photo",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "image/jpeg" },
+      }),
+    ),
+  );
+});
+
+it("deletes an owned photograph directly from Gallery after confirmation", async () => {
+  const user = userEvent.setup();
+  request.mockResolvedValue(Response.json({ saved: true }));
+  const data = profile();
+  data.gallery = [
+    { id: "private-photo", description: "River bank", width: 400, height: 300 },
+  ];
+  render(<MemberGallery data={data} />);
+  await user.click(screen.getByRole("button", { name: "Delete photograph 1" }));
+  const confirmation = screen.getByRole("dialog", {
+    name: "Delete this photograph?",
+  });
+  expect(request).not.toHaveBeenCalled();
+  expect(confirmation).toHaveTextContent(
+    "still counts toward today’s upload allowance",
+  );
+  await user.click(
+    within(confirmation).getByRole("button", { name: "Delete photograph" }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByAltText("River bank")).not.toBeInTheDocument(),
+  );
+  expect(request).toHaveBeenCalledWith(
+    "/api/photos/private-photo",
+    expect.objectContaining({ method: "DELETE" }),
+  );
+});
+
 it("uses protected URLs and stages confirmed gallery deletions until Done", async () => {
   const user = userEvent.setup();
   request.mockResolvedValue(
@@ -239,4 +305,112 @@ it("keeps the profile entry in New Post and returns focus there after cancellati
   await waitFor(() => expect(trigger).toHaveFocus());
   await user.click(trigger);
   expect(screen.getByLabelText("Your post")).toHaveValue("Keep my draft");
+});
+
+it("offers deletion inside the profile post editor and preserves the draft when confirmation is cancelled", async () => {
+  const user = userEvent.setup();
+  const data = profile();
+  data.posts = [
+    {
+      id: "owned-post",
+      body: "Original thought",
+      createdAt: "2026-11-01T12:00:00Z",
+      expiresAt: "2026-12-01T12:00:00Z",
+      photos: [],
+    },
+  ];
+  request.mockResolvedValue(Response.json({ saved: true }));
+  render(<PrivateProfile data={data} />);
+  await user.click(screen.getByRole("button", { name: "Edit" }));
+  await user.clear(screen.getByLabelText("Your post"));
+  await user.type(screen.getByLabelText("Your post"), "An unsaved revision");
+  await user.click(screen.getByRole("button", { name: "Delete post" }));
+  const confirmation = screen.getByRole("alertdialog", {
+    name: "Delete this post?",
+  });
+  expect(
+    within(confirmation).getByRole("button", { name: "Keep post" }),
+  ).toHaveFocus();
+  expect(request).not.toHaveBeenCalled();
+  await user.click(
+    within(confirmation).getByRole("button", { name: "Keep post" }),
+  );
+  expect(screen.getByLabelText("Your post")).toHaveValue("An unsaved revision");
+  expect(screen.getByRole("button", { name: "Delete post" })).toHaveFocus();
+  await user.click(screen.getByRole("button", { name: "Delete post" }));
+  await user.keyboard("{Escape}");
+  expect(screen.getByRole("dialog", { name: "Edit post" })).toBeVisible();
+  expect(screen.getByLabelText("Your post")).toHaveValue("An unsaved revision");
+  await user.click(screen.getByRole("button", { name: "Save changes" }));
+  expect(request).toHaveBeenCalledWith(
+    "/api/posts/owned-post",
+    expect.objectContaining({
+      method: "PATCH",
+      body: JSON.stringify({ body: "An unsaved revision" }),
+    }),
+  );
+});
+
+it("keeps a rejected deletion recoverable and refreshes the profile after confirmed deletion", async () => {
+  const user = userEvent.setup();
+  const data = profile();
+  data.posts = [
+    {
+      id: "owned-post",
+      body: "Original thought",
+      createdAt: "2026-11-01T12:00:00Z",
+      expiresAt: "2026-12-01T12:00:00Z",
+      photos: [],
+    },
+  ];
+  request
+    .mockResolvedValueOnce(
+      Response.json(
+        { error: "Couldn’t delete your post. Try again." },
+        { status: 503 },
+      ),
+    )
+    .mockResolvedValueOnce(Response.json({ deleted: true }));
+  const changed = vi.fn();
+  window.addEventListener("margin:member-updated", changed);
+  try {
+    const view = render(<PrivateProfile data={data} />);
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    await user.click(screen.getByRole("button", { name: "Delete post" }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Delete post",
+      }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn’t delete your post. Try again.",
+    );
+    expect(screen.getByRole("article", { hidden: true })).toHaveTextContent(
+      "Original thought",
+    );
+    expect(changed).not.toHaveBeenCalled();
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Delete post",
+      }),
+    );
+    expect(request).toHaveBeenLastCalledWith(
+      "/api/posts/owned-post",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(changed).toHaveBeenCalledTimes(1);
+    expect(refresh).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+    view.rerender(<PrivateProfile data={{ ...data, posts: [] }} />);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: "Recent Posts" }),
+      ).toHaveFocus(),
+    );
+    expect(screen.queryByRole("article")).not.toBeInTheDocument();
+  } finally {
+    window.removeEventListener("margin:member-updated", changed);
+  }
 });

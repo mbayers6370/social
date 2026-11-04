@@ -11,8 +11,10 @@ import { usePreview } from "@/features/local-preview/provider";
 import { SafetySettings } from "@/features/safety/safety-settings";
 import { AccountControls } from "@/features/account/account-controls";
 import { Avatar } from "@/features/feed/post-content";
+import { useSettingFeedback } from "./setting-save-status";
 
 export function SettingsPage() {
+  const [feedback, setFeedback] = useSettingFeedback();
   const {
     preferences,
     updatePreferences,
@@ -53,7 +55,11 @@ export function SettingsPage() {
             <h2 id="reading-title">Reading & motion</h2>
             <ReadingSettings
               preferences={preferences}
-              onChange={updatePreferences}
+              feedback={feedback}
+              onChange={(patch) => {
+                updatePreferences(patch);
+                setFeedback({ key: Object.keys(patch)[0], state: "saved" });
+              }}
             />
           </section>
           <section

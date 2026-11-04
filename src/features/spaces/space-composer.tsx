@@ -24,6 +24,12 @@ import { Avatar } from "@/features/feed/post-content";
 import type { Person } from "@/features/feed/schema";
 import { ComposerEntry } from "@/features/compose/composer-entry";
 import { ComposerSurface } from "@/features/compose/composer-surface";
+import {
+  PostModeControls,
+  type PostingAllowance,
+} from "@/features/compose/post-mode-controls";
+import { containsPostLink, DAILY_REGULAR_POSTS } from "@/lib/platform-rules";
+import { requestMember } from "@/features/social/member-client";
 import { useComposerLayout } from "@/features/compose/use-composer-layout";
 import { SPACE_PHOTO_LIMIT } from "@/lib/platform-rules";
 import { validateLocalPhoto } from "@/features/local-preview/upload";
@@ -59,6 +65,9 @@ export function SpaceComposer({
   const action = useSpaceAction();
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
+  const [allowance, setAllowance] = useState<PostingAllowance>();
+  const [allowanceError, setAllowanceError] = useState("");
+  const [allowanceAttempt, setAllowanceAttempt] = useState(0);
   const [photos, setPhotos] = useState<SpaceDraftPhoto[]>([]);
   const [picking, setPicking] = useState(false);
   const [initialFile, setInitialFile] = useState<File>();
@@ -71,6 +80,41 @@ export function SpaceComposer({
   const addPhoto = useRef<HTMLButtonElement>(null);
   const text = useRef<HTMLTextAreaElement>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
+  const hasLink =
+    personal && containsPostLink({ body, kind: link ? "link" : "post" });
+  const postAllowed =
+    !personal ||
+    Boolean(
+      allowance &&
+      (hasLink ? allowance.linkAllowed : allowance.regularRemaining > 0),
+    );
+  const hasContent = Boolean(body.trim() || (!link && photos.length));
+  useEffect(() => {
+    if (!personal || !open) return;
+    const controller = new AbortController();
+    void requestMember<PostingAllowance>(client, "/api/posts/allowance", {
+      signal: controller.signal,
+    })
+      .then((value) => {
+        if (
+          !Number.isInteger(value?.regularRemaining) ||
+          value.regularRemaining < 0 ||
+          value.regularRemaining > DAILY_REGULAR_POSTS ||
+          typeof value.linkAllowed !== "boolean"
+        )
+          throw Error("Couldn’t load today’s allowance. Please try again.");
+        if (!controller.signal.aborted) setAllowance(value);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted)
+          setAllowanceError(
+            error instanceof Error
+              ? error.message
+              : "Couldn’t load today’s allowance. Please try again.",
+          );
+      });
+    return () => controller.abort();
+  }, [personal, open, client, allowanceAttempt]);
   useEffect(() => {
     if (validation || action.error) feedback.current?.focus();
   }, [validation, action.error]);
@@ -116,6 +160,10 @@ export function SpaceComposer({
     return () => cancelAnimationFrame(frame);
   }, [open, action.busy]);
   function activate(photo: boolean) {
+    if (personal) {
+      setAllowance(undefined);
+      setAllowanceError("");
+    }
     returnTo.current = photo;
     if (photo) setLink(false);
     setValidation("");
@@ -192,7 +240,7 @@ export function SpaceComposer({
           setChecking(true);
           setValidation("");
           try {
-            await validateLocalPhoto(files[0], "Dropped photograph");
+            await validateLocalPhoto(files[0]);
             if (alive.current) {
               setInitialFile(files[0]);
               activate(true);
@@ -212,20 +260,15 @@ export function SpaceComposer({
         {open && (
           <ComposerSurface
             inline={desktop}
-            feed
+            feed={entryVisible}
             onActivate={() => {
               if (!picking) text.current?.focus();
             }}
             onReturnFocus={restoreFocus}
             onCancel={picking || action.busy ? undefined : close}
           >
-            <header className="margin-compose-header">
-              {desktop ? (
-                <div className="margin-compose-author">
-                  <Avatar person={currentViewer} live={!client.preview} />
-                  <h2 className="margin-compose-title">Your post</h2>
-                </div>
-              ) : (
+            {!desktop && (
+              <header className="margin-compose-header">
                 <>
                   <div className="margin-compose-heading">
                     <DialogTitle className="margin-compose-title">
@@ -249,13 +292,14 @@ export function SpaceComposer({
                     </div>
                   </div>
                 </>
-              )}
-            </header>
+              </header>
+            )}
             <form
               className="margin-compose-form"
               onSubmit={async (event) => {
                 event.preventDefault();
                 setValidation("");
+                if (!postAllowed) return;
                 if (!body.trim() && !photos.length) {
                   setValidation("Write a post or choose a photograph.");
                   text.current?.focus();
@@ -296,7 +340,6 @@ export function SpaceComposer({
                   payload.set("input", JSON.stringify(input));
                   for (const photo of files) {
                     payload.append("photos", photo.file);
-                    payload.append("descriptions", photo.description);
                   }
                 }
                 if (
@@ -324,51 +367,70 @@ export function SpaceComposer({
             >
               <div className="margin-compose-editor">
                 {personal && (
-                  <div
-                    className="margin-compose-modes"
-                    role="group"
-                    aria-label="Post type"
-                  >
-                    <Button
-                      variant="ghost"
-                      aria-pressed={!link}
-                      disabled={action.busy || action.uncertain}
-                      onClick={() => setLink(false)}
-                    >
-                      Post
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      aria-pressed={link}
-                      disabled={action.busy || action.uncertain}
-                      onClick={() => {
-                        setLink(true);
+                  <PostModeControls
+                    mode={link ? "link" : "post"}
+                    allowance={allowance}
+                    unavailable={Boolean(allowanceError)}
+                    disabled={action.busy || action.uncertain}
+                    avatar={
+                      desktop ? (
+                        <Avatar person={currentViewer} live={!client.preview} />
+                      ) : undefined
+                    }
+                    onChange={(mode) => {
+                      setLink(mode === "link");
+                      if (mode === "link") {
                         setPhotos([]);
                         urls.current.forEach(URL.revokeObjectURL);
                         urls.current.clear();
+                      }
+                    }}
+                  />
+                )}
+                {personal && allowanceError && (
+                  <div role="alert">
+                    <p>{allowanceError}</p>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setAllowance(undefined);
+                        setAllowanceError("");
+                        setAllowanceAttempt((attempt) => attempt + 1);
                       }}
                     >
-                      Link
+                      Retry allowance
                     </Button>
                   </div>
                 )}
-                <Label
-                  htmlFor={`${id}-body`}
-                  className={desktop ? "sr-only" : undefined}
-                >
-                  Your post
-                </Label>
-                <textarea
-                  ref={text}
-                  id={`${id}-body`}
-                  className="margin-compose-body"
-                  rows={5}
-                  maxLength={personal ? 3000 : 2000}
-                  placeholder="Something worth sharing…"
-                  value={body}
-                  disabled={action.busy || action.uncertain}
-                  onChange={(event) => setBody(event.target.value)}
-                />
+                {desktop && !personal && (
+                  <div className="margin-compose-author">
+                    <Avatar person={currentViewer} live={!client.preview} />
+                    <strong>{currentViewer.name}</strong>
+                  </div>
+                )}
+                <div className="margin-compose-writing">
+                  <div>
+                    <Label htmlFor={`${id}-body`} className="sr-only">
+                      Your post
+                    </Label>
+                    <textarea
+                      ref={text}
+                      id={`${id}-body`}
+                      className="margin-compose-body"
+                      rows={3}
+                      maxLength={personal ? 3000 : 2000}
+                      placeholder="Something worth sharing…"
+                      value={body}
+                      disabled={action.busy || action.uncertain}
+                      onChange={(event) => setBody(event.target.value)}
+                    />
+                  </div>
+                </div>
+                {personal && hasLink && allowance && !allowance.linkAllowed && (
+                  <p role="status" className="margin-field-hint">
+                    Remove the link to share a regular post.
+                  </p>
+                )}
                 {personal && link && (
                   <>
                     <Label htmlFor={`${id}-url`}>Link</Label>
@@ -402,7 +464,7 @@ export function SpaceComposer({
                           alt={
                             item.kind === "saved"
                               ? item.photo.description
-                              : item.description
+                              : "Selected photograph"
                           }
                           width={
                             item.kind === "saved"
@@ -443,10 +505,12 @@ export function SpaceComposer({
                       }}
                     >
                       <ImageIcon aria-hidden="true" />
-                      Add Photographs
+                      Add photographs
                     </Button>
                     <p className="margin-field-hint">
-                      {photos.length} of 3 photographs
+                      {photos.length
+                        ? `${photos.length} of 3 photographs`
+                        : "Up to 3 photographs"}
                     </p>
                   </div>
                 )}
@@ -489,12 +553,51 @@ export function SpaceComposer({
                   </p>
                 )}
                 {action.uncertain && (
-                  <Button
-                    variant="outline"
-                    onClick={() => window.location.reload()}
-                  >
-                    Reload to check saved changes
-                  </Button>
+                  <div className="margin-compose-guidance">
+                    <p className="margin-field-hint" role="status">
+                      Your draft and photographs are still here. Review your
+                      published posts before trying again.
+                    </p>
+                    <Link
+                      href={client.href(
+                        personal ? "/app" : `/app/spaces/${spaceId}`,
+                      )}
+                      target="_blank"
+                      rel="noopener"
+                      className="margin-section-link"
+                    >
+                      View published posts (new tab)
+                    </Link>
+                    {action.checkedSavedChanges ? (
+                      <Button
+                        variant="outline"
+                        disabled={action.busy}
+                        onClick={() => {
+                          action.resumeDraft();
+                          requestAnimationFrame(() => text.current?.focus());
+                        }}
+                      >
+                        Continue editing draft
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        disabled={action.busy}
+                        onClick={() => {
+                          if (personal) {
+                            setAllowance(undefined);
+                            setAllowanceError("");
+                            setAllowanceAttempt((attempt) => attempt + 1);
+                          }
+                          action.checkSavedChanges();
+                        }}
+                      >
+                        {action.busy
+                          ? "Checking saved posts…"
+                          : "Check saved posts"}
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="margin-compose-actions">
@@ -509,7 +612,13 @@ export function SpaceComposer({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={action.busy || action.uncertain}
+                    disabled={
+                      action.busy ||
+                      action.uncertain ||
+                      !hasContent ||
+                      !postAllowed ||
+                      (link && !url.trim())
+                    }
                   >
                     {action.busy ? "Publishing…" : "Publish"}
                   </Button>

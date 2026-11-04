@@ -84,7 +84,7 @@ export function MessageComposer({
         }
       })}
     >
-      <label htmlFor="message-body" className="margin-field-label">
+      <label htmlFor="message-body" className="sr-only">
         {notebook ? "Note to self" : `Message to ${name}`}
       </label>
       <div className="margin-message-input" data-field>

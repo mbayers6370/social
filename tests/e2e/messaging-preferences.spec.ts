@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import {
   memberFixture,
   identity,
@@ -73,7 +73,7 @@ test("starts messaging on, recovers a failed opt-out and restores navigation on 
   await expect(
     page.getByRole("checkbox", { name: /^Messages New private/ }),
   ).toBeDisabled();
-  await page.locator("#messaging-settings").screenshot({
+  await captureScreenshot(page.locator("#messaging-settings"), {
     path: info.outputPath("messaging-off-setting.png"),
     caret: "initial",
   });
@@ -103,7 +103,7 @@ test("starts messaging on, recovers a failed opt-out and restores navigation on 
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("settings-help-before-removal.png"),
     caret: "initial",
   });
@@ -154,7 +154,7 @@ test("removes profile messaging for either opt-out, blocks the disabled messagin
   await expect(
     page.getByRole("link", { name: "Messaging settings" }),
   ).toHaveAttribute("href", "/app/settings#messaging-settings");
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("disabled-messaging-route.png"),
     caret: "initial",
   });
@@ -200,7 +200,7 @@ test("stops an already-open composer immediately after the recipient becomes una
   await expect(
     page.getByText("This conversation is unavailable.", { exact: true }),
   ).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("revoked-open-conversation.png"),
     caret: "initial",
   });
@@ -236,7 +236,7 @@ test("opens a new Space post notification at its protected post destination", as
     name: /Alex Example posted in Dinner plans/,
   });
   await expect(activity).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-post-notification.png"),
     caret: "initial",
   });

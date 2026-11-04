@@ -4,16 +4,16 @@
   letter-spacing: normal;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
-  margin-top: 4px;
+  margin-top: 0;
   font-size: 0.875rem;
   font-weight: 400;
-  line-height: 1.65;
+  line-height: 1.5;
 }
 .margin-comment-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-section);
-  padding-block: var(--space-section) var(--space-related);
+  gap: 4px;
+  padding-block: 0;
   list-style: none;
 }
 .margin-comment-list:empty {
@@ -30,7 +30,7 @@
 .margin-replies-toggle {
   margin-left: 54px;
   height: 44px;
-  padding-inline: 8px;
+  padding-inline: 0;
   border-radius: 8px;
   font-size: var(--text-control);
   font-weight: 400;
@@ -42,8 +42,8 @@
 .margin-comment-replies {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  margin-top: 12px;
+  gap: var(--space-related);
+  margin-top: 4px;
   margin-left: 16px;
   list-style: none;
 }
@@ -59,7 +59,7 @@
   align-items: center;
   flex-wrap: wrap;
   column-gap: 8px;
-  min-height: 44px;
+  line-height: 1.4;
 }
 .margin-comment-meta strong {
   font-size: 0.875rem;
@@ -89,6 +89,24 @@
   margin-top: var(--space-related);
   border-radius: 8px;
   font-weight: 500;
+}
+.margin-comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 0;
+  margin-left: -8px;
+}
+.margin-comment-actions > button {
+  min-width: 44px;
+  min-height: 44px;
+  padding-inline: 8px;
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+  font: 400 var(--text-meta)/1.4 var(--font-body);
+}
+.margin-comment-actions > .margin-report-control {
+  margin-left: auto;
 }
 .margin-comment-form {
   padding-block: 22px 0;
@@ -159,6 +177,19 @@
   }
   .margin-replies-toggle {
     margin-left: 53px;
+    min-height: 24px;
+    height: 24px;
+    padding-block: 0;
+  }
+  .margin-comment-actions > button,
+  .margin-comment-actions .margin-report-button {
+    min-height: 24px;
+    height: 24px;
+    padding-block: 0;
+  }
+  .margin-comment-actions .margin-report-button {
+    min-width: 24px;
+    width: 24px;
   }
   .margin-author-label {
     font-size: var(--text-meta);
@@ -209,24 +240,6 @@
   overflow: hidden;
 }
 
-.margin-comment-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  margin-left: -8px;
-}
-.margin-comment-actions > button {
-  min-width: 44px;
-  min-height: 44px;
-  padding-inline: 8px;
-  border-radius: 8px;
-  color: hsl(var(--muted-foreground));
-  font: 400 var(--text-meta)/1.4 var(--font-body);
-}
-.margin-comment-actions > .margin-report-control {
-  margin-left: auto;
-}
 .margin-comment-edited {
   color: hsl(var(--note-foreground));
   font: var(--text-note)/1.5 var(--font-body);

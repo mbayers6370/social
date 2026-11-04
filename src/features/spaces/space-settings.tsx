@@ -21,6 +21,21 @@ export function SpaceSettings({ data }: { data: Data }) {
   if (data.kind === "EVENT")
     return (
       <div className="margin-space-settings">
+        <label className="margin-space-preference">
+          <input
+            type="checkbox"
+            checked={data.rsvpEnabled !== false}
+            disabled={action.busy}
+            onChange={(event) =>
+              action.run(`/api/spaces/${data.id}/members`, "PATCH", {
+                action: "rsvp-settings",
+                rsvpEnabled: event.target.checked,
+              })
+            }
+          />
+          <span>Allow RSVPs</span>
+        </label>
+        {action.error && !edit && <p role="alert">{action.error}</p>}
         <Button variant="outline" onClick={() => setEdit(true)}>
           Edit end time
         </Button>
@@ -46,12 +61,12 @@ export function SpaceSettings({ data }: { data: Data }) {
     <div className="margin-space-settings">
       <Dialog open={edit} onOpenChange={setEdit}>
         <DialogTrigger asChild>
-          <Button variant="outline">Space settings</Button>
+          <Button variant="outline">Edit details</Button>
         </DialogTrigger>
         <DialogContent onEscapeKeyDown={preserveTimeZoneMenu}>
-          <DialogTitle>Space settings</DialogTitle>
+          <DialogTitle>Edit Space details</DialogTitle>
           <DialogDescription>
-            Update the details of your private Space.
+            Change the name, dates and times, location, and RSVP options.
           </DialogDescription>
           <SpaceForm
             space={data}
@@ -60,33 +75,31 @@ export function SpaceSettings({ data }: { data: Data }) {
           />
         </DialogContent>
       </Dialog>
-      {data.kind === "GATHERING" && (
-        <Dialog open={archive} onOpenChange={setArchive}>
-          <DialogTrigger asChild>
-            <Button variant="ghost">Archive Gathering Space</Button>
-          </DialogTrigger>
-          <DialogContent role="alertdialog">
-            <DialogTitle>Archive this Gathering Space?</DialogTitle>
-            <DialogDescription>
-              It becomes read-only. Event details stay, while posts and comments
-              still expire after 30 days.
-            </DialogDescription>
-            <Button variant="outline" onClick={() => setArchive(false)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={action.busy}
-              onClick={async () => {
-                if (await action.run(`/api/spaces/${data.id}/archive`, "POST"))
-                  setArchive(false);
-              }}
-            >
-              Archive Gathering Space
-            </Button>
-            {action.error && <p role="alert">{action.error}</p>}
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={archive} onOpenChange={setArchive}>
+        <DialogTrigger asChild>
+          <Button variant="ghost">Archive Space</Button>
+        </DialogTrigger>
+        <DialogContent role="alertdialog">
+          <DialogTitle>Archive this Space?</DialogTitle>
+          <DialogDescription>
+            It becomes read-only. Its details stay, while posts and comments
+            still expire after 30 days.
+          </DialogDescription>
+          <Button variant="outline" onClick={() => setArchive(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={action.busy}
+            onClick={async () => {
+              if (await action.run(`/api/spaces/${data.id}/archive`, "POST"))
+                setArchive(false);
+            }}
+          >
+            Archive Space
+          </Button>
+          {action.error && <p role="alert">{action.error}</p>}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

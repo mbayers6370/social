@@ -17,7 +17,11 @@ export function SpaceTimeline({
   const client = useSpaceClient();
   if (!data.posts.length && !data.nextCursor) return null;
   return (
-    <section className="margin-space-timeline" aria-label="Posts">
+    <section
+      className="margin-space-timeline"
+      aria-label="Posts"
+      data-main-feed={href === "/app/feed" || undefined}
+    >
       {data.posts.map((post) => (
         <SpacePostCard
           key={post.id}

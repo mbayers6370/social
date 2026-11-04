@@ -72,7 +72,9 @@ export function PostPhotos({
               key={`${postId}-${index}`}
               type="button"
               className="margin-post-photo"
+              data-aspect={photo.aspect}
               data-post-photo-trigger
+              data-photo-open
               data-post-id={postId}
               aria-label={`View photograph ${index + 1} of ${photos.length}: ${photo.description}`}
               aria-haspopup="dialog"

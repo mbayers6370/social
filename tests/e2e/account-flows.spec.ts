@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { unzipSync, strFromU8 } from "fflate";
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 test.beforeEach(() =>
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION === "1",
@@ -29,7 +29,7 @@ test("sets up a new profile with an empty feed and invitation", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/account-invitation-${test.info().project.name}.png`,
   });
 });
@@ -49,24 +49,29 @@ test("changes a profile photograph and offers selected account downloads", async
   const overlayBox = (await overlay.boundingBox())!;
   for (const key of ["x", "y", "width", "height"] as const)
     expect(Math.abs(portraitBox[key] - overlayBox[key])).toBeLessThan(0.5);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/profile-edit-${test.info().project.name}.png`,
   });
   await overlay.click();
   const picker = page.getByRole("dialog", { name: "Choose a photograph" });
+  const selected = picker.getByRole("button", { name: /^Select / }).first();
+  await expect(
+    picker.getByRole("button", { name: "Use photograph", exact: true }),
+  ).toBeDisabled();
+  await selected.click();
+  await expect(selected).toHaveAttribute("aria-pressed", "true");
+  await expect(selected.locator(".margin-photo-selected-mark")).toBeVisible();
+  await expect(selected).toHaveCSS("border-top-width", "3px");
+  await expect(picker.getByRole("textbox")).toHaveCount(0);
   await picker
-    .getByRole("button", { name: /^Select / })
-    .first()
-    .click();
-  await picker
-    .getByRole("button", { name: "Use Photograph", exact: true })
+    .getByRole("button", { name: "Use photograph", exact: true })
     .click();
   const confirm = page.getByRole("dialog", { name: "Your Profile Photograph" });
   await expect(confirm.locator("img").first()).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/profile-photo-${test.info().project.name}.png`,
   });
-  await confirm.getByRole("button", { name: "Use Photograph" }).click();
+  await confirm.getByRole("button", { name: "Use photograph" }).click();
   await expect(confirm).toHaveCount(0);
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   // Keep client navigation so the same tab account state is available.
@@ -98,7 +103,7 @@ test("changes a profile photograph and offers selected account downloads", async
   await download
     .getByRole("radio", { name: "Complete archive (.zip)", exact: true })
     .check();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/account-download-${test.info().project.name}.png`,
   });
   const [bundle] = await Promise.all([
@@ -148,7 +153,7 @@ test("keeps frequent settings visible and secondary records expandable", async (
   ).toBe(true);
   await page.getByRole("heading", { name: "Settings", exact: true }).click();
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/settings-revised-${testInfo.project.name}.png`,
     fullPage: true,
   });
@@ -160,10 +165,28 @@ test("edits an older account-owned reply on a profile and leaves a deletion plac
   await page.goto("/?view=profile");
   await page.locator("#post-fog [data-conversation-trigger]").click();
   const dialog = page.getByRole("dialog", { name: /Conversation on/ });
-  await dialog
-    .getByRole("button", { name: "Show 1 reply", exact: true })
-    .first()
-    .click();
+  // The profile conversation flips into place. Wait for its actual animation,
+  // so a pointer click cannot land on the front face during the turn.
+  await expect
+    .poll(() =>
+      dialog.evaluate((node) =>
+        node
+          .getAnimations()
+          .every((animation) => animation.playState !== "running"),
+      ),
+    )
+    .toBe(true);
+  const thread = dialog.getByRole("listitem").filter({
+    has: page.locator("#comment-post-fog-fog-3"),
+  });
+  const toggle = thread.getByRole("button", {
+    name: "Show 1 reply",
+    exact: true,
+  });
+  await toggle.click();
+  await expect(
+    thread.getByRole("button", { name: "Hide replies", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
   const reply = page.locator("#comment-post-fog-fog-4");
   await expect(
     reply.getByRole("button", { name: "Edit", exact: true }),
@@ -179,7 +202,7 @@ test("edits an older account-owned reply on a profile and leaves a deletion plac
     .fill("Yes, that’s the trail. An updated reply.");
   await reply.getByRole("button", { name: "Save changes" }).click();
   await expect(reply).toContainText("Edited");
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/comment-actions-${test.info().project.name}.png`,
   });
   const label = dialog.locator("label").filter({ hasText: "Add a comment" });

@@ -51,8 +51,11 @@ it("puts personal sections before the post stream in reading and keyboard order"
   ).toEqual(["On Repeat", "Gallery", "Recent Posts"]);
   const gallery = screen.getByRole("region", { name: "Gallery" });
   expect(
-    within(gallery).getByRole("link", { name: "View all 4 photographs" }),
+    within(gallery).getByRole("link", { name: "View More" }),
   ).toHaveAttribute("href", "/?view=gallery");
+  expect(
+    within(gallery).getAllByRole("button", { name: /^View photograph/ }),
+  ).toHaveLength(3);
   expect(within(gallery).getAllByRole("img")).toHaveLength(3);
 });
 
@@ -163,7 +166,7 @@ it.each(["none", "incoming", "outgoing", "blocked"] as const)(
     ])
       expect(screen.queryByText(marker)).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /View all .*photographs/ }),
+      screen.queryByRole("button", { name: /^View photograph/ }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Open PRIVATE_SONG/ }),

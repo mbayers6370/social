@@ -44,7 +44,7 @@ model Account {
   readingSize String @default("standard") @db.VarChar(16)
   motion String @default("system") @db.VarChar(16)
   notifyComments Boolean @default(true)
-  notifyLikes Boolean @default(true)
+  notifyLikes Boolean @default(false)
   notifyFriends Boolean @default(true)
   notifyMessages Boolean @default(true)
   messagingEnabled Boolean @default(true)
@@ -52,6 +52,8 @@ model Account {
   bio String @default("") @db.VarChar(300)
   emailVerifiedAt DateTime?
   displayName String @default("Margin member") @db.VarChar(80)
+  /// Legacy lifetime allowance fields, retained for schema compatibility only.
+  /// Available slots are derived from active personal InvitationLinks.
   invitationsRemaining Int @default(0)
   invitationAllowanceGrantedAt DateTime?
   role AccountRole @default(MEMBER)
@@ -148,6 +150,7 @@ model Photo {
   posts           PostPhoto[]
   gallery         GalleryEntry?
   uploadedAt DateTime?
+  purgeAttemptedAt DateTime?
   spaceReferences SpacePhoto[]
 
   @@unique([id, ownerId])
@@ -195,6 +198,20 @@ model MemberMessage {
   @@unique([senderId, requestId])
   @@index([senderId, recipientId, createdAt, id])
   @@index([recipientId, readAt, createdAt])
+  @@index([createdAt, id])
+}
+
+/// Aggregate health and private scan progress; never serialized as a raw row.
+model MaintenanceJob {
+  name String @id
+  leaseOwner String?
+  leaseUntil DateTime?
+  lastStartedAt DateTime?
+  lastSucceededAt DateTime?
+  lastFailedAt DateTime?
+  failures Int @default(0)
+  result Json?
+  objectCursor String?
 }
 
 model MemberNotification {
@@ -261,7 +278,7 @@ model Invitation {
   @@index([founderSubject])
 }
 
-/// Issuance consumes a member's allowance. Only completed, verified claims consume capacity.
+/// Members may hold three active personal links; completed claims, expiry and revocation free slots.
 model InvitationLink {
   id String @id @default(cuid())
   digest String @unique
@@ -319,6 +336,7 @@ model Space {
   startsAt DateTime?
   timeZone String?
   location String? @db.VarChar(300)
+  rsvpEnabled Boolean @default(true)
   ticketmasterId String? @unique
   endsAt DateTime?
   expiresAt DateTime?

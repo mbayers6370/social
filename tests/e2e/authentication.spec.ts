@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 
 test("keeps registration closed and fails closed on protected requests without authentication services", async ({
   page,
@@ -65,7 +65,7 @@ test.describe("fictional account access UI; real session endpoint is never bypas
     await expect(page.getByRole("main").getByRole("alert")).toContainText(
       "Check your connection",
     );
-    await page.screenshot({
+    await captureScreenshot(page, {
       path: info.outputPath("auth-unavailable.png"),
       fullPage: true,
     });
@@ -139,7 +139,7 @@ test.describe("fictional account access UI; real session endpoint is never bypas
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page.screenshot({
+    await captureScreenshot(page, {
       path: info.outputPath("auth-profile-recovery.png"),
       fullPage: true,
     });

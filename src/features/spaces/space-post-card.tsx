@@ -157,7 +157,6 @@ export function SpacePostCard({
     >
       <Spaces aria-hidden="true" />
       {p.space.name}
-      <span className="margin-space-post-kind">Space</span>
     </Link>
   ) : null;
   return (

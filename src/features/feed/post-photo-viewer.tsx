@@ -16,6 +16,7 @@ export function PostPhotoViewer({
   onClose,
   onRestoreFocus,
   privateMedia = false,
+  context = "post",
 }: {
   photos: PostMedia[];
   initialIndex: number;
@@ -24,6 +25,7 @@ export function PostPhotoViewer({
   onClose: () => void;
   onRestoreFocus: (event: Event) => void;
   privateMedia?: boolean;
+  context?: "post" | "gallery";
 }) {
   const [index, setIndex] = useState(initialIndex);
   const [open, setOpen] = useState(true);
@@ -95,10 +97,12 @@ export function PostPhotoViewer({
         <header className="margin-post-photo-viewer-header">
           <Button variant="ghost" onClick={close}>
             <ChevronLeft aria-hidden="true" />
-            Back to post
+            {context === "gallery" ? "Back to gallery" : "Back to post"}
           </Button>
           <DialogTitle className="sr-only">
-            Photographs from {authorName}’s post
+            {context === "gallery"
+              ? "Gallery photographs"
+              : `Photographs from ${authorName}’s post`}
           </DialogTitle>
           <span className="margin-field-hint" aria-live="polite">
             {index + 1} of {photos.length}

@@ -9,6 +9,7 @@ import {
 } from "node:fs";
 import { PrismaClient } from "../src/generated/prisma/client.ts";
 import { createDatabaseAdapter } from "../src/server/database-adapter.ts";
+import { availableInvitationSlots } from "../src/server/account/invitation-links.ts";
 if (process.argv.includes("--help")) {
   console.log(
     "Usage: npm run test:invitations:live. Requires the running localhost:3000 development app, matching test keys, Invite-only/Test mode, Redis, invitation signing and the known local database. Uses marked disposable accounts, official bot-testing tokens and test email addresses, not real inboxes. Removes its own fixtures; never changes provider settings or production.",
@@ -181,8 +182,6 @@ try {
           status: "ACTIVE",
           displayName: "Invitation test sender",
           username: `sender_${run.slice(0, 16)}`,
-          invitationsRemaining: 3,
-          invitationAllowanceGrantedAt: new Date(),
           onboardedAt: new Date(),
           ageConfirmedAt: new Date(),
           emailVerifiedAt: new Date(),
@@ -197,9 +196,13 @@ try {
   stage = "issue-via-friends";
   await s.goto(`${origin}/app/friends`);
   await s.getByRole("button", { name: "Invite someone", exact: true }).click();
-  const dialog = s.getByRole("dialog", { name: "A small circle starts here." });
-  await expect(dialog.getByText(/3 of 3 invitations remaining/)).toBeVisible();
-  await dialog.getByRole("button", { name: "Copy link", exact: true }).click();
+  const dialog = s.getByRole("dialog", { name: "Invite someone to Margin" });
+  await expect(
+    dialog.getByText(/3 of 3 invitation slots available/),
+  ).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Create invitation link", exact: true })
+    .click();
   const linkField = dialog.getByLabel("Your invitation link");
   await expect(linkField).toBeVisible();
   const linkUrl = await linkField.inputValue();
@@ -214,9 +217,8 @@ try {
   );
   check(link.expiresAt - link.createdAt === 30 * 86400000, "thirtyDayDeadline");
   check(
-    (await db.account.findUniqueOrThrow({ where: { userId: senderId } }))
-      .invitationsRemaining === 2,
-    "allowanceConsumedAtIssue",
+    (await availableInvitationSlots(db, senderId)) === 2,
+    "slotHeldWhileActive",
   );
   await s.screenshot({ path: ".local/invitation-journey/share-desktop.png" });
   stage = "preview-safe";
@@ -334,8 +336,8 @@ try {
   });
   check(
     account.status === "ACTIVE" &&
-      account.invitationsRemaining === 3 &&
-      Boolean(account.invitationAllowanceGrantedAt),
+      (await availableInvitationSlots(db, account.userId)) === 3 &&
+      (await availableInvitationSlots(db, senderId)) === 3,
     "automaticActivationWithThreeInvitations",
   );
   check(
@@ -361,7 +363,7 @@ try {
   await p.goto(`${origin}/app/friends`);
   await p.getByRole("button", { name: "Invite someone", exact: true }).click();
   await expect(
-    p.getByRole("dialog").getByText(/3 of 3 invitations remaining/),
+    p.getByRole("dialog").getByText(/3 of 3 invitation slots available/),
   ).toBeVisible();
   await p.keyboard.press("Escape");
   stage = "private-post-fixture";

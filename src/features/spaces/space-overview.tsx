@@ -4,12 +4,9 @@ import type { SpaceDetails } from "./contracts";
 
 /** Everyday context belongs beside the identity, outside administration. */
 export function SpaceOverview({ data }: { data: SpaceDetails }) {
-  if (data.kind === "PRIVATE") return null;
+  if (!data.startsAt && !data.location) return null;
   return (
-    <section
-      className="margin-space-overview"
-      aria-label="Gathering and event details"
-    >
+    <section className="margin-space-overview" aria-label="Date and place">
       <div className="margin-space-event-facts">
         {data.startsAt && (
           <p className="margin-space-event-detail">
@@ -26,6 +23,21 @@ export function SpaceOverview({ data }: { data: SpaceDetails }) {
                 timeZone: data.timeZone!,
               }).format(new Date(data.startsAt))}
             </time>
+          </p>
+        )}
+        {data.endsAt && data.kind !== "EVENT" && (
+          <p className="margin-space-event-detail">
+            <Calendar aria-hidden="true" />
+            <span>
+              Ends{" "}
+              <time dateTime={data.endsAt}>
+                {new Intl.DateTimeFormat("en-US", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                  timeZone: data.timeZone!,
+                }).format(new Date(data.endsAt))}
+              </time>
+            </span>
           </p>
         )}
         {data.location && (

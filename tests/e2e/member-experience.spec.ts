@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture, conversation, friend } from "./helpers/member-fixture";
 test.beforeEach(async ({ page }) => {
   test.skip(
@@ -25,7 +25,7 @@ test("shows the approved profile, recovers a failed edit, and uses live music se
       .locator(".margin-profile-gallery")
       .getByRole("link", { name: "View More" }),
   ).toHaveAttribute("href", "/app/gallery");
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: info.outputPath("member-profile.png"),
     fullPage: true,
@@ -98,7 +98,7 @@ test("keeps Friends, Gallery, Settings and Spaces consistent with member navigat
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page.screenshot({
+    await captureScreenshot(page, {
       caret: "initial",
       path: info.outputPath(`member-${area}.png`),
       fullPage: true,
@@ -108,9 +108,7 @@ test("keeps Friends, Gallery, Settings and Spaces consistent with member navigat
         page.getByRole("link", { name: /Alex Example @alex_example/ }),
       ).toHaveAttribute("href", "/app?person=fictional-friend");
       await page.getByRole("tab", { name: "Requests" }).click();
-      await expect(
-        page.getByText("No requests waiting for you."),
-      ).toBeVisible();
+      await expect(page.getByText("No requests right now.")).toBeVisible();
     }
     if (area === "settings") {
       await page.getByRole("radio", { name: "Larger", exact: true }).click();
@@ -122,7 +120,7 @@ test("keeps Friends, Gallery, Settings and Spaces consistent with member navigat
         "larger",
       );
       await expect(
-        page.getByRole("status").filter({ hasText: "Settings saved." }),
+        page.getByRole("status").filter({ hasText: "Saved" }),
       ).toBeVisible();
     }
   }
@@ -172,7 +170,7 @@ test("restores conversation trigger focus on Escape and safely retries an uncert
   expect(payloads).toHaveLength(2);
   expect(payloads[0]).toEqual(payloads[1]);
   expect(payloads[0].requestId).toMatch(/^[a-f0-9-]{36}$/);
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: info.outputPath("member-messages.png"),
     fullPage: true,

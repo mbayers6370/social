@@ -25,6 +25,7 @@ import {
   eventExpiry,
   defaultEventEnd,
   validEventEnd,
+  privateSpaceStorageKind,
 } from "@/features/spaces/lifecycle";
 import { liveSpaceWhere } from "./access";
 import { spaceInvitationNotificationKey } from "./invitation-notifications";
@@ -66,15 +67,13 @@ export class SpaceService extends SocialService {
       return tx.space.create({
         data: {
           name: input.name,
-          kind: input.kind,
+          kind: privateSpaceStorageKind(input.startsAt),
           creatorId: actor,
-          ...(input.kind === "GATHERING"
-            ? {
-                startsAt: new Date(input.startsAt),
-                timeZone: input.timeZone,
-                location: input.location,
-              }
-            : {}),
+          startsAt: input.startsAt ? new Date(input.startsAt) : null,
+          timeZone: input.timeZone ?? null,
+          location: input.location || null,
+          endsAt: input.endsAt ? new Date(input.endsAt) : null,
+          rsvpEnabled: input.rsvpEnabled ?? true,
           memberships: { create: { userId: actor, role: "ADMIN" } },
         },
         select: { id: true },
@@ -306,7 +305,7 @@ export class SpaceService extends SocialService {
       return {
         ...local,
         notice:
-          "Ticketmaster search is temporarily unavailable. You can still open your joined Spaces below.",
+          "Ticketmaster search is temporarily unavailable. You can still open your joined Spaces above.",
       };
     }
   }
@@ -407,6 +406,7 @@ export class SpaceService extends SocialService {
         imageUrl,
         sourceUrl,
         ticketmasterId,
+        rsvpEnabled,
       } = membership.space;
       return {
         id: spaceId,
@@ -429,9 +429,11 @@ export class SpaceService extends SocialService {
         viewerId: actor,
         role: membership.role,
         includeInFeed: membership.includeInFeed,
-        rsvp: membership.rsvp,
+        rsvpEnabled,
+        rsvp: startsAt && rsvpEnabled ? membership.rsvp : null,
         members: members.map(({ user, ...m }) => ({
           ...m,
+          rsvp: startsAt && rsvpEnabled ? m.rsvp : null,
           name: user.account!.displayName,
         })),
         memberCount: await tx.spaceMembership.count({ where: { spaceId: id } }),
@@ -674,21 +676,23 @@ export class SpaceService extends SocialService {
           409,
           "Event details come from Ticketmaster and cannot be changed here.",
         );
-      if (input.kind !== member.space.kind)
-        throw new SocialError(400, "The Space type cannot be changed");
       await tx.space.update({
         where: { id },
         data: {
           name: input.name,
-          ...(input.kind === "GATHERING"
-            ? {
-                startsAt: new Date(input.startsAt),
-                timeZone: input.timeZone,
-                location: input.location ?? "",
-              }
-            : {}),
+          kind: privateSpaceStorageKind(input.startsAt),
+          startsAt: input.startsAt ? new Date(input.startsAt) : null,
+          timeZone: input.timeZone ?? null,
+          location: input.location || null,
+          endsAt: input.endsAt ? new Date(input.endsAt) : null,
+          rsvpEnabled: input.rsvpEnabled ?? member.space.rsvpEnabled,
         },
       });
+      if (!input.startsAt)
+        await tx.spaceMembership.updateMany({
+          where: { spaceId: id },
+          data: { rsvp: null },
+        });
     });
   }
   async member(subject: string, id: string, raw: MemberInput) {
@@ -707,10 +711,23 @@ export class SpaceService extends SocialService {
       // Leaving withdraws this member's access; it does not edit archived content.
       const leaving = input.action === "remove" && input.userId === actor;
       if (self.space.archivedAt && !leaving)
-        throw new SocialError(409, "This event is archived and read-only");
+        throw new SocialError(409, "This Space is archived and read-only");
+      if (input.action === "rsvp-settings") {
+        requireSpaceAdmin(self);
+        await tx.space.update({
+          where: { id },
+          data: { rsvpEnabled: input.rsvpEnabled },
+        });
+        return;
+      }
       if (input.action === "rsvp") {
-        if (self.space.kind === "PRIVATE")
-          throw new SocialError(400, "RSVP is only available for events");
+        if (!self.space.rsvpEnabled)
+          throw new SocialError(409, "RSVPs are turned off for this Space.");
+        if (!self.space.startsAt)
+          throw new SocialError(
+            400,
+            "Add a date to this Space before using RSVP",
+          );
         await tx.spaceMembership.update({
           where: { spaceId_userId: { spaceId: id, userId: actor } },
           data: { rsvp: input.rsvp },
@@ -780,11 +797,8 @@ export class SpaceService extends SocialService {
       const actor = await this.actor(tx, subject);
       const member = await spaceAccess(tx, actor, id, false, this.clock());
       requireSpaceAdmin(member);
-      if (member.space.kind !== "GATHERING")
-        throw new SocialError(
-          400,
-          "Only Gathering Spaces can be archived. Event Spaces close automatically.",
-        );
+      if (member.space.kind === "EVENT")
+        throw new SocialError(400, "Event Spaces close automatically.");
       await tx.space.update({
         where: { id },
         data: { archivedAt: this.clock() },
@@ -877,7 +891,7 @@ export class SpaceService extends SocialService {
     subject: string,
     id: string | undefined,
     raw: unknown,
-    files: { bytes: Uint8Array; type: string; description: string }[],
+    files: { bytes: Uint8Array; type: string; description?: string }[],
   ) {
     const input = (id ? spacePostDraftInput : memberPostDraftInput).parse(raw);
     if (
@@ -887,12 +901,7 @@ export class SpaceService extends SocialService {
     )
       throw new SocialError(400, "Choose up to three photographs.");
     for (const file of files) {
-      if (
-        !file.bytes.length ||
-        file.bytes.length > PHOTO_MAX_BYTES ||
-        !file.description.trim() ||
-        file.description.length > 500
-      )
+      if (!file.bytes.length || file.bytes.length > PHOTO_MAX_BYTES)
         throw new SocialError(400, "Invalid photograph.");
     }
     const reservations = await this.transaction(async (tx) => {
@@ -953,7 +962,7 @@ export class SpaceService extends SocialService {
               dayKey: dayKey(now.toISOString()),
               createdAt: now,
               uploadExpiresAt: new Date(now.getTime() + 600_000),
-              description: file.description.trim(),
+              description: file.description?.trim() || "Photograph",
               width: 1,
               height: 1,
               byteLength: 1,
@@ -1040,13 +1049,7 @@ export class SpaceService extends SocialService {
         return post;
       });
     } catch (error) {
-      await this.db.photo.updateMany({
-        where: {
-          id: { in: reservations.map((photo) => photo.id) },
-          state: { not: "READY" },
-        },
-        data: { state: "DELETE_PENDING" },
-      });
+      await this.queueFailedUploads(reservations);
       throw error;
     }
   }
@@ -1218,6 +1221,7 @@ export class SpaceService extends SocialService {
               },
             },
             {
+              ownerId: { not: actor },
               space: {
                 deletedAt: null,
                 memberships: { some: { userId: actor, includeInFeed: true } },
@@ -1412,12 +1416,7 @@ export class SpaceService extends SocialService {
         select: { photoId: true },
       })
     ).map((r) => r.photoId);
-    await tx.postComment.deleteMany({ where: { post: { spaceId: id } } });
-    await tx.postPhoto.deleteMany({ where: { post: { spaceId: id } } });
-    await tx.post.updateMany({
-      where: { spaceId: id },
-      data: { body: "", deletedAt: this.clock() },
-    });
+    await tx.post.deleteMany({ where: { spaceId: id } });
     await tx.spacePhoto.deleteMany({ where: { spaceId: id } });
     await tx.spaceInvitation.deleteMany({ where: { spaceId: id } });
     await tx.spaceMembership.deleteMany({ where: { spaceId: id } });
@@ -1438,7 +1437,7 @@ export class SpaceService extends SocialService {
     await retireUnreferencedPhotos(tx, photoIds, this.clock());
   }
   /** Trusted maintenance entry point; access is denied at the deadline even before this runs. */
-  async expireSpaces(limit = 20) {
+  async expireSpaces(limit = 20, signal?: AbortSignal) {
     const rows = await this.db.space.findMany({
       where: {
         kind: "EVENT",
@@ -1450,6 +1449,7 @@ export class SpaceService extends SocialService {
     });
     let expired = 0;
     for (const row of rows) {
+      if (signal?.aborted) break;
       const removed = await this.transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM "Space" WHERE id = ${row.id} FOR UPDATE`;
         const current = await tx.space.findFirst({

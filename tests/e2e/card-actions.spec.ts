@@ -1,11 +1,11 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Development preview");
   await page.emulateMedia({ reducedMotion: "reduce" });
 });
 
-test("conversation actions share one disclosure and restore focus after dialogs", async ({
+test("exports beside the expiry rule and restores focus after conversation dialogs", async ({
   page,
 }, testInfo) => {
   await page.goto("/?view=messages&thread=june");
@@ -14,11 +14,13 @@ test("conversation actions share one disclosure and restore focus after dialogs"
   ).toBeEnabled();
   const header = page.locator(".margin-thread-header");
   const options = header.getByRole("button", { name: "Conversation options" });
-  const download = header.getByRole("button", {
-    name: "Download conversation",
-  });
+  const download = page
+    .locator(".margin-message-retention")
+    .getByRole("button", {
+      name: "Export conversation",
+    });
   const report = header.getByRole("button", { name: "Report conversation" });
-  await expect(download).toBeHidden();
+  await expect(download).toBeVisible();
   await expect(report).toBeHidden();
   if (testInfo.project.name === "mobile")
     await expect(
@@ -26,18 +28,20 @@ test("conversation actions share one disclosure and restore focus after dialogs"
     ).toBeFocused();
   await options.focus();
   await page.keyboard.press("ArrowDown");
-  await expect(download).toBeFocused();
-  await page.keyboard.press("Tab");
   await expect(report).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(options).toBeFocused();
   await expect(options).toHaveAttribute("aria-expanded", "false");
 
   await options.click();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: testInfo.outputPath("conversation-options.png"),
     caret: "initial",
   });
+  // The options popover covers the retention control on narrow screens.
+  // Dismiss it as a user would before opening the separate export dialog.
+  await page.keyboard.press("Escape");
+  await expect(options).toHaveAttribute("aria-expanded", "false");
   await download.click();
   const exportDialog = page.getByRole("dialog", {
     name: "Download this conversation",
@@ -47,7 +51,7 @@ test("conversation actions share one disclosure and restore focus after dialogs"
     exportDialog.getByRole("checkbox", { name: /^Messages / }),
   ).toBeChecked();
   await page.keyboard.press("Escape");
-  await expect(options).toBeFocused();
+  await expect(download).toBeFocused();
   await expect(options).toHaveAttribute("aria-expanded", "false");
 
   await options.click();
@@ -105,8 +109,8 @@ test("feed cards keep utility actions in the header and Conversation in a compac
       conversationHeight: conversation.height,
     };
   });
-  expect(geometry.top).toBe("16px");
-  expect(geometry.bottom).toBe("16px");
+  expect(geometry.top).toBe("24px");
+  expect(geometry.bottom).toBe("24px");
   expect(geometry.menuHeight).toBeGreaterThanOrEqual(44);
   expect(geometry.conversationHeight).toBeGreaterThanOrEqual(44);
   await options.focus();
@@ -121,7 +125,7 @@ test("feed cards keep utility actions in the header and Conversation in a compac
   });
   await expect(report).toBeFocused();
   await expect(report.locator("svg")).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("feed-card-menu.png"),
     caret: "initial",
   });
@@ -206,7 +210,7 @@ test("Space cards show their audience, support reporting, and opt out without le
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await expect(options).toBeFocused();
   await options.click();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-card-menu.png"),
     caret: "initial",
   });

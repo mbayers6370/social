@@ -5,6 +5,7 @@ import type { PrismaClient, Prisma } from "../../generated/prisma/client";
 import { SocialError } from "../social/errors";
 
 export const INVITATION_DAYS = 30;
+export const PERSONAL_INVITATION_SLOTS = 3;
 const day = 86_400_000;
 export const linkInput = z.strictObject({
   requestId: z.uuid(),
@@ -32,6 +33,34 @@ export function invitationToken(kind: "link" | "claim", id: string) {
     .digest("base64url");
 }
 
+/** The pg adapter can surface serialization failures directly at COMMIT or
+ * wrapped in a Prisma query error. Both mean the entire transaction must retry. */
+export function isInvitationWriteConflict(error: unknown) {
+  if (typeof error !== "object" || !error) return false;
+  if ("code" in error && error.code === "P2034") return true;
+  const meta = "meta" in error ? error.meta : null;
+  const adapter =
+    typeof meta === "object" && meta && "driverAdapterError" in meta
+      ? meta.driverAdapterError
+      : error;
+  const cause =
+    typeof adapter === "object" && adapter && "cause" in adapter
+      ? adapter.cause
+      : null;
+  return (
+    (typeof cause === "object" &&
+      cause !== null &&
+      "kind" in cause &&
+      cause.kind === "TransactionWriteConflict") ||
+    ("code" in error &&
+      error.code === "P2010" &&
+      typeof meta === "object" &&
+      meta !== null &&
+      "code" in meta &&
+      ["40001", "40P01"].includes(String(meta.code)))
+  );
+}
+
 export async function invitationTransaction<T>(
   db: PrismaClient,
   run: (tx: Prisma.TransactionClient) => Promise<T>,
@@ -45,7 +74,13 @@ export async function invitationTransaction<T>(
     } catch (error) {
       const code =
         typeof error === "object" && error && "code" in error ? error.code : "";
-      if ((code === "P2034" || code === "P2002") && attempt < 4) continue;
+      if (
+        (isInvitationWriteConflict(error) || code === "P2002") &&
+        attempt < 4
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 10 * 2 ** attempt));
+        continue;
+      }
       throw error;
     }
   }
@@ -68,6 +103,25 @@ export async function invitationOwner(
   return { ...owner, account: owner.account };
 }
 
+/** Link state is authoritative; acceptance, expiry and withdrawal release a slot
+ * without a counter update, refund job or migration of legacy balances. */
+export async function availableInvitationSlots(
+  db: Prisma.TransactionClient,
+  ownerId: string,
+  now = new Date(),
+) {
+  const active = await db.invitationLink.count({
+    where: {
+      createdBy: ownerId,
+      community: false,
+      revokedAt: null,
+      expiresAt: { gt: now },
+      acceptedCount: 0,
+    },
+  });
+  return Math.max(0, PERSONAL_INVITATION_SLOTS - active);
+}
+
 export async function issueInvitationLink(
   db: PrismaClient,
   subject: string,
@@ -82,10 +136,7 @@ export async function issueInvitationLink(
     const founder = owner.account.role === "FOUNDER";
     if (
       !founder &&
-      (input.community ||
-        input.maxRedemptions !== 1 ||
-        input.label ||
-        input.expiresAt)
+      (input.community || input.maxRedemptions !== 1 || input.expiresAt)
     )
       throw new SocialError(
         403,
@@ -128,19 +179,11 @@ export async function issueInvitationLink(
         "Choose an expiration within the next 30 days.",
       );
     if (!founder) {
-      const quota = await tx.account.updateMany({
-        where: {
-          userId: owner.id,
-          status: "ACTIVE",
-          invitationsRemaining: { gt: 0 },
-          invitationAllowanceGrantedAt: { not: null },
-        },
-        data: { invitationsRemaining: { decrement: 1 } },
-      });
-      if (quota.count !== 1)
+      // Serializable predicate reads protect the last slot from parallel issuers.
+      if ((await availableInvitationSlots(tx, owner.id, now)) === 0)
         throw new SocialError(
           409,
-          "You’ve used your three invitations. Existing links can still be shared until they expire.",
+          "You have three active invitations. A slot opens when someone finishes joining, a link expires, or you withdraw it. You can still share an active link.",
         );
     }
     const id = randomBytes(16).toString("hex");

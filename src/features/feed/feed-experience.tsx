@@ -251,6 +251,7 @@ export function FeedExperience({
           <div
             aria-label={profileId ? "Profile posts" : "Chronological feed"}
             className="margin-feed-list"
+            data-main-feed={!profileId || undefined}
           >
             {ordered.map((post, index) => {
               const currentDay = dayKey(post.createdAt);

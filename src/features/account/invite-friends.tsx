@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Friends } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAccountSession } from "@/components/auth/account-session";
+import { POSTING_TIME_ZONE } from "@/lib/platform-rules";
 
 type Invitation = {
   id: string;
@@ -30,6 +31,36 @@ type Summary = {
   links: Invitation[];
 };
 
+function isActive(link: Invitation) {
+  return (
+    !link.revoked &&
+    new Date(link.expiresAt).getTime() > Date.now() &&
+    (link.accepted ?? 0) < (link.maximum ?? 1)
+  );
+}
+const invitationDate = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  timeZone: POSTING_TIME_ZONE,
+});
+function linkStatus(link: Invitation) {
+  if (link.revoked) return "Withdrawn";
+  if ((link.accepted ?? 0) >= (link.maximum ?? 1)) return "Accepted";
+  if (new Date(link.expiresAt).getTime() <= Date.now()) return "Expired";
+  return `Expires ${invitationDate.format(new Date(link.expiresAt))}`;
+}
+async function call(url: string, init?: RequestInit) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(30_000),
+    ...init,
+  });
+  const data = await response.json();
+  if (!response.ok)
+    throw Error(data.error || "Invitations are unavailable. Please try again.");
+  return data;
+}
+
 export function InviteFriends() {
   const session = useAccountSession();
   return <InvitationManager available={Boolean(session?.managed)} />;
@@ -43,48 +74,121 @@ export function InvitationManager({ available }: { available: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
-  const [emailMode, setEmailMode] = useState(false);
   const [community, setCommunity] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const disclosureId = useId();
+  const [sharedIds, setSharedIds] = useState<Set<string>>(() => new Set());
   const requestId = useRef<string | null>(null);
   const form = useRef<HTMLFormElement>(null);
+  const copyButton = useRef<HTMLButtonElement>(null);
+  const pendingCopyFocus = useRef(false);
+  const working = useRef(false);
+  const loading = useRef(false);
+  const revision = useRef(0);
+  const loadedCount = useRef(0);
 
-  async function call(url: string, init?: RequestInit) {
-    const response = await fetch(url, { cache: "no-store", ...init });
-    const data = await response.json();
-    if (!response.ok)
-      throw Error(
-        data.error || "Invitations are unavailable. Please try again.",
-      );
-    return data;
-  }
-  async function load() {
-    setBusy(true);
-    setError("");
-    try {
-      setSummary(await call("/api/invitations"));
-    } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : "Couldn’t load invitations.",
-      );
-    } finally {
-      setBusy(false);
+  useEffect(() => {
+    if (!busy && pendingCopyFocus.current) {
+      pendingCopyFocus.current = false;
+      copyButton.current?.focus();
     }
-  }
-  async function create(email?: string): Promise<Invitation> {
-    if (invitation && !community) return invitation;
+  }, [busy, invitation]);
+
+  // Refresh the pages already being read without collapsing older invitations.
+  const fetchSummary = useCallback(async () => {
+    let updated: Summary = await call("/api/invitations");
+    const target = loadedCount.current;
+    const cursors = new Set<string>();
+    while (updated.nextCursor && updated.links.length < target) {
+      const cursor = updated.nextCursor;
+      if (cursors.has(cursor)) throw Error("Couldn’t refresh invitations.");
+      cursors.add(cursor);
+      const next: Summary = await call(
+        `/api/invitations?before=${encodeURIComponent(cursor)}`,
+      );
+      updated = { ...next, links: [...updated.links, ...next.links] };
+    }
+    return updated;
+  }, []);
+
+  const load = useCallback(
+    async ({ foreground = false, choose = false } = {}) => {
+      if (working.current || loading.current) return;
+      loading.current = true;
+      const currentRevision = revision.current;
+      if (foreground) {
+        working.current = true;
+        setBusy(true);
+        setError("");
+      }
+      try {
+        const updated = await fetchSummary();
+        if (revision.current !== currentRevision) return;
+        loadedCount.current = updated.links.length;
+        setSummary(updated);
+        setInvitation((current) =>
+          current
+            ? (updated.links.find((link) => link.id === current.id) ?? current)
+            : choose
+              ? (updated.links.find(
+                  (link) => !link.community && isActive(link),
+                ) ?? null)
+              : null,
+        );
+      } catch (failure) {
+        // Quiet refreshes retain the last known list when temporarily offline.
+        if (foreground)
+          setError(
+            failure instanceof Error
+              ? failure.message
+              : "Couldn’t load invitations.",
+          );
+      } finally {
+        loading.current = false;
+        if (foreground) {
+          working.current = false;
+          setBusy(false);
+        }
+      }
+    },
+    [fetchSummary],
+  );
+
+  useEffect(() => {
+    if (!open || !available) return;
+    const refresh = () => {
+      if (document.visibilityState !== "hidden") void load();
+    };
+    window.addEventListener("focus", refresh);
+    const interval = window.setInterval(refresh, 15_000);
+    const deadlines =
+      summary?.links
+        .filter(isActive)
+        .map((link) => new Date(link.expiresAt).getTime()) ?? [];
+    const delay = Math.min(...deadlines) - Date.now();
+    const deadline = deadlines.length
+      ? window.setTimeout(refresh, Math.min(Math.max(0, delay), 2_147_483_647))
+      : undefined;
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.clearInterval(interval);
+      window.clearTimeout(deadline);
+    };
+  }, [open, available, summary, load]);
+
+  async function create(): Promise<Invitation> {
     requestId.current ??= crypto.randomUUID();
     const fields = form.current ? new FormData(form.current) : null;
-    const data = await call("/api/invitations", {
+    const data: Invitation = await call("/api/invitations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         requestId: requestId.current,
         community,
+        label: String(fields?.get("label") || ""),
         ...(community
           ? {
-              label: String(fields?.get("label") || ""),
               maxRedemptions: Number(fields?.get("maximum") || 10),
               ...(fields?.get("expires")
                 ? {
@@ -95,43 +199,53 @@ export function InvitationManager({ available }: { available: boolean }) {
                 : {}),
             }
           : {}),
-        ...(email ? { email } : {}),
       }),
     });
     setInvitation(data);
     requestId.current = null;
-    const updated = await call("/api/invitations").catch(() => null);
-    setSummary(updated);
+    const updated = await fetchSummary().catch(() => null);
+    if (updated) {
+      loadedCount.current = updated.links.length;
+      setSummary(updated);
+    }
     return data;
   }
+  function markShared(id: string) {
+    setSharedIds((current) =>
+      current.has(id) ? current : new Set([...current, id]),
+    );
+  }
   async function share(link: Invitation, copy = false) {
-    const text =
-      "I’d like to invite you to Margin. A little of our days, with room for everything else.";
     if (!copy && navigator.share) {
       try {
         await navigator.share({
           title: "An invitation to Margin",
-          text,
+          text: "I’d like to invite you to Margin. A little of our days, with room for everything else.",
           url: link.url,
         });
+        markShared(link.id);
         setStatus("Invitation shared.");
       } catch (failure) {
         if (failure instanceof DOMException && failure.name === "AbortError")
           return;
         setStatus(
-          "Your invitation is ready. Tap Share invitation again, or copy the link below.",
+          "Sharing didn’t work. Try Share again, or copy the link above.",
         );
       }
     } else {
       try {
         await navigator.clipboard.writeText(link.url);
+        markShared(link.id);
         setStatus("Invitation link copied.");
       } catch {
-        setStatus("Your invitation is ready. Select and copy the link below.");
+        setStatus("Select and copy the link above.");
       }
     }
   }
   async function perform(action: () => Promise<unknown>) {
+    if (working.current) return;
+    working.current = true;
+    revision.current++;
     setBusy(true);
     setError("");
     setStatus("");
@@ -144,37 +258,27 @@ export function InvitationManager({ available }: { available: boolean }) {
           : "Couldn’t complete the invitation. Please try again.",
       );
     } finally {
+      working.current = false;
       setBusy(false);
     }
   }
   const canCreate = Boolean(
     summary && (summary.founder || summary.remaining > 0),
   );
-  async function email(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const address = String(new FormData(event.currentTarget).get("email"));
-    await perform(async () => {
-      if (invitation)
-        await call(
-          `/api/invite/${new URL(invitation.url).pathname.split("/").pop()}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: address }),
-          },
-        );
-      else await create(address);
-      setStatus(
-        "Personal invitation requested. Ask your friend to check their inbox.",
-      );
-    });
-  }
+  const active = invitation ? isActive(invitation) : false;
+  const listedInvitations =
+    summary?.links.filter((link) => !link.revoked) ?? [];
+  const canInviteAnother =
+    invitation &&
+    canCreate &&
+    (sharedIds.has(invitation.id) || !active || (invitation.accepted ?? 0) > 0);
+
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next && available) void load();
+        if (next && available) void load({ foreground: true, choose: true });
       }}
     >
       <DialogTrigger asChild>
@@ -184,51 +288,95 @@ export function InvitationManager({ available }: { available: boolean }) {
         </Button>
       </DialogTrigger>
       <DialogContent className="margin-invitation-dialog">
-        <DialogTitle>A small circle starts here.</DialogTitle>
-        <DialogDescription>
+        <DialogTitle className="margin-invitation-title">
+          Invite someone to Margin
+        </DialogTitle>
+        <DialogDescription className={available ? "sr-only" : undefined}>
           {available
-            ? "Send a personal invitation by text or your favorite messaging app. Links last 30 days. Joining doesn’t automatically make you friends."
+            ? "Copy or share an invitation link to Margin."
             : "Your three invitations become available when you finish joining. This preview doesn’t issue live invitations."}
         </DialogDescription>
         {available && (
           <>
-            {summary && (
-              <p role="status">
-                {summary.founder
-                  ? "Founder · Unlimited invitations"
-                  : `${summary.remaining} of 3 invitations remaining · No expiration on your allowance`}
+            {invitation && (
+              <>
+                <div className="margin-invitation-link">
+                  <Label className="sr-only" htmlFor="invitation-link">
+                    Your invitation link
+                  </Label>
+                  <Input
+                    id="invitation-link"
+                    value={invitation.url}
+                    readOnly
+                    onFocus={(event) => event.currentTarget.select()}
+                    onCopy={() => markShared(invitation.id)}
+                  />
+                  <p className="margin-field-hint">
+                    {linkStatus(invitation)}
+                    {active &&
+                      (invitation.community
+                        ? " · Only verified, completed claims count toward its limit."
+                        : " · One person can join with this link.")}
+                  </p>
+                </div>
+                <div className="margin-invitation-actions">
+                  <Button
+                    ref={copyButton}
+                    disabled={busy || !active}
+                    onClick={() => void perform(() => share(invitation, true))}
+                  >
+                    Copy link
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={busy || !active}
+                    onClick={() => void perform(() => share(invitation))}
+                  >
+                    Share
+                  </Button>
+                </div>
+              </>
+            )}
+            {status && (
+              <p className="margin-invitation-feedback" role="status">
+                {status}
               </p>
             )}
-            {summary?.founder && (
+            {summary && !invitation && (
               <form
                 ref={form}
                 className="margin-account-form"
                 onSubmit={(event) => event.preventDefault()}
               >
-                <label className="margin-account-confirmation">
-                  <input
-                    type="checkbox"
-                    checked={community}
-                    disabled={busy}
-                    onChange={(event) => {
-                      setCommunity(event.target.checked);
-                      setInvitation(null);
-                      requestId.current = null;
-                    }}
-                  />
-                  Create a community invitation
-                </label>
+                {summary.founder && (
+                  <label className="margin-account-confirmation">
+                    <input
+                      type="checkbox"
+                      checked={community}
+                      disabled={busy}
+                      onChange={(event) => {
+                        setCommunity(event.target.checked);
+                        requestId.current = null;
+                        setStatus("");
+                      }}
+                    />
+                    Create a community invitation
+                  </label>
+                )}
+                <Label htmlFor="invitation-label">
+                  {community
+                    ? "Campaign label (optional)"
+                    : "Who’s this for? (optional)"}
+                </Label>
+                <Input
+                  id="invitation-label"
+                  name="label"
+                  placeholder={community ? undefined : "e.g. Sam"}
+                  maxLength={80}
+                  disabled={busy || !canCreate}
+                />
                 {community && (
                   <>
-                    <Label htmlFor="invitation-label">
-                      Campaign label (optional)
-                    </Label>
-                    <Input
-                      id="invitation-label"
-                      name="label"
-                      maxLength={80}
-                      disabled={busy}
-                    />
                     <Label htmlFor="invitation-maximum">
                       People who can join
                     </Label>
@@ -254,45 +402,25 @@ export function InvitationManager({ available }: { available: boolean }) {
                 )}
               </form>
             )}
-            <div className="margin-invitation-actions">
-              <Button
-                disabled={busy || (!invitation && !canCreate)}
-                onClick={() =>
-                  void perform(async () =>
-                    share(invitation ?? (await create())),
-                  )
-                }
-              >
-                {busy ? "Please wait…" : "Share invitation"}
-              </Button>
-              <Button
-                variant="outline"
-                disabled={busy || (!invitation && !canCreate)}
-                onClick={() =>
-                  void perform(async () =>
-                    share(invitation ?? (await create()), true),
-                  )
-                }
-              >
-                Copy link
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={busy || (!invitation && !canCreate)}
-                onClick={() => setEmailMode(!emailMode)}
-              >
-                Invite by email
-              </Button>
-            </div>
-            {!invitation && canCreate && (
-              <p className="margin-field-hint">
-                Creating a personal link uses one invitation, even if it isn’t
-                accepted. Sharing it again uses no more.
-              </p>
+            {!invitation && (
+              <div className="margin-invitation-actions">
+                <Button
+                  disabled={busy || !canCreate}
+                  onClick={() =>
+                    void perform(async () => {
+                      await create();
+                      pendingCopyFocus.current = true;
+                    })
+                  }
+                >
+                  {busy ? "Please wait…" : "Create invitation link"}
+                </Button>
+              </div>
             )}
-            {invitation && canCreate && (
+            {canInviteAnother && (
               <Button
-                variant="ghost"
+                variant="link"
+                className="margin-invitation-next"
                 disabled={busy}
                 onClick={() => {
                   setInvitation(null);
@@ -303,147 +431,138 @@ export function InvitationManager({ available }: { available: boolean }) {
                 Invite another person
               </Button>
             )}
-            {invitation && (
-              <div className="margin-invitation-link">
-                <Label htmlFor="invitation-link">Your invitation link</Label>
-                <Input
-                  id="invitation-link"
-                  value={invitation.url}
-                  readOnly
-                  onFocus={(event) => event.currentTarget.select()}
-                />
-                <p className="margin-field-hint">
-                  Expires {new Date(invitation.expiresAt).toLocaleDateString()}.{" "}
-                  {(invitation.community ?? community)
-                    ? "Only verified, completed claims count toward its limit."
-                    : "One person can join with this link."}
-                </p>
+            {summary && (
+              <div className="margin-invitation-info">
+                <div className="margin-invitation-availability">
+                  <p role="status">
+                    {summary.founder
+                      ? "Unlimited invitations"
+                      : `${summary.remaining} of 3 invitations left`}
+                  </p>
+                  <button
+                    type="button"
+                    className="margin-invitation-text-action"
+                    aria-expanded={helpOpen}
+                    aria-controls={`${disclosureId}-help`}
+                    onClick={() => setHelpOpen(!helpOpen)}
+                  >
+                    How invitations work
+                  </button>
+                </div>
+                <div
+                  id={`${disclosureId}-help`}
+                  hidden={!helpOpen}
+                  className="margin-invitation-help"
+                >
+                  <p>
+                    Each personal link lets one person join and lasts 30 days.
+                    Joining doesn’t automatically make you friends.
+                  </p>
+                  {!summary.founder && (
+                    <p>
+                      You can have three active invitations at a time. When
+                      someone accepts your invitation and finishes joining, that
+                      slot becomes available again. Expired or withdrawn links
+                      also free a slot.
+                    </p>
+                  )}
+                  <p>
+                    You can share the same active link again without using
+                    another slot.
+                  </p>
+                </div>
               </div>
             )}
-            {emailMode && (
-              <form className="margin-account-form" onSubmit={email}>
-                <Label htmlFor="friend-email">Their email address</Label>
-                <Input
-                  id="friend-email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  maxLength={254}
-                  required
-                  disabled={busy}
-                />
-                <Button type="submit" disabled={busy}>
-                  Send personal invitation
-                </Button>
-              </form>
-            )}
-            {summary && !summary.founder && summary.remaining === 0 && (
-              <p>
-                Your three invitations have been issued. You can still share an
-                available link below.
-              </p>
-            )}
-            {summary && summary.links.length > 0 && (
-              <details>
-                <summary>Your invitations</summary>
-                <ul className="margin-invitation-list">
-                  {summary.links.map((link) => {
-                    const ended =
-                      link.revoked ||
-                      new Date(link.expiresAt) <= new Date() ||
-                      (link.accepted ?? 0) >= (link.maximum ?? 1);
-                    return (
-                      <li key={link.id}>
-                        <p>
-                          {link.label ||
-                            (link.community
-                              ? "Community invitation"
-                              : "Personal invitation")}{" "}
-                          ·{" "}
-                          {link.revoked
-                            ? "Withdrawn"
-                            : new Date(link.expiresAt) <= new Date()
-                              ? "Expired"
-                              : `${link.accepted ?? 0} of ${link.maximum ?? 1} accepted`}
-                        </p>
-                        <div className="margin-invitation-actions">
-                          {!ended && (
-                            <>
+            {summary &&
+              (listedInvitations.length > 0 || summary.nextCursor) && (
+                <section
+                  className="margin-invitation-history"
+                  aria-label="Your invitations"
+                >
+                  <div className="margin-invitation-history-heading">
+                    <h3>Your invitations</h3>
+                    <button
+                      type="button"
+                      className="margin-invitation-text-action"
+                      aria-expanded={historyOpen}
+                      aria-controls={`${disclosureId}-history`}
+                      onClick={() => setHistoryOpen(!historyOpen)}
+                    >
+                      {historyOpen ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <ul
+                    id={`${disclosureId}-history`}
+                    hidden={!historyOpen}
+                    className="margin-invitation-list"
+                  >
+                    {listedInvitations.map((link) => {
+                      const ended = !isActive(link);
+                      return (
+                        <li key={link.id}>
+                          <div className="margin-invitation-list-copy">
+                            <p>
+                              {link.community
+                                ? link.label || "Community invitation"
+                                : link.label
+                                  ? `For ${link.label}`
+                                  : "Personal invitation"}
+                            </p>
+                            <p className="margin-invitation-meta">
+                              {!ended && "Active · "}
+                              {linkStatus(link)}
+                              {link.community &&
+                                ` · ${link.accepted ?? 0} of ${link.maximum ?? 1} accepted`}
+                            </p>
+                          </div>
+                          <div className="margin-invitation-actions">
+                            {!ended && (
                               <Button
-                                variant="outline"
+                                variant="ghost"
+                                size="sm"
                                 disabled={busy}
                                 onClick={() => {
+                                  pendingCopyFocus.current = true;
                                   setInvitation(link);
-                                  void perform(() => share(link));
+                                  setStatus("");
                                 }}
                               >
-                                Share invitation
+                                Show link
                               </Button>
+                            )}
+                            {!ended && (
                               <Button
-                                variant="outline"
+                                variant="ghost"
+                                size="sm"
                                 disabled={busy}
-                                onClick={() => {
-                                  setInvitation(link);
-                                  void perform(() => share(link, true));
-                                }}
+                                onClick={() =>
+                                  void perform(async () => {
+                                    await call(`/api/invitations/${link.id}`, {
+                                      method: "DELETE",
+                                    });
+                                    if (invitation?.id === link.id)
+                                      setInvitation(null);
+                                    const updated = await fetchSummary();
+                                    loadedCount.current = updated.links.length;
+                                    setSummary(updated);
+                                    const withdrawn = summary.founder
+                                      ? "Invitation withdrawn."
+                                      : "Invitation withdrawn. Its slot is available again.";
+                                    setStatus(withdrawn);
+                                  })
+                                }
                               >
-                                Copy link
+                                Withdraw invitation
                               </Button>
-                            </>
-                          )}
-                          {!link.revoked && (
-                            <Button
-                              variant="ghost"
-                              disabled={busy}
-                              onClick={() =>
-                                void perform(async () => {
-                                  const result = await call(
-                                    `/api/invitations/${link.id}`,
-                                    { method: "DELETE" },
-                                  );
-                                  if (invitation?.id === link.id)
-                                    setInvitation(null);
-                                  setSummary(await call("/api/invitations"));
-                                  setStatus(
-                                    result.providerPending
-                                      ? "Invitation withdrawn. Margin access is blocked; email-link revocation is waiting for Clerk. Retry withdrawal to check again."
-                                      : "Invitation withdrawn. This does not restore your allowance.",
-                                  );
-                                })
-                              }
-                            >
-                              Withdraw invitation
-                            </Button>
-                          )}
-                          {link.revoked && (
-                            <Button
-                              variant="ghost"
-                              disabled={busy}
-                              onClick={() =>
-                                void perform(async () => {
-                                  const result = await call(
-                                    `/api/invitations/${link.id}`,
-                                    { method: "DELETE" },
-                                  );
-                                  setStatus(
-                                    result.providerPending
-                                      ? "Margin access remains blocked. Clerk cleanup is still pending."
-                                      : "Withdrawal is complete in Margin and Clerk.",
-                                  );
-                                })
-                              }
-                            >
-                              Check withdrawal
-                            </Button>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </details>
-            )}
-            {summary?.nextCursor && (
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              )}
+            {historyOpen && summary?.nextCursor && (
               <Button
                 variant="outline"
                 disabled={busy}
@@ -452,10 +571,12 @@ export function InvitationManager({ available }: { available: boolean }) {
                     const next: Summary = await call(
                       `/api/invitations?before=${encodeURIComponent(summary.nextCursor!)}`,
                     );
-                    setSummary({
+                    const updated = {
                       ...next,
                       links: [...summary.links, ...next.links],
-                    });
+                    };
+                    loadedCount.current = updated.links.length;
+                    setSummary(updated);
                   })
                 }
               >
@@ -463,13 +584,15 @@ export function InvitationManager({ available }: { available: boolean }) {
               </Button>
             )}
             {!summary && !busy && (
-              <Button variant="outline" onClick={() => void load()}>
+              <Button
+                variant="outline"
+                onClick={() => void load({ foreground: true, choose: true })}
+              >
                 Retry loading invitations
               </Button>
             )}
           </>
         )}
-        {status && <p role="status">{status}</p>}
         {error && <p role="alert">{error}</p>}
       </DialogContent>
     </Dialog>

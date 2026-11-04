@@ -68,6 +68,7 @@
   ); /* opaque darker outline on light surfaces */
   /* Geometry shared by the shell, feed and conversation panel. */
   --margin-feed-width: 600px;
+  --margin-post-inline-padding: calc(var(--space-related) * 2);
   --margin-panel-width: clamp(320px, calc(100vw - 760px), 420px);
   --margin-pair-gap: 40px;
   --margin-feed-spread: calc(
@@ -94,6 +95,7 @@
 }
 @media (min-width: 640px) {
   :root {
+    --margin-post-inline-padding: var(--space-group);
     --site-gutter: clamp(32px, 4vw, 80px);
   }
 }

@@ -11,13 +11,13 @@
       "files": [
         {
           "path": "margin-hinge-light.ttf",
-          "sha256": "bb76c200061e4a03fbdf4aaa726d4e6445aa5290d92e5be2e06ecc97caedfc01",
-          "bytes": 46908
+          "sha256": "50bba7540108c96348767f5073303dd3281f0e4be8a6144cb08a640fca112756",
+          "bytes": 46904
         },
         {
           "path": "margin-hinge-light.woff2",
-          "sha256": "6c2778ed49574719d289ea3bf848c40c5ce21820b1c53d10eaf5b7af27bedc12",
-          "bytes": 11360
+          "sha256": "d6e0ece15aec59988028b1d885af34c6e55af2a345475ab4ffaf454d7883e8ff",
+          "bytes": 11408
         }
       ],
       "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"
@@ -31,13 +31,13 @@
       "files": [
         {
           "path": "margin-hinge-medium.ttf",
-          "sha256": "22d7493e30ba0196c41785aeb4def43dc6856cb01dbff0104f4a1a83dfab5ada",
+          "sha256": "3c537cad807605ea76cdc3baa8ca3993aca03946d14097329c221f560d409898",
           "bytes": 47600
         },
         {
           "path": "margin-hinge-medium.woff2",
-          "sha256": "8cf50cbecc690f8a1c08322ee9d19c697982a1f03a4eea6e94b0330bd68fffa6",
-          "bytes": 11480
+          "sha256": "cfbb31ec79e04589f8e811e07196504d1bbaa7f590c5bb56ad2ab4892e3d1e55",
+          "bytes": 11488
         }
       ],
       "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"
@@ -51,13 +51,13 @@
       "files": [
         {
           "path": "margin-hinge-bold.ttf",
-          "sha256": "7d02b3c90c0be97288f3bf17e206813c945149863bb730558ed1f2c24b60ab34",
+          "sha256": "7ccb5e4b6d94e73ca979366961e49613c0f8094dd30948f99ad240e3f85a09cc",
           "bytes": 48020
         },
         {
           "path": "margin-hinge-bold.woff2",
-          "sha256": "4ce66e2bfda4929ae4ac8885ff4adaf6c3fb193036cc46e311f41957a53f428d",
-          "bytes": 12144
+          "sha256": "cd8cf7abccf25ac3fdefe4dc8ca3948ad2268a5d94297b120dd966b043bec36d",
+          "bytes": 12188
         }
       ],
       "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−"

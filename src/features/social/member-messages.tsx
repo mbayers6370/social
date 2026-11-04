@@ -29,6 +29,7 @@ import {
   memberChanged,
 } from "./member-client";
 import { MemberConversationMenu } from "./member-conversation-menu";
+import { MemberConversationExport } from "./member-conversation-export";
 import { MessagingOff } from "./messaging-off";
 import { useMember } from "./member-provider";
 import type { MemberConversation, MemberThread } from "./member-contracts";
@@ -315,7 +316,7 @@ export function MemberMessages({
             </SectionTitle>
           </div>
           <p className="margin-inbox-description">
-            A little space for a conversation.
+            Your conversations and private notes.
           </p>
           {inboxError && <p role="status">{inboxError}</p>}
           <ul className="margin-thread-list" aria-label="Conversations">
@@ -326,7 +327,7 @@ export function MemberMessages({
                   <div
                     className="margin-thread-choice"
                     data-notebook={thread.notebook || undefined}
-                    data-active={selectedId === thread.id}
+                    data-active={active.id === thread.id}
                     data-unread={thread.unread}
                   >
                     {thread.notebook ? (
@@ -356,7 +357,7 @@ export function MemberMessages({
                             : `Open conversation with ${thread.contact.name}`
                         }
                         aria-current={
-                          selectedId === thread.id ? "true" : undefined
+                          active.id === thread.id ? "true" : undefined
                         }
                         onClick={() => {
                           paginated.current = false;
@@ -371,7 +372,7 @@ export function MemberMessages({
                       >
                         {thread.preview ||
                           (thread.notebook
-                            ? "A little space for your thoughts."
+                            ? "Notes to self"
                             : "Start a conversation.")}
                       </button>
                     </span>
@@ -432,13 +433,7 @@ export function MemberMessages({
               : `Conversation with ${active.contact.name}`
           }
         >
-          <header
-            className={
-              active.notebook
-                ? "margin-thread-header margin-navigation-theme"
-                : "margin-thread-header"
-            }
-          >
+          <header className="margin-thread-header">
             <Button
               ref={back}
               className="margin-thread-back"
@@ -489,7 +484,18 @@ export function MemberMessages({
               />
             )}
           </header>
-          <MessageRetention notebook={active.notebook} />
+          <MessageRetention
+            notebook={active.notebook}
+            exportAction={
+              !denied &&
+              !active.notebook && (
+                <MemberConversationExport
+                  key={active.id}
+                  threadId={active.id}
+                />
+              )
+            }
+          />
           <div
             ref={scroll}
             className="margin-thread-scroll"

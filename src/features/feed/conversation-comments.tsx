@@ -77,15 +77,7 @@ function CommentThreadView({
   const count = thread.replies.length;
   return (
     <li className="margin-comment-thread">
-      <CommentRow
-        comment={thread.comment}
-        parentAuthor={
-          thread.comment.replyTo
-            ? authors.get(thread.comment.replyTo)
-            : undefined
-        }
-        {...rowProps}
-      />
+      <CommentRow comment={thread.comment} {...rowProps} />
       {count > 0 && (
         <>
           <Button
@@ -110,6 +102,7 @@ function CommentThreadView({
               <li key={comment.id}>
                 <CommentRow
                   comment={comment}
+                  showReplyContext={comment.replyTo !== thread.comment.id}
                   parentAuthor={
                     comment.replyTo ? authors.get(comment.replyTo) : undefined
                   }
@@ -127,6 +120,7 @@ function CommentThreadView({
 function CommentRow({
   comment,
   parentAuthor,
+  showReplyContext = false,
   postId,
   postAuthorId,
   referenceTime,
@@ -137,6 +131,7 @@ function CommentRow({
 }: RowProps & {
   comment: FeedComment;
   parentAuthor?: Person;
+  showReplyContext?: boolean;
 }) {
   const previewContext = useOptionalPreview();
   const preview = live ? null : previewContext;
@@ -166,18 +161,17 @@ function CommentRow({
               {author.name}
             </PersonLink>
           </strong>
-          {author.id === postAuthorId ? (
+          <time dateTime={comment.createdAt}>
+            {relativeTime(comment.createdAt, referenceTime)}
+          </time>
+          {author.id === postAuthorId && (
             <span className="margin-author-label">Author</span>
-          ) : (
-            <time dateTime={comment.createdAt}>
-              {relativeTime(comment.createdAt, referenceTime)}
-            </time>
           )}
           {comment.editedAt && !comment.deletedAt && (
             <span className="margin-comment-edited">Edited</span>
           )}
         </div>
-        {comment.replyTo && (
+        {showReplyContext && comment.replyTo && (
           <span className="margin-reply-context">
             In reply to{" "}
             {parentAuthor ? (

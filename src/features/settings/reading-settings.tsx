@@ -1,18 +1,24 @@
 "use client";
 import type { Preferences } from "@/features/local-preview/model";
+import { SettingSaveStatus, type SettingFeedback } from "./setting-save-status";
 export function ReadingSettings({
   preferences,
   onChange,
   disabled = false,
+  feedback,
 }: {
   preferences: Preferences;
   onChange: (value: Partial<Preferences>) => void;
   disabled?: boolean;
+  feedback?: SettingFeedback;
 }) {
   return (
     <>
       <fieldset disabled={disabled}>
-        <legend>Text size</legend>
+        <legend>
+          Text size{" "}
+          <SettingSaveStatus setting="readingSize" feedback={feedback} />
+        </legend>
         <div className="margin-setting-segments">
           {(
             [
@@ -43,7 +49,9 @@ export function ReadingSettings({
         </div>
       </fieldset>
       <fieldset disabled={disabled}>
-        <legend>Motion</legend>
+        <legend>
+          Motion <SettingSaveStatus setting="motion" feedback={feedback} />
+        </legend>
         <div className="margin-setting-segments">
           {(
             [

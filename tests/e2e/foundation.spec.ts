@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test("public provider marks are served as SVG and decode without a session", async ({
   page,
@@ -35,6 +35,7 @@ test("public provider marks are served as SVG and decode without a session", asy
 test("public shell is responsive, keyboard accessible, and uses a fresh CSP nonce", async ({
   page,
   request,
+  browserName,
 }, testInfo) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -44,7 +45,8 @@ test("public shell is responsive, keyboard accessible, and uses a fresh CSP nonc
       ? /A little less\.\s*A little closer\./
       : "Feed",
   );
-  await page.keyboard.press("Tab");
+  // Safari's default link-navigation shortcut is Option-Tab.
+  await page.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab");
   await expect(
     page.getByRole("link", { name: "Skip to content" }),
   ).toBeFocused();
@@ -79,7 +81,7 @@ test("public shell is responsive, keyboard accessible, and uses a fresh CSP nonc
     `'nonce-${nonce}'`,
   );
   expect(errors).toEqual([]);
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("home.png"),
     fullPage: true,

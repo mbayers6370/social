@@ -125,11 +125,11 @@ type Preview = {
   updateDraft: (patch: Partial<PostInput>) => void;
   publish: (input: unknown) => string;
   editPost: (id: string, input: unknown) => void;
-  deletePost: (id: string) => void;
+  deletePost: (id: string, deletePhotos?: boolean) => void;
   deletePhoto: (id: string) => void;
   saveGallery: (input: unknown) => void;
   postStatus: string;
-  upload: (file: File, description: string) => Promise<Photo>;
+  upload: (file: File) => Promise<Photo>;
   place: (id: string, replacement?: string) => void;
   changeGallery: (
     id: string,
@@ -316,10 +316,15 @@ export function PreviewProvider({
     changeFriend: (personId, action) => {
       if (action === "accept" && loadFriendProfileAction) {
         // Validate before fetching, then revalidate on commit if another action intervenes.
-        changeFriendship(latest.current, bootstrap.viewerId, {
-          personId,
-          action,
-        });
+        changeFriendship(
+          latest.current,
+          bootstrap.viewerId,
+          {
+            personId,
+            action,
+          },
+          new Date(now),
+        );
         return new Promise<void>((resolve, reject) => {
           startTransition(async () => {
             try {
@@ -336,10 +341,15 @@ export function PreviewProvider({
                 throw new PreviewError("That profile is unavailable.");
               }
               commit((current) => {
-                const next = changeFriendship(current, bootstrap.viewerId, {
-                  personId,
-                  action,
-                });
+                const next = changeFriendship(
+                  current,
+                  bootstrap.viewerId,
+                  {
+                    personId,
+                    action,
+                  },
+                  new Date(now),
+                );
                 if (!content) return next;
                 const knownIds = new Set(next.posts.map((post) => post.id));
                 return {
@@ -365,7 +375,12 @@ export function PreviewProvider({
         });
       }
       commit((current) =>
-        changeFriendship(current, bootstrap.viewerId, { personId, action }),
+        changeFriendship(
+          current,
+          bootstrap.viewerId,
+          { personId, action },
+          new Date(now),
+        ),
       );
     },
     notifications,
@@ -676,9 +691,15 @@ export function PreviewProvider({
       );
       setPostStatus("Post updated.");
     },
-    deletePost(id) {
-      commit((current) =>
-        deleteLocalPost(current, bootstrap.viewerId, id, new Date(now)),
+    deletePost(id, deletePhotos = false) {
+      commitPhotoChange(
+        deleteLocalPost(
+          latest.current,
+          bootstrap.viewerId,
+          id,
+          new Date(now),
+          deletePhotos,
+        ),
       );
       setPostStatus("Post deleted.");
     },
@@ -697,7 +718,7 @@ export function PreviewProvider({
         ),
       );
     },
-    async upload(file, description) {
+    async upload(file) {
       if (
         latest.current.photos.filter((photo) => photo.kind === "local")
           .length >= 40
@@ -705,7 +726,7 @@ export function PreviewProvider({
         throw new PreviewError(
           "This local session already has 40 photographs. Refresh to start a new session.",
         );
-      const dimensions = await validateLocalPhoto(file, description);
+      const dimensions = await validateLocalPhoto(file);
       if (
         latest.current.photos.filter((photo) => photo.kind === "local")
           .length >= 40
@@ -720,9 +741,9 @@ export function PreviewProvider({
       const photo: Photo = {
         id: `photo-${createLocalId()}`,
         ownerId: bootstrap.viewerId,
-        title: description.trim().slice(0, 100),
-        description: description.trim(),
-        caption: description.trim().slice(0, 200),
+        title: "Photograph",
+        description: "Photograph",
+        caption: "",
         aspect: dimensions.width > dimensions.height ? "landscape" : "portrait",
         image: { src, ...dimensions },
         kind: "local",

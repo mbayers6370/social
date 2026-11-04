@@ -117,7 +117,7 @@ export const publicDocuments = {
         title: "A post is the beginning",
         paragraphs: [
           "Choose the speech-bubble icon on a post to open its conversation. Read the replies, add a thought or respond to someone. Returning brings you back to the post.",
-          `Messages have a separate inbox, with an intended lifetime of ${MESSAGE_LIFETIME_DAYS} days after each message is sent. Notebook is for private notes to yourself, with an intended lifetime of ${NOTEBOOK_LIFETIME_DAYS} days after each note is saved. The preview keeps these locally; message and note expiry are not connected yet.`,
+          `Messages have a separate inbox, with an intended lifetime of ${MESSAGE_LIFETIME_DAYS} days after each message is sent. Notebook is for private notes to yourself, with an intended lifetime of ${NOTEBOOK_LIFETIME_DAYS} days after each note is saved. The preview keeps these locally. The member app enforces expiry on reads and uses a separate cleanup worker.`,
         ],
       },
       {
@@ -196,7 +196,7 @@ export const publicDocuments = {
         id: "expiration",
         title: "What happens after thirty days?",
         paragraphs: [
-          "The planned feed gives posts a thirty-day life. Expired posts are hidden in the preview, but scheduled permanent erasure and message expiry are not active. A saved gallery photograph, screenshot or export does not automatically disappear with a post.",
+          "The planned feed gives posts a thirty-day life. The member app denies expired posts and messages immediately; its separate maintenance worker permanently removes expired content once deployed. A saved gallery photograph, screenshot or export does not automatically disappear with a post.",
         ],
         links: [{ label: "Read the retention draft", href: "/retention" }],
       },
@@ -763,25 +763,25 @@ export const publicDocuments = {
         id: "posts",
         title: "Posts and their conversations",
         paragraphs: [
-          "The intended experience gives a post thirty days in ordinary views. Its conversation belongs with it. The local preview filters expired posts, but it is not running a scheduled permanent-erasure service.",
-          "Expiry checks and deletion routines are being developed, but a live cleanup schedule has not been verified. The final policy needs a precise visibility clock, erasure deadline and treatment of comments when a post expires or is deleted.",
+          "Posts expire thirty days after creation, or earlier when their Event Space ends its availability. Editing does not renew the deadline. The member app denies access at expiry; manual deletion removes the post and its conversation immediately.",
+          "The separate maintenance worker removes expired post rows, comments, likes, notifications and photo attachments. Hosted worker deployment, monitoring, object deletion and backup behavior still require launch verification; database deletion does not erase recipient copies or backups instantly.",
         ],
       },
       {
         id: "messages",
         title: "Messages and Notebook",
         paragraphs: [
-          `Private messages are intended to expire ${MESSAGE_LIFETIME_DAYS} days after each message is sent. A new message does not renew an older message’s lifetime. Automatic message expiry is not active yet.`,
-          `Notebook is a separate notes-to-self feature. Each note is intended to expire ${NOTEBOOK_LIFETIME_DAYS} days after it is saved; adding another note does not renew earlier entries. Automatic note expiry is not active yet. Final permanent-erasure, backup and export rules remain under review.`,
+          `Private messages expire ${MESSAGE_LIFETIME_DAYS} days after each message is sent. A new message does not renew an older message’s lifetime. The member app excludes expired messages from history, previews and exports, independently of scheduled cleanup.`,
+          `Notebook is a separate notes-to-self feature. Each note expires ${NOTEBOOK_LIFETIME_DAYS} days after it is saved; adding another note does not renew earlier entries. The maintenance worker permanently removes expired message and note rows. Hosted operation and backup-erasure rules still require launch verification.`,
         ],
       },
       {
         id: "gallery",
         title: "Gallery photographs",
         paragraphs: [
-          "Photographs selected for Gallery are intended to stay until you remove or replace them. An image can be referenced by both a post and the gallery, so a post expiring does not necessarily remove the photograph from Gallery.",
+          "Photographs selected for Gallery are intended to stay until you remove or replace them. One canonical photo record and stored original can be referenced by Gallery, portraits, posts and multiple Spaces. Reusing its photo ID never creates another stored copy. A post expiring does not remove a photograph that still has another valid reference.",
           "Replacing a gallery selection only changes that selection. Delete photograph is a broader action: in the local preview it removes image references from your posts, gallery and drafts while preserving post text and conversations. Files selected from your device remain temporary browser references in this preview.",
-          "Hosted photo erasure needs to handle storage failures, outstanding references and any retained versions. The final schedule and completion status remain to be verified.",
+          "The cleanup worker deletes a private photo original only when no valid reference remains. Failed deletions retain a retry intent; a deletion failure does not restore access. A minimal daily upload quota marker can remain until the end of that upload day. Actual hosted storage deletion, backup handling and operational completion still require verification.",
         ],
       },
       {
@@ -966,7 +966,7 @@ export const publicDocuments = {
         id: "photographs",
         title: "Photographs and alternatives to dragging",
         paragraphs: [
-          "The photograph picker asks for a description of what is visible for people using screen readers. Captions and post text can provide the story around the photograph. Gallery arrangement includes keyboard and explicit move controls alongside dragging.",
+          "The photograph picker accepts an image without requiring a description. Post text can provide the story around the photograph. Gallery arrangement includes keyboard and explicit move controls alongside dragging.",
           "Public landing-page photographs are static illustrations with text alternatives. They do not open a viewer or require precise pointer actions.",
         ],
       },

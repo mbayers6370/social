@@ -79,21 +79,50 @@
   color: hsl(var(--note-foreground));
   font: 400 var(--text-note)/1.5 var(--font-body);
 }
-.margin-gallery-featured,
 .margin-gallery-grid {
   display: grid;
   align-items: start;
   gap: 12px;
-}
-.margin-gallery-featured {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.margin-gallery-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.margin-gallery-featured
-  > .margin-gallery-cell:first-child:nth-last-child(odd) {
-  grid-column: 1 / -1;
+/* Shared featured composition: image dimensions never determine grid tracks. */
+.margin-gallery-mosaic {
+  --gallery-image-fit: cover;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  aspect-ratio: 3 / 2;
+}
+.margin-gallery-mosaic[data-count="1"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.margin-gallery-mosaic[data-count="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  aspect-ratio: 2;
+}
+.margin-gallery-mosaic[data-count="3"] > :first-child {
+  grid-row: 1 / 3;
+}
+.margin-gallery-mosaic > :is(button, .margin-gallery-cell) {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  max-height: none;
+}
+.margin-gallery-mosaic img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 .margin-gallery-cell {
   position: relative;
@@ -114,7 +143,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: var(--gallery-image-fit, contain);
   border-radius: inherit;
 }
 .margin-gallery-tile[aria-pressed="true"] {
@@ -214,6 +243,12 @@ html[data-motion="reduced"] .margin-gallery-floating img {
 }
 .margin-gallery-delete {
   color: hsl(var(--destructive));
+}
+.margin-gallery-photo-delete {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  border-radius: var(--radius-control);
 }
 .margin-gallery-delete:hover {
   color: hsl(var(--destructive));
@@ -382,17 +417,28 @@ html[data-motion="reduced"] .margin-gallery-floating img {
   gap: 8px;
   min-width: 0;
 }
-.margin-editor-selection > p {
+.margin-editor-selected-photo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.margin-editor-selected-photo > img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+}
+.margin-editor-selected-photo > p {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   font: 400 var(--text-control)/1.5 var(--font-body);
 }
 .margin-editor-selection-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 .margin-editor-selection-actions > button {
   font-weight: 400;
@@ -401,6 +447,8 @@ html[data-motion="reduced"] .margin-gallery-floating img {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  border-top: 1px solid hsl(var(--border) / 0.65);
+  padding-top: 12px;
 }
 .margin-gallery-editor-complete > button {
   min-height: 52px;
@@ -430,14 +478,6 @@ html[data-motion="reduced"] .margin-gallery-floating img {
   .margin-gallery-header h1 {
     font-size: var(--text-display-sm);
   }
-  .margin-gallery-featured {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
-  }
-  .margin-gallery-featured
-    > .margin-gallery-cell:first-child:nth-last-child(odd) {
-    grid-column: auto;
-  }
   .margin-gallery-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
@@ -465,18 +505,8 @@ html[data-motion="reduced"] .margin-gallery-floating img {
     grid-template-columns: repeat(6, minmax(0, 96px));
     justify-content: space-between;
   }
-  .margin-editor-selection {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-  }
-  .margin-editor-selection > p {
-    flex: 1;
-    min-width: 0;
-  }
   .margin-editor-selection-actions {
-    flex-shrink: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .margin-gallery-editor-complete {
     display: flex;
@@ -501,7 +531,7 @@ html[data-motion="reduced"] .margin-gallery-floating img {
   }
 }
 @media (min-width: 1024px) {
-  .margin-gallery-page .margin-gallery-cell {
+  .margin-gallery-page .margin-gallery-grid .margin-gallery-cell {
     aspect-ratio: 3 / 2;
     max-height: none;
   }

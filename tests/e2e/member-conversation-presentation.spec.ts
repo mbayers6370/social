@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture, identity, friend } from "./helpers/member-fixture";
 import type { Page } from "./fixtures";
 
@@ -110,8 +110,8 @@ for (const area of ["feed-posts", "profile"]) {
       const source = (await post.boundingBox())!;
       const panel = (await dialog.boundingBox())!;
       expect(source.x).toBeLessThan(before.x - 100);
-      expect(panel.y).toBeCloseTo(source.y, 0);
-      expect(panel.height).toBeCloseTo(source.height, 0);
+      expect(panel.y).toBeCloseTo(source.y + 16, 0);
+      expect(panel.height).toBeCloseTo(source.height - 32, 0);
       expect(panel.x + panel.width).toBeLessThanOrEqual(
         page.viewportSize()!.width,
       );
@@ -148,7 +148,7 @@ for (const area of ["feed-posts", "profile"]) {
       dialog.getByText("A reply to keep.", { exact: true }),
     ).toBeInViewport();
     await expect(dialog.locator("[data-like-count]")).toHaveText("3 likes");
-    await page.screenshot({
+    await captureScreenshot(page, {
       path: info.outputPath(`${area}-conversation.png`),
       caret: "initial",
     });
@@ -242,7 +242,7 @@ test("keeps the animated live reply box above the mobile keyboard", async ({
     })
     .toBeLessThanOrEqual(444);
   await expect(dialog.locator(".margin-conversation-header")).toBeInViewport();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("live-conversation-keyboard.png"),
     caret: "initial",
   });

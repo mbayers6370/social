@@ -98,7 +98,11 @@ class Drawing:
             return 620
         if char == " ":
             return 300
-        if char in "ilI!|.,:;'`":
+        if char in ".,:;'`‘’‚":
+            return 180
+        if char in '"“”„':
+            return 360
+        if char in "ilI!|":
             return 250
         if char in "ftjr()[]{}":
             return 390

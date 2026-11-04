@@ -30,6 +30,24 @@
 .margin-settings-feedback:empty {
   display: none;
 }
+.margin-setting-with-feedback {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.margin-setting-with-feedback > label {
+  flex: 1;
+  min-width: 0;
+}
+.margin-setting-save-status {
+  margin-inline-start: 8px;
+  color: hsl(var(--muted-foreground));
+  font: var(--text-meta)/1.5 var(--font-body);
+  white-space: nowrap;
+}
+.margin-setting-save-status:empty {
+  display: none;
+}
 .margin-settings-column {
   display: grid;
   align-content: start;

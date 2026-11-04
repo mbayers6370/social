@@ -39,7 +39,6 @@ const relationshipSchema = z
     action: z.enum(["request", "accept", "remove", "block", "unblock"]),
   })
   .strict();
-const descriptionSchema = z.string().trim().min(1).max(500);
 
 export async function boundedBody(request: Request, max: number) {
   const length = request.headers.get("content-length");
@@ -106,9 +105,7 @@ export async function postDraftRequest(request: Request) {
     throw new SocialError(400, "Invalid photograph form");
   }
   if (
-    [...form.keys()].some(
-      (key) => !["input", "photos", "descriptions"].includes(key),
-    ) ||
+    [...form.keys()].some((key) => !["input", "photos"].includes(key)) ||
     form.getAll("input").length !== 1
   )
     throw new SocialError(400, "Invalid photograph form");
@@ -122,13 +119,8 @@ export async function postDraftRequest(request: Request) {
     throw new SocialError(400, "Invalid post");
   }
   const input = memberPostDraftInput.parse(raw);
-  const photos = form.getAll("photos"),
-    descriptions = form.getAll("descriptions");
-  if (
-    !photos.length ||
-    photos.length + input.photoIds.length > 3 ||
-    photos.length !== descriptions.length
-  )
+  const photos = form.getAll("photos");
+  if (!photos.length || photos.length + input.photoIds.length > 3)
     throw new SocialError(400, "Choose up to three photographs");
   const files = [];
   for (let index = 0; index < photos.length; index++) {
@@ -138,7 +130,7 @@ export async function postDraftRequest(request: Request) {
     files.push({
       bytes: new Uint8Array(await file.arrayBuffer()),
       type: file.type,
-      description: descriptionSchema.parse(descriptions[index]),
+      description: "Photograph",
     });
   }
   return { input, files };
@@ -403,18 +395,6 @@ export async function socialRequest(
       case "spaceUpload":
       case "createPhotoPost": {
         const type = request.headers.get("content-type") ?? "";
-        const encoding = request.headers.get("x-photo-description-encoding");
-        if (encoding !== null && encoding !== "percent")
-          throw new SocialError(400, "Invalid description encoding");
-        let descriptionHeader = request.headers.get("x-photo-description");
-        if (encoding === "percent" && descriptionHeader !== null) {
-          try {
-            descriptionHeader = decodeURIComponent(descriptionHeader);
-          } catch {
-            throw new SocialError(400, "Invalid description encoding");
-          }
-        }
-        const description = descriptionSchema.parse(descriptionHeader);
         // Active-account check before accepting a large body; rechecked inside the transaction.
         if ((await service.account(subject))?.accountStatus !== "ACTIVE")
           throw new SocialError(403, "Account is not active");
@@ -422,7 +402,7 @@ export async function socialRequest(
           subject,
           await boundedBody(request, PHOTO_MAX_BYTES),
           type,
-          description,
+          "Photograph",
           operation === "spaceUpload" ? id! : undefined,
         );
         break;
@@ -441,9 +421,15 @@ export async function socialRequest(
           },
         });
       }
-      case "deletePost":
-        await service.deletePost(subject, id!);
+      case "deletePost": {
+        const input = request.body
+          ? z
+              .strictObject({ deletePhotos: z.boolean().default(false) })
+              .parse(await json(request))
+          : { deletePhotos: false };
+        await service.deletePost(subject, id!, input.deletePhotos);
         break;
+      }
       case "deletePhoto":
         await service.deletePhoto(subject, id!);
         break;

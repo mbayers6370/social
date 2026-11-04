@@ -72,9 +72,11 @@ function shiftMonth(date: Date, amount: number) {
 export function EventDateTimeField({
   value,
   onChange,
+  end = false,
 }: {
   value: string;
   onChange: (value: string) => void;
+  end?: boolean;
 }) {
   const id = useId();
   const [date, time = ""] = value.split("T");
@@ -134,10 +136,12 @@ export function EventDateTimeField({
   }
   return (
     <fieldset className="margin-space-date-field">
-      <legend className="margin-field-label">Date and local time</legend>
+      <legend className="margin-field-label">
+        {end ? "End date and local time" : "Date and local time"}
+      </legend>
       <div className="margin-space-date-time">
         <div>
-          <Label htmlFor={`${id}-date`}>Date</Label>
+          <Label htmlFor={`${id}-date`}>{end ? "End date" : "Date"}</Label>
           <div className="margin-space-date-control">
             <Input
               id={`${id}-date`}
@@ -155,7 +159,7 @@ export function EventDateTimeField({
               variant="ghost"
               size="icon"
               className="margin-space-date-trigger"
-              aria-label="Choose date"
+              aria-label={end ? "Choose end date" : "Choose date"}
               aria-haspopup="dialog"
               aria-expanded={open}
               onClick={() => {
@@ -168,7 +172,7 @@ export function EventDateTimeField({
           </div>
         </div>
         <div>
-          <Label htmlFor={`${id}-time`}>Time</Label>
+          <Label htmlFor={`${id}-time`}>{end ? "End time" : "Time"}</Label>
           <Input
             id={`${id}-time`}
             type="time"
@@ -192,7 +196,7 @@ export function EventDateTimeField({
             trigger.current?.focus();
           }}
         >
-          <DialogTitle>Choose date</DialogTitle>
+          <DialogTitle>{end ? "Choose end date" : "Choose date"}</DialogTitle>
           <DialogDescription className="sr-only">
             Use the arrow keys to move by day, Page Up and Page Down to change
             months, and Enter to choose a date.

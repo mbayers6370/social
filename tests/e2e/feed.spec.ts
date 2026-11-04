@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "./fixtures";
+import { captureScreenshot, expect, test, type Page } from "./fixtures";
 
 test.beforeEach(async ({ page }, testInfo) => {
   test.skip(
@@ -87,7 +87,7 @@ test("shows the reference feed in chronological order with mobile-first navigati
     await page
       .locator("#post-porch")
       .evaluate((node) => getComputedStyle(node).borderBottomWidth),
-  ).toBe("1px");
+  ).toBe("0px");
   await expect(page.locator(".margin-feed-list figcaption")).toHaveCount(0);
   await expect(page.locator("#post-fog")).toHaveCount(0);
   await expect(page.locator("#post-porch .margin-post-image")).toHaveAttribute(
@@ -106,7 +106,7 @@ test("shows the reference feed in chronological order with mobile-first navigati
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("margin-feed.png"),
     fullPage: true,
@@ -161,8 +161,8 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
     const panel = await dialog.boundingBox();
     expect(moved!.x).toBeLessThan(before.post.x - 100);
     expect(moved!.y).toBeCloseTo(before.post.y - scrollDelta, 1);
-    expect(panel!.height).toBeCloseTo(moved!.height, 1);
-    expect(panel!.y).toBeCloseTo(moved!.y, 1);
+    expect(panel!.height).toBeCloseTo(moved!.height - 32, 1);
+    expect(panel!.y).toBeCloseTo(moved!.y + 16, 1);
     const content = (await page.locator(".margin-main").boundingBox())!;
     expect((moved!.x + panel!.x + panel!.width) / 2).toBeCloseTo(
       content.x + content.width / 2,
@@ -174,7 +174,7 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
     expect(panel!.y).toBeCloseTo(0, 0);
     expect(panel!.height).toBeCloseTo(page.viewportSize()!.height, 0);
   }
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("margin-conversation.png"),
   });
@@ -360,7 +360,7 @@ test("keeps the active experience usable when switching between desktop and mobi
     .poll(async () => {
       const panel = await dialog.boundingBox();
       const post = await page.locator("#post-porch").boundingBox();
-      return Math.abs(panel!.height - post!.height);
+      return Math.abs(panel!.height - (post!.height - 32));
     })
     .toBeLessThan(1);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -398,7 +398,7 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
     const dialog = await openPost(page, id);
     const panelBounds = (await dialog.boundingBox())!;
     const postBounds = (await post.boundingBox())!;
-    expect(panelBounds.height).toBeCloseTo(postBounds.height, 1);
+    expect(panelBounds.height).toBeCloseTo(postBounds.height - 32, 1);
     expect(postBounds.height).toBeGreaterThanOrEqual(
       Math.max(original.height, 640) - 1,
     );
@@ -468,7 +468,7 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
       .boundingBox())!;
     expect(buttonBounds.y).toBeGreaterThan(textBounds.y + textBounds.height);
     if (id === "post-porch" || id === "post-book")
-      await page.screenshot({
+      await captureScreenshot(page, {
         caret: "initial",
         path: testInfo.outputPath(`conversation-${id}.png`),
       });
@@ -490,7 +490,7 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
   const headerHeight = (await page.locator(".margin-header").boundingBox())!
     .height;
   const postHeight = (await page.locator("#post-porch").boundingBox())!.height;
-  expect((await dialog.boundingBox())!.height).toBeCloseTo(postHeight, 1);
+  expect((await dialog.boundingBox())!.height).toBeCloseTo(postHeight - 32, 1);
   expect(postHeight).toBeGreaterThanOrEqual(500 - headerHeight - 64);
   await expect(
     dialog.getByRole("button", { name: "Close conversation", exact: true }),
@@ -512,6 +512,11 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
     dialog.getByRole("button", { name: "Post", exact: true }),
   ).toBeInViewport();
   await dialog.getByRole("button", { name: "Post", exact: true }).click();
+  // Posting reveals the saved comment; return to the composer to check its
+  // position while only the discussion region scrolls.
+  await dialog
+    .locator(".margin-conversation-composer")
+    .scrollIntoViewIfNeeded();
   const scroll = dialog.getByRole("region", { name: "Conversation content" });
   await scroll.evaluate((node) => {
     node.scrollTop = 0;
@@ -651,7 +656,7 @@ test("conversation controls have padded hover targets and a soft comment focus b
   });
   expect(Math.min(...padding)).toBeGreaterThanOrEqual(10);
   await like.hover();
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("like-hover.png"),
   });
@@ -673,7 +678,7 @@ test("conversation controls have padded hover targets and a soft comment focus b
       "0px",
     );
     await close.hover();
-    await page.screenshot({
+    await captureScreenshot(page, {
       caret: "initial",
       path: testInfo.outputPath("close-hover.png"),
     });
@@ -685,7 +690,7 @@ test("conversation controls have padded hover targets and a soft comment focus b
   }
   const input = dialog.getByRole("textbox", { name: "Add a comment" });
   expect((await input.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("inline-comment.png"),
   });
@@ -705,7 +710,7 @@ test("conversation controls have padded hover targets and a soft comment focus b
   expect(focus.border).not.toBe(focus.text);
   expect(focus.shadow).not.toBe("none");
   expect(focus.outline).toBe("none");
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("expanded-comment-focus.png"),
   });
@@ -763,7 +768,7 @@ test("keeps the comment composer pinned with likes and expiry directly underneat
     expect((await scroll.boundingBox())!.height).toBeGreaterThan(0);
   }
   await page.setViewportSize(initialViewport);
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("pinned-comment-footer.png"),
   });
@@ -801,44 +806,48 @@ test("keeps navigation and conversation controls usable from small phones to wid
   }
 });
 
-test("reverses the opening animation when closing", async ({ page }) => {
-  const dialog = await openPost(page, "post-book");
-  const frames = await dialog.evaluate(async (node) => {
-    const motion = node.getAnimations()[0];
-    // openPost waits for the entrance to finish. Seek back into that entrance
-    // so this actually tests reversing an in-progress animation.
-    motion.pause();
-    await motion.ready;
-    motion.currentTime = Number(motion.effect!.getTiming().duration) / 2;
-    motion.playbackRate = 0.2;
-    return (motion.effect as KeyframeEffect).getKeyframes();
-  });
-  if ((page.viewportSize()?.width ?? 0) < 1024)
-    expect(
-      frames.some((frame) => String(frame.transform).includes("-180deg")),
-    ).toBe(true);
-  else
-    expect(
-      frames.some((frame) => String(frame.clipPath).includes("100%")),
-    ).toBe(true);
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#post-book")).toHaveAttribute(
-    "data-phase",
-    "closing",
-  );
-  expect(
-    await dialog.evaluate(async (node) => {
+test(
+  "reverses the opening animation when closing",
+  { tag: "@extended" },
+  async ({ page }) => {
+    const dialog = await openPost(page, "post-book");
+    const frames = await dialog.evaluate(async (node) => {
       const motion = node.getAnimations()[0];
+      // openPost waits for the entrance to finish. Seek back into that entrance
+      // so this actually tests reversing an in-progress animation.
+      motion.pause();
       await motion.ready;
-      return motion.playbackRate;
-    }),
-  ).toBeLessThan(0);
-  // The slow rate makes the reversal observable; finish at its normal speed.
-  await dialog.evaluate((node) => {
-    node.getAnimations()[0].playbackRate = -1;
-  });
-  await expect(dialog).not.toBeVisible();
-});
+      motion.currentTime = Number(motion.effect!.getTiming().duration) / 2;
+      motion.playbackRate = 0.2;
+      return (motion.effect as KeyframeEffect).getKeyframes();
+    });
+    if ((page.viewportSize()?.width ?? 0) < 1024)
+      expect(
+        frames.some((frame) => String(frame.transform).includes("-180deg")),
+      ).toBe(true);
+    else
+      expect(
+        frames.some((frame) => String(frame.clipPath).includes("100%")),
+      ).toBe(true);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#post-book")).toHaveAttribute(
+      "data-phase",
+      "closing",
+    );
+    expect(
+      await dialog.evaluate(async (node) => {
+        const motion = node.getAnimations()[0];
+        await motion.ready;
+        return motion.playbackRate;
+      }),
+    ).toBeLessThan(0);
+    // The slow rate makes the reversal observable; finish at its normal speed.
+    await dialog.evaluate((node) => {
+      node.getAnimations()[0].playbackRate = -1;
+    });
+    await expect(dialog).not.toBeVisible();
+  },
+);
 
 test("supports optional touch swipes with the same reversible conversation", async ({
   page,

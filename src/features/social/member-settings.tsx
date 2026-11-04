@@ -12,6 +12,10 @@ import { Avatar } from "@/features/feed/post-content";
 import { ReadingSettings } from "@/features/settings/reading-settings";
 import { MessagingSettings } from "@/features/settings/messaging-settings";
 import { UsernameSettings } from "@/features/settings/username-settings";
+import {
+  SettingSaveStatus,
+  useSettingFeedback,
+} from "@/features/settings/setting-save-status";
 import { AccountControls } from "@/features/account/account-controls";
 import { Button } from "@/components/ui/button";
 import { AppFooter } from "@/components/layout/app-footer";
@@ -46,6 +50,7 @@ export function MemberSettings({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [feedback, setFeedback] = useSettingFeedback();
   useEffect(() => {
     const reveal = () =>
       document
@@ -61,6 +66,8 @@ export function MemberSettings({
     setBusy(true);
     setError("");
     setStatus("");
+    const key = Object.keys(patch)[0];
+    setFeedback({ key, state: "saving" });
     try {
       const next = await requestMember<MemberIdentity>(
         client,
@@ -70,8 +77,9 @@ export function MemberSettings({
       setSaved(next);
       member?.acceptIdentity(next);
       memberChanged();
-      setStatus("Settings saved.");
+      setFeedback({ key, state: "saved" });
     } catch (error) {
+      setFeedback(null);
       setError(
         error instanceof Error
           ? error.message
@@ -101,7 +109,7 @@ export function MemberSettings({
           </p>
         )}
         <p role="status" className="margin-settings-feedback">
-          {busy ? "Saving your settings…" : status}
+          {status}
         </p>
         <div className="margin-settings-columns">
           <div className="margin-settings-column">
@@ -113,11 +121,13 @@ export function MemberSettings({
               <h2 id="reading-title">Reading &amp; motion</h2>
               <ReadingSettings
                 preferences={identity.preferences}
+                feedback={feedback}
                 disabled={busy}
                 onChange={(patch) => void updatePreferences(patch)}
               />
             </section>
             <MessagingSettings
+              feedback={feedback}
               enabled={identity.preferences.messagingEnabled}
               disabled={busy}
               onChange={(messagingEnabled) =>
@@ -155,24 +165,29 @@ export function MemberSettings({
                     ],
                   ] as const
                 ).map(([key, label, description]) => (
-                  <label className="margin-notification-preference" key={key}>
-                    <input
-                      type="checkbox"
-                      checked={identity.preferences[key]}
-                      disabled={
-                        busy ||
-                        (key === "notifyMessages" &&
-                          !identity.preferences.messagingEnabled)
-                      }
-                      onChange={(event) =>
-                        void updatePreferences({ [key]: event.target.checked })
-                      }
-                    />
-                    <span>
-                      <strong>{label}</strong>
-                      <span>{description}</span>
-                    </span>
-                  </label>
+                  <div className="margin-setting-with-feedback" key={key}>
+                    <label className="margin-notification-preference">
+                      <input
+                        type="checkbox"
+                        checked={identity.preferences[key]}
+                        disabled={
+                          busy ||
+                          (key === "notifyMessages" &&
+                            !identity.preferences.messagingEnabled)
+                        }
+                        onChange={(event) =>
+                          void updatePreferences({
+                            [key]: event.target.checked,
+                          })
+                        }
+                      />
+                      <span>
+                        <strong>{label}</strong>
+                        <span>{description}</span>
+                      </span>
+                    </label>
+                    <SettingSaveStatus setting={key} feedback={feedback} />
+                  </div>
                 ))}
                 <p className="margin-field-hint">
                   These choices control your in-app activity. Push notifications
@@ -232,7 +247,7 @@ export function MemberSettings({
                 <details className="margin-settings-record">
                   <summary>
                     <span>Blocked people</span>
-                    <span>{safety.blocked.length}</span>
+                    <span>{safety.blocked.length || "None"}</span>
                     <ChevronDown aria-hidden="true" />
                   </summary>
                   <div>
@@ -287,7 +302,7 @@ export function MemberSettings({
                 <details className="margin-settings-record">
                   <summary>
                     <span>Your reports</span>
-                    <span>{safety.reports.length}</span>
+                    <span>{safety.reports.length || "None"}</span>
                     <ChevronDown aria-hidden="true" />
                   </summary>
                   <div>

@@ -135,7 +135,7 @@ export function ProfilePhotoEditor() {
                 }
               }}
             >
-              Use Photograph
+              Use photograph
             </Button>
           </div>
         </DialogContent>

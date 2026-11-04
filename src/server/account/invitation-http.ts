@@ -9,6 +9,7 @@ import { SocialError } from "../social/errors";
 import { accountConfiguration } from "./config";
 import {
   digestToken,
+  availableInvitationSlots,
   emailInput,
   invitationOwner,
   invitationToken,
@@ -177,7 +178,10 @@ export async function invitationRequest(
     return Response.json(
       {
         founder: owner.account.role === "FOUNDER",
-        remaining: owner.account.invitationsRemaining,
+        remaining:
+          owner.account.role === "FOUNDER"
+            ? 0
+            : await availableInvitationSlots(db, owner.id),
         nextCursor: more ? links.at(-1)!.id : null,
         links: links.map((link) => ({
           id: link.id,

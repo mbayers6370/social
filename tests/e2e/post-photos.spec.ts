@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   test.skip(
@@ -6,6 +6,34 @@ test.beforeEach(async ({ page }) => {
     "Development feed fixtures",
   );
   await page.goto("/?view=profile");
+});
+
+test("gives portrait post photos a taller frame at the existing full width", async ({
+  page,
+}, info) => {
+  await page.goto("/");
+  for (const [aspect, ratio] of [
+    ["portrait", 4 / 5],
+    ["landscape", 3 / 2],
+  ] as const) {
+    const frame = page
+      .locator(
+        `.margin-post-photos[data-multiple="false"] .margin-post-photo[data-aspect="${aspect}"]`,
+      )
+      .first();
+    await expect(frame).toBeVisible();
+    const photo = (await frame.boundingBox())!;
+    const container = (await frame.locator("..").boundingBox())!;
+    expect(photo.width).toBeCloseTo(container.width, 1);
+    expect(photo.width / photo.height).toBeCloseTo(ratio, 2);
+    if (aspect === "portrait") {
+      expect(photo.height).toBeGreaterThan(photo.width);
+      await frame.scrollIntoViewIfNeeded();
+      await captureScreenshot(page, {
+        path: info.outputPath("portrait-post.png"),
+      });
+    }
+  }
 });
 
 test("shows Ines's three photos before text, supports mobile swiping, and returns from the viewer", async ({
@@ -48,7 +76,7 @@ test("shows Ines's three photos before text, supports mobile swiping, and return
       .toBeGreaterThan(0);
     await expect(page.getByRole("dialog")).toHaveCount(0);
   }
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("three-photo-post.png"),
   });
@@ -67,7 +95,7 @@ test("shows Ines's three photos before text, supports mobile swiping, and return
   await expect(dialog.getByText("3 of 3", { exact: true })).toBeVisible();
   await page.keyboard.press("ArrowLeft");
   await expect(dialog.getByText("2 of 3", { exact: true })).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     caret: "initial",
     path: testInfo.outputPath("full-photo-viewer.png"),
   });
@@ -133,7 +161,7 @@ test("publishes three photographs together and preserves the image limit across 
       .nth(index)
       .click();
     await picker
-      .getByRole("button", { name: "Use Photograph", exact: true })
+      .getByRole("button", { name: "Use photograph", exact: true })
       .click();
   }
   await expect(

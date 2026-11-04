@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 test.beforeEach(async ({ page }) => {
   test.skip(
@@ -48,7 +48,7 @@ test("keeps profile post surfaces flat and mobile navigation portraits at icon s
   await expect(image).toHaveAttribute("title", "A cup of tea on a table");
   await expect(viewer.locator("figcaption")).toHaveClass(/\bsr-only\b/);
   await expect(viewer.locator(".margin-photo-caption")).toHaveCount(0);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("photo-description-hover.png"),
     caret: "initial",
   });
@@ -77,7 +77,7 @@ test("uses search semantics and a clear empty notification hierarchy", async ({
   await expect(
     panel.getByRole("button", { name: "Mark all as read" }),
   ).toHaveCount(0);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("notification-empty.png"),
     caret: "initial",
   });

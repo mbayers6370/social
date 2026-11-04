@@ -4,6 +4,7 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import {
   assertStillPhoto,
@@ -31,9 +32,38 @@ export interface PrivatePhotoStore {
   put(key: string, bytes: Uint8Array): Promise<void>;
   get(key: string): Promise<Uint8Array>;
   delete(key: string): Promise<void>;
+  list?(
+    after?: string,
+    limit?: number,
+  ): Promise<{
+    objects: { key: string; lastModified: Date }[];
+    hasMore: boolean;
+  }>;
 }
 // No public URL, ACL, signed bearer URL, or image-optimizer path is produced.
 export const privatePhotoStore: PrivatePhotoStore = {
+  async list(after, limit = 100) {
+    if (isLocalStoreEnabled())
+      return (await developmentStore!).list!(after, limit);
+    const { client, bucket } = getPrivateStorage();
+    const page = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: "social/",
+        StartAfter: after,
+        MaxKeys: Math.min(100, Math.max(1, limit)),
+      }),
+      { abortSignal: AbortSignal.timeout(10_000) },
+    );
+    return {
+      objects: (page.Contents ?? []).map((object) => {
+        if (!object.Key || !object.LastModified)
+          throw Error("Invalid private object listing");
+        return { key: object.Key, lastModified: object.LastModified };
+      }),
+      hasMore: Boolean(page.IsTruncated),
+    };
+  },
   async put(key, bytes) {
     if (isLocalStoreEnabled()) return (await developmentStore!).put(key, bytes);
     const { client, bucket } = getPrivateStorage();

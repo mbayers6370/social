@@ -100,11 +100,11 @@ it("offers recovery for a legacy pending account without treating it as active",
   ).toBeVisible();
   expect(screen.queryByLabelText("Username")).not.toBeInTheDocument();
 });
-it("sends a canonically active, completed account to the member area", async () => {
+it("sends a canonically active, completed account straight to the feed", async () => {
   state.owner.mockResolvedValue({
     account: { onboardedAt: new Date(), status: "ACTIVE" },
   });
-  await expect(OnboardingPage()).rejects.toThrow("redirect:/app");
+  await expect(OnboardingPage()).rejects.toThrow("redirect:/app/feed");
 });
 it("never presents onboarding as a way to reactivate a deactivated account", async () => {
   state.owner.mockResolvedValue({

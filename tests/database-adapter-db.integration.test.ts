@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { privateTestDatabaseUrl } from "./helpers/database";
 // Real disposable PostgreSQL, no Clerk/Redis credentials or member data.
 import {
   afterAll,
@@ -35,14 +36,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       ).toEqual([]);
     });
     beforeAll(() => {
-      const url = new URL(process.env.DATABASE_URL!);
-      if (
-        url.hostname !== "127.0.0.1" ||
-        url.port !== "55432" ||
-        !/^\/margin_slice_test_[a-f0-9]{32}$/.test(url.pathname) ||
-        url.username !== "margin_runtime"
-      )
-        throw Error("Refusing non-disposable database");
+      const url = privateTestDatabaseUrl();
       // One connection makes every test exercise actual connection reuse.
       db = new PrismaClient({ adapter: createDatabaseAdapter(url.href, 1) });
     });

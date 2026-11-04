@@ -126,6 +126,19 @@ export function ConversationDialog({
       target.getBoundingClientRect().top -
       scroll.getBoundingClientRect().top -
       16;
+    // Focusing a tall panel's composer can scroll the page past its comments.
+    // Reveal the saved comment in the page as well as in the inner scroller.
+    if (desktop || inlineFlip) {
+      const bounds = target.getBoundingClientRect();
+      const top =
+        (document.querySelector(".margin-header")?.getBoundingClientRect()
+          .bottom ?? 0) + 16;
+      const bottom = window.innerHeight - 16;
+      if (bounds.top < top)
+        window.scrollBy({ top: bounds.top - top, behavior: "instant" });
+      else if (bounds.bottom > bottom)
+        window.scrollBy({ top: bounds.bottom - bottom, behavior: "instant" });
+    }
     scrolledComment.current = pendingComment;
     // Live comments arrive after the dialog's initial autofocus has run.
     // Move focus only while it remains on the dialog's initial Back control.
@@ -137,6 +150,8 @@ export function ConversationDialog({
     frame,
     pendingComment,
     post.id,
+    desktop,
+    inlineFlip,
     state.comments.length,
     state.expandedReplies,
     state.visibleCount,
@@ -145,7 +160,6 @@ export function ConversationDialog({
   const conversationMeta = (
     <footer className="margin-conversation-footer">
       <span data-like-count>
-        <Heart aria-hidden="true" fill="currentColor" />
         {post.likes + Number(state.liked)}{" "}
         {post.likes + Number(state.liked) === 1 ? "like" : "likes"}
       </span>
@@ -442,6 +456,7 @@ export function ConversationDialog({
         <Dialog.Content
           ref={setFrame}
           data-layout={layout}
+          data-feed-dividers={selection.mainFeed || undefined}
           data-profile-flip={profileDate || undefined}
           aria-modal={!wideScreen || undefined}
           className={cn(

@@ -15,6 +15,7 @@ import type { PostMenuControls } from "@/features/feed/post-options-menu";
 import type { SpacePost } from "./contracts";
 import { useSpaceClient } from "./client";
 import { useSpaceAction } from "./use-space-action";
+import { PostPhotoDeleteOption } from "@/features/profile/post-photo-delete-option";
 
 export function SpacePostActions({
   post,
@@ -32,6 +33,7 @@ export function SpacePostActions({
   const action = useSpaceAction();
   const [removing, setRemoving] = useState(false);
   const [feedError, setFeedError] = useState("");
+  const [deletePhotos, setDeletePhotos] = useState(false);
   const cancel = useRef<HTMLButtonElement>(null);
   async function removeFromFeed() {
     try {
@@ -129,6 +131,7 @@ export function SpacePostActions({
           onClick={() => {
             controls.itemProps.onClick();
             setRemoving(true);
+            setDeletePhotos(false);
           }}
         >
           <Trash aria-hidden="true" />
@@ -155,6 +158,13 @@ export function SpacePostActions({
             The post and its conversation will be removed. Photographs used
             elsewhere are preserved.
           </DialogDescription>
+          {!!post.photos.length && (
+            <PostPhotoDeleteOption
+              checked={deletePhotos}
+              disabled={action.busy}
+              onChange={setDeletePhotos}
+            />
+          )}
           <Button
             ref={cancel}
             variant="outline"
@@ -167,7 +177,13 @@ export function SpacePostActions({
             variant="destructive"
             disabled={action.busy}
             onClick={async () => {
-              if (await action.run(`/api/posts/${post.id}`, "DELETE"))
+              if (
+                await action.run(
+                  `/api/posts/${post.id}`,
+                  "DELETE",
+                  deletePhotos ? { deletePhotos: true } : undefined,
+                )
+              )
                 setRemoving(false);
             }}
           >

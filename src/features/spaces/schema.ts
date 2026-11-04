@@ -15,20 +15,39 @@ const timeZone = z
       return false;
     }
   }, "Choose a valid time zone.");
-export const spaceInput = z.discriminatedUnion("kind", [
-  z.strictObject({
+export const spaceInput = z
+  .strictObject({
     kind: z.literal("PRIVATE"),
     name: z.string().trim().min(1).max(100),
-  }),
-  z.strictObject({
-    kind: z.literal("GATHERING"),
-    name: z.string().trim().min(1).max(100),
-    startsAt: z.iso.datetime(),
-    timeZone,
+    startsAt: z.iso.datetime().optional(),
+    endsAt: z.iso.datetime().optional(),
+    rsvpEnabled: z.boolean().optional(),
+    timeZone: timeZone.optional(),
     location: z.string().trim().max(300).optional(),
-  }),
-]);
+  })
+  .refine((value) => Boolean(value.startsAt) === Boolean(value.timeZone), {
+    message: "Choose a date, time and time zone together.",
+    path: ["startsAt"],
+  })
+  .refine((value) => !value.endsAt || Boolean(value.startsAt), {
+    message: "Choose a start before adding an end time.",
+    path: ["endsAt"],
+  })
+  .refine(
+    (value) =>
+      !value.endsAt ||
+      !value.startsAt ||
+      Date.parse(value.endsAt) > Date.parse(value.startsAt),
+    {
+      message: "The end time must be after the start time.",
+      path: ["endsAt"],
+    },
+  );
 export const memberInput = z.discriminatedUnion("action", [
+  z.strictObject({
+    action: z.literal("rsvp-settings"),
+    rsvpEnabled: z.boolean(),
+  }),
   z.strictObject({
     action: z.literal("preferences"),
     includeInFeed: z.boolean(),

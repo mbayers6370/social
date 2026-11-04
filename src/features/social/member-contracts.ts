@@ -21,6 +21,7 @@ export type MemberIdentity = {
 export type MemberContact = {
   person: Person;
   username: string;
+  friendsSince?: string | null;
   relationship:
     "self" | "none" | "friends" | "incoming" | "outgoing" | "blocked";
 };

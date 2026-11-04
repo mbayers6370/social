@@ -62,7 +62,7 @@ function ReadyForm({ kind }: { kind: "sign-in" | "sign-up" }) {
       routing="path"
       path="/sign-in"
       signUpUrl="/sign-up"
-      forceRedirectUrl="/onboarding"
+      forceRedirectUrl="/app/feed"
       appearance={authAppearance}
     />
   ) : (

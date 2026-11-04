@@ -16,7 +16,7 @@ export const identity = {
     readingSize: "standard",
     motion: "system",
     notifyComments: true,
-    notifyLikes: true,
+    notifyLikes: false,
     notifyFriends: true,
     notifyMessages: true,
     messagingEnabled: true,
@@ -60,6 +60,10 @@ export async function memberFixture(page: Page) {
       });
     if (path === "/api/member/context")
       return route.fulfill({ json: currentIdentity });
+    if (path === "/api/posts/allowance")
+      return route.fulfill({
+        json: { regularRemaining: 3, linkAllowed: true },
+      });
     if (path === "/api/notifications")
       return route.fulfill({ json: { activity: [], nextCursor: null } });
     if (path === "/api/gallery/photos")
@@ -119,6 +123,7 @@ export async function memberFixture(page: Page) {
               person: friend,
               username: "alex_example",
               relationship: "friends",
+              friendsSince: "2026-03-12T12:00:00Z",
             },
           ],
           nextCursor: null,

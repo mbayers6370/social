@@ -69,8 +69,8 @@ export function FeedComposer() {
     setChecking(true);
     setNotice("");
     try {
-      // Validate the file here; the author supplies its actual description in the picker.
-      await validateLocalPhoto(files[0], "Dropped photograph");
+      // Validate the file before opening the picker.
+      await validateLocalPhoto(files[0]);
       if (!alive.current) return;
       const updatedReason = dropAllowance(current.current);
       if (updatedReason) {

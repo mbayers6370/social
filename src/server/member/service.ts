@@ -32,6 +32,7 @@ import type {
 } from "@/features/social/member-contracts";
 import { Prisma } from "@/generated/prisma/client";
 import { containsPostLink } from "@/lib/platform-rules";
+import { messageCutoff } from "@/lib/message-policy";
 
 const active = { account: { is: { status: "ACTIVE" as const } } };
 const accountSelect = {
@@ -48,6 +49,12 @@ const pair = (a: string, b: string) =>
 /** Completes the existing DAL; account identity, post/media lifecycles, audience
  * checks and transactions remain owned by SocialService/SpaceService. */
 export class MemberService extends SpaceService {
+  async postingAllowance(subject: string) {
+    return this.transaction(async (tx) => {
+      const actor = await this.actor(tx, subject);
+      return this.dailyPostAllowance(tx, actor, this.clock());
+    });
+  }
   async editPersonalPost(subject: string, id: string, body: string) {
     return this.transaction(async (tx) => {
       const actor = await this.actor(tx, subject);
@@ -257,7 +264,7 @@ export class MemberService extends SpaceService {
     subject: string,
     bytes: Uint8Array,
     type: string,
-    description: string,
+    description = "Photograph",
     replacementPhotoId?: string,
   ) {
     return (
@@ -412,6 +419,30 @@ export class MemberService extends SpaceService {
       const links = await tx.friendship.findMany({
         where: { OR: [{ lowId: actor }, { highId: actor }] },
       });
+      const acceptedKeys = links
+        .filter(
+          (link) =>
+            link.status === "ACCEPTED" &&
+            rows
+              .slice(0, 30)
+              .some((row) => row.id === link.lowId || row.id === link.highId),
+        )
+        .map((link) => `friend-accepted:${link.lowId}:${link.highId}`);
+      // Acceptance activity is kept for the current friendship and removed on
+      // unfriend/block. Undated legacy relationships must not gain invented dates.
+      const accepted = acceptedKeys.length
+        ? await tx.memberNotification.findMany({
+            where: {
+              kind: "friend_accepted",
+              dedupeKey: { in: acceptedKeys },
+              OR: [{ recipientId: actor }, { actorId: actor }],
+            },
+            select: { dedupeKey: true, createdAt: true },
+          })
+        : [];
+      const dates = new Map(
+        accepted.map((row) => [row.dedupeKey, row.createdAt.toISOString()]),
+      );
       const contacts: MemberContact[] = rows.slice(0, 30).map((row) => {
         const link = links.find(
           (link) => link.lowId === row.id || link.highId === row.id,
@@ -419,6 +450,11 @@ export class MemberService extends SpaceService {
         return {
           person: memberPerson(row.id, row.account!),
           username: row.account!.username ?? "",
+          friendsSince:
+            link?.status === "ACCEPTED"
+              ? (dates.get(`friend-accepted:${link.lowId}:${link.highId}`) ??
+                null)
+              : null,
           relationship:
             link?.status === "ACCEPTED"
               ? "friends"
@@ -437,6 +473,7 @@ export class MemberService extends SpaceService {
     contact: string,
   ): Prisma.MemberMessageWhereInput {
     return {
+      createdAt: { gt: messageCutoff(this.clock(), actor === contact) },
       OR: [
         { senderId: actor, recipientId: contact, hiddenBySender: false },
         ...(actor === contact
@@ -512,6 +549,7 @@ export class MemberService extends SpaceService {
           recipientId: actor,
           hiddenByRecipient: false,
           readAt: null,
+          createdAt: { gt: messageCutoff(this.clock()) },
         },
         select: { id: true },
       }));
@@ -541,12 +579,20 @@ export class MemberService extends SpaceService {
             { friendshipsHigh: { some: { lowId: actor, status: "ACCEPTED" } } },
             {
               sentMessages: {
-                some: { recipientId: actor, hiddenByRecipient: false },
+                some: {
+                  recipientId: actor,
+                  hiddenByRecipient: false,
+                  createdAt: { gt: messageCutoff(this.clock()) },
+                },
               },
             },
             {
               receivedMessages: {
-                some: { senderId: actor, hiddenBySender: false },
+                some: {
+                  senderId: actor,
+                  hiddenBySender: false,
+                  createdAt: { gt: messageCutoff(this.clock()) },
+                },
               },
             },
           ],
@@ -635,9 +681,16 @@ export class MemberService extends SpaceService {
         where: {
           senderId_requestId: { senderId: actor, requestId: input.requestId },
         },
-        select: { id: true, recipientId: true, body: true },
+        select: { id: true, recipientId: true, body: true, createdAt: true },
       });
       if (previous) {
+        if (
+          previous.createdAt <= messageCutoff(this.clock(), actor === contact)
+        )
+          throw new SocialError(
+            409,
+            "That message request has expired. Start a new message.",
+          );
         if (previous.recipientId !== contact || previous.body !== input.body)
           throw new SocialError(
             409,
@@ -748,6 +801,34 @@ export class MemberService extends SpaceService {
       return { saved: true };
     });
   }
+  /** Atomic bounded erasure, including notifications that reference message IDs.
+   * SKIP LOCKED makes overlapping maintenance invocations safe. */
+  async expireMessages(limit = 100) {
+    const batch = Math.min(100, Math.max(1, limit));
+    const messagesBefore = messageCutoff(this.clock());
+    const notesBefore = messageCutoff(this.clock(), true);
+    const [result] = await this.db.$queryRaw<
+      { messages: number; notifications: number }[]
+    >`
+      WITH expired AS (
+        SELECT id FROM "MemberMessage"
+        WHERE ("senderId" = "recipientId" AND "createdAt" <= ${notesBefore})
+           OR ("senderId" <> "recipientId" AND "createdAt" <= ${messagesBefore})
+        ORDER BY "createdAt", id LIMIT ${batch} FOR UPDATE SKIP LOCKED
+      ), erased AS (
+        DELETE FROM "MemberMessage" m USING expired e WHERE m.id = e.id RETURNING m.id
+      ), obsolete_notifications AS (
+        SELECT n.id FROM "MemberNotification" n WHERE n."kind" = 'message' AND (
+          n."dedupeKey" IN (SELECT 'message:' || id FROM erased)
+          OR n."createdAt" <= ${messagesBefore}
+          OR NOT EXISTS (SELECT 1 FROM "MemberMessage" m WHERE m.id = substring(n."dedupeKey" from 9))
+        ) ORDER BY n."createdAt", n.id LIMIT ${batch} FOR UPDATE SKIP LOCKED
+      ), notifications AS (
+        DELETE FROM "MemberNotification" n USING obsolete_notifications o WHERE n.id = o.id RETURNING n.id
+      ) SELECT (SELECT count(*)::integer FROM erased) AS messages,
+        (SELECT count(*)::integer FROM notifications) AS notifications`;
+    return result;
+  }
   async like(subject: string, postId: string, liked: boolean) {
     return this.transaction(async (tx) => {
       const actor = await this.actor(tx, subject);
@@ -828,6 +909,22 @@ export class MemberService extends SpaceService {
       const activity: MemberActivity[] = [];
       for (const row of rows.slice(0, 50)) {
         if (!row.actor.account || (await this.blocked(tx, actor, row.actorId)))
+          continue;
+        if (
+          row.kind === "message" &&
+          !(await tx.memberMessage.findFirst({
+            where: {
+              id: row.dedupeKey.startsWith("message:")
+                ? row.dedupeKey.slice(8)
+                : "",
+              senderId: row.actorId,
+              recipientId: actor,
+              hiddenByRecipient: false,
+              createdAt: { gt: messageCutoff(this.clock()) },
+            },
+            select: { id: true },
+          }))
+        )
           continue;
         if (
           (row.kind === "message" &&
@@ -1043,6 +1140,21 @@ export class MemberService extends SpaceService {
       });
       const messages = await tx.memberMessage.findMany({
         where: {
+          AND: [
+            {
+              OR: [
+                {
+                  senderId: id,
+                  recipientId: id,
+                  createdAt: { gt: messageCutoff(this.clock(), true) },
+                },
+                {
+                  NOT: { senderId: id, recipientId: id },
+                  createdAt: { gt: messageCutoff(this.clock()) },
+                },
+              ],
+            },
+          ],
           OR: [
             { senderId: id, hiddenBySender: false },
             { recipientId: id, hiddenByRecipient: false },

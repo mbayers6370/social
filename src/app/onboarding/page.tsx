@@ -59,7 +59,7 @@ export default async function OnboardingPage() {
       </AuthShell>
     );
   if (setup.account?.onboardedAt) {
-    if (setup.account.status === "ACTIVE") redirect("/app");
+    if (setup.account.status === "ACTIVE") redirect("/app/feed");
     return (
       <AuthShell
         title="Your account needs attention."

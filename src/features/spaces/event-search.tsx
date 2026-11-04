@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import type { EventSearchPage } from "./contracts";
 import { useSpaceClient } from "./client";
 import { useSpaceAction } from "./use-space-action";
+import { SpaceDates } from "./space-dates";
 
 export function EventSearch() {
   const id = useId();
@@ -144,14 +145,14 @@ export function EventSearch() {
             placeholder="Search for an artist"
           />
         </div>
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" variant="outline" disabled={loading}>
           Search events
         </Button>
       </form>
       <p className="margin-field-hint">
-        Public events from Ticketmaster. Join a Space to see and share posts,
-        comments, and photos. Each Space disappears 48 hours after the event
-        ends, and its content becomes inaccessible.
+        Public events from Ticketmaster. Join an Event Space to see and share
+        posts, comments, and photos. Each Space disappears 48 hours after the
+        event ends, and its content becomes inaccessible.
       </p>
       {loading && <p role="status">Searching Event Spaces…</p>}
       {error && <p role="alert">{error}</p>}
@@ -185,20 +186,7 @@ export function EventSearch() {
                   </div>
                   <div className="margin-event-result-copy">
                     <h3>{event.name}</h3>
-                    {event.startsAt && (
-                      <time dateTime={event.startsAt}>
-                        {new Intl.DateTimeFormat("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                          timeZoneName: "short",
-                          timeZone: event.timeZone!,
-                        }).format(new Date(event.startsAt))}
-                      </time>
-                    )}
+                    <SpaceDates space={event} detailed />
                     {event.location && <p>{event.location}</p>}
                     {event.memberCount > 0 && (
                       <p>

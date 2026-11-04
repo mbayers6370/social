@@ -2,6 +2,7 @@ import type { FeedPost } from "./schema";
 
 export type ConversationSelection = {
   commentId?: string;
+  mainFeed?: boolean;
   post: FeedPost;
   trigger: HTMLElement;
   scrollY: number;
@@ -42,6 +43,7 @@ export function selectConversation(
   }
   return {
     commentId,
+    mainFeed: Boolean(card.closest('[data-main-feed="true"]')),
     post,
     trigger,
     scrollY,

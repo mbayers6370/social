@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { privateTestDatabaseUrl } from "./helpers/database";
 // Real disposable PostgreSQL + real image decoder/private filesystem bytes.
 // Clerk sessions and Redis are mocked: this does not verify hosted identity/rate limits/R2.
 import {
@@ -16,7 +17,7 @@ import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { createDatabaseAdapter } from "@/server/database-adapter";
 import { PrismaClient } from "@/generated/prisma/client";
 import { SpaceService } from "@/server/spaces/service";
 import { calvinEvent } from "./helpers/ticketmaster-fixture";
@@ -50,16 +51,9 @@ describe.skipIf(!enabled)(
     let actors: { id: string; clerkId: string }[];
     let now = new Date("2026-10-29T17:00:00Z");
     beforeAll(async () => {
-      const url = new URL(process.env.DATABASE_URL!);
-      if (
-        url.hostname !== "127.0.0.1" ||
-        url.port !== "55432" ||
-        !/^\/margin_slice_test_[a-f0-9]{32}$/.test(url.pathname) ||
-        url.username !== "margin_runtime"
-      )
-        throw new Error("Refusing non-disposable database");
+      const url = privateTestDatabaseUrl();
       db = new PrismaClient({
-        adapter: new PrismaPg({ connectionString: url.href, max: 10 }),
+        adapter: createDatabaseAdapter(url.href, 10),
       });
       directory = await mkdtemp(join(tmpdir(), "margin-private-photo-test-"));
       store = {
@@ -127,83 +121,104 @@ describe.skipIf(!enabled)(
           nextPage: null,
         }),
       });
-    it("space composer: multipart publishing keeps text and three mixed attachments in one protected post", async () => {
-      now = new Date();
-      vi.spyOn(privatePhotoStore, "put").mockImplementation(store.put);
-      vi.spyOn(privatePhotoStore, "get").mockImplementation(store.get);
+    it("space plans: adds and removes plans on the same invitation-only Space, preserving content and clearing RSVPs", async () => {
+      const spaces = publicEvents();
+      const [owner, member] = actors;
+      const room = await spaces.createSpace(owner.clerkId, {
+        kind: "PRIVATE",
+        name: "Our Space",
+      });
+      await spaces.accept(
+        member.clerkId,
+        (await spaces.invite(owner.clerkId, room.id, member.id)).id,
+      );
+      const post = await spaces.publish(owner.clerkId, room.id, {
+        body: "Keep our conversation",
+        photoIds: [],
+      });
+      await expect(
+        spaces.member(member.clerkId, room.id, {
+          action: "rsvp",
+          rsvp: "GOING",
+        }),
+      ).rejects.toMatchObject({ status: 400 });
+      const planned = {
+        kind: "PRIVATE" as const,
+        name: "Our Space",
+        startsAt: "2027-01-01T09:00:00Z",
+        timeZone: "Asia/Tokyo",
+        location: "At home",
+      };
+      await expect(
+        spaces.updateSpace(member.clerkId, room.id, planned),
+      ).rejects.toMatchObject({ status: 403 });
+      await spaces.updateSpace(owner.clerkId, room.id, planned);
+      expect(await spaces.readSpace(member.clerkId, room.id)).toMatchObject({
+        id: room.id,
+        startsAt: planned.startsAt.replace("Z", ".000Z"),
+        timeZone: "Asia/Tokyo",
+        memberCount: 2,
+      });
+      await spaces.member(member.clerkId, room.id, {
+        action: "rsvp",
+        rsvp: "GOING",
+      });
+      // This is also the edit path for existing GATHERING storage rows.
+      expect(
+        (await db.space.findUniqueOrThrow({ where: { id: room.id } })).kind,
+      ).toBe("GATHERING");
+      await spaces.updateSpace(owner.clerkId, room.id, {
+        kind: "PRIVATE",
+        name: "Still our Space",
+      });
+      expect(await spaces.readSpace(member.clerkId, room.id)).toMatchObject({
+        name: "Still our Space",
+        startsAt: null,
+        timeZone: null,
+        location: null,
+        rsvp: null,
+        memberCount: 2,
+      });
+      expect(
+        await db.post.findUnique({ where: { id: post.id } }),
+      ).toMatchObject({ body: "Keep our conversation", spaceId: room.id });
+      expect(
+        await db.spaceMembership.count({
+          where: { spaceId: room.id, rsvp: { not: null } },
+        }),
+      ).toBe(0);
+      await expect(
+        spaces.member(member.clerkId, room.id, {
+          action: "rsvp",
+          rsvp: "MAYBE",
+        }),
+      ).rejects.toMatchObject({ status: 400 });
+      expect(
+        (await spaces.searchEvents(actors[2].clerkId, "Still our Space"))
+          .events,
+      ).toHaveLength(0);
+    });
+    it("space plans: archives an undated Space and rejects later edits and posts", async () => {
       const spaces = publicEvents();
       const room = await spaces.createSpace(actors[0].clerkId, {
         kind: "PRIVATE",
-        name: "Composer",
+        name: "Our archive",
       });
-      await spaces.accept(
-        actors[1].clerkId,
-        (await spaces.invite(actors[0].clerkId, room.id, actors[1].id)).id,
-      );
-      const saved = await service.createPhotoPost(
-        actors[0].clerkId,
-        photo,
-        "image/jpeg",
-        "Saved photograph",
-      );
-      session.subject = actors[0].clerkId;
-      const form = new FormData();
-      form.set(
-        "input",
-        JSON.stringify({
-          body: "Une soirée ensemble",
-          photoIds: [saved.photos[0].photo.id],
-        }),
-      );
-      for (const description of ["Une rivière", "The evening sky"]) {
-        form.append(
-          "photos",
-          new File([new Uint8Array(photo)], "day.jpg", { type: "image/jpeg" }),
-        );
-        form.append("descriptions", description);
-      }
-      const response = await socialRequest(
-        new Request(`http://localhost:3000/api/spaces/${room.id}/posts`, {
-          method: "POST",
-          headers: { origin: "http://localhost:3000" },
-          body: form,
-        }),
-        "spacePublish",
-        room.id,
-      );
-      expect(response.status).toBe(201);
-      const { id } = await response.json();
-      const posts = (await spaces.posts(actors[1].clerkId, room.id)).posts;
-      expect(posts).toHaveLength(1);
-      expect(posts[0]).toMatchObject({ id, body: "Une soirée ensemble" });
-      expect(posts[0].photos.map((p) => p.description).sort()).toEqual([
-        "Saved photograph",
-        "The evening sky",
-        "Une rivière",
-      ]);
+      await spaces.archive(actors[0].clerkId, room.id);
       expect(
-        await db.galleryEntry.count({ where: { ownerId: actors[0].id } }),
-      ).toBe(1);
-      for (const image of posts[0].photos) {
-        const bytes = await spaces.readPhoto(actors[1].clerkId, image.id);
-        expect((await sharp(bytes).metadata()).exif).toBeUndefined();
-        await expect(
-          spaces.readPhoto(actors[2].clerkId, image.id),
-        ).rejects.toMatchObject({ status: 404 });
-      }
+        (await spaces.readSpace(actors[0].clerkId, room.id)).archivedAt,
+      ).not.toBeNull();
       await expect(
-        spaces.publishWithUploads(
-          actors[0].clerkId,
-          room.id,
-          { body: "Over allowance", photoIds: [] },
-          [
-            {
-              bytes: photo,
-              type: "image/jpeg",
-              description: "Fourth photograph",
-            },
-          ],
-        ),
+        spaces.updateSpace(actors[0].clerkId, room.id, {
+          kind: "PRIVATE",
+          name: "Changed",
+        }),
+      ).rejects.toMatchObject({ status: 409 });
+      await expect(
+        spaces.publish(actors[0].clerkId, room.id, {
+          body: "Too late",
+          photoIds: [],
+        }),
       ).rejects.toMatchObject({ status: 409 });
     });
     it("space composer: concurrent batches respect the shared image quota without partial posts", async () => {
@@ -348,7 +363,6 @@ describe.skipIf(!enabled)(
               type: "image/jpeg",
             }),
           );
-          form.append("descriptions", "Photograph");
         }
         const response = await socialRequest(
           new Request(`http://localhost:3000/api/spaces/${room.id}/posts`, {
@@ -372,7 +386,7 @@ describe.skipIf(!enabled)(
         calvinEvent.id,
       );
       const gathering = await spaces.createSpace(actors[0].clerkId, {
-        kind: "GATHERING",
+        kind: "PRIVATE",
         name: "Calvin Harris private plans",
         startsAt: calvinEvent.startsAt,
         timeZone: calvinEvent.timeZone,
@@ -482,14 +496,14 @@ describe.skipIf(!enabled)(
 
       await expect(
         spaces.updateSpace(creator.clerkId, row.id, {
-          kind: "GATHERING",
+          kind: "PRIVATE",
           name: "Change",
           startsAt: calvinEvent.startsAt,
           timeZone: calvinEvent.timeZone,
         }),
       ).rejects.toMatchObject({ status: 409 });
       const privateInput = {
-        kind: "GATHERING" as const,
+        kind: "PRIVATE" as const,
         name: "Dinner",
         startsAt: calvinEvent.startsAt,
         timeZone: calvinEvent.timeZone,
@@ -574,7 +588,7 @@ describe.skipIf(!enabled)(
           kind === "PRIVATE"
             ? { kind: "PRIVATE" as const, name: "Leave test" }
             : {
-                kind: "GATHERING" as const,
+                kind: "PRIVATE" as const,
                 name: "Leave test",
                 startsAt: "2027-01-01T12:00:00Z",
                 timeZone: "UTC",
@@ -762,9 +776,7 @@ describe.skipIf(!enabled)(
         expect.objectContaining({ id: post.id }),
       );
       expect(remaining.gallery).toEqual([]);
-      expect(
-        await db.post.findUniqueOrThrow({ where: { id: post.id } }),
-      ).toMatchObject({ body: "" });
+      expect(await db.post.findUnique({ where: { id: post.id } })).toBeNull();
       expect(
         await db.photo.findUniqueOrThrow({ where: { id: photoId } }),
       ).toMatchObject({ state: "PURGED", description: "" });
@@ -873,7 +885,7 @@ describe.skipIf(!enabled)(
     it("only Space administrators archive events, retaining metadata and freezing shared changes", async () => {
       const spaces = new SpaceService(db, store, () => now);
       const room = await spaces.createSpace(actors[0].clerkId, {
-        kind: "GATHERING",
+        kind: "PRIVATE",
         name: "Dinner",
         startsAt: "2027-01-01T20:00:00Z",
         timeZone: "Europe/Paris",
@@ -1231,7 +1243,7 @@ describe.skipIf(!enabled)(
     it("expires comments with their post, frees Space slots, and retains archived event metadata", async () => {
       const spaces = new SpaceService(db, store, () => now);
       const room = await spaces.createSpace(actors[0].clerkId, {
-        kind: "GATHERING",
+        kind: "PRIVATE",
         name: "Future gathering",
         startsAt: "2027-06-01T12:00:00Z",
         timeZone: "UTC",
@@ -1274,8 +1286,8 @@ describe.skipIf(!enabled)(
         await db.postComment.count({ where: { postId: uploaded.id } }),
       ).toBe(0);
       expect(
-        (await db.post.findUniqueOrThrow({ where: { id: uploaded.id } })).body,
-      ).toBe("");
+        await db.post.findUnique({ where: { id: uploaded.id } }),
+      ).toBeNull();
       expect(await db.spacePhoto.count({ where: { spaceId: room.id } })).toBe(
         0,
       );
@@ -1413,7 +1425,7 @@ describe.skipIf(!enabled)(
         const spaces = new SpaceService(db, store, () => now);
         const [owner, member, other] = actors;
         const room = await spaces.createSpace(owner.clerkId, {
-          kind: "GATHERING",
+          kind: "PRIVATE",
           name: "A gathering",
           startsAt: "2027-01-01T12:00:00Z",
           timeZone: "UTC",
@@ -1495,7 +1507,7 @@ describe.skipIf(!enabled)(
     it("only the creator deletes a Space, erasing event metadata while preserving external image references", async () => {
       const spaces = new SpaceService(db, store, () => now);
       const room = await spaces.createSpace(actors[0].clerkId, {
-        kind: "GATHERING",
+        kind: "PRIVATE",
         name: "Delete me",
         startsAt: "2027-01-01T12:00:00Z",
         timeZone: "UTC",
@@ -1542,9 +1554,7 @@ describe.skipIf(!enabled)(
       expect(await db.postComment.count({ where: { postId: shared.id } })).toBe(
         0,
       );
-      expect(
-        (await db.post.findUniqueOrThrow({ where: { id: shared.id } })).body,
-      ).toBe("");
+      expect(await db.post.findUnique({ where: { id: shared.id } })).toBeNull();
       expect(
         (
           await service.readPhoto(
@@ -1598,7 +1608,7 @@ describe.skipIf(!enabled)(
     it("archived events deny new posts, uploads and comments while keeping existing conversations readable", async () => {
       const spaces = new SpaceService(db, store, () => now);
       const room = await spaces.createSpace(actors[0].clerkId, {
-        kind: "GATHERING",
+        kind: "PRIVATE",
         name: "Dinner",
         startsAt: "2027-01-01T12:00:00Z",
         timeZone: "UTC",
@@ -1906,9 +1916,7 @@ describe.skipIf(!enabled)(
       now = new Date("2026-11-29T17:00:00Z");
       expect(await service.expirePosts()).toBe(1);
       expect(await service.expirePosts()).toBe(0);
-      expect(
-        (await db.post.findUniqueOrThrow({ where: { id: text.id } })).body,
-      ).toBe("");
+      expect(await db.post.findUnique({ where: { id: text.id } })).toBeNull();
     });
     it("HTTP uses session identity, strict input, origin checks, private headers and authorization before storage", async () => {
       const post = await service.createPhotoPost(
@@ -1976,133 +1984,6 @@ describe.skipIf(!enabled)(
           )
         ).status,
       ).toBe(503);
-    });
-    it("completes the HTTP account/friend/post/photo/delete slice against the real database", async () => {
-      vi.spyOn(privatePhotoStore, "put").mockImplementation(store.put);
-      vi.spyOn(privatePhotoStore, "get").mockImplementation(store.get);
-      vi.spyOn(privatePhotoStore, "delete").mockImplementation(store.delete);
-      const request = (path: string, method = "GET", body?: object) =>
-        new Request(`http://localhost:3000/api/${path}`, {
-          method,
-          headers: {
-            origin: "http://localhost:3000",
-            "content-type": "application/json",
-          },
-          ...(body ? { body: JSON.stringify(body) } : {}),
-        });
-      session.subject = actors[0].clerkId;
-      expect(
-        (await (await socialRequest(request("account"), "account")).json())
-          .accountStatus,
-      ).toBe("ACTIVE");
-      const created = await socialRequest(
-        request("posts", "POST", { body: "HTTP private thought" }),
-        "createPost",
-      );
-      expect(created.status).toBe(201);
-      const post = await created.json();
-      const uploaded = await socialRequest(
-        new Request("http://localhost:3000/api/posts/photo", {
-          method: "POST",
-          headers: {
-            origin: "http://localhost:3000",
-            "content-type": "image/jpeg",
-            "x-photo-description": encodeURIComponent(
-              "Une rivière près de chez moi",
-            ),
-            "x-photo-description-encoding": "percent",
-          },
-          body: new Uint8Array(photo),
-        }),
-        "createPhotoPost",
-      );
-      expect(uploaded.status).toBe(201);
-      const photoPost = await uploaded.json();
-      expect(photoPost.photos[0].photo.description).toBe(
-        "Une rivière près de chez moi",
-      );
-      const photoId = photoPost.photos[0].photo.id;
-      const ownProfile = await socialRequest(
-        request(`profiles/${actors[0].id}`),
-        "profile",
-        actors[0].id,
-      );
-      expect(ownProfile.status).toBe(200);
-      expect((await ownProfile.json()).posts).toHaveLength(2);
-      expect(
-        (
-          await socialRequest(
-            request("relationships", "POST", {
-              targetId: actors[1].id,
-              action: "request",
-            }),
-            "relationship",
-          )
-        ).status,
-      ).toBe(204);
-      session.subject = actors[1].clerkId;
-      expect(
-        (
-          await socialRequest(
-            request("relationships", "POST", {
-              targetId: actors[0].id,
-              action: "accept",
-            }),
-            "relationship",
-          )
-        ).status,
-      ).toBe(204);
-      expect(
-        (await socialRequest(request(`posts/${post.id}`), "readPost", post.id))
-          .status,
-      ).toBe(200);
-      expect(
-        (
-          await socialRequest(
-            request(`photos/${photoId}`, "DELETE"),
-            "deletePhoto",
-            photoId,
-          )
-        ).status,
-      ).toBe(404);
-      session.subject = actors[0].clerkId;
-      expect(
-        (
-          await socialRequest(
-            request(`photos/${photoId}`, "DELETE"),
-            "deletePhoto",
-            photoId,
-          )
-        ).status,
-      ).toBe(204);
-      expect(
-        (await db.photo.findUniqueOrThrow({ where: { id: photoId } })).state,
-      ).toBe("PURGED");
-      expect(
-        (
-          await socialRequest(
-            request(`posts/${post.id}`, "DELETE"),
-            "deletePost",
-            post.id,
-          )
-        ).status,
-      ).toBe(204);
-      expect(
-        (await socialRequest(request(`posts/${post.id}`), "readPost", post.id))
-          .status,
-      ).toBe(404);
-      expect(
-        (await socialRequest(request("account", "DELETE"), "deactivate"))
-          .status,
-      ).toBe(204);
-      expect(
-        (
-          await socialRequest(
-            request("posts", "POST", { body: "No stale session write" }),
-            "createPost",
-          )
-        ).status,
-      ).toBe(403);
     });
     it("rechecks stale purge candidates before deleting canonical bytes", async () => {
       const uploaded = await service.createPhotoPost(

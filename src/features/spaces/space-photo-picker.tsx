@@ -4,7 +4,6 @@ import { DevicePhotoPreview } from "@/components/shared/device-photo-preview";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Check, Image as ImageIcon, Upload } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -22,7 +21,6 @@ export type SpaceDraftPhoto =
   | {
       kind: "device";
       file: File;
-      description: string;
       width: number;
       height: number;
       src: string;
@@ -64,8 +62,8 @@ export function SpacePhotoPicker({
         <DialogHeader className="margin-photo-picker-header">
           <DialogTitle>Choose a photograph</DialogTitle>
           <DialogDescription>
-            Select a saved photograph or choose one from your device, then
-            review it before continuing. Nothing is shared until you publish.
+            Choose a saved photo or upload one. Nothing is shared until you
+            publish, and photos are checked before others see them.
           </DialogDescription>
         </DialogHeader>
         <SpacePhotoSelection
@@ -100,7 +98,6 @@ function SpacePhotoSelection({
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState(initialFile);
   const [saved, setSaved] = useState<PrivatePhoto>();
-  const [description, setDescription] = useState("");
   const [library, setLibrary] = useState<{
     photos: PrivatePhoto[];
     nextCursor: string | null;
@@ -159,18 +156,23 @@ function SpacePhotoSelection({
   return (
     <>
       <div className="margin-photo-picker-body">
-        <section className="margin-photo-source" aria-label="Your Photographs">
-          <h3>Your Photographs</h3>
+        <section className="margin-photo-source" aria-label="Your photographs">
+          <h3>Your photographs</h3>
+          {libraryUrl && library.photos.length > 0 && (
+            <p className="margin-field-hint">
+              Reusing a saved photograph doesn’t take another gallery slot.
+            </p>
+          )}
           {loading && <p role="status">Loading photographs…</p>}
           {!loading && !error && !library.photos.length && (
             <p className="margin-field-hint">No photographs here yet.</p>
           )}
           <div className="margin-photo-library">
-            {library.photos.map((photo) => (
+            {library.photos.map((photo, index) => (
               <button
                 key={photo.id}
                 type="button"
-                aria-label={`Select ${photo.description}`}
+                aria-label={`Select ${photo.description === "Photograph" ? `photograph ${index + 1}` : photo.description}`}
                 aria-pressed={saved?.id === photo.id}
                 disabled={
                   checking ||
@@ -182,7 +184,6 @@ function SpacePhotoSelection({
                 onClick={() => {
                   setSaved(photo);
                   setFile(undefined);
-                  setDescription(photo.description);
                   if (input.current) input.current.value = "";
                   setError("");
                 }}
@@ -233,12 +234,11 @@ function SpacePhotoSelection({
             setChecking(true);
             setError("");
             try {
-              const size = await validateLocalPhoto(file, description);
+              const size = await validateLocalPhoto(file);
               if (alive.current)
                 onChoose({
                   kind: "device",
                   file,
-                  description: description.trim(),
                   ...size,
                   src: URL.createObjectURL(file),
                 });
@@ -254,8 +254,8 @@ function SpacePhotoSelection({
             }
           }}
         >
-          {file && <DevicePhotoPreview file={file} description={description} />}
-          <Label htmlFor={`${id}-file`}>Photograph from your device</Label>
+          {file && <DevicePhotoPreview file={file} />}
+          <Label htmlFor={`${id}-file`}>Or upload a new one</Label>
           <div
             className="margin-file-picker"
             data-disabled={checking || undefined}
@@ -265,7 +265,7 @@ function SpacePhotoSelection({
             </span>
             <div className="margin-file-summary">
               <span className="margin-file-name" role="status">
-                {file?.name ?? "A photograph from your day"}
+                {file?.name ?? "Upload from your device"}
               </span>
               <span className="margin-field-hint">
                 JPEG, PNG or WebP · Up to 8 MB
@@ -287,28 +287,10 @@ function SpacePhotoSelection({
                 if (!next) return;
                 setFile(next);
                 setSaved(undefined);
-                setDescription("");
                 setError("");
               }}
             />
           </div>
-          <Label htmlFor={`${id}-description`}>
-            Describe the photograph (alt text)
-          </Label>
-          <Input
-            id={`${id}-description`}
-            maxLength={300}
-            required
-            value={description}
-            readOnly={Boolean(saved)}
-            disabled={checking || (!file && !saved)}
-            onChange={(event) => setDescription(event.target.value)}
-          />
-          <p className="margin-field-hint">
-            {saved
-              ? "The saved description is preserved when you reuse this photograph."
-              : "Describe what’s visible for people using screen readers. Add any story in your post."}
-          </p>
           {error && <p role="alert">{error}</p>}
         </form>
       </div>
@@ -321,7 +303,7 @@ function SpacePhotoSelection({
           form={id}
           disabled={checking || (!saved && !file)}
         >
-          {checking ? "Checking photograph…" : "Use Photograph"}
+          {checking ? "Checking photograph…" : "Use photograph"}
         </Button>
       </footer>
     </>

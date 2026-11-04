@@ -1,6 +1,6 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 
 test.beforeEach(() =>
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Local Space composer"),
@@ -69,6 +69,10 @@ test("matches the feed entry and preserves a text/photo draft until one Publish"
   }
   const text = page.getByLabel("Your post", { exact: true });
   await expect(text).toBeFocused();
+  await expect(text).toHaveAttribute("rows", "3");
+  await expect(
+    surface.locator(".margin-compose-writing .margin-avatar"),
+  ).toHaveCount(0);
   await text.fill("A thought to keep with our photographs.");
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(prompt).toBeFocused();
@@ -77,20 +81,17 @@ test("matches the feed entry and preserves a text/photo draft until one Publish"
     const picker = page.getByRole("dialog", { name: "Choose a photograph" });
     await expect(picker).toBeVisible();
     await picker
-      .getByLabel("Photograph from your device")
+      .getByLabel("Or upload a new one")
       .setInputFiles(path.resolve("src/assets/fixtures/dog.jpg"));
-    await picker
-      .getByLabel("Describe the photograph (alt text)")
-      .fill(description);
-    await picker.getByRole("button", { name: "Use Photograph" }).click();
+    await picker.getByRole("button", { name: "Use photograph" }).click();
     await expect(picker).toHaveCount(0);
     if (description === "Our first photograph")
-      await page.getByRole("button", { name: "Add Photographs" }).click();
+      await page.getByRole("button", { name: "Add photographs" }).click();
   }
   await expect(text).toHaveValue("A thought to keep with our photographs.");
   await expect(page.locator(".margin-compose-photos img")).toHaveCount(2);
   await expect(page.locator("article")).toHaveCount(originalPosts);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-composer-open.png"),
     fullPage: info.project.name !== "mobile",
   });
@@ -103,12 +104,7 @@ test("matches the feed entry and preserves a text/photo draft until one Publish"
     .getByRole("article")
     .filter({ hasText: "A thought to keep with our photographs." });
   await expect(post).toBeVisible();
-  await expect(
-    post.getByRole("img", { name: "Our first photograph", exact: true }),
-  ).toBeVisible();
-  await expect(
-    post.getByRole("img", { name: "Our second photograph", exact: true }),
-  ).toBeVisible();
+  await expect(post.locator(".margin-post-image")).toHaveCount(2);
   await expect(page.getByRole("article")).toHaveCount(originalPosts + 1);
   await expect(prompt).toBeFocused();
   await prompt.click();
@@ -149,10 +145,7 @@ test("opens a dropped photograph for review before publishing on desktop", async
   );
   const picker = page.getByRole("dialog", { name: "Choose a photograph" });
   await expect(picker.getByText("dog.jpg", { exact: true })).toBeVisible();
-  await picker
-    .getByLabel("Describe the photograph (alt text)")
-    .fill("Dropped photograph");
-  await picker.getByRole("button", { name: "Use Photograph" }).click();
+  await picker.getByRole("button", { name: "Use photograph" }).click();
   await expect(page.locator(".margin-compose-photos img")).toHaveCount(1);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await entry.getByRole("button", { name: "Share a thought…" }).click();

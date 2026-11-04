@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { eventFixtures, mockTicketmasterCatalog } from "./helpers/ticketmaster";
 
 test.beforeEach(() =>
@@ -48,7 +48,7 @@ test("caps event results, supports scrolling, and lists joined events with their
   await results.evaluate((n) => {
     n.scrollTop = 0;
   });
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("capped-event-results.png"),
     fullPage: true,
   });
@@ -64,7 +64,7 @@ test("caps event results, supports scrolling, and lists joined events with their
     .getByRole("link", { name: /Calvin Harris/ });
   await expect(joined).toHaveCount(1);
   await expect(joined.locator(".margin-space-row-icon svg")).toBeVisible();
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("joined-event-in-your-spaces.png"),
     fullPage: true,
   });

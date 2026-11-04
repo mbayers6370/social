@@ -8,6 +8,8 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SpacesList } from "@/features/spaces/spaces-list";
+import { SpaceForm } from "@/features/spaces/space-form";
+import { spaceInput } from "@/features/spaces/schema";
 import { SpaceDetails } from "@/features/spaces/space-details";
 import type { SpaceDetails as Data } from "@/features/spaces/contracts";
 import { ApplicationNavigation } from "@/components/layout/application-navigation";
@@ -32,6 +34,7 @@ beforeEach(() => {
   );
 });
 afterEach(() => {
+  vi.useRealTimers();
   HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   vi.unstubAllGlobals();
 });
@@ -61,7 +64,72 @@ it("keeps Spaces between Feed and Messages on both navigation bars", () => {
     "page",
   );
 });
-it("creates a private Gathering using the selected local time zone", async () => {
+it("labels card dates in the Space time zone and uses the saved event disappearance deadline", () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-03T12:00:00Z"));
+  const common = {
+    startsAt: "2026-11-12T01:00:00Z",
+    timeZone: "America/Los_Angeles",
+    location: "Los Angeles",
+    archivedAt: null,
+    memberCount: 2,
+  };
+  render(
+    <SpacesList
+      data={{
+        spaces: [
+          {
+            ...common,
+            id: "concert",
+            name: "An evening together",
+            kind: "EVENT",
+            endsAt: "2026-11-13T02:00:00Z",
+            expiresAt: "2026-11-15T02:00:00Z",
+          },
+          { ...common, id: "dinner", name: "Dinner", kind: "GATHERING" },
+          {
+            ...common,
+            id: "next-year",
+            name: "Next year",
+            kind: "GATHERING",
+            startsAt: "2027-01-02T01:00:00Z",
+          },
+          {
+            ...common,
+            id: "friends",
+            name: "Friends",
+            kind: "PRIVATE",
+            startsAt: null,
+            timeZone: null,
+            location: null,
+          },
+        ],
+        invitations: [],
+        nextCursor: null,
+      }}
+    />,
+  );
+  const event = screen.getByRole("link", { name: /An evening together/ });
+  expect(event).toHaveTextContent("Event Wed 11 Nov");
+  expect(event).toHaveTextContent(
+    "Disappears 14 Nov 2026 · 48 hours after the event ends",
+  );
+  expect(within(event).getByText("14 Nov 2026")).toHaveAttribute(
+    "datetime",
+    "2026-11-15T02:00:00Z",
+  );
+  const gathering = screen.getByRole("link", { name: /Dinner/ });
+  expect(gathering).toHaveTextContent("Wed 11 Nov");
+  expect(gathering).not.toHaveTextContent(/Date|2026/);
+  expect(screen.getByRole("link", { name: /Next year/ })).toHaveTextContent(
+    "Fri 1 Jan 2027",
+  );
+  expect(gathering).not.toHaveTextContent("Disappears");
+  expect(screen.getByRole("link", { name: /Friends/ })).not.toHaveTextContent(
+    /Event|Gathering|Disappears/,
+  );
+});
+it("creates a Space with optional plans using the selected local time zone", async () => {
   const user = userEvent.setup();
   const fetcher = vi.fn<typeof fetch>(
     async () =>
@@ -72,8 +140,8 @@ it("creates a private Gathering using the selected local time zone", async () =>
     <SpacesList data={{ spaces: [], invitations: [], nextCursor: null }} />,
   );
   await user.click(screen.getByRole("button", { name: "New Space" }));
-  await user.click(screen.getByRole("radio", { name: "Gathering Space" }));
-  await user.type(screen.getByLabelText("Gathering Space name"), "Dinner");
+  await user.click(screen.getByRole("button", { name: "Add a date and time" }));
+  await user.type(screen.getByLabelText("Space name"), "Dinner");
   fireEvent.change(screen.getByLabelText("Date", { exact: true }), {
     target: { value: "2027-01-01" },
   });
@@ -86,12 +154,97 @@ it("creates a private Gathering using the selected local time zone", async () =>
   await user.click(screen.getByRole("button", { name: "Create Space" }));
   await waitFor(() => expect(fetcher).toHaveBeenCalled());
   expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toMatchObject({
-    kind: "GATHERING",
+    kind: "PRIVATE",
     name: "Dinner",
     startsAt: "2027-01-01T09:00:00.000Z",
     timeZone: "Asia/Tokyo",
   });
   expect(push).toHaveBeenCalledWith("/app/spaces/event-one");
+});
+it("creates a Space with just a name and no type choice or required date", async () => {
+  const user = userEvent.setup();
+  const fetcher = vi.fn(async () => Response.json({ id: "new-room" }));
+  vi.stubGlobal("fetch", fetcher);
+  render(<SpaceForm />);
+  expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+  expect(
+    screen.queryByLabelText("Date", { exact: true }),
+  ).not.toBeInTheDocument();
+  await user.type(screen.getByLabelText("Space name"), "Our people");
+  await user.click(screen.getByRole("button", { name: "Create Space" }));
+  expect(fetcher).toHaveBeenCalledWith(
+    "/api/spaces",
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({
+        kind: "PRIVATE",
+        name: "Our people",
+        location: "",
+        rsvpEnabled: true,
+      }),
+    }),
+  );
+});
+it("removes an existing Space's plans only on save and explains the RSVP change", async () => {
+  const { spacesFixture } = await import("./helpers/spaces-fixture");
+  const user = userEvent.setup();
+  const fetcher = vi.fn(async () => new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetcher);
+  render(
+    <SpaceForm
+      space={{
+        ...spacesFixture().spaces[0],
+        kind: "GATHERING",
+        startsAt: "2027-01-01T09:00:00Z",
+        timeZone: "Asia/Tokyo",
+        location: "At home",
+      }}
+    />,
+  );
+  expect(screen.getByLabelText("Date", { exact: true })).toHaveValue(
+    "2027-01-01",
+  );
+  await user.click(
+    screen.getByRole("button", { name: "Remove date and time" }),
+  );
+  expect(fetcher).not.toHaveBeenCalled();
+  expect(
+    screen.getByText(/dates, times and RSVPs will be removed when you save/),
+  ).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Save changes" }));
+  expect(fetcher).toHaveBeenCalledWith(
+    "/api/spaces/sample-room",
+    expect.objectContaining({
+      method: "PATCH",
+      body: JSON.stringify({
+        kind: "PRIVATE",
+        name: "Japan 2027",
+        location: "At home",
+        rsvpEnabled: true,
+      }),
+    }),
+  );
+});
+it("requires complete optional plans and rejects manual public Event creation", () => {
+  const base = { kind: "PRIVATE", name: "Our Space" };
+  expect(spaceInput.safeParse(base).success).toBe(true);
+  expect(
+    spaceInput.safeParse({ ...base, startsAt: "2027-01-01T09:00:00Z" }).success,
+  ).toBe(false);
+  expect(
+    spaceInput.safeParse({ ...base, timeZone: "Asia/Tokyo" }).success,
+  ).toBe(false);
+  expect(spaceInput.safeParse({ ...base, location: "At home" }).success).toBe(
+    true,
+  );
+  expect(spaceInput.safeParse({ ...base, kind: "EVENT" }).success).toBe(false);
+  expect(
+    spaceInput.safeParse({
+      ...base,
+      startsAt: "2027-01-01T09:00:00Z",
+      timeZone: "Asia/Tokyo",
+    }).success,
+  ).toBe(true);
 });
 it("changes only the current member's feed preference and preserves archived read-only controls", async () => {
   const user = userEvent.setup();
@@ -122,7 +275,7 @@ it("changes only the current member's feed preference and preserves archived rea
     ),
   ).toBeDisabled();
   expect(
-    screen.queryByRole("button", { name: "Space settings" }),
+    screen.queryByRole("button", { name: "Edit details" }),
   ).not.toBeInTheDocument();
   await user.click(screen.getByText("Space options", { exact: true }));
   await user.click(screen.getByRole("checkbox"));
@@ -151,8 +304,22 @@ it("retains an uncertain Space draft and prevents a second publish", async () =>
   expect(fetcher).toHaveBeenCalledTimes(1);
   expect(screen.getByLabelText("Your post")).toHaveValue("Keep this draft");
   expect(
-    screen.getByRole("button", { name: "Reload to check saved changes" }),
+    screen.getByRole("button", { name: "Check saved posts" }),
   ).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Check saved posts" }));
+  expect(refresh).toHaveBeenCalled();
+  expect(screen.getByLabelText("Your post")).toHaveValue("Keep this draft");
+  expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(
+    screen.getByRole("link", { name: "View published posts (new tab)" }),
+  ).toHaveAttribute("href", "/app/spaces/room");
+  await user.click(
+    screen.getByRole("button", { name: "Continue editing draft" }),
+  );
+  expect(screen.getByLabelText("Your post")).toHaveValue("Keep this draft");
+  expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
+  expect(fetcher).toHaveBeenCalledTimes(1);
 });
 it("stages a saved Space photograph until Publish and sends its canonical reference with text", async () => {
   const { SpaceComposer } = await import("@/features/spaces/space-composer");
@@ -189,7 +356,7 @@ it("stages a saved Space photograph until Publish and sends its canonical refere
     fetcher.mock.calls.filter(([, init]) => init?.method === "POST"),
   ).toHaveLength(0);
   await user.click(
-    within(picker).getByRole("button", { name: "Use Photograph" }),
+    within(picker).getByRole("button", { name: "Use photograph" }),
   );
   await user.type(screen.getByLabelText("Your post"), "With a photograph");
   await user.click(screen.getByRole("button", { name: "Publish" }));
@@ -238,10 +405,10 @@ it("keeps a full Space photograph draft within three attachments when reopened f
       }),
     );
     await user.click(
-      within(picker).getByRole("button", { name: "Use Photograph" }),
+      within(picker).getByRole("button", { name: "Use photograph" }),
     );
     if (id < 3)
-      await user.click(screen.getByRole("button", { name: "Add Photographs" }));
+      await user.click(screen.getByRole("button", { name: "Add photographs" }));
   }
   await user.click(screen.getByRole("button", { name: "Cancel" }));
   await user.click(screen.getByRole("button", { name: "New photo post" }));
@@ -249,7 +416,7 @@ it("keeps a full Space photograph draft within three attachments when reopened f
     screen.queryByRole("dialog", { name: "Choose a photograph" }),
   ).not.toBeInTheDocument();
   expect(
-    screen.getByRole("button", { name: "Add Photographs" }),
+    screen.getByRole("button", { name: "Add photographs" }),
   ).toBeDisabled();
 });
 it("does not turn a successful comment into a second create when only the subsequent refresh fails", async () => {
@@ -542,6 +709,71 @@ it("explains an empty photograph library and keeps a collapsed post draft", asyn
   expect(screen.getByLabelText("Your post")).toHaveValue(
     "Come back to this thought",
   );
-  await user.click(screen.getByRole("button", { name: "Add Photographs" }));
+  await user.click(screen.getByRole("button", { name: "Add photographs" }));
   expect(await screen.findByText("No photographs here yet.")).toBeVisible();
+});
+
+it("edits times, location and RSVP independently, preserving settings after a rejected save", async () => {
+  const { spacesFixture } = await import("./helpers/spaces-fixture");
+  const user = userEvent.setup();
+  const saved = vi.fn();
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      Response.json({ error: "Please try again." }, { status: 503 }),
+    )
+    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetcher);
+  render(
+    <SpaceForm
+      space={{
+        ...spacesFixture().spaces[0],
+        startsAt: "2027-01-01T09:00:00Z",
+        timeZone: "Asia/Tokyo",
+        location: "At home",
+        rsvpEnabled: true,
+      }}
+      onSaved={saved}
+    />,
+  );
+  fireEvent.change(screen.getByLabelText("Time", { exact: true }), {
+    target: { value: "19:00" },
+  });
+  await user.click(screen.getByRole("checkbox", { name: "Set an end time" }));
+  fireEvent.change(screen.getByLabelText("End date", { exact: true }), {
+    target: { value: "2027-01-01" },
+  });
+  fireEvent.change(screen.getByLabelText("End time", { exact: true }), {
+    target: { value: "18:00" },
+  });
+  await user.click(screen.getByRole("checkbox", { name: "Allow RSVPs" }));
+  await user.click(screen.getByRole("checkbox", { name: "Show a location" }));
+  await user.click(screen.getByRole("button", { name: "Save changes" }));
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "The end time must be after the start time.",
+  );
+  expect(fetcher).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("End time", { exact: true }), {
+    target: { value: "20:00" },
+  });
+  await user.click(screen.getByRole("button", { name: "Save changes" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Please try again.",
+  );
+  expect(screen.getByLabelText("Time", { exact: true })).toHaveValue("19:00");
+  expect(
+    screen.getByRole("checkbox", { name: "Allow RSVPs" }),
+  ).not.toBeChecked();
+  expect(
+    screen.getByRole("checkbox", { name: "Show a location" }),
+  ).not.toBeChecked();
+  expect(saved).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Save changes" }));
+  expect(saved).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(fetcher.mock.calls[1][1]!.body as string)).toMatchObject({
+    startsAt: "2027-01-01T10:00:00.000Z",
+    endsAt: "2027-01-01T11:00:00.000Z",
+    location: "",
+    rsvpEnabled: false,
+  });
 });

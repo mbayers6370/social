@@ -44,6 +44,7 @@ import {
 } from "@/features/local-preview/model";
 
 import { ComposerSurface } from "./composer-surface";
+import { PostModeControls } from "./post-mode-controls";
 
 const resolvePost = zodResolver(postInputSchema);
 // Keep inactive fields in the draft; validate and submit only the chosen mode.
@@ -199,13 +200,8 @@ export function PostComposer({
       }}
       onCancel={picking ? undefined : onComplete}
     >
-      <header className="margin-compose-header">
-        {inline ? (
-          <div className="margin-compose-author">
-            <Avatar person={profile.person} />
-            <h2 className="margin-compose-title">Your post</h2>
-          </div>
-        ) : (
+      {!inline && (
+        <header className="margin-compose-header">
           <>
             <div className="margin-compose-heading">
               <DialogTitle className="margin-compose-title">
@@ -230,7 +226,7 @@ export function PostComposer({
               For friends. Local preview only.
             </DialogDescription>
             <div className="margin-compose-author">
-              <Avatar person={profile.person} linked onNavigate={onComplete} />
+              <Avatar person={profile.person} />
               <div className="margin-compose-author-copy">
                 <strong>
                   <PersonLink person={profile.person} onNavigate={onComplete}>
@@ -246,8 +242,8 @@ export function PostComposer({
               </div>
             </div>
           </>
-        )}
-      </header>
+        </header>
+      )}
       <form
         noValidate
         className="margin-compose-form"
@@ -267,55 +263,46 @@ export function PostComposer({
         })}
       >
         <div className="margin-compose-editor">
-          <div
-            className="margin-compose-modes"
-            role="group"
-            aria-label="Post type"
-          >
-            {(["post", "link"] as const).map((kind) => (
-              <Button
-                type="button"
-                variant="ghost"
-                key={kind}
-                aria-pressed={values.kind === kind}
-                onClick={() => {
-                  update("kind", kind);
-                  clearErrors();
-                }}
-              >
-                {kind === "post" ? "Post" : "Link"}
-              </Button>
-            ))}
+          <PostModeControls
+            mode={values.kind ?? "post"}
+            allowance={eligibility}
+            disabled={isSubmitting}
+            dayLabel={allowanceDay}
+            statusId="posting-allowance"
+            avatar={inline ? <Avatar person={profile.person} /> : undefined}
+            onChange={(kind) => {
+              update("kind", kind);
+              clearErrors();
+            }}
+          />
+          <div className="margin-compose-writing">
+            <Field>
+              <Label htmlFor="post-body" className="sr-only">
+                Your post
+              </Label>
+              <textarea
+                data-field
+                id="post-body"
+                rows={3}
+                maxLength={3000}
+                className="margin-compose-body"
+                placeholder="Something worth sharing…"
+                {...register("body", {
+                  onChange: (event) => {
+                    if (!editingPost)
+                      preview.updateDraft({ body: event.target.value });
+                  },
+                })}
+                aria-invalid={!!errors.body}
+                aria-describedby={errors.body ? "post-body-error" : undefined}
+              />
+              {errors.body && (
+                <FieldError id="post-body-error">
+                  {errors.body.message}
+                </FieldError>
+              )}
+            </Field>
           </div>
-          <Field>
-            <Label
-              htmlFor="post-body"
-              className={inline ? "sr-only" : undefined}
-            >
-              Your post
-            </Label>
-            <textarea
-              data-field
-              id="post-body"
-              rows={5}
-              maxLength={3000}
-              className="margin-compose-body"
-              placeholder="Something worth sharing…"
-              {...register("body", {
-                onChange: (event) => {
-                  if (!editingPost)
-                    preview.updateDraft({ body: event.target.value });
-                },
-              })}
-              aria-invalid={!!errors.body}
-              aria-describedby={errors.body ? "post-body-error" : undefined}
-            />
-            {errors.body && (
-              <FieldError id="post-body-error">
-                {errors.body.message}
-              </FieldError>
-            )}
-          </Field>
           {values.kind === "link" && (
             <Field>
               <Label htmlFor="post-link">Link</Label>
@@ -434,17 +421,15 @@ export function PostComposer({
                 </Button>
               )}
               <div className="margin-compose-allowances">
-                <p
-                  className="margin-field-hint"
-                  id="posting-allowance"
-                  aria-live="polite"
-                >
-                  {eligibility.allowed
-                    ? hasLink
-                      ? "This link-containing post will be your only post today."
-                      : `${eligibility.regularRemaining} regular ${eligibility.regularRemaining === 1 ? "post" : "posts"} remaining ${allowanceDay}.`
-                    : eligibility.reason}
-                </p>
+                {!eligibility.allowed && (
+                  <p
+                    className="margin-field-hint"
+                    id="posting-error"
+                    role="status"
+                  >
+                    {eligibility.reason}
+                  </p>
+                )}
                 <p
                   className="margin-field-hint"
                   id="photo-allowance"
@@ -493,9 +478,13 @@ export function PostComposer({
             <Button
               type="submit"
               disabled={
-                isSubmitting || !eligibility.allowed || missingReplacement
+                isSubmitting ||
+                !eligibility.allowed ||
+                missingReplacement ||
+                (!values.body?.trim() && !photoIds.length) ||
+                (values.kind === "link" && !values.url?.trim())
               }
-              aria-describedby="posting-allowance photo-allowance"
+              aria-describedby={`posting-allowance photo-allowance${!eligibility.allowed ? " posting-error" : ""}`}
             >
               {editingPost
                 ? isSubmitting

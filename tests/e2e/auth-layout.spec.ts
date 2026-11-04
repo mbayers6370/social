@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 test("centers account cards and offers a single direct preview action", async ({
   page,
 }, testInfo) => {
@@ -79,7 +79,7 @@ test("centers account cards and offers a single direct preview action", async ({
         await expect(
           page.getByRole("link", { name: "Sign in", exact: true }),
         ).toHaveCount(1);
-      await page.screenshot({
+      await captureScreenshot(page, {
         path: `test-results/auth-${route.slice(1)}-${size.width}x${size.height}.png`,
         fullPage: true,
       });

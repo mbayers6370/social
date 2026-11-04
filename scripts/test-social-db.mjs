@@ -2,21 +2,25 @@ import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { resolve, join } from "node:path";
+import { isolatedEnvironment } from "./testing/environment.mjs";
 
 // Uses the existing, password-protected local cluster. Never reads/writes .env,
 // never migrates margin_local, and always creates a new disposable database.
 if (Number(process.versions.node.split(".")[0]) !== 22)
   throw new Error("Use Node 22");
 const root = resolve(import.meta.dirname, "..");
-const authOnly = process.argv.slice(2).includes("--auth");
-const adapterOnly = process.argv.slice(2).includes("--database-adapter");
-const memberOnly = process.argv.slice(2).includes("--member");
-const notificationOnly = process.argv.slice(2).includes("--notification-links");
-const communicationOnly = process.argv.slice(2).includes("--communication");
-const spaceInvitationOnly = process.argv
-  .slice(2)
-  .includes("--space-invitations");
-const invitationOnly = process.argv.slice(2).includes("--invitations");
+// Arguments after -- go only to Vitest, allowing focused regression checks.
+const argv = process.argv.slice(2);
+const separator = argv.indexOf("--");
+const options = separator < 0 ? argv : argv.slice(0, separator);
+const testArgs = separator < 0 ? [] : argv.slice(separator + 1);
+const authOnly = options.includes("--auth");
+const adapterOnly = options.includes("--database-adapter");
+const memberOnly = options.includes("--member");
+const notificationOnly = options.includes("--notification-links");
+const communicationOnly = options.includes("--communication");
+const spaceInvitationOnly = options.includes("--space-invitations");
+const invitationOnly = options.includes("--invitations");
 if (
   [
     authOnly,
@@ -27,20 +31,18 @@ if (
     invitationOnly,
     spaceInvitationOnly,
   ].filter(Boolean).length > 1 ||
-  process.argv
-    .slice(2)
-    .some(
-      (argument) =>
-        ![
-          "--auth",
-          "--database-adapter",
-          "--member",
-          "--notification-links",
-          "--communication",
-          "--invitations",
-          "--space-invitations",
-        ].includes(argument),
-    )
+  options.some(
+    (argument) =>
+      ![
+        "--auth",
+        "--database-adapter",
+        "--member",
+        "--notification-links",
+        "--communication",
+        "--invitations",
+        "--space-invitations",
+      ].includes(argument),
+  )
 )
   throw new Error("Unknown database-test option");
 const bin =
@@ -106,7 +108,10 @@ sql(
 );
 try {
   const env = {
-    ...process.env,
+    ...isolatedEnvironment(
+      process.env,
+      readFileSync(join(root, ".env.example"), "utf8"),
+    ),
     DATABASE_URL: url("margin_runtime", secrets.runtime),
     MIGRATION_DATABASE_URL: url("margin_owner", secrets.owner),
   };
@@ -128,7 +133,16 @@ try {
     [
       "node_modules/vitest/vitest.mjs",
       "run",
+      "--project=database",
       "--no-file-parallelism",
+      ...(process.env.MARGIN_TEST_REPORT
+        ? [
+            "--reporter=default",
+            "--reporter=json",
+            `--outputFile.json=${process.env.MARGIN_TEST_REPORT}`,
+          ]
+        : []),
+      ...testArgs,
       ...(spaceInvitationOnly
         ? ["tests/space-invitation-db.integration.test.ts"]
         : notificationOnly
@@ -152,6 +166,7 @@ try {
                         "tests/member-db.integration.test.ts",
                         "tests/notification-links-db.integration.test.ts",
                         "tests/communication-db.integration.test.ts",
+                        "tests/retention-db.integration.test.ts",
                       ]),
     ],
     { cwd: root, env: { ...env, RUN_PRIVATE_DB_TESTS: "1" }, stdio: "inherit" },

@@ -8,7 +8,7 @@ const groups = [
   {
     title: "Explore",
     links: [
-      ["Why margin", "/why-margin"],
+      ["Why Margin", "/why-margin"],
       ["How it works", "/how-it-works"],
       ["About", "/why-margin#about"],
     ],

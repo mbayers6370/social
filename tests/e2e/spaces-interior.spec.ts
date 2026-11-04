@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "./fixtures";
+import { captureScreenshot, test, expect, type Page } from "./fixtures";
 import { calvinEvent } from "../helpers/ticketmaster-fixture";
 
 // Exercise the Space UI without making any requests to the Ticketmaster API or image host.
@@ -48,9 +48,7 @@ test("keeps Gathering RSVP responses in the sidebar and Share directly above pos
     page.getByRole("heading", { name: "Japan 2027", exact: true }),
   ).toBeVisible();
   await expect(
-    page
-      .getByRole("region", { name: "Gathering and event details" })
-      .locator("time"),
+    page.getByRole("region", { name: "Date and place" }).locator("time"),
   ).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Your RSVP" })).toHaveCount(
     0,
@@ -79,16 +77,16 @@ test("keeps Gathering RSVP responses in the sidebar and Share directly above pos
   );
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("gathering-interior.png"),
     fullPage: true,
   });
   await page.getByText("Space options", { exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Space settings", exact: true }),
+    page.getByRole("button", { name: "Edit details", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Archive Gathering Space", exact: true }),
+    page.getByRole("button", { name: "Archive Space", exact: true }),
   ).toBeVisible();
 });
 
@@ -101,7 +99,7 @@ test("keeps the Private Space composer above its feed with matching member and o
   ).toBeVisible();
   await expect(page.getByRole("group", { name: "Your RSVP" })).toHaveCount(0);
   await checkComposerPlacement(page);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("private-interior.png"),
     fullPage: true,
   });
@@ -136,7 +134,7 @@ test("keeps the Event Space composer above empty and populated feeds", async ({
     page.getByRole("button", { name: "Going", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("empty-event-interior.png"),
     fullPage: true,
   });

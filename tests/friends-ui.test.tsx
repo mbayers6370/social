@@ -4,6 +4,9 @@ import { useEffect } from "react";
 import userEvent from "@testing-library/user-event";
 import { PreviewProvider, usePreview } from "@/features/local-preview/provider";
 import { FriendsPage } from "@/features/friends/friends-page";
+import { MemberFriends } from "@/features/social/member-friends";
+import { SpaceClientProvider } from "@/features/spaces/client";
+import type { MemberFriends as FriendsData } from "@/features/social/member-contracts";
 import { FriendActions } from "@/features/friends/friend-actions";
 import { NotificationCenter } from "@/features/notifications/notification-center";
 import { MarginNavigation } from "@/components/layout/margin-navigation";
@@ -63,7 +66,177 @@ it("keeps four mobile destinations with notifications and account utilities in t
     "page",
   );
 });
-it("accepts a request, updates friends, confirms removal with safe focus and supports cancelling that confirmation", async () => {
+it("keeps the preview count in its tab and scopes the single search to the current list", async () => {
+  const user = userEvent.setup();
+  render(
+    <PreviewProvider bootstrap={notificationFixture().bootstrap}>
+      <FriendsPage />
+    </PreviewProvider>,
+  );
+  expect(screen.getByRole("button", { name: "Friends · 1" })).toBeVisible();
+  expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Search profiles" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /Manage friendship/ }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Theo/ })).toHaveAttribute(
+    "href",
+    "/?view=profile&person=theo",
+  );
+  const search = screen.getByRole("searchbox", { name: "Search your friends" });
+  expect(search).toHaveAttribute("placeholder", "Search your friends");
+  await user.type(search, "Nadia");
+  expect(
+    screen.getByText("No matches. Try another name or username."),
+  ).toBeVisible();
+  expect(screen.getByRole("button", { name: "Friends · 1" })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: /Requests/ }));
+  expect(
+    screen.queryByRole("searchbox", { name: "Search your requests" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText("Nadia")).toBeVisible();
+});
+
+it("shows the member friend count and keeps global profile search outside the list", async () => {
+  const user = userEvent.setup();
+  const initial: FriendsData = {
+    contacts: [
+      {
+        person: {
+          id: "friend",
+          name: "Alex Example",
+          initials: "AE",
+          tone: "paper",
+        },
+        username: "alex_example",
+        relationship: "friends",
+        friendsSince: "2026-03-12T12:00:00Z",
+      },
+      {
+        person: {
+          id: "request",
+          name: "Casey Example",
+          initials: "CE",
+          tone: "paper",
+        },
+        username: "casey_example",
+        relationship: "incoming",
+      },
+    ],
+    nextCursor: null,
+  };
+  const client = {
+    request: async () => Response.json({ activity: [], nextCursor: null }),
+    href: (url: string) => url,
+    photoSrc: (id: string) => `/api/photos/${id}`,
+    preview: false,
+  };
+  render(
+    <SpaceClientProvider client={client}>
+      <MemberFriends initial={initial} />
+    </SpaceClientProvider>,
+  );
+  const page = within(
+    document.querySelector<HTMLElement>(".margin-friends-page")!,
+  );
+  expect(page.getByRole("tab", { name: "Friends · 1" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  expect(page.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
+  expect(
+    page.queryByRole("button", { name: "Search profiles" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Search profiles" })).toBeVisible();
+  expect(
+    page.queryByRole("button", { name: /Manage friendship/ }),
+  ).not.toBeInTheDocument();
+  const friend = page.getByRole("link", { name: /Alex Example/ });
+  expect(friend).toHaveAttribute("href", "/app?person=friend");
+  expect(friend).toHaveTextContent("Friends since March ’26");
+  expect(friend.querySelector("time")).toHaveAttribute(
+    "datetime",
+    "2026-03-12T12:00:00.000Z",
+  );
+  await user.type(
+    page.getByRole("searchbox", { name: "Search your friends" }),
+    "Casey",
+  );
+  expect(page.getByText("No matching profiles in this list.")).toBeVisible();
+  expect(page.getByRole("tab", { name: "Friends · 1" })).toBeVisible();
+  await user.click(page.getByRole("tab", { name: "Requests" }));
+  expect(
+    page.queryByRole("searchbox", { name: "Search your requests" }),
+  ).not.toBeInTheDocument();
+  expect(page.getByText("Casey Example")).toBeVisible();
+});
+
+it.each([0, 10, 11])(
+  "shows request search only above ten entries (%i requests)",
+  async (count) => {
+    const user = userEvent.setup();
+    const initial: FriendsData = {
+      contacts: Array.from({ length: count }, (_, index) => ({
+        person: {
+          id: `person-${index}`,
+          name: `Person ${index}`,
+          initials: "P",
+          tone: "paper",
+        },
+        username: `person_${index}`,
+        relationship: index % 2 ? "outgoing" : "incoming",
+      })),
+      nextCursor: null,
+    };
+    const client = {
+      request: async () => Response.json({ activity: [], nextCursor: null }),
+      href: (url: string) => url,
+      photoSrc: (id: string) => `/api/photos/${id}`,
+      preview: false,
+    };
+    render(
+      <SpaceClientProvider client={client}>
+        <MemberFriends initial={initial} />
+      </SpaceClientProvider>,
+    );
+    const page = within(
+      document.querySelector<HTMLElement>(".margin-friends-page")!,
+    );
+    await user.click(page.getByRole("tab", { name: "Requests" }));
+    if (count > 10) {
+      const search = page.getByRole("searchbox", {
+        name: "Search your requests",
+      });
+      await user.type(search, "Person 10");
+      expect(page.getByText("Person 10")).toBeVisible();
+      expect(
+        page.queryByText("Person 0", { exact: true }),
+      ).not.toBeInTheDocument();
+      expect(search).toBeVisible();
+      expect(
+        within(page.getByRole("region", { name: "Sent" })).queryByText("0", {
+          exact: true,
+        }),
+      ).not.toBeInTheDocument();
+    } else expect(page.queryByRole("searchbox")).not.toBeInTheDocument();
+    if (count === 0) {
+      expect(page.getByText("No requests right now.")).toBeVisible();
+      expect(
+        page.queryByRole("heading", { name: "Received" }),
+      ).not.toBeInTheDocument();
+      expect(
+        page.queryByRole("heading", { name: "Sent" }),
+      ).not.toBeInTheDocument();
+      expect(
+        page.getByRole("button", { name: "Invite someone" }),
+      ).toBeVisible();
+    }
+  },
+);
+
+it("accepts a request, updates the tab count and makes the new friend row open their profile", async () => {
   const user = userEvent.setup();
   render(
     <PreviewProvider bootstrap={notificationFixture().bootstrap}>
@@ -71,44 +244,25 @@ it("accepts a request, updates friends, confirms removal with safe focus and sup
     </PreviewProvider>,
   );
   await user.click(screen.getByRole("button", { name: /Requests 1 new/ }));
-  const received = screen.getByRole("region", { name: "Received" });
   await user.click(
-    within(received).getByRole("button", { name: "Accept request" }),
+    within(screen.getByRole("region", { name: "Received" })).getByRole(
+      "button",
+      { name: "Accept request" },
+    ),
   );
   expect(screen.getByRole("status")).toHaveTextContent(
     "You and Nadia are now friends.",
   );
-  expect(screen.getByText("No requests waiting for you.")).toBeVisible();
-  await waitFor(() =>
-    expect(screen.getByRole("heading", { name: "Friends" })).toHaveFocus(),
-  );
-  await user.click(screen.getByRole("button", { name: "Friends 2" }));
-  const manage = screen.getByRole("button", {
-    name: "Manage friendship with Nadia",
-  });
-  await user.click(manage);
-  let dialog = screen.getByRole("alertdialog", {
-    name: "Remove Nadia from friends?",
-  });
-  expect(within(dialog).getByRole("button", { name: "Cancel" })).toHaveFocus();
-  await user.keyboard("{Escape}");
-  await waitFor(() => expect(manage).toHaveFocus());
-  expect(screen.getByRole("button", { name: "Friends 2" })).toBeInTheDocument();
-  await user.click(manage);
-  dialog = screen.getByRole("alertdialog");
-  await user.click(
-    within(dialog).getByRole("button", { name: "Remove friend" }),
-  );
-  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent(
-    "Nadia removed from friends.",
-  );
-  expect(screen.getByRole("button", { name: "Friends 1" })).toBeInTheDocument();
-  await waitFor(() =>
-    expect(screen.getByRole("heading", { name: "Friends" })).toHaveFocus(),
-  );
+  await user.click(screen.getByRole("button", { name: "Friends · 2" }));
+  const row = screen.getByRole("link", { name: /Nadia/ });
+  expect(row).toHaveAttribute("href", "/?view=profile&person=nadia");
+  expect(row).toHaveTextContent("Friends since");
+  expect(row.querySelector("time")).not.toBeNull();
+  expect(
+    screen.queryByRole("button", { name: /Manage friendship/ }),
+  ).not.toBeInTheDocument();
 });
-it("shows sent requests, supports cancellation and decline, and filters without hiding status feedback", async () => {
+it("keeps small request lists unfiltered and combines their empty state without hiding status feedback", async () => {
   const user = userEvent.setup();
   const { bootstrap } = notificationFixture();
   bootstrap.friendships = [
@@ -127,13 +281,15 @@ it("shows sent requests, supports cancellation and decline, and filters without 
     }),
   );
   expect(screen.getByText("No outgoing requests.")).toBeVisible();
-  await user.type(screen.getByRole("searchbox"), "no such name");
-  expect(
-    screen.getAllByText("No matches. Try another name or username."),
-  ).toHaveLength(2);
-  await user.clear(screen.getByRole("searchbox"));
+  expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Decline" }));
-  expect(screen.getByText("No requests waiting for you.")).toBeVisible();
+  expect(screen.getByText("No requests right now.")).toBeVisible();
+  expect(
+    screen.queryByRole("heading", { name: "Received" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Sent" }),
+  ).not.toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(
     "Friend request from Nadia declined.",
   );

@@ -36,6 +36,7 @@ import {
   isSpaceExpired,
   defaultEventEnd,
   validEventEnd,
+  privateSpaceStorageKind,
 } from "./lifecycle";
 import type { CatalogEvent } from "./contracts";
 import type { SafetyReport } from "@/features/safety/model";
@@ -158,7 +159,7 @@ export function SpacesPreviewProvider({
             nextPage = found.nextPage;
           } catch {
             notice =
-              "Ticketmaster search is temporarily unavailable. You can still open your joined Spaces below.";
+              "Ticketmaster search is temporarily unavailable. You can still open your joined Spaces above.";
           }
           const mapped = events.flatMap((event) => {
             const space = next.spaces.find(
@@ -280,11 +281,12 @@ export function SpacesPreviewProvider({
           next.spaces.push({
             id,
             name: input.name,
-            kind: input.kind,
-            startsAt: input.kind === "GATHERING" ? input.startsAt : null,
-            timeZone: input.kind === "GATHERING" ? input.timeZone : null,
-            location:
-              input.kind === "GATHERING" ? (input.location ?? null) : null,
+            kind: privateSpaceStorageKind(input.startsAt),
+            startsAt: input.startsAt ?? null,
+            timeZone: input.timeZone ?? null,
+            location: input.location || null,
+            endsAt: input.endsAt ?? null,
+            rsvpEnabled: input.rsvpEnabled ?? true,
             archivedAt: null,
             memberCount: 1,
             creatorId: next.viewer.id,
@@ -325,7 +327,7 @@ export function SpacesPreviewProvider({
           if (isSpaceExpired(space, preview?.now ?? Date.now()))
             throw Error("This Event Space has expired.");
           if (space.archivedAt)
-            throw Error("This event is archived and read-only.");
+            throw Error("This Space is archived and read-only.");
           const input = commentInput.parse(body);
           const comment = {
             id: `preview-${crypto.randomUUID()}`,
@@ -343,6 +345,25 @@ export function SpacesPreviewProvider({
             throw Error("The personal preview session is unavailable.");
           await preview.changeFriend(person.id, body.action);
         } else if (segments[1] === "posts" && method === "DELETE") {
+          const post = next.posts.find((post) => post.id === id);
+          if (!post || post.author.id !== next.viewer.id)
+            throw Error("This post is unavailable.");
+          if (body.deletePhotos === true) {
+            const ids = new Set(
+              next.photos
+                .filter(
+                  (photo) =>
+                    photo.ownerId === next.viewer.id &&
+                    post.photos.some((attached) => attached.id === photo.id),
+                )
+                .map((photo) => photo.id),
+            );
+            next.photos = next.photos.filter((photo) => !ids.has(photo.id));
+            next.posts = next.posts.map((post) => ({
+              ...post,
+              photos: post.photos.filter((photo) => !ids.has(photo.id)),
+            }));
+          }
           next.posts = next.posts.filter((p) => p.id !== id);
           delete next.comments[id];
         } else if (room) {
@@ -358,7 +379,7 @@ export function SpacesPreviewProvider({
                 (body.action === "remove" && body.userId === next.viewer.id))
             )
           )
-            throw Error("This event is archived and read-only.");
+            throw Error("This Space is archived and read-only.");
           if (segments[3] === "schedule" && method === "PATCH") {
             if (room.kind !== "EVENT" || room.role !== "ADMIN")
               throw Error("Space administrator access required.");
@@ -388,22 +409,31 @@ export function SpacesPreviewProvider({
               delete next.comments[p.id];
             next.posts = next.posts.filter((p) => p.space?.id !== id);
           } else if (method === "PATCH" && segments.length === 3) {
+            if (room.role !== "ADMIN")
+              throw Error("Space administrator access required.");
             const input = spaceInput.parse(body);
-            if (input.kind !== room.kind)
-              throw Error("The Space type cannot be changed");
+            if (room.kind === "EVENT")
+              throw Error(
+                "Event details come from Ticketmaster and cannot be changed here.",
+              );
             room.name = input.name;
-            if (input.kind === "GATHERING") {
-              room.startsAt = input.startsAt;
-              room.timeZone = input.timeZone;
-              room.location = input.location ?? null;
+            room.kind = privateSpaceStorageKind(input.startsAt);
+            room.startsAt = input.startsAt ?? null;
+            room.timeZone = input.timeZone ?? null;
+            room.location = input.location || null;
+            room.endsAt = input.endsAt ?? null;
+            room.rsvpEnabled = input.rsvpEnabled ?? room.rsvpEnabled ?? true;
+            if (!input.startsAt) {
+              room.rsvp = null;
+              room.members.forEach((member) => {
+                member.rsvp = null;
+              });
             }
             for (const post of next.posts.filter((p) => p.space?.id === id))
               post.space!.name = input.name;
           } else if (segments[3] === "archive" && method === "POST") {
-            if (room.kind !== "GATHERING")
-              throw Error(
-                "Event Spaces close automatically; only Gathering Spaces can be archived.",
-              );
+            if (room.kind === "EVENT")
+              throw Error("Event Spaces close automatically.");
             room.archivedAt = new Date(
               preview?.now ?? Date.now(),
             ).toISOString();
@@ -413,7 +443,15 @@ export function SpacesPreviewProvider({
             const input = memberInput.parse(body);
             if (input.action === "preferences")
               room.includeInFeed = input.includeInFeed;
-            else if (input.action === "rsvp") {
+            else if (input.action === "rsvp-settings") {
+              if (room.role !== "ADMIN")
+                throw Error("Space administrator access required.");
+              room.rsvpEnabled = input.rsvpEnabled;
+            } else if (input.action === "rsvp") {
+              if (room.rsvpEnabled === false)
+                throw Error("RSVPs are turned off for this Space.");
+              if (!room.startsAt)
+                throw Error("Add a date to this Space before using RSVP");
               room.rsvp = input.rsvp;
               room.members.find((m) => m.userId === next.viewer.id)!.rsvp =
                 input.rsvp;
@@ -537,22 +575,14 @@ export function SpacesPreviewProvider({
                 .flatMap((p) => p.photos.map((p) => p.id)),
             );
             let content: { body: string; photoIds: string[] };
-            let incoming: { file: File; description: string }[] = [];
+            let incoming: { file: File }[] = [];
             if (init?.body instanceof FormData) {
               const input = init.body.get("input");
               if (typeof input !== "string") throw Error("Invalid post.");
               content = spacePostDraftInput.parse(JSON.parse(input));
-              const descriptions = init.body.getAll("descriptions");
-              incoming = init.body.getAll("photos").map((file, index) => {
-                const description = descriptions[index];
-                if (
-                  !(file instanceof File) ||
-                  typeof description !== "string" ||
-                  !description.trim() ||
-                  description.length > 500
-                )
-                  throw Error("Invalid photograph.");
-                return { file, description };
+              incoming = init.body.getAll("photos").map((file) => {
+                if (!(file instanceof File)) throw Error("Invalid photograph.");
+                return { file };
               });
               if (
                 !incoming.length ||
@@ -561,21 +591,13 @@ export function SpacesPreviewProvider({
                 throw Error("Choose up to three photographs.");
             } else if (init?.body instanceof File) {
               content = { body: "", photoIds: [] };
-              incoming = [
-                {
-                  file: init.body,
-                  description: decodeURIComponent(
-                    new Headers(init.headers).get("X-Photo-Description") ??
-                      "Photograph",
-                  ),
-                },
-              ];
+              incoming = [{ file: init.body }];
             } else content = spacePostInput.parse(body);
             if (uploads.current + incoming.length > DAILY_IMAGES)
               throw Error(
                 "The preview's three new photograph uploads have been used. Reload to reset this sample session.",
               );
-            for (const { file, description } of incoming) {
+            for (const { file } of incoming) {
               if (retained.size + incoming.length > SPACE_PHOTO_LIMIT)
                 throw Error("This sample Space already holds 20 photographs.");
               assertStillPhoto(
@@ -596,7 +618,7 @@ export function SpacesPreviewProvider({
               const photoId = `preview-${crypto.randomUUID()}`;
               next.photos.push({
                 id: photoId,
-                description,
+                description: "Photograph",
                 width: image.naturalWidth,
                 height: image.naturalHeight,
                 ownerId: next.viewer.id,

@@ -1,7 +1,36 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { ArrowLeft, Conversation } from "@/components/margin-icons";
+
+type DemoStage = "initial" | "invited" | "front" | "back";
+const DemoContext = createContext<{
+  stage: DemoStage;
+  setStage: (stage: DemoStage) => void;
+} | null>(null);
+
+export function WelcomeDemo({ children }: { children: ReactNode }) {
+  const [stage, setStage] = useState<DemoStage>("initial");
+  return (
+    <DemoContext.Provider value={{ stage, setStage }}>
+      {children}
+    </DemoContext.Provider>
+  );
+}
+
+export function useWelcomeDemo() {
+  const value = useContext(DemoContext);
+  if (!value) throw Error("Welcome demo controls require WelcomeDemo.");
+  return value;
+}
 
 /** The product's card turn, using only a fictional public discussion. */
 export function WelcomePost({
@@ -11,26 +40,13 @@ export function WelcomePost({
   children: ReactNode;
   discussion: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
-  const [showHint, setShowHint] = useState(true);
-  const [hintVisible, setHintVisible] = useState(false);
+  const { stage, setStage } = useWelcomeDemo();
+  const open = stage === "back";
+  const setOpen = (value: boolean) => setStage(value ? "back" : "front");
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const back = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
-
-  useEffect(() => {
-    const button = trigger.current;
-    if (!button || !showHint || typeof IntersectionObserver === "undefined")
-      return;
-    const observer = new IntersectionObserver(
-      ([entry]) =>
-        setHintVisible(entry.isIntersecting && entry.intersectionRatio >= 1),
-      { threshold: [0, 1] },
-    );
-    observer.observe(button);
-    return () => observer.disconnect();
-  }, [showHint]);
 
   useEffect(() => {
     if (open) back.current?.focus({ preventScroll: true });
@@ -63,19 +79,10 @@ export function WelcomePost({
             aria-label="Open conversation"
             aria-expanded={open}
             aria-controls={id}
-            data-hint={showHint ? (hintVisible ? "active" : "idle") : undefined}
-            onClick={() => {
-              setShowHint(false);
-              setOpen(true);
-            }}
+            onClick={() => setOpen(true)}
           >
             <Conversation aria-hidden="true" />
-            <span
-              className="margin-welcome-post-action-label"
-              aria-hidden="true"
-            >
-              Open
-            </span>
+            <span>Conversation</span>
           </button>
         </div>
         <div

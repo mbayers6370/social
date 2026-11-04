@@ -5,45 +5,49 @@ import { buttonVariants } from "@/components/ui/button";
 import { PublicTextLink } from "./public-shell";
 import { WelcomeMessages, WelcomePreview } from "./welcome-preview";
 import { WelcomeGallery } from "./welcome-gallery";
+import { WelcomePreviewLink } from "./welcome-preview-link";
+import { WelcomeDemo } from "./welcome-interactive";
 
 export function PublicHome() {
   return (
     <>
-      <section className="margin-public-hero" aria-labelledby="public-title">
-        <header className="margin-welcome-opening">
-          <h1 id="public-title">
-            <span>A little less.</span>
-            <span>A little closer.</span>
-          </h1>
-          <div className="margin-welcome-copy">
-            <p className="margin-public-intro">
-              A small social space for friends. A little of your day, a little
-              of theirs. And room for everything else.
-            </p>
-            <div className="margin-welcome-actions">
-              <Link
-                href="/how-it-works"
-                className={buttonVariants({ className: "margin-welcome-cta" })}
-              >
-                Membership by invitation
-              </Link>
-              <PublicTextLink href="#welcome-preview">
-                See how it feels
-              </PublicTextLink>
+      <WelcomeDemo>
+        <section className="margin-public-hero" aria-labelledby="public-title">
+          <header className="margin-welcome-opening">
+            <h1 id="public-title">
+              <span>A little less.</span>
+              <span>A little closer.</span>
+            </h1>
+            <div className="margin-welcome-copy">
+              <p className="margin-public-intro">
+                A small social space for friends. A little of your day, a little
+                of theirs. And room for everything else.
+              </p>
+              <div className="margin-welcome-actions">
+                <Link
+                  href="/how-it-works"
+                  className={buttonVariants({
+                    className: "margin-welcome-cta",
+                  })}
+                >
+                  Membership by invitation
+                </Link>
+                <WelcomePreviewLink />
+              </div>
+              <p className="margin-public-status">
+                A small community, grown through personal invitations.
+              </p>
             </div>
-            <p className="margin-public-status">
-              A small community, grown through personal invitations.
-            </p>
+          </header>
+          <div
+            className="margin-welcome-story"
+            id="welcome-preview"
+            tabIndex={-1}
+          >
+            <WelcomePreview />
           </div>
-        </header>
-        <div
-          className="margin-welcome-story"
-          id="welcome-preview"
-          tabIndex={-1}
-        >
-          <WelcomePreview />
-        </div>
-      </section>
+        </section>
+      </WelcomeDemo>
       <section
         className="margin-welcome-interlude"
         aria-labelledby="welcome-pace-title"
@@ -69,6 +73,13 @@ export function PublicHome() {
           </figcaption>
         </figure>
       </section>
+      <ul className="margin-welcome-differences" aria-label="What’s different">
+        <li>No like counts in the feed</li>
+        <li>No ads</li>
+        <li>No algorithm</li>
+        <li>Posts disappear after 30 days</li>
+        <li>Up to three posts a day</li>
+      </ul>
       <section
         className="margin-welcome-connection"
         aria-labelledby="welcome-connection-title"

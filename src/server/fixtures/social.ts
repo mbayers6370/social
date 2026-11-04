@@ -27,6 +27,7 @@ export function getDevelopmentSocial(): Bootstrap {
   const friendships: Friendship[] = friends.map((id) => ({
     people: ["ines", id],
     status: "accepted",
+    acceptedAt: "2026-03-12T12:00:00Z",
   }));
   // Directed requests exercise both sides of the local lifecycle; no request is sent.
   for (const [id, requestedBy] of [

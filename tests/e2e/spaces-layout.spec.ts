@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { captureScreenshot, expect, test } from "./fixtures";
 
 test("Spaces stays readable, keeps posts close, and preserves an interrupted composer", async ({
   page,
@@ -10,7 +10,7 @@ test("Spaces stays readable, keeps posts close, and preserves an interrupted com
   await page.goto("/preview/spaces");
   await expect(page.getByRole("button", { name: "New Space" })).toBeEnabled();
   await page.evaluate(() => document.fonts.ready);
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("spaces-directory.png"),
     fullPage: true,
     caret: "initial",
@@ -36,7 +36,7 @@ test("Spaces stays readable, keeps posts close, and preserves an interrupted com
     const b = await stream.boundingBox();
     expect(a!.x + a!.width).toBeLessThan(b!.x);
   }
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("space-reading-layout.png"),
     fullPage: true,
     caret: "initial",

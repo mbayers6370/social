@@ -61,7 +61,7 @@ it("expands the desktop composer in the feed and preserves text and attachments 
   await user.click(
     within(
       screen.getByRole("dialog", { name: "Choose a photograph" }),
-    ).getByRole("button", { name: "Use Photograph" }),
+    ).getByRole("button", { name: "Use photograph" }),
   );
   expect(
     within(composer).getByRole("button", {
@@ -133,7 +133,7 @@ it("opens the feed prompt and photo shortcut, preserves drafts and restores focu
   await user.click(
     within(
       screen.getByRole("dialog", { name: "Choose a photograph" }),
-    ).getByRole("button", { name: "Use Photograph" }),
+    ).getByRole("button", { name: "Use photograph" }),
   );
   const photoComposer = screen.getByRole("dialog", { name: "New Post" });
   expect(
@@ -250,7 +250,7 @@ it("retains both mode drafts after closing the composer and respects explicit ph
     await user.click(
       within(
         screen.getByRole("dialog", { name: "Choose a photograph" }),
-      ).getByRole("button", { name: "Use Photograph" }),
+      ).getByRole("button", { name: "Use photograph" }),
     );
   }
   await user.click(within(dialog).getByRole("button", { name: "Link" }));
@@ -336,16 +336,14 @@ it("offers today's Gallery photographs in the composer without charging the allo
   const picker = await screen.findByRole("dialog", {
     name: "Choose a photograph",
   });
-  expect(
-    within(picker).getByLabelText("Photograph from your device"),
-  ).toBeDisabled();
+  expect(within(picker).getByLabelText("Or upload a new one")).toBeDisabled();
   await user.click(
     within(picker).getByRole("button", { name: "Select Morning" }),
   );
   await user.click(
     within(
       screen.getByRole("dialog", { name: "Choose a photograph" }),
-    ).getByRole("button", { name: "Use Photograph" }),
+    ).getByRole("button", { name: "Use photograph" }),
   );
   const composer = screen.getByRole("dialog", { name: "New Post" });
   await user.type(
@@ -374,10 +372,9 @@ it("validates and shares a text/photo post into local state with a fixed friends
   await waitFor(() =>
     expect(screen.getByRole("textbox", { name: "Your post" })).toHaveFocus(),
   );
-  await user.click(screen.getByRole("button", { name: "Share with friends" }));
   expect(
-    await screen.findByText("Write something before sharing."),
-  ).toBeVisible();
+    screen.getByRole("button", { name: "Share with friends" }),
+  ).toBeDisabled();
   await user.type(
     screen.getByRole("textbox", { name: "Your post" }),
     "A new thought for my friends.",
@@ -390,7 +387,7 @@ it("validates and shares a text/photo post into local state with a fixed friends
   await user.click(
     within(
       screen.getByRole("dialog", { name: "Choose a photograph" }),
-    ).getByRole("button", { name: "Use Photograph" }),
+    ).getByRole("button", { name: "Use photograph" }),
   );
   await user.click(screen.getByRole("button", { name: "Share with friends" }));
   await waitFor(() => expect(complete).toHaveBeenCalledOnce());
@@ -432,5 +429,5 @@ it("shows and enforces the allowance when a URL is pasted into ordinary post tex
   await user.clear(input);
   await user.type(input, "A thought without a link.");
   expect(submit).toBeEnabled();
-  expect(submit).toHaveAccessibleDescription(/2 regular posts remaining/);
+  expect(submit).toHaveAccessibleDescription(/2 left today/);
 });

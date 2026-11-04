@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { privateTestDatabaseUrl } from "./helpers/database";
 // Disposable PostgreSQL. Clerk and Redis adapters are controlled doubles.
 import {
   afterAll,
@@ -38,14 +39,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
     let spacePost: { id: string };
     const now = new Date("2026-11-03T12:00:00Z");
     beforeAll(() => {
-      const url = new URL(process.env.DATABASE_URL!);
-      if (
-        url.hostname !== "127.0.0.1" ||
-        url.port !== "55432" ||
-        !/^\/margin_slice_test_[a-f0-9]{32}$/.test(url.pathname) ||
-        url.username !== "margin_runtime"
-      )
-        throw Error("Disposable database required");
+      const url = privateTestDatabaseUrl();
       db = new PrismaClient({ adapter: createDatabaseAdapter(url.href, 3) });
       service = new MemberService(
         db,
@@ -90,6 +84,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       process.env.MARGIN_PRIVATE_BACKEND_ENABLED = "1";
     });
     afterEach(async () => {
+      vi.useRealTimers();
       delete process.env.MARGIN_PRIVATE_BACKEND_ENABLED;
       await db.user.deleteMany({
         where: { id: { in: users.map((u) => u.id) } },
@@ -290,6 +285,10 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       ).toEqual([]);
     });
     it("validates exact target query parameters at the authenticated HTTP boundary", async () => {
+      // The HTTP adapter constructs its own service using Date. Share the
+      // fixture clock so this post stays valid regardless of the CI run date.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(now);
       const { reply } = await thread();
       const read = (query: string) =>
         socialRequest(

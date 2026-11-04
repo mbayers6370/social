@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { privateTestDatabaseUrl } from "./helpers/database";
 // Real disposable PostgreSQL, real image normalization/cropping and private file
 // bytes. Music catalogue lookups are doubles; no Clerk/Redis/cloud calls.
 import {
@@ -42,14 +43,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       spotifyUrl: "https://open.spotify.com/search/Sample%20artist",
     };
     beforeAll(async () => {
-      const url = new URL(process.env.DATABASE_URL!);
-      if (
-        url.hostname !== "127.0.0.1" ||
-        url.port !== "55432" ||
-        !/^\/margin_slice_test_[a-f0-9]{32}$/.test(url.pathname) ||
-        url.username !== "margin_runtime"
-      )
-        throw Error("Refusing non-disposable database");
+      const url = privateTestDatabaseUrl();
       db = new PrismaClient({ adapter: createDatabaseAdapter(url.href, 5) });
       root = await mkdtemp(join(tmpdir(), "margin-member-"));
       store = localPhotoStore(root);
@@ -102,6 +96,133 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       await service.relationship(actors[b].clerkId, actors[a].id, "accept");
     }
 
+    it.each([false, true])(
+      "post photo deletion honors deletePhotos=%s and preserves daily upload accounting",
+      async (deletePhotos) => {
+        const subject = actors[0].clerkId;
+        const post = await service.createPhotoPost(
+          subject,
+          image,
+          "image/jpeg",
+        );
+        const photoId = post.photos[0].photo.id;
+        const other = await service.publishPersonal(subject, {
+          body: "Another appearance",
+          photoIds: [photoId],
+        });
+        await service.deletePost(subject, post.id, deletePhotos);
+        expect(await db.post.findUnique({ where: { id: post.id } })).toBeNull();
+        expect(
+          await db.post.findUnique({ where: { id: other.id } }),
+        ).not.toBeNull();
+        expect(await db.postPhoto.count({ where: { postId: other.id } })).toBe(
+          deletePhotos ? 0 : 1,
+        );
+        expect(await db.galleryEntry.count({ where: { photoId } })).toBe(
+          deletePhotos ? 0 : 1,
+        );
+        expect(
+          await db.photo.findUnique({ where: { id: photoId } }),
+        ).toMatchObject({
+          state: deletePhotos ? "DELETE_PENDING" : "READY",
+          uploadedAt: expect.any(Date),
+        });
+        await service.uploadGallery(subject, image, "image/jpeg");
+        await service.uploadGallery(subject, image, "image/jpeg");
+        await expect(
+          service.uploadGallery(subject, image, "image/jpeg"),
+        ).rejects.toMatchObject({
+          status: 409,
+          message: "Daily photograph allowance reached",
+        });
+      },
+    );
+    it("post photo deletion denies a different owner without changing the post or photograph", async () => {
+      const post = await service.createPhotoPost(
+        actors[0].clerkId,
+        image,
+        "image/jpeg",
+      );
+      await expect(
+        service.deletePost(actors[1].clerkId, post.id, true),
+      ).rejects.toMatchObject({ status: 404 });
+      expect(
+        await db.post.findUnique({ where: { id: post.id } }),
+      ).not.toBeNull();
+      expect(
+        await db.photo.findUnique({ where: { id: post.photos[0].photo.id } }),
+      ).toMatchObject({ state: "READY" });
+    });
+    it("post photo deletion rolls back the post when a photograph is retained by an archived Space", async () => {
+      const subject = actors[0].clerkId;
+      const post = await service.createPhotoPost(subject, image, "image/jpeg");
+      const photoId = post.photos[0].photo.id;
+      const room = await service.createSpace(subject, {
+        kind: "PRIVATE",
+        name: "Archived photographs",
+      });
+      await service.publish(subject, room.id, {
+        body: "Retained",
+        photoIds: [photoId],
+      });
+      await db.space.update({
+        where: { id: room.id },
+        data: { archivedAt: now },
+      });
+      await expect(
+        service.deletePost(subject, post.id, true),
+      ).rejects.toMatchObject({ status: 409 });
+      expect(
+        await db.post.findUnique({ where: { id: post.id } }),
+      ).not.toBeNull();
+      expect(
+        await db.galleryEntry.findUnique({ where: { photoId } }),
+      ).not.toBeNull();
+      expect(
+        await db.photo.findUnique({ where: { id: photoId } }),
+      ).toMatchObject({ state: "READY" });
+    });
+
+    it("reports the enforced personal allowance across posting, deletion, links and a new day", async () => {
+      const subject = actors[0].clerkId;
+      await expect(service.postingAllowance(subject)).resolves.toEqual({
+        regularRemaining: 3,
+        linkAllowed: true,
+      });
+      const post = await service.publishPersonal(subject, {
+        body: "First thought",
+        photoIds: [],
+      });
+      await service.publishPersonal(actors[1].clerkId, {
+        body: "Someone else’s thought",
+        photoIds: [],
+      });
+      await expect(service.postingAllowance(subject)).resolves.toEqual({
+        regularRemaining: 2,
+        linkAllowed: false,
+      });
+      await service.deletePost(subject, post.id);
+      await expect(service.postingAllowance(subject)).resolves.toEqual({
+        regularRemaining: 3,
+        linkAllowed: true,
+      });
+      await service.publishPersonal(subject, {
+        body: "A link https://example.com",
+        photoIds: [],
+      });
+      await expect(service.postingAllowance(subject)).resolves.toEqual({
+        regularRemaining: 0,
+        linkAllowed: false,
+      });
+      now = new Date(now.getTime() + 86400000);
+      await expect(service.postingAllowance(subject)).resolves.toEqual({
+        regularRemaining: 3,
+        linkAllowed: true,
+      });
+      await expect(
+        service.postingAllowance(actors[3].clerkId),
+      ).rejects.toMatchObject({ status: 403 });
+    });
     it("atomically publishes three personal uploads, retaining gallery references and enforcing the personal allowance", async () => {
       const subject = actors[0].clerkId;
       const files = Array.from({ length: 3 }, (_, index) => ({
@@ -121,10 +242,20 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       expect(
         (await service.profile(subject, actors[0].id)).posts[0].photos,
       ).toHaveLength(3);
+      const reused = await db.postPhoto.findFirstOrThrow({
+        where: { postId: post.id },
+        select: { photoId: true },
+      });
       await service.publishPersonal(subject, {
         body: "Second thought",
-        photoIds: [],
+        photoIds: [reused.photoId],
       });
+      expect(
+        await db.galleryEntry.count({ where: { ownerId: actors[0].id } }),
+      ).toBe(3);
+      expect(await db.photo.count({ where: { ownerId: actors[0].id } })).toBe(
+        3,
+      );
       await service.publishPersonal(subject, {
         body: "Third thought",
         photoIds: [],
@@ -440,6 +571,29 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         (await service.profile(actors[1].clerkId, actors[0].id)).posts[0].body,
       ).toBe("Private update");
     });
+    it("reports the current friendship’s acceptance date to both friends, preserving it on read and resetting it after re-friending", async () => {
+      const since = now.toISOString();
+      await friends();
+      const contact = async (actor: number, friend: number) =>
+        (await service.contacts(actors[actor].clerkId)).contacts.find(
+          (row) => row.person.id === actors[friend].id,
+        );
+      expect((await contact(0, 1))?.friendsSince).toBe(since);
+      expect((await contact(1, 0))?.friendsSince).toBe(since);
+      await service.readNotifications(actors[0].clerkId);
+      now = new Date(now.getTime() + 3600000);
+      await service.relationship(actors[1].clerkId, actors[0].id, "accept");
+      expect((await contact(0, 1))?.friendsSince).toBe(since);
+      await service.relationship(actors[0].clerkId, actors[1].id, "remove");
+      await service.relationship(actors[0].clerkId, actors[1].id, "request");
+      expect((await contact(0, 1))?.friendsSince).toBeNull();
+      await service.relationship(actors[1].clerkId, actors[0].id, "accept");
+      expect((await contact(0, 1))?.friendsSince).toBe(now.toISOString());
+      await db.memberNotification.deleteMany({
+        where: { kind: "friend_accepted" },
+      });
+      expect((await contact(0, 1))?.friendsSince).toBeNull();
+    });
     it("searches actual active introductions without disclosing pending or blocked accounts", async () => {
       expect(
         (
@@ -564,6 +718,15 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         liked: true,
         count: 1,
       });
+      expect(
+        (await service.identity(actors[0].clerkId)).preferences.notifyLikes,
+      ).toBe(false);
+      expect(
+        (await service.notifications(actors[0].clerkId)).activity.some(
+          (row) => row.kind === "like",
+        ),
+      ).toBe(false);
+      await service.updatePreferences(actors[0].clerkId, { notifyLikes: true });
       expect(await service.like(actors[1].clerkId, post.id, true)).toEqual({
         liked: true,
         count: 1,
@@ -664,6 +827,135 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       await expect(
         service.conversation(actor.clerkId, actor.id, foreign.id),
       ).rejects.toThrow();
+    });
+    it("edits private details independently and keeps RSVP responses while admins turn RSVPs off", async () => {
+      await friends();
+      const owner = actors[0];
+      const member = actors[1];
+      const planned = {
+        kind: "PRIVATE" as const,
+        name: "Our plans",
+        startsAt: "2027-01-01T09:00:00Z",
+        endsAt: "2027-01-01T11:00:00Z",
+        timeZone: "Asia/Tokyo",
+        location: "At home",
+        rsvpEnabled: true,
+      };
+      const room = await service.createSpace(owner.clerkId, planned);
+      await service.accept(
+        member.clerkId,
+        (await service.invite(owner.clerkId, room.id, member.id)).id,
+      );
+      await service.member(member.clerkId, room.id, {
+        action: "rsvp",
+        rsvp: "GOING",
+      });
+      await expect(
+        service.updateSpace(member.clerkId, room.id, planned),
+      ).rejects.toMatchObject({ status: 403 });
+      const changed = {
+        ...planned,
+        startsAt: "2027-01-02T09:00:00Z",
+        endsAt: "2027-01-02T12:00:00Z",
+        location: "",
+        rsvpEnabled: false,
+      };
+      await service.updateSpace(owner.clerkId, room.id, changed);
+      const off = await service.readSpace(member.clerkId, room.id);
+      expect(off).toMatchObject({
+        startsAt: "2027-01-02T09:00:00.000Z",
+        endsAt: "2027-01-02T12:00:00.000Z",
+        location: null,
+        rsvpEnabled: false,
+        rsvp: null,
+        expiresAt: null,
+      });
+      expect(off.members.every((entry) => entry.rsvp === null)).toBe(true);
+      expect(
+        (
+          await db.spaceMembership.findUniqueOrThrow({
+            where: { spaceId_userId: { spaceId: room.id, userId: member.id } },
+          })
+        ).rsvp,
+      ).toBe("GOING");
+      await expect(
+        service.member(member.clerkId, room.id, {
+          action: "rsvp",
+          rsvp: "MAYBE",
+        }),
+      ).rejects.toMatchObject({ status: 409 });
+      await expect(
+        service.member(member.clerkId, room.id, {
+          action: "rsvp-settings",
+          rsvpEnabled: true,
+        }),
+      ).rejects.toMatchObject({ status: 403 });
+      await service.member(owner.clerkId, room.id, {
+        action: "rsvp-settings",
+        rsvpEnabled: true,
+      });
+      expect((await service.readSpace(member.clerkId, room.id)).rsvp).toBe(
+        "GOING",
+      );
+      await expect(
+        service.updateSpace(owner.clerkId, room.id, {
+          ...changed,
+          endsAt: changed.startsAt,
+        }),
+      ).rejects.toThrow();
+      await service.updateSpace(owner.clerkId, room.id, {
+        kind: "PRIVATE",
+        name: "Just a place",
+        location: "The library",
+      });
+      expect(await service.readSpace(member.clerkId, room.id)).toMatchObject({
+        startsAt: null,
+        endsAt: null,
+        location: "The library",
+        rsvp: null,
+      });
+    });
+    it("excludes your own opted-in Space posts from the main feed while retaining the Space timeline and other members’ posts", async () => {
+      await friends();
+      const room = await service.createSpace(actors[0].clerkId, {
+        kind: "PRIVATE",
+        name: "Shared room",
+      });
+      await service.accept(
+        actors[1].clerkId,
+        (await service.invite(actors[0].clerkId, room.id, actors[1].id)).id,
+      );
+      for (const actor of actors.slice(0, 2)) {
+        await service.member(actor.clerkId, room.id, {
+          action: "preferences",
+          includeInFeed: true,
+        });
+      }
+      const own = await service.publish(actors[0].clerkId, room.id, {
+        body: "My Space post",
+        photoIds: [],
+      });
+      now = new Date(now.getTime() + 1000);
+      const other = await service.publish(actors[1].clerkId, room.id, {
+        body: "Another member’s Space post",
+        photoIds: [],
+      });
+      now = new Date(now.getTime() + 1000);
+      const personal = await service.publishPersonal(actors[1].clerkId, {
+        body: "Their personal post",
+        photoIds: [],
+      });
+      expect(
+        (await service.feed(actors[0].clerkId)).posts.map((post) => post.id),
+      ).toEqual([personal.id, other.id]);
+      expect(
+        (await service.feed(actors[1].clerkId)).posts.map((post) => post.id),
+      ).toEqual([own.id]);
+      expect(
+        (await service.posts(actors[0].clerkId, room.id)).posts.map(
+          (post) => post.id,
+        ),
+      ).toEqual([other.id, own.id]);
     });
     it("uses the saved protected portrait across Feed and conversation authors", async () => {
       await friends();

@@ -21,11 +21,8 @@
   flex-wrap: wrap;
   gap: 16px;
 }
-.margin-find-friends {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--text-control);
+.margin-friends-intro > p {
+  font: var(--text-body)/1.6 var(--font-body);
   color: hsl(var(--muted-foreground));
 }
 .margin-friends-switch {
@@ -87,6 +84,43 @@
   padding: 12px;
   border-radius: 8px;
   background: hsl(var(--secondary) / 0.6);
+}
+.margin-friends-list > li[data-friend="true"] {
+  padding: 0;
+}
+.margin-friend-profile-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: 8px 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: inherit;
+}
+.margin-friend-profile-link:hover {
+  background: hsl(var(--accent));
+}
+.margin-friend-since {
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-meta);
+}
+.margin-friend-chevron {
+  width: 16px;
+  height: 16px;
+  color: hsl(var(--muted-foreground));
+}
+@media (max-width: 479px) {
+  .margin-friend-profile-link {
+    grid-template-columns: minmax(0, 1fr) 16px;
+  }
+  .margin-friend-since {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .margin-friend-chevron {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
 }
 .margin-friend-person {
   display: flex;

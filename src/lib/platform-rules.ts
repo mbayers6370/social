@@ -7,7 +7,7 @@ export const POSTING_TIME_ZONE = FEED_TIME_ZONE;
 export const POSTING_RULE_SUMMARY =
   "Up to three regular posts per calendar day, or one link-containing post as your only post that day. Up to three photographs total per day, shared between posts and Gallery.";
 export const POSTING_EDIT_RULE =
-  "Editing or deleting a post recalculates your allowance from the remaining posts. Photographs kept in Gallery still count toward that day’s photo allowance. Add a link only when no other posts remain that day; remove the link to return to the three-post allowance.";
+  "Editing or deleting a post recalculates your post allowance. Uploaded photographs still count toward that day’s three-photo limit, even if you delete the post. Add a link only when no other posts remain that day; remove the link to return to the three-post allowance.";
 export const POSTING_EXCLUSIONS =
   "Comments and private messages do not count toward this limit.";
 /** Includes links pasted into ordinary body text, not only the dedicated Link mode. */

@@ -40,15 +40,24 @@ export function SpaceMembers({ data }: { data: Data }) {
         <div className="margin-space-panel-content">
           <ul className="margin-space-rows">
             {data.members.map((m) => (
-              <li key={m.userId}>
-                <span>
+              <li key={m.userId} className="margin-space-member-row">
+                <span className="margin-space-member-copy">
                   <Link href={client.href(`/app?person=${m.userId}`)}>
                     {m.name}
                   </Link>
-                  {m.role === "ADMIN" ? " · Administrator" : ""}
-                  {m.rsvp
-                    ? ` · ${m.rsvp === "GOING" ? "Going" : m.rsvp === "MAYBE" ? "Maybe" : "Can’t go"}`
-                    : ""}
+                  {(m.role === "ADMIN" || m.rsvp) && (
+                    <span className="margin-space-meta">
+                      {m.role === "ADMIN" ? "Administrator" : ""}
+                      {m.role === "ADMIN" && m.rsvp ? " · " : ""}
+                      {m.rsvp
+                        ? m.rsvp === "GOING"
+                          ? "Going"
+                          : m.rsvp === "MAYBE"
+                            ? "Maybe"
+                            : "Can’t go"
+                        : ""}
+                    </span>
+                  )}
                 </span>
                 {m.userId !== data.viewerId && (
                   <div

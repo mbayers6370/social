@@ -11,7 +11,7 @@ import { Avatar } from "@/features/feed/post-content";
 import { InviteFriends } from "@/features/account/invite-friends";
 import { useSpaceClient } from "@/features/spaces/client";
 import { MemberFriendActions } from "./member-friend-actions";
-import { MemberSearch } from "./member-search";
+import { FriendProfileLink } from "@/features/friends/friend-profile-link";
 import { requestMember } from "./member-client";
 import type { MemberFriends as FriendsData } from "./member-contracts";
 
@@ -28,12 +28,21 @@ export function MemberFriends({ initial }: { initial: FriendsData }) {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const data = page?.source === initial ? page.data : initial;
-  const term = query.trim().replace(/^@/, "").toLowerCase();
+  const requestCount = data.contacts.filter(
+    (contact) =>
+      contact.relationship === "incoming" ||
+      contact.relationship === "outgoing",
+  ).length;
+  const showSearch = section === "friends" || requestCount > 10;
+  const term = showSearch ? query.trim().replace(/^@/, "").toLowerCase() : "";
+  const friendCount = data.contacts.filter(
+    (contact) => contact.relationship === "friends",
+  ).length;
   const groups =
     section === "friends"
       ? [
           {
-            title: "Your Friends",
+            title: "Friends",
             kind: "friends",
             empty:
               "No friends here yet. Find a profile to send your first request.",
@@ -65,13 +74,10 @@ export function MemberFriends({ initial }: { initial: FriendsData }) {
             >
               Friends
             </SectionTitle>
-            <MemberSearch />
           </div>
           <div className="margin-friends-intro">
             {" "}
-            <p className="margin-field-hint">
-              A small circle, chosen together.
-            </p>
+            <p>A small circle, chosen together.</p>
             <InviteFriends />
           </div>
         </header>
@@ -111,76 +117,125 @@ export function MemberFriends({ initial }: { initial: FriendsData }) {
               }}
               onClick={() => setSection(value)}
             >
-              {value === "friends" ? "Friends" : "Requests"}
+              {value === "friends" ? (
+                <>
+                  Friends ·{" "}
+                  <span>
+                    {friendCount}
+                    {data.nextCursor ? "+" : ""}
+                  </span>
+                </>
+              ) : (
+                "Requests"
+              )}
             </Button>
           ))}
         </div>
-        <div className="margin-friends-search">
-          <Label className="sr-only" htmlFor={`${id}-filter`}>
-            Search your {section === "friends" ? "friends" : "requests"}
-          </Label>
-          <Search aria-hidden="true" />
-          <Input
-            id={`${id}-filter`}
-            type="search"
-            maxLength={80}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Name or username"
-          />
-        </div>
+        {showSearch && (
+          <div className="margin-friends-search">
+            <Label className="sr-only" htmlFor={`${id}-filter`}>
+              Search your {section === "friends" ? "friends" : "requests"}
+            </Label>
+            <Search aria-hidden="true" />
+            <Input
+              id={`${id}-filter`}
+              type="search"
+              maxLength={80}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={`Search your ${section === "friends" ? "friends" : "requests"}`}
+            />
+          </div>
+        )}
         <div
           id={`${id}-panel`}
           role="tabpanel"
           aria-labelledby={`${id}-${section}`}
         >
-          {groups.map((group) => {
-            const contacts = data.contacts.filter(
-              (contact) =>
-                contact.relationship === group.kind &&
-                (!term ||
-                  `${contact.person.name} ${contact.username}`
-                    .toLowerCase()
-                    .includes(term)),
-            );
-            return (
-              <section className="margin-friends-group" key={group.kind}>
-                <header className="margin-section-heading">
-                  <h2>{group.title}</h2>
-                  <span>
-                    {contacts.length}
-                    {data.nextCursor ? "+" : ""}
-                  </span>
-                </header>
-                {!contacts.length ? (
-                  <p className="margin-empty-copy">
-                    {term ? "No matching profiles in this list." : group.empty}
-                  </p>
-                ) : (
-                  <ul className="margin-friends-list">
-                    {contacts.map((contact) => (
-                      <li key={contact.person.id}>
-                        <Link
-                          href={`/app?person=${encodeURIComponent(contact.person.id)}`}
-                          className="margin-friend-person"
+          {section === "requests" && requestCount === 0 ? (
+            <div className="margin-friends-group">
+              <p className="margin-empty-copy">
+                {data.nextCursor
+                  ? "Load more to check for requests."
+                  : "No requests right now."}
+              </p>
+            </div>
+          ) : (
+            groups.map((group) => {
+              const contacts = data.contacts.filter(
+                (contact) =>
+                  contact.relationship === group.kind &&
+                  (!term ||
+                    `${contact.person.name} ${contact.username}`
+                      .toLowerCase()
+                      .includes(term)),
+              );
+              return (
+                <section
+                  className="margin-friends-group"
+                  key={group.kind}
+                  aria-label={group.title}
+                >
+                  {section === "requests" && (
+                    <header className="margin-section-heading">
+                      <h2>{group.title}</h2>
+                      {contacts.length > 0 && (
+                        <span>
+                          {contacts.length}
+                          {data.nextCursor ? "+" : ""}
+                        </span>
+                      )}
+                    </header>
+                  )}
+                  {!contacts.length ? (
+                    <p className="margin-empty-copy">
+                      {term
+                        ? "No matching profiles in this list."
+                        : group.empty}
+                    </p>
+                  ) : (
+                    <ul className="margin-friends-list">
+                      {contacts.map((contact) => (
+                        <li
+                          key={contact.person.id}
+                          data-friend={
+                            contact.relationship === "friends" || undefined
+                          }
                         >
-                          <Avatar live person={contact.person} />
-                          <span>
-                            <strong>{contact.person.name}</strong>
-                            <span>@{contact.username}</span>
-                          </span>
-                        </Link>
-                        <MemberFriendActions
-                          person={contact.person}
-                          relationship={contact.relationship}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            );
-          })}
+                          {contact.relationship === "friends" ? (
+                            <FriendProfileLink
+                              live
+                              person={contact.person}
+                              username={contact.username}
+                              href={`/app?person=${encodeURIComponent(contact.person.id)}`}
+                              friendsSince={contact.friendsSince}
+                            />
+                          ) : (
+                            <>
+                              <Link
+                                href={`/app?person=${encodeURIComponent(contact.person.id)}`}
+                                className="margin-friend-person"
+                              >
+                                <Avatar live person={contact.person} />
+                                <span>
+                                  <strong>{contact.person.name}</strong>
+                                  <span>@{contact.username}</span>
+                                </span>
+                              </Link>
+                              <MemberFriendActions
+                                person={contact.person}
+                                relationship={contact.relationship}
+                              />
+                            </>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              );
+            })
+          )}
         </div>
         {data.nextCursor && (
           <Button

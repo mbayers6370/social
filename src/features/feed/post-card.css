@@ -10,12 +10,17 @@
 }
 .margin-post-card {
   --post-block-padding: calc(var(--space-related) * 2);
-  --post-inline-padding: calc(var(--space-related) * 2);
-  padding: var(--post-block-padding) var(--post-inline-padding);
+  padding: var(--post-block-padding) var(--margin-post-inline-padding);
   border: 1px solid hsl(var(--border) / 0.65);
   border-radius: var(--radius-card);
   background: hsl(var(--card));
   color: hsl(var(--card-foreground));
+}
+[data-main-feed="true"] .margin-post-card {
+  --post-block-padding: var(--space-group);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 .margin-feed-post {
   position: relative;
@@ -91,6 +96,11 @@
   margin-top: var(--space-related);
   font-size: var(--text-meta);
   color: hsl(var(--muted-foreground));
+}
+[data-main-feed="true"] .margin-post-footer {
+  /* Balance visible content around rules while retaining the 44px tap target.
+     The 16px conversation icon has 12px more inset than the 40px avatar. */
+  margin-bottom: -12px;
 }
 .margin-post-details {
   display: flex;
@@ -208,11 +218,6 @@
     opacity: 1;
   }
 }
-@media (min-width: 640px) {
-  .margin-post-card {
-    --post-inline-padding: var(--space-group);
-  }
-}
 @media (min-width: 1024px) {
   .margin-post-footer {
     gap: 8px 16px;
@@ -226,8 +231,6 @@
     display: flex;
     flex-direction: column;
     min-height: var(--margin-conversation-height);
-    background: hsl(var(--muted));
-    color: hsl(var(--muted-foreground));
     visibility: visible;
     z-index: 30;
   }

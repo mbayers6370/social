@@ -109,14 +109,6 @@
   min-width: 0;
   animation: margin-compose-expand 180ms ease-out;
 }
-.margin-compose-inline .margin-compose-header {
-  margin: -16px -16px 16px;
-  padding: 16px;
-  border-bottom: 1px solid hsl(var(--border) / 0.65);
-}
-.margin-compose-inline .margin-compose-title {
-  font: 500 var(--text-control)/1.5 var(--font-body);
-}
 .margin-compose-inline .margin-compose-editor {
   padding: 0;
   overflow: visible;
@@ -196,6 +188,44 @@ html[data-motion="reduced"] .margin-compose-inline {
   background: hsl(var(--secondary));
   border-radius: var(--radius-control);
 }
+.margin-compose-type {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.margin-compose-posting-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.margin-compose-posting-status > div {
+  min-width: 0;
+}
+.margin-compose-posting-status .margin-avatar,
+.margin-compose-author .margin-avatar {
+  --margin-avatar-size: 36px;
+}
+.margin-compose-writing {
+  width: 100%;
+}
+.margin-post-photo-delete-option label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: var(--text-body);
+}
+.margin-post-photo-delete-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: hsl(var(--blackened-olive));
+}
+.margin-compose-writing > :last-child {
+  min-width: 0;
+}
 .margin-compose-modes button {
   border-radius: var(--radius-control);
   min-width: 85px;
@@ -232,9 +262,10 @@ html[data-motion="reduced"] .margin-compose-inline {
 }
 .margin-compose-body {
   width: 100%;
-  min-height: 180px;
-  max-height: 40svh;
-  resize: vertical;
+  height: calc(3lh + 26px);
+  min-height: calc(3lh + 26px);
+  overflow-y: auto;
+  resize: none;
   padding: 12px;
   border: 1px solid hsl(var(--input));
   border-radius: 12px;

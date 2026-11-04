@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { captureScreenshot, test, expect } from "./fixtures";
 import { memberFixture, friend, identity } from "./helpers/member-fixture";
 
 test.beforeEach(async ({ page }) => {
@@ -9,45 +9,64 @@ test.beforeEach(async ({ page }) => {
   await memberFixture(page);
 });
 
-test("keeps Notebook neutral until selected and uses the shared lime/olive selection and thread border", async ({
-  page,
-  isMobile,
-}, info) => {
-  await page.goto("/preview/auth?view=member&area=messages");
-  const notebook = page.locator('.margin-thread-choice[data-notebook="true"]');
-  await expect(notebook).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  await expect(notebook).toHaveCSS("border-top-color", "rgb(223, 227, 229)");
-  await page
-    .getByRole("button", { name: "Open conversation with Alex Example" })
-    .click();
-  await expect(page.locator(".margin-thread")).toHaveCSS(
-    "border-top-color",
-    "rgb(138, 145, 110)",
-  );
-  if (!isMobile) {
+test(
+  "highlights the displayed conversation from entry with the light green selection and olive border",
+  { tag: "@extended" },
+  async ({ page, isMobile }, info) => {
+    await page.goto("/preview/auth?view=member&area=messages");
+    const notebook = page.locator(
+      '.margin-thread-choice[data-notebook="true"]',
+    );
+    await expect(notebook).toHaveAttribute("data-active", "true");
+    await expect(notebook).toHaveCSS(
+      "background-color",
+      isMobile ? "rgb(255, 255, 255)" : "rgba(185, 198, 90, 0.35)",
+    );
+    await expect(notebook).toHaveCSS(
+      "border-top-color",
+      isMobile ? "rgb(223, 227, 229)" : "rgb(138, 145, 110)",
+    );
+    await page
+      .getByRole("button", { name: "Open conversation with Alex Example" })
+      .click();
+    await expect(page.locator(".margin-thread")).toHaveCSS(
+      "border-top-color",
+      "rgb(138, 145, 110)",
+    );
+    if (!isMobile) {
+      await expect(
+        page.locator('.margin-thread-choice[data-active="true"]'),
+      ).toHaveCSS("background-color", "rgba(185, 198, 90, 0.35)");
+      await expect(notebook).toHaveCSS(
+        "background-color",
+        "rgb(255, 255, 255)",
+      );
+    } else await page.getByRole("button", { name: "Back to messages" }).click();
+    await page.getByRole("button", { name: "Open notebook" }).click();
     await expect(
-      page.locator('.margin-thread-choice[data-active="true"]'),
-    ).toHaveCSS("background-color", "rgb(185, 198, 90)");
-    await expect(notebook).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  } else await page.getByRole("button", { name: "Back to messages" }).click();
-  await page.getByRole("button", { name: "Open notebook" }).click();
-  await expect(
-    page
-      .locator(".margin-thread-header")
-      .getByRole("heading", { name: "Notebook" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Conversation options", exact: true }),
-  ).toHaveCount(0);
-  if (!isMobile) {
-    await expect(notebook).toHaveCSS("background-color", "rgb(185, 198, 90)");
-    await expect(notebook).toHaveCSS("border-top-color", "rgb(138, 145, 110)");
-  }
-  await page.screenshot({
-    path: info.outputPath("notebook-selection.png"),
-    caret: "initial",
-  });
-});
+      page
+        .locator(".margin-thread-header")
+        .getByRole("heading", { name: "Notebook" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Conversation options", exact: true }),
+    ).toHaveCount(0);
+    if (!isMobile) {
+      await expect(notebook).toHaveCSS(
+        "background-color",
+        "rgba(185, 198, 90, 0.35)",
+      );
+      await expect(notebook).toHaveCSS(
+        "border-top-color",
+        "rgb(138, 145, 110)",
+      );
+    }
+    await captureScreenshot(page, {
+      path: info.outputPath("notebook-selection.png"),
+      caret: "initial",
+    });
+  },
+);
 
 test("spaces profile options consistently and preserves report, block and friendship controls", async ({
   page,
@@ -86,7 +105,7 @@ test("spaces profile options consistently and preserves report, block and friend
   expect((await dialog.boundingBox())!.width).toBeLessThanOrEqual(
     page.viewportSize()!.width - 16,
   );
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: info.outputPath("profile-options.png"),
     caret: "initial",
   });
@@ -188,7 +207,7 @@ for (const kind of ["comment", "reply"] as const) {
       await expect(
         dialog.getByRole("button", { name: "Hide replies" }),
       ).toHaveAttribute("aria-expanded", "true");
-    await page.screenshot({
+    await captureScreenshot(page, {
       path: info.outputPath(`notification-${kind}.png`),
       caret: "initial",
     });

@@ -26,7 +26,13 @@ const data = {
 };
 beforeEach(() => {
   request.mockReset();
-  vi.stubGlobal("fetch", request);
+  vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
+    url === "/api/posts/allowance"
+      ? Promise.resolve(
+          Response.json({ regularRemaining: 3, linkAllowed: true }),
+        )
+      : request(url, init),
+  );
   vi.stubGlobal("matchMedia", () => ({
     matches: true,
     addEventListener: vi.fn(),

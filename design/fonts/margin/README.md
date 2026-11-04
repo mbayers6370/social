@@ -5,7 +5,7 @@ These are working font families, developed from the visual studies rather than e
 No Caudex, Neurath, Amigável, system-font outlines, or third-party font binaries are used in the build.
 
 Each family has three upright faces: **Light 300**, **Medium 500**, and **Bold 700**.
-Hinge has proportional spacing, angled crossbars, diagonal shoulder cuts, and pair kerning.
+Hinge has proportional spacing, angled crossbars, diagonal shoulder cuts, and pair kerning. Apostrophes, quotation marks, commas, periods and ellipses use compact punctuation advances in the editable master and both exported formats.
 Loose Mono uses a **620-unit advance for every character**, including spaces and punctuation; it has no pair kerning.
 The three weights use the same metrics within each family, so switching weight preserves line lengths.
 

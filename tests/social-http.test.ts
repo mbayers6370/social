@@ -5,6 +5,7 @@ import { boundedBody, socialRequest } from "@/server/social/http";
 import { UnauthorizedError, requireViewer } from "@/server/auth";
 import { getDb } from "@/server/db";
 import { enforceRateLimit } from "@/server/security/rate-limit";
+import { SpaceService } from "@/server/spaces/service";
 vi.mock("@/server/auth", async (original) => ({
   ...(await original<typeof import("@/server/auth")>()),
   requireViewer: vi.fn(),
@@ -18,6 +19,40 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.clearAllMocks();
 });
+it.each([undefined, false, true])(
+  "passes the explicit post-photo deletion choice %s through the authenticated boundary",
+  async (deletePhotos) => {
+    vi.stubEnv("MARGIN_PRIVATE_BACKEND_ENABLED", "1");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+    vi.mocked(requireViewer).mockResolvedValue({ id: "verified-subject" });
+    const remove = vi
+      .spyOn(SpaceService.prototype, "deletePost")
+      .mockResolvedValue();
+    const response = await socialRequest(
+      new Request("http://localhost:3000/api/posts/post-choice", {
+        method: "DELETE",
+        headers: {
+          Origin: "http://localhost:3000",
+          ...(deletePhotos === undefined
+            ? {}
+            : { "Content-Type": "application/json" }),
+        },
+        ...(deletePhotos === undefined
+          ? {}
+          : { body: JSON.stringify({ deletePhotos }) }),
+      }),
+      "deletePost",
+      "post-choice",
+    );
+    expect(response.status).toBe(204);
+    expect(remove).toHaveBeenCalledWith(
+      "verified-subject",
+      "post-choice",
+      deletePhotos ?? false,
+    );
+  },
+);
+
 it("keeps the candidate backend disabled by default without opening a database", async () => {
   vi.stubEnv("MARGIN_PRIVATE_BACKEND_ENABLED", "");
   const response = await socialRequest(

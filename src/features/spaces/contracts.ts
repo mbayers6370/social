@@ -1,6 +1,7 @@
 export type SpaceSummary = {
   id: string;
   name: string;
+  // PRIVATE and GATHERING are storage tags for the same invitation-only Space.
   kind: "PRIVATE" | "GATHERING" | "EVENT";
   startsAt: string | null;
   timeZone: string | null;
@@ -39,6 +40,7 @@ export type SpaceDetails = SpaceSummary & {
   role: "ADMIN" | "MEMBER";
   includeInFeed: boolean;
   rsvp: "GOING" | "MAYBE" | "DECLINED" | null;
+  rsvpEnabled?: boolean;
   members: {
     userId: string;
     name: string;

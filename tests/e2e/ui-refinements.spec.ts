@@ -1,38 +1,4 @@
-import { expect, test } from "./fixtures";
-test("photographs stay selected until confirmed and retain saved alt text", async ({
-  page,
-}, testInfo) => {
-  test.skip(
-    process.env.PLAYWRIGHT_PRODUCTION === "1",
-    "Photograph fixtures are development-only",
-  );
-  await page.goto("/?view=profile");
-  await page.getByRole("button", { name: "Edit profile", exact: true }).click();
-  await page.getByRole("button", { name: "Change profile photograph" }).click();
-  const picker = page.getByRole("dialog", { name: "Choose a photograph" });
-  const use = picker.getByRole("button", {
-    name: "Use Photograph",
-    exact: true,
-  });
-  await expect(use).toBeDisabled();
-  const photo = picker.getByRole("button", { name: /^Select / }).first();
-  const description = await photo.locator("img").getAttribute("alt");
-  await photo.click();
-  await expect(photo).toHaveAttribute("aria-pressed", "true");
-  await expect(photo.locator(".margin-photo-selected-mark")).toBeVisible();
-  await expect(photo).toHaveCSS("border-top-width", "3px");
-  await expect(
-    picker.getByRole("textbox", { name: "Describe the photograph (alt text)" }),
-  ).toHaveValue(description!);
-  await expect(use).toBeEnabled();
-  await page.screenshot({
-    path: `test-results/selected-photo-${testInfo.project.name}.png`,
-  });
-  await use.click();
-  await expect(
-    page.getByRole("dialog", { name: "Your Profile Photograph" }),
-  ).toBeVisible();
-});
+import { captureScreenshot, expect, test } from "./fixtures";
 test("profile flags have a dismissible keyboard tooltip and account actions are outlined", async ({
   page,
 }, testInfo) => {
@@ -78,24 +44,7 @@ test("profile flags have a dismissible keyboard tooltip and account actions are 
     menu.getByRole("button", { name: "Exit preview", exact: true }),
   ])
     await expect(action).toHaveCSS("border-top-width", "1px");
-  await page.screenshot({
+  await captureScreenshot(page, {
     path: `test-results/outlined-account-${testInfo.project.name}.png`,
   });
-});
-test("public sign-in stays outlined without overflowing narrow screens", async ({
-  page,
-}, testInfo) => {
-  if (testInfo.project.name === "mobile")
-    await page.setViewportSize({ width: 320, height: 800 });
-  await page.goto("/welcome");
-  await expect(
-    page
-      .getByRole("navigation", { name: "Public navigation" })
-      .getByRole("link", { name: "Sign in", exact: true }),
-  ).toHaveCSS("border-top-width", "1px");
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
 });
