@@ -222,6 +222,7 @@ it.each([
   },
 );
 it.each([
+  [false, false],
   [false, true],
   [true, false],
   [true, true],
@@ -245,9 +246,12 @@ it.each([
         />,
       ),
     );
-    expect(screen.queryByRole("link", { name: "Message" }) !== null).toBe(
-      viewer && recipient,
-    );
+    const message = screen.queryByRole("link", { name: "Message A friend" });
+    if (viewer && recipient) {
+      expect(message).toHaveAttribute("href", "/app/messages?thread=friend");
+    } else {
+      expect(message).not.toBeInTheDocument();
+    }
   },
 );
 it("clears a stale open conversation after a server denial reports that messaging is off", async () => {

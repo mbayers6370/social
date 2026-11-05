@@ -121,7 +121,7 @@ test("removes profile messaging for either opt-out, blocks the disabled messagin
     exact: true,
   });
   await expect(
-    page.getByRole("link", { name: "Message", exact: true }),
+    page.getByRole("link", { name: `Message ${friend.name}`, exact: true }),
   ).toHaveCount(0);
   await expect(
     nav.getByRole("link", { name: "Messages", exact: true }),
@@ -137,7 +137,7 @@ test("removes profile messaging for either opt-out, blocks the disabled messagin
     "/preview/auth?view=member&area=friend-profile&messaging=off",
   );
   await expect(
-    page.getByRole("link", { name: "Message", exact: true }),
+    page.getByRole("link", { name: `Message ${friend.name}`, exact: true }),
   ).toHaveCount(0);
   await expect(
     nav.getByRole("link", { name: "Messages", exact: true }),
@@ -161,8 +161,11 @@ test("removes profile messaging for either opt-out, blocks the disabled messagin
   await page.unroute("**/__member_fixture/api/member/context");
   await page.goto("/preview/auth?view=member&area=friend-profile");
   await expect(
-    page.getByRole("link", { name: "Message", exact: true }),
+    page.getByRole("link", { name: `Message ${friend.name}`, exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: `Message ${friend.name}`, exact: true }),
+  ).toHaveAttribute("href", `/app/messages?thread=${friend.id}`);
   await expect(
     nav.getByRole("link", { name: "Messages", exact: true }),
   ).toBeVisible();
