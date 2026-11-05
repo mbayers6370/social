@@ -10,6 +10,7 @@ import { EmptyFeed } from "./empty-feed";
 import { useFeedReveal } from "./use-feed-reveal";
 
 import { FeedComposer } from "@/features/compose/feed-composer";
+import { cn } from "@/lib/utils";
 
 import dynamic from "next/dynamic";
 import {
@@ -242,7 +243,10 @@ export function FeedExperience({
           </p>
         )}
         <div
-          className={`margin-feed-column${profileId ? "" : "margin-feed-surface"}`}
+          className={cn(
+            "margin-feed-column",
+            !profileId && "margin-feed-surface",
+          )}
         >
           {!profileId && (
             <>
