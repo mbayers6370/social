@@ -6,7 +6,7 @@ export const DAILY_IMAGES = 3;
 export const SPACE_PHOTO_LIMIT = 20;
 export const POSTING_TIME_ZONE = FEED_TIME_ZONE;
 export const POSTING_RULE_SUMMARY =
-  "Up to three regular posts per calendar day, or one link-containing post as your only post that day. Up to three photographs total per day, shared between posts and Gallery.";
+  "Up to three regular posts per calendar day, or one post with a link if it’s your only post that day. Up to three photographs a day in total, shared between posts and Gallery.";
 export const POSTING_EDIT_RULE =
   "Published posts and uploaded photographs still count toward the day’s allowance after deletion. Editing uses the original posting day. Add a link only when there are no other publications that day; removing a link returns that post to the regular-post allowance.";
 export const POSTING_EXCLUSIONS =

@@ -16,7 +16,7 @@ const postingPoints = [
   POSTING_EDIT_RULE,
   POSTING_EXCLUSIONS,
   "Your posting day runs from midnight to midnight in your account’s saved time zone. Changing time zones does not give you a fresh allowance; recent usage carries forward for at least 24 hours.",
-  "A link pasted into your post text counts as a link-containing post, too.",
+  "Pasting a link into your words counts as a link post, too.",
 ];
 const supportContact =
   "Email " +
@@ -26,6 +26,8 @@ const photoProcessing =
   "Your uploaded photographs are checked for supported file type, size, and dimensions, then re-encoded with embedded source metadata removed. These technical and privacy checks are not automated content moderation: they do not determine whether an image is safe, lawful, or appropriate. Visible details in a photograph can still identify you or reveal a location.";
 const messagePrivacy =
   "Your messages are stored on our servers and are not end-to-end encrypted. Your Notebook is for notes to yourself. Reporting a message can make the reported message available to the founder for a safety review; it does not open your entire inbox to other members.";
+const sharedConversations =
+  "If someone you message deactivates their account, your conversation with them is removed too. Download it first if you want to keep a copy.";
 const removalScope =
   "Deactivation ends your account access and removes your posts, Gallery placements, friendships, and messages from the active service. Your photographs become unavailable and are queued for storage cleanup. It does not automatically erase your sign-in identity with Clerk, every remaining account or safety record, or backups. Email support for a complete account-erasure request.";
 
@@ -53,7 +55,7 @@ export const publicDocuments = {
         id: "boundaries",
         title: "Leave a little room.",
         paragraphs: [
-          "You can share up to three regular posts a day, or one link-containing post as your only post that day. It’s an allowance, not a quota. You don’t need to post every day to belong here.",
+          "You can share up to three regular posts a day, or one post with a link if it’s your only post that day. It’s an allowance, not a quota. You don’t need to post every day to belong here.",
           "Your posts expire after 30 days. Your Gallery gives you room for up to 20 photographs you want to keep. Words and still photographs leave room to pause without another video starting.",
           "Expiration is not a promise to erase screenshots, exports, or backups at the same moment. You deserve to know that difference before you share.",
         ],
@@ -93,7 +95,7 @@ export const publicDocuments = {
     intro: "Your people. A few clear boundaries. Plenty of room within them.",
     summary: [
       "Join by invitation and connect through mutual friendship.",
-      "Share up to three regular posts a day, or one link-containing post.",
+      "Share up to three posts a day, or one post with a link.",
       "Keep photographs in Gallery and conversations in their own space.",
     ],
     sections: [
@@ -232,8 +234,8 @@ export const publicDocuments = {
         id: "saving",
         title: "Check whether a change saved",
         paragraphs: [
-          "Settings options save as you change them. Look for the saved confirmation beside the option. Profile, post, Top 4, and Gallery editors use their own Save or Done button.",
-          "If a submission’s result is uncertain, use the recovery action to check what saved before submitting again. Keep the draft open until you know the result. Unpublished drafts are temporary and aren’t a backup; save important writing elsewhere before closing or refreshing your browser.",
+          "Settings save automatically; look for the confirmation beside each option. Your profile, posts, Top 4, and Gallery have their own Save or Done button, and need that tap.",
+          "If you’re not sure something posted, check before trying again, and keep your draft open until you know. Drafts aren’t saved anywhere, so copy important writing somewhere safe before you close or refresh the page.",
         ],
       },
       {
@@ -286,8 +288,9 @@ export const publicDocuments = {
         title: "Write a message or a note",
         paragraphs: [
           "Open Messages and choose a conversation. Enter sends; Shift+Enter starts a new line. In Notebook, Enter saves a note to yourself. Your composer stays below the conversation as you write.",
-          "You can turn messaging off in Settings. That stops reads and sends for conversations involving your account, including existing conversations, while the underlying retention deadlines continue. Turning it back on restores access to content that hasn’t expired.",
-          "Download an available conversation from its header. Your account download can include available messages and Notebook notes. Unsent drafts stay in the current tab and aren’t included in the saved-account export.",
+          "You can turn messaging off in Settings. That pauses all your conversations, in both directions, but expiry deadlines keep running. Turn it back on to pick up anything that hasn’t expired.",
+          "Download a conversation from its header. Your account download can include your messages and Notebook notes. Messages you haven’t sent aren’t included.",
+          sharedConversations,
           messagePrivacy,
         ],
       },
@@ -436,15 +439,15 @@ export const publicDocuments = {
         title: "Take a copy with you",
         paragraphs: [
           "In Settings, open the account download and choose the categories you want. Prepare an archive with available photographs or a readable PDF. You can also download an available conversation from its header.",
-          "Your download can include your profile and music, posts, photographs and Gallery arrangement, comments and likes, relationships, messages, Notebook notes, notifications, preferences, and your reports. It doesn’t expose provider credentials, private storage keys, other people’s full accounts, or other people’s reports.",
-          "Unpublished drafts remain in your tab and are excluded from the saved-account export. Expired and erased content isn’t recoverable through a download. If your account needs an assisted export or a category is missing, email support.",
+          "Your download can include your profile and music, Top 4, posts, photographs and Gallery arrangement, comments and likes, relationships, messages, Notebook notes, notifications, preferences, and your reports. It never includes passwords, other people’s private accounts, or their reports.",
+          "Drafts you haven’t posted aren’t included. Expired and erased content can’t be recovered through a download. If your account needs an assisted export or a category is missing, email support.",
         ],
       },
       {
         id: "correction",
         title: "Change what you share",
         paragraphs: [
-          "Use Edit profile for your name and bio, Settings for your one permitted username change, and the controls beside your posts, Gallery, Top 4, and On Repeat for those choices. Settings options save as you change them; editors with a Save or Done button need that final step.",
+          "Use Edit profile for your name and bio, and Settings for your one username change. Your posts, Gallery, Top 4, and On Repeat each have their own controls. Settings save automatically; anything with a Save or Done button needs that tap.",
           "Your personal posts and Gallery are for accepted friends. Your profile introduction can be visible to other signed-in members. Removing a friendship changes access; it does not erase a screenshot or downloaded copy.",
         ],
         links: [{ label: "Help with your profile", href: "/help#profile" }],
@@ -844,6 +847,7 @@ export const publicDocuments = {
             NOTEBOOK_LIFETIME_DAYS +
             " days after it is saved. New messages and notes do not renew earlier entries.",
           "Expired entries are excluded from conversation history, previews, and exports. Scheduled cleanup removes their stored rows. Turning messaging off does not pause these deadlines. Download available messages before expiration if you want to keep a copy.",
+          sharedConversations,
         ],
       },
       {
@@ -877,7 +881,7 @@ export const publicDocuments = {
         title: "Backups and cleanup delays",
         paragraphs: [
           "Removing a live database record does not instantly erase database recovery logs, replicas, or backups. A storage outage or cleanup backlog can delay physical deletion while normal access remains denied.",
-          "The hosted backup rotation, deletion completion targets, and controls for reapplying deletions after restoration must be confirmed before this policy becomes effective. A one-minute cleanup schedule is an operating cadence, not a promise that every file disappears within one minute.",
+          "The hosted backup rotation, deletion completion targets, and controls for reapplying deletions after restoration must be confirmed before this policy becomes effective.",
         ],
       },
       {
