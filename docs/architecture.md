@@ -35,7 +35,7 @@ The preview identity is fictional and is not authenticated production access. Al
 
 `PostCard` is the reusable post article. It accepts server-rendered author/content children and local action slots. `PostFooter` provides expiry details and the trailing Conversation action; profile owners also receive Edit. Feed and profile posts share the same action placement.
 
-The main feed excludes the viewer's own personal posts; opted-in Space posts retain their shared chronology. Profile posts share one Recent posts card with full-width separators. Photos precede text and open through shared image viewers. Preview profile conversations flip in place on desktop; preview feed conversations use an adjacent desktop panel. Live Spaces reuse comment rows/forms in an accessible dialog with focus restoration.
+The main feed excludes the viewer's own personal posts; opted-in Space posts retain their shared chronology. Profile posts share one Recent posts card with full-width separators. Photos precede text and open through shared image viewers. Main-feed composition and posts share one white surface with full-width rules. Main-feed and profile conversations flip in place on desktop and fill the screen on phones. Live Spaces reuse comment rows/forms in an accessible dialog with focus restoration.
 
 ## Durable Spaces
 

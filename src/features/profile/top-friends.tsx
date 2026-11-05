@@ -10,6 +10,14 @@ import { memberChanged } from "@/features/social/member-client";
 import { ProfileSection } from "./profile-section";
 import { TopFriendsEditor } from "./top-friends-editor";
 
+function topFriendName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  const lastName = parts.at(-1);
+  return parts.length > 1 && lastName
+    ? `${parts[0]} ${Array.from(lastName)[0]}.`
+    : name.trim();
+}
+
 /** Absence means private/disabled. An empty authorized list offers only its owner a prompt. */
 export function TopFriends({
   friends,
@@ -63,8 +71,8 @@ export function TopFriends({
           <div className="margin-top-friends-grid">
             {saved.map((person) => (
               <PersonLink live key={person.id} person={person}>
-                <Avatar live person={person} sizes="44px" />
-                <span>{person.name}</span>
+                <Avatar live person={person} sizes="44px" shape="rounded" />
+                <span>{topFriendName(person.name)}</span>
               </PersonLink>
             ))}
           </div>

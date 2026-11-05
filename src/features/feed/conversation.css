@@ -292,8 +292,14 @@ html:has(.margin-conversation-frame[aria-modal="true"]) {
     border: 0;
     border-radius: inherit;
   }
-  .margin-conversation-frame[data-layout="inline-flip"][data-profile-flip="true"] {
+  .margin-conversation-frame[data-layout="inline-flip"]:is(
+      [data-profile-flip="true"],
+      [data-feed-dividers="true"]
+    ) {
     border-radius: 0;
+  }
+  .margin-conversation-frame[data-layout="inline-flip"][data-feed-dividers="true"] {
+    --conversation-surface: var(--feed-surface);
   }
 }
 @media (prefers-reduced-motion: reduce) {

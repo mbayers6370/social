@@ -34,9 +34,6 @@ export function PublicHome() {
                 </Link>
                 <WelcomePreviewLink />
               </div>
-              <p className="margin-public-status">
-                A small community, grown through personal invitations.
-              </p>
             </div>
           </header>
           <div
@@ -73,71 +70,83 @@ export function PublicHome() {
           </figcaption>
         </figure>
       </section>
-      <ul className="margin-welcome-differences" aria-label="What’s different">
-        <li>No like counts in the feed</li>
-        <li>No ads</li>
-        <li>No algorithm</li>
-        <li>Posts disappear after 30 days</li>
-        <li>Up to three posts a day</li>
-      </ul>
-      <section
-        className="margin-welcome-connection"
-        aria-labelledby="welcome-connection-title"
-      >
-        <div className="margin-welcome-section-copy">
-          <h2 id="welcome-connection-title">
-            Less audience.
-            <br />
-            More friends.
-          </h2>
-          <p>
-            A passing thought becomes a conversation. A photograph becomes a
-            plan. That’s the good part.
-          </p>
-          <PublicTextLink href="/how-it-works">How Margin works</PublicTextLink>
-        </div>
-        <div className="margin-welcome-message-stage">
-          <p className="margin-welcome-message-preface">
-            A little later, in messages…
-          </p>
-          <WelcomeMessages />
-          <p className="margin-welcome-message-afterword">
-            And just like that, Saturday has plans.
-          </p>
-        </div>
-      </section>
-      <section
-        className="margin-welcome-gallery-section"
-        aria-labelledby="welcome-gallery-title"
-      >
-        <div className="margin-welcome-gallery-heading">
-          <h2 id="welcome-gallery-title">
-            The days move on.
-            <br />
-            Keep the good bits.
-          </h2>
-          <p>
-            A small gallery of photographs, chosen by you. For the friends who
-            know the stories behind them.
-          </p>
-        </div>
-        <WelcomeGallery />
-      </section>
+      <div className="margin-welcome-friends">
+        <section
+          className="margin-welcome-connection"
+          aria-labelledby="welcome-connection-title"
+        >
+          <div className="margin-welcome-section-copy">
+            <h2 id="welcome-connection-title">
+              Less audience.
+              <br />
+              More friends.
+            </h2>
+            <p>
+              A passing thought becomes a conversation. A photograph becomes a
+              plan. That’s the good part.
+            </p>
+            <PublicTextLink href="/how-it-works">
+              How Margin works
+            </PublicTextLink>
+          </div>
+          <div className="margin-welcome-message-stage">
+            <p className="margin-welcome-message-preface">
+              A little later, in messages…
+            </p>
+            <WelcomeMessages />
+            <p className="margin-welcome-message-afterword">
+              And just like that, Saturday has plans.
+            </p>
+          </div>
+        </section>
+        <ul
+          className="margin-welcome-differences"
+          aria-label="What’s different"
+        >
+          <li>No like counts in the feed</li>
+          <li>No ads</li>
+          <li>No algorithm</li>
+          <li>Posts disappear after 30 days</li>
+          <li>Up to three posts a day</li>
+        </ul>
+        <section
+          className="margin-welcome-gallery-section"
+          aria-labelledby="welcome-gallery-title"
+        >
+          <div className="margin-welcome-gallery-heading">
+            <h2 id="welcome-gallery-title">
+              The days move on.
+              <br />
+              Keep the good bits.
+            </h2>
+            <p>
+              A small gallery of photographs, chosen by you. For the friends who
+              know the stories behind them.
+            </p>
+          </div>
+          <WelcomeGallery />
+        </section>
+      </div>
       <section
         className="margin-welcome-joining"
         aria-labelledby="welcome-joining-title"
       >
-        <div>
+        <div className="margin-welcome-joining-layout">
           <h2 id="welcome-joining-title">
             <span>For the people</span> <span>you think of first.</span>
           </h2>
-          <p className="margin-welcome-invitation">
-            Margin grows through invitations from existing members. Open a link
-            from someone you know to begin.
-          </p>
-          <PublicTextLink href="/how-it-works">
-            Membership by invitation
-          </PublicTextLink>
+          <div className="margin-welcome-invitation">
+            <p className="margin-welcome-invitation-label">
+              Membership by invitation
+            </p>
+            <p>
+              A friend sends you a personal invitation link. Open it to create
+              your account and join them on Margin.
+            </p>
+            <PublicTextLink href="/how-it-works">
+              How invitations work
+            </PublicTextLink>
+          </div>
         </div>
       </section>
     </>

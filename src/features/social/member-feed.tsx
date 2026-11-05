@@ -39,9 +39,9 @@ export function MemberFeed({
               }).format(new Date(referenceTime))}
             </time>
           </p>
-          {data && <PersonalComposer viewer={data.viewer} />}
         </section>
-        <div className="margin-feed-column">
+        <div className="margin-feed-column margin-feed-surface">
+          {data && <PersonalComposer viewer={data.viewer} />}
           {data ? (
             <>
               <SpaceTimeline
@@ -51,9 +51,7 @@ export function MemberFeed({
               />
               {!data.page.posts.length && !older ? (
                 <EmptyFeedContent hasFriends={data.page.hasFriends} />
-              ) : (
-                !data.page.nextCursor && <FeedEnd />
-              )}
+              ) : null}
               {older && <Link href="/app/feed">Newest posts</Link>}
             </>
           ) : (
@@ -63,6 +61,9 @@ export function MemberFeed({
             </div>
           )}
         </div>
+        {data &&
+          (data.page.posts.length > 0 || older) &&
+          !data.page.nextCursor && <FeedEnd />}
       </div>
     </LiveAppShell>
   );

@@ -143,10 +143,7 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
   await expect(dialog.locator("[data-like-count]")).toHaveCount(1);
   await expect(
     dialog.getByRole("button", {
-      name:
-        (page.viewportSize()?.width ?? 0) >= 1024
-          ? "Back to post"
-          : "Close conversation",
+      name: "Close conversation",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -157,17 +154,13 @@ test("opens the correct conversation, keeps Like at the top, and restores scroll
   expect(after?.x).toBeCloseTo(before.next.x, 1);
   expect(after?.y).toBeCloseTo(before.next.y + growth - scrollDelta, 1);
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
-    const moved = await post.boundingBox();
-    const panel = await dialog.boundingBox();
-    expect(moved!.x).toBeLessThan(before.post.x - 100);
-    expect(moved!.y).toBeCloseTo(before.post.y - scrollDelta, 1);
-    expect(panel!.height).toBeCloseTo(moved!.height - 32, 1);
-    expect(panel!.y).toBeCloseTo(moved!.y + 16, 1);
-    const content = (await page.locator(".margin-main").boundingBox())!;
-    expect((moved!.x + panel!.x + panel!.width) / 2).toBeCloseTo(
-      content.x + content.width / 2,
-      0,
-    );
+    const slot = (await post.locator("..").boundingBox())!;
+    const flipped = (await dialog.boundingBox())!;
+    await expect(dialog).toHaveAttribute("data-layout", "inline-flip");
+    expect(flipped.x).toBeCloseTo(before.post.x, 1);
+    expect(flipped.width).toBeCloseTo(before.post.width, 1);
+    expect(flipped.y).toBeCloseTo(slot.y, 1);
+    expect(flipped.height).toBeCloseTo(slot.height, 1);
   } else {
     const panel = await dialog.boundingBox();
     expect(panel!.x).toBeCloseTo(0, 0);
@@ -318,10 +311,7 @@ test("provides a reduced-motion crossfade and visible reversible controls", asyn
   ).toBe(true);
   await dialog
     .getByRole("button", {
-      name:
-        (page.viewportSize()?.width ?? 0) < 1024
-          ? "Back to post"
-          : "Close conversation",
+      name: "Back to post",
       exact: true,
     })
     .click();
@@ -354,13 +344,16 @@ test("keeps the active experience usable when switching between desktop and mobi
     )
     .toBeLessThan(1);
   await page.setViewportSize({ width: 1280, height: 700 });
-  await expect(dialog).toHaveAttribute("data-layout", "panel");
+  await expect(dialog).toHaveAttribute("data-layout", "inline-flip");
   await expect(dialog).not.toHaveAttribute("aria-modal", "true");
   await expect
     .poll(async () => {
       const panel = await dialog.boundingBox();
-      const post = await page.locator("#post-porch").boundingBox();
-      return Math.abs(panel!.height - (post!.height - 32));
+      const slot = await page
+        .locator("#post-porch")
+        .locator("..")
+        .boundingBox();
+      return Math.abs(panel!.height - slot!.height);
     })
     .toBeLessThan(1);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -370,18 +363,19 @@ test("keeps the active experience usable when switching between desktop and mobi
   await expect(dialog).not.toBeVisible();
 });
 
-test("desktop pairs expand in the feed without overlapping adjacent posts and retain an inset composer", async ({
+test("desktop conversations flip within their feed slot and restore neighboring posts on return", async ({
   page,
-}, testInfo) => {
+  isMobile,
+}) => {
   test.skip(
-    testInfo.project.name === "mobile",
-    "Desktop panels; mobile conversations remain full screen",
+    isMobile,
+    "Desktop inline flip; phone conversations are full screen",
   );
-  await page.setViewportSize({ width: 1280, height: 1400 });
+  await page.setViewportSize({ width: 1280, height: 900 });
   for (const id of ["post-book", "post-porch", "post-notebook", "post-tea"]) {
     const post = page.locator(`#${id}`);
     await post.scrollIntoViewIfNeeded();
-    const original = (await post.boundingBox())!;
+    const before = (await post.boundingBox())!;
     const originalScroll = await page.evaluate(() => scrollY);
     const neighbors = await page
       .locator(".margin-feed-post")
@@ -392,157 +386,44 @@ test("desktop pairs expand in the feed without overlapping adjacent posts and re
           y: node.getBoundingClientRect().y + scrollY,
         })),
       );
-    const proseHeight = (await post
-      .locator(".margin-post-prose")
-      .boundingBox())!.height;
     const dialog = await openPost(page, id);
-    const panelBounds = (await dialog.boundingBox())!;
-    const postBounds = (await post.boundingBox())!;
-    expect(panelBounds.height).toBeCloseTo(postBounds.height - 32, 1);
-    expect(postBounds.height).toBeGreaterThanOrEqual(
-      Math.max(original.height, 640) - 1,
-    );
-    expect(
-      (await post.locator(".margin-post-prose").boundingBox())!.height,
-    ).toBeCloseTo(proseHeight, 1);
-    const activeIndex = neighbors.findIndex((neighbor) => neighbor.id === id);
-    const currentScroll = await page.evaluate(() => scrollY);
-    const growth =
-      (await post.locator("..").boundingBox())!.height - original.height;
-    for (const [index, neighbor] of neighbors.entries()) {
-      if (neighbor.id === id) continue;
-      const bounds = (await page.locator(`#${neighbor.id}`).boundingBox())!;
-      expect(bounds.x).toBeCloseTo(neighbor.x, 1);
-      expect(
-        Math.abs(
-          bounds.y +
-            currentScroll -
-            neighbor.y -
-            (index > activeIndex ? growth : 0),
-        ),
-      ).toBeLessThan(1);
-    }
-    if (neighbors[activeIndex + 1]) {
+    await expect(dialog).toHaveAttribute("data-layout", "inline-flip");
+    await expect(dialog).not.toHaveAttribute("aria-modal", "true");
+    const slot = (await post.locator("..").boundingBox())!;
+    const flipped = (await dialog.boundingBox())!;
+    expect(flipped.x).toBeCloseTo(before.x, 1);
+    expect(flipped.width).toBeCloseTo(before.width, 1);
+    expect(flipped.y).toBeCloseTo(slot.y, 1);
+    expect(flipped.height).toBeCloseTo(slot.height, 1);
+    const index = neighbors.findIndex((item) => item.id === id);
+    if (neighbors[index + 1]) {
       const next = (await page
-        .locator(`#${neighbors[activeIndex + 1].id}`)
+        .locator(`#${neighbors[index + 1].id}`)
         .boundingBox())!;
-      expect(next.y).toBeGreaterThanOrEqual(
-        Math.max(
-          postBounds.y + postBounds.height,
-          panelBounds.y + panelBounds.height,
-        ) - 1,
-      );
+      expect(next.y).toBeGreaterThanOrEqual(flipped.y + flipped.height - 1);
     }
-    if (neighbors[activeIndex - 1]) {
-      const previous = (await page
-        .locator(`#${neighbors[activeIndex - 1].id}`)
-        .boundingBox())!;
-      expect(previous.y + previous.height).toBeLessThanOrEqual(
-        Math.min(postBounds.y, panelBounds.y) + 1,
-      );
-    }
-    expect(
-      Math.abs(
-        panelBounds.y +
-          panelBounds.height / 2 -
-          (postBounds.y + postBounds.height / 2),
-      ),
-    ).toBeLessThan(1);
-    await expect(dialog.getByRole("textbox")).toBeInViewport();
-    await dialog.getByRole("textbox").focus();
-    const inputBox = (await dialog
-      .locator(".margin-comment-input")
-      .boundingBox())!;
-    const footerBox = (await dialog
-      .locator(".margin-conversation-footer")
-      .boundingBox())!;
-    expect(inputBox.x).toBeCloseTo(footerBox.x, 1);
-    expect(inputBox.width).toBeCloseTo(footerBox.width, 1);
-    expect(inputBox.x - panelBounds.x).toBeGreaterThanOrEqual(24);
-    expect(
-      panelBounds.x + panelBounds.width - inputBox.x - inputBox.width,
-    ).toBeGreaterThanOrEqual(24);
-    const textBounds = (await dialog.getByRole("textbox").boundingBox())!;
-    const buttonBounds = (await dialog
-      .getByRole("button", { name: "Post", exact: true })
-      .boundingBox())!;
-    expect(buttonBounds.y).toBeGreaterThan(textBounds.y + textBounds.height);
-    if (id === "post-porch" || id === "post-book")
-      await captureScreenshot(page, {
-        caret: "initial",
-        path: testInfo.outputPath(`conversation-${id}.png`),
-      });
+    const input = dialog.getByRole("textbox", { name: "Add a comment" });
+    await input.focus();
+    await input.fill("A thought inside the shared feed.");
+    await expect(input).toBeInViewport();
+    await expect(
+      dialog.getByRole("button", { name: "Post", exact: true }),
+    ).toBeInViewport();
     await dialog
-      .getByRole("button", { name: "Close conversation", exact: true })
+      .getByRole("button", { name: "Back to post", exact: true })
       .click();
     await expect(dialog).not.toBeVisible();
     await expect(post.locator("[data-conversation-trigger]")).toBeFocused();
     expect(await page.evaluate(() => scrollY)).toBeCloseTo(originalScroll, 1);
     for (const neighbor of neighbors) {
-      const documentTop = await page
-        .locator(`#${neighbor.id}`)
-        .evaluate((node) => node.getBoundingClientRect().top + scrollY);
-      expect(Math.abs(documentTop - neighbor.y)).toBeLessThan(1);
+      const bounds = await page.locator(`#${neighbor.id}`).evaluate((node) => ({
+        x: node.getBoundingClientRect().x,
+        y: node.getBoundingClientRect().y + scrollY,
+      }));
+      expect(bounds.x).toBeCloseTo(neighbor.x, 1);
+      expect(bounds.y).toBeCloseTo(neighbor.y, 1);
     }
   }
-  await page.setViewportSize({ width: 1280, height: 500 });
-  const dialog = await openPost(page, "post-porch");
-  const headerHeight = (await page.locator(".margin-header").boundingBox())!
-    .height;
-  const postHeight = (await page.locator("#post-porch").boundingBox())!.height;
-  expect((await dialog.boundingBox())!.height).toBeCloseTo(postHeight - 32, 1);
-  expect(postHeight).toBeGreaterThanOrEqual(500 - headerHeight - 64);
-  await expect(
-    dialog.getByRole("button", { name: "Close conversation", exact: true }),
-  ).toBeInViewport();
-  const input = dialog.getByRole("textbox", { name: "Add a comment" });
-  const inputWidth = (await dialog
-    .locator(".margin-conversation-footer")
-    .boundingBox())!.width;
-  await dialog
-    .locator(".margin-conversation-composer")
-    .scrollIntoViewIfNeeded();
-  await expect(input).toBeInViewport();
-  expect((await input.boundingBox())!.height).toBe(44);
-  // Make overflow deliberate rather than depending on a fixture's comment count.
-  await input.fill(
-    "A longer thought to exercise scrolling in a short window. ".repeat(25),
-  );
-  await expect(
-    dialog.getByRole("button", { name: "Post", exact: true }),
-  ).toBeInViewport();
-  await dialog.getByRole("button", { name: "Post", exact: true }).click();
-  // Posting reveals the saved comment; return to the composer to check its
-  // position while only the discussion region scrolls.
-  await dialog
-    .locator(".margin-conversation-composer")
-    .scrollIntoViewIfNeeded();
-  const scroll = dialog.getByRole("region", { name: "Conversation content" });
-  await scroll.evaluate((node) => {
-    node.scrollTop = 0;
-  });
-  await expect(dialog).toHaveAttribute("data-more-below", "true");
-  const composerBounds = (await dialog
-    .locator(".margin-conversation-composer")
-    .boundingBox())!;
-  await scroll.evaluate((node) => {
-    node.scrollTop = node.scrollHeight;
-  });
-  await expect(dialog).toHaveAttribute("data-more-below", "false");
-  expect(
-    (await dialog.locator(".margin-conversation-composer").boundingBox())!.y,
-  ).toBeCloseTo(composerBounds.y, 1);
-  await expect(dialog.locator("[data-like-count]")).toBeInViewport();
-  await input.fill("The composer is still reachable in a short window.");
-  expect((await input.boundingBox())!.height).toBeGreaterThan(44);
-  expect(
-    (await dialog.locator(".margin-comment-input").boundingBox())!.width,
-  ).toBeCloseTo(inputWidth, 1);
-  await expect(input).toBeInViewport();
-  await dialog.getByRole("button", { name: "Post", exact: true }).click();
-  await expect(dialog.getByRole("status")).toContainText("isn’t saved");
-  await page.keyboard.press("Escape");
-  await expect(dialog).not.toBeVisible();
 });
 
 test("opens the local post composer and returns to the feed", async ({
@@ -645,7 +526,6 @@ test("comment field expands in place on focus, preserves drafts, and collapses o
 
 test("conversation controls have padded hover targets and a soft comment focus border", async ({
   page,
-  isMobile,
 }, testInfo) => {
   const dialog = await openPost(page, "post-porch");
   const like = dialog.getByRole("button", { name: "Like", exact: true });
@@ -660,34 +540,13 @@ test("conversation controls have padded hover targets and a soft comment focus b
     caret: "initial",
     path: testInfo.outputPath("like-hover.png"),
   });
-  if (!isMobile) {
-    const close = dialog.getByRole("button", {
-      name: "Close conversation",
-      exact: true,
-    });
-    const button = (await close.boundingBox())!;
-    const icon = (await close.locator("svg").boundingBox())!;
-    expect(icon.x - button.x).toBeGreaterThanOrEqual(8);
-    expect(
-      button.x + button.width - icon.x - icon.width,
-    ).toBeGreaterThanOrEqual(8);
-    expect(icon.y - button.y).toBeGreaterThanOrEqual(8);
-    await expect(close).toHaveCSS("border-left-width", "0px");
-    await expect(dialog.locator(".margin-conversation-close-slot")).toHaveCSS(
-      "border-left-width",
-      "0px",
-    );
-    await close.hover();
-    await captureScreenshot(page, {
-      caret: "initial",
-      path: testInfo.outputPath("close-hover.png"),
-    });
-  } else {
-    const back = dialog.getByRole("button", { name: "Back to post" });
-    await expect(back).toBeInViewport();
-    await expect(back).toBeEnabled();
-    await expect(back.locator(".margin-icon")).toHaveCount(1);
-  }
+  const back = dialog.getByRole("button", { name: "Back to post" });
+  await expect(back).toBeInViewport();
+  await expect(back).toBeEnabled();
+  const target = (await back.boundingBox())!;
+  expect(target.height).toBeGreaterThanOrEqual(44);
+  expect(target.width).toBeGreaterThanOrEqual(44);
+  await expect(back.locator(".margin-icon")).toHaveCount(1);
   const input = dialog.getByRole("textbox", { name: "Add a comment" });
   expect((await input.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await captureScreenshot(page, {
@@ -798,7 +657,7 @@ test("keeps navigation and conversation controls usable from small phones to wid
     await dialog.getByRole("button", { name: "Liked", exact: true }).click();
     await dialog
       .getByRole("button", {
-        name: width < 1024 ? "Back to post" : "Close conversation",
+        name: "Back to post",
         exact: true,
       })
       .click();
@@ -821,14 +680,9 @@ test(
       motion.playbackRate = 0.2;
       return (motion.effect as KeyframeEffect).getKeyframes();
     });
-    if ((page.viewportSize()?.width ?? 0) < 1024)
-      expect(
-        frames.some((frame) => String(frame.transform).includes("-180deg")),
-      ).toBe(true);
-    else
-      expect(
-        frames.some((frame) => String(frame.clipPath).includes("100%")),
-      ).toBe(true);
+    expect(
+      frames.some((frame) => String(frame.transform).includes("-180deg")),
+    ).toBe(true);
     await page.keyboard.press("Escape");
     await expect(page.locator("#post-book")).toHaveAttribute(
       "data-phase",
