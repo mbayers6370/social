@@ -288,7 +288,7 @@ describe("isolated local application", () => {
     const deleted = deleteLocalPost(next, "ines", "post-three-new", now);
     expect(localPostingEligibility(deleted, "ines", now, false)).toMatchObject({
       allowed: true,
-      regularRemaining: 3,
+      regularRemaining: 2,
       imagesRemaining: 0,
     });
     expect(() => placePhoto(deleted, "ines", ids[3], undefined, now)).toThrow(
@@ -410,14 +410,12 @@ describe("isolated local application", () => {
       deleteLocalPost(state, "ines", post.id, new Date(post.expiresAt)),
     ).toThrow("unavailable");
   });
-  it("deletes the canonical post and dated quota record while retaining gallery photographs", () => {
+  it("deletes the canonical post while retaining its quota record and gallery photographs", () => {
     const { state } = fixture();
     const post = state.posts.find((post) => post.id === "post-fog")!;
     const next = deleteLocalPost(state, "ines", post.id, now);
     expect(next.posts.some((item) => item.id === post.id)).toBe(false);
-    expect(next.postingRecords?.some((item) => item.id === post.id)).toBe(
-      false,
-    );
+    expect(next.postingRecords?.some((item) => item.id === post.id)).toBe(true);
     expect(
       next.profiles
         .find((profile) => profile.person.id === "ines")

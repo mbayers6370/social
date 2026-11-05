@@ -1,7 +1,10 @@
 import { AvatarPhoto } from "@/components/shared/avatar-photo";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { AvatarFrame } from "@/components/shared/avatar-frame";
+import {
+  AvatarFrame,
+  type AvatarShape,
+} from "@/components/shared/avatar-frame";
 import type { FeedPost, Person } from "./schema";
 import { FEED_TIME_ZONE, postTime } from "./format";
 import { PostPhotos } from "./post-photos";
@@ -14,6 +17,7 @@ export function Avatar({
   linked = false,
   live = false,
   onNavigate,
+  shape = "circle",
 }: {
   person: Person;
   small?: boolean;
@@ -21,9 +25,11 @@ export function Avatar({
   linked?: boolean;
   live?: boolean;
   onNavigate?: ComponentProps<typeof PersonLink>["onNavigate"];
+  shape?: AvatarShape;
 }) {
   const avatar = (
     <AvatarFrame
+      shape={shape}
       size={small ? 29 : 40}
       className={cn(
         "margin-avatar",
@@ -38,6 +44,7 @@ export function Avatar({
           initials={person.initials}
           sizes={sizes ?? (small ? "29px" : "76px")}
           live={live}
+          shape={shape}
         />
       ) : (
         person.initials
@@ -154,15 +161,17 @@ export function PostFooter({
               timeZone: FEED_TIME_ZONE,
             }).format(new Date(post.createdAt))}
           </time>
-          <span aria-hidden="true">·</span>
-          <time className="margin-post-expiry" dateTime={post.expiresAt}>
-            Expires{" "}
-            {new Intl.DateTimeFormat("en-GB", {
-              day: "numeric",
-              month: "short",
-              timeZone: FEED_TIME_ZONE,
-            }).format(new Date(post.expiresAt))}
-          </time>
+          <span className="margin-post-expiry">
+            <span aria-hidden="true">{"//"}</span>{" "}
+            <time dateTime={post.expiresAt}>
+              Expires{" "}
+              {new Intl.DateTimeFormat("en-GB", {
+                day: "numeric",
+                month: "short",
+                timeZone: FEED_TIME_ZONE,
+              }).format(new Date(post.expiresAt))}
+            </time>
+          </span>
         </div>
       )}
       {actions && (

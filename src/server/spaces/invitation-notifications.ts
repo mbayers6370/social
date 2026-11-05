@@ -1,6 +1,6 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
-import { liveSpaceWhere, unblockedAuthor } from "./access";
+import { liveSpaceWhere, unblockedAuthor, acceptedFriendOf } from "./access";
 
 const PREFIX = "space-invitation:";
 export const spaceInvitationNotificationKey = (id: string) => `${PREFIX}${id}`;
@@ -23,7 +23,10 @@ export async function visibleSpaceInvitation(
       ...(inviterId ? { inviterId } : {}),
       acceptedAt: null,
       expiresAt: { gt: now },
-      inviter: unblockedAuthor(recipientId),
+      inviter: {
+        ...unblockedAuthor(recipientId),
+        ...acceptedFriendOf(recipientId),
+      },
       space: {
         ...liveSpaceWhere(now),
         archivedAt: null,
@@ -33,7 +36,7 @@ export async function visibleSpaceInvitation(
     select: {
       id: true,
       inviterId: true,
-      space: { select: { id: true, name: true } },
+      space: { select: { id: true, name: true, kind: true } },
     },
   });
   if (!invitation) return null;

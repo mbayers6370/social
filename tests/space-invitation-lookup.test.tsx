@@ -8,7 +8,7 @@ import {
 } from "@/features/spaces/client";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 afterEach(() => vi.unstubAllGlobals());
-const member = (id: string, friend = false) => ({
+const member = (id: string, friend = true) => ({
   person: { id, name: id, initials: id[0], tone: "paper" as const },
   username: id.toLowerCase(),
   friend,
@@ -46,10 +46,9 @@ it("starts with friends, searches by handle, and sends only the explicitly selec
   const groups = within(dialog).getAllByRole("heading", { level: 3 });
   expect(groups.map((heading) => heading.textContent)).toEqual([
     "Your friends",
-    "Other members",
   ]);
   const input = within(dialog).getByRole("searchbox", {
-    name: "Search members",
+    name: "Search friends",
   });
   expect(input).toHaveAttribute("autocomplete", "off");
   await user.type(input, "@adam");
@@ -100,7 +99,7 @@ it("ignores stale lookup responses so a changed search cannot invite the wrong p
   );
   setup(request);
   await user.click(screen.getByRole("button", { name: "Invite someone" }));
-  const input = screen.getByRole("searchbox", { name: "Search members" });
+  const input = screen.getByRole("searchbox", { name: "Search friends" });
   await user.type(input, "alice");
   await waitFor(() => expect(old).toBeTypeOf("function"));
   await user.clear(input);

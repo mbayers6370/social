@@ -69,6 +69,10 @@ test("keeps enlarged navigation readable and puts utility links under Settings",
   });
   await navigation.getByRole("link", { name: "Profile", exact: true }).click();
   await expect(page.locator(".margin-app-footer-desktop")).not.toBeVisible();
+  await page
+    .locator(".margin-profile-identity")
+    .getByRole("button", { name: /^More options for/ })
+    .click();
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   const utilities = page.getByRole("navigation", { name: "Help and legal" });
   await expect(
@@ -83,10 +87,24 @@ test("keeps enlarged navigation readable and puts utility links under Settings",
   const copyright = page
     .locator(".margin-settings-page .margin-app-footer")
     .getByText("© 2026 margin", { exact: true });
-  await copyright.scrollIntoViewIfNeeded();
-  expect((await copyright.boundingBox())!.y).toBeGreaterThan(
-    (await utilities.boundingBox())!.y +
-      (await utilities.boundingBox())!.height,
+  await expect(copyright).toHaveCount(0);
+  for (const [name, href] of [
+    ["Copyright", "/copyright"],
+    ["Cookies", "/cookies"],
+    ["Accessibility", "/accessibility"],
+  ])
+    await expect(
+      utilities.getByRole("link", { name, exact: true }),
+    ).toHaveAttribute("href", href);
+  const lastLink = utilities.getByRole("link", {
+    name: "Cookies",
+    exact: true,
+  });
+  await lastLink.scrollIntoViewIfNeeded();
+  await expect(lastLink).toBeInViewport({ ratio: 1 });
+  const linkBox = (await lastLink.boundingBox())!;
+  expect(linkBox.y + linkBox.height).toBeLessThanOrEqual(
+    (await navigation.boundingBox())!.y + 1,
   );
   await captureScreenshot(page, {
     caret: "initial",

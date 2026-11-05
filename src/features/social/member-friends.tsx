@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useId, useRef, useState } from "react";
-import { ChevronLeft, Friends, Search } from "@/components/margin-icons";
+import { Friends, Search } from "@/components/margin-icons";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { LiveAppShell } from "@/components/layout/live-app-shell";
 import { Button } from "@/components/ui/button";
@@ -60,10 +60,6 @@ export function MemberFriends({ initial }: { initial: FriendsData }) {
     <LiveAppShell active="profile">
       <section className="margin-friends-page" aria-labelledby="friends-title">
         <header>
-          <Link href="/app" className="margin-back-link">
-            <ChevronLeft aria-hidden="true" />
-            Profile
-          </Link>
           <div className="margin-section-heading">
             <SectionTitle
               as="h1"

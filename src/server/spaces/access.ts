@@ -37,3 +37,9 @@ export const unblockedAuthor = (viewerId: string): Prisma.UserWhereInput => ({
   blocksSent: { none: { blockedId: viewerId } },
   blocksReceived: { none: { blockerId: viewerId } },
 });
+export const acceptedFriendOf = (viewerId: string): Prisma.UserWhereInput => ({
+  OR: [
+    { friendshipsLow: { some: { highId: viewerId, status: "ACCEPTED" } } },
+    { friendshipsHigh: { some: { lowId: viewerId, status: "ACCEPTED" } } },
+  ],
+});

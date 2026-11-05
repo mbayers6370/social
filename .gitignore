@@ -5,6 +5,8 @@ out/
 generated/
 next-env.d.ts
 *.tsbuildinfo
+__pycache__/
+*.py[cod]
 
 # Test source and fixtures are versioned; generated reports stay local.
 # Test reports, traces, coverage and temporary output
@@ -63,7 +65,6 @@ prisma/*.db-*
 # Local agent tooling and operating-system files
 .agents/
 .codex/
-AGENTS.md
 CLAUDE.md
 .claude/
 .cursor/

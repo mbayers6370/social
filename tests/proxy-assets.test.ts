@@ -85,21 +85,26 @@ it("does not exempt private paths that resemble public asset filenames", () => {
     );
 });
 
-it("marks protected responses noncacheable and nonindexable with and without Clerk", async () => {
-  vi.stubEnv("NODE_ENV", "production");
-  for (const credentials of [false, true]) {
-    vi.stubEnv("CLERK_SECRET_KEY", credentials ? "sk_live_fixture" : "");
-    vi.stubEnv(
-      "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-      credentials ? "pk_live_fixture" : "",
-    );
-    const response = await request("/api/private.json");
-    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
-    expect(response.headers.get("X-Robots-Tag")).toBe(
-      "noindex, noarchive, nosnippet",
-    );
-  }
-});
+it.each(["/api/private.json", "/people/matt"])(
+  "marks protected responses for %s noncacheable and nonindexable with and without Clerk",
+  async (path) => {
+    vi.stubEnv("NODE_ENV", "production");
+    for (const credentials of [false, true]) {
+      vi.stubEnv("CLERK_SECRET_KEY", credentials ? "sk_live_fixture" : "");
+      vi.stubEnv(
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        credentials ? "pk_live_fixture" : "",
+      );
+      const response = await request(path);
+      if (credentials) expect(protect).toHaveBeenCalled();
+      else expect(response.status).toBe(503);
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(response.headers.get("X-Robots-Tag")).toBe(
+        "noindex, noarchive, nosnippet",
+      );
+    }
+  },
+);
 
 for (const mode of ["development", "production"] as const) {
   it(`allows only the approved brand images without auth credentials in ${mode}`, async () => {
@@ -107,6 +112,7 @@ for (const mode of ["development", "production"] as const) {
     vi.stubEnv("CLERK_SECRET_KEY", "");
     vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "");
     for (const asset of [
+      "/brand/margin-email.png",
       "/brands/apple-music.svg",
       "/brands/spotify.svg",
       "/brands/itunes-store.svg",
@@ -120,6 +126,9 @@ for (const mode of ["development", "production"] as const) {
       );
     }
     for (const path of [
+      "/brand/private.png",
+      "/brand/margin-email.png/extra",
+      "/brand/margin-email.png.bak",
       "/brands/private.svg",
       "/brands/apple-music.svg/extra",
       "/brands/spotify.svg.bak",
@@ -134,6 +143,7 @@ for (const mode of ["development", "production"] as const) {
     vi.stubEnv("NODE_ENV", mode);
     vi.stubEnv("CLERK_SECRET_KEY", "sk_live_fixture");
     vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "pk_live_fixture");
+    await request("/brand/margin-email.png");
     await request("/brands/apple-music.svg");
     await request("/brands/spotify.svg");
     expect(protect).not.toHaveBeenCalled();
@@ -141,6 +151,10 @@ for (const mode of ["development", "production"] as const) {
     expect(protect).toHaveBeenCalledOnce();
     await request("/brands/private.svg");
     expect(protect).toHaveBeenCalledTimes(2);
+    await request("/brand/margin-email.png/extra");
+    expect(protect).toHaveBeenCalledTimes(3);
+    await request("/brand/private.png");
+    expect(protect).toHaveBeenCalledTimes(4);
   });
 }
 
@@ -249,4 +263,18 @@ it("allows the exact onboarding preview only during development", async () => {
     (await request("/preview/onboarding")).headers.get("x-middleware-next"),
   ).toBe("1");
   expect((await request("/preview/onboarding/private")).status).toBe(503);
+});
+
+it("serves the localhost production shell without upgrading its HTTP assets", async () => {
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+  vi.stubEnv("CLERK_SECRET_KEY", "");
+  vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "");
+  const response = await request("/welcome");
+  expect(response.headers.get("Content-Security-Policy")).not.toContain(
+    "upgrade-insecure-requests",
+  );
+  expect(response.headers.get("Content-Security-Policy")).toContain(
+    "'strict-dynamic'",
+  );
 });

@@ -186,6 +186,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
     it("reports the enforced personal allowance across posting, deletion, links and a new day", async () => {
       const subject = actors[0].clerkId;
       await expect(service.postingAllowance(subject)).resolves.toEqual({
+        timeZone: "America/Los_Angeles",
         regularRemaining: 3,
         linkAllowed: true,
       });
@@ -198,24 +199,35 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         photoIds: [],
       });
       await expect(service.postingAllowance(subject)).resolves.toEqual({
+        timeZone: "America/Los_Angeles",
         regularRemaining: 2,
         linkAllowed: false,
       });
       await service.deletePost(subject, post.id);
       await expect(service.postingAllowance(subject)).resolves.toEqual({
-        regularRemaining: 3,
-        linkAllowed: true,
+        timeZone: "America/Los_Angeles",
+        regularRemaining: 2,
+        linkAllowed: false,
       });
+      await expect(
+        service.publishPersonal(subject, {
+          body: "A link https://example.com",
+          photoIds: [],
+        }),
+      ).rejects.toMatchObject({ status: 409 });
+      now = new Date(now.getTime() + 86400000);
       await service.publishPersonal(subject, {
         body: "A link https://example.com",
         photoIds: [],
       });
       await expect(service.postingAllowance(subject)).resolves.toEqual({
+        timeZone: "America/Los_Angeles",
         regularRemaining: 0,
         linkAllowed: false,
       });
       now = new Date(now.getTime() + 86400000);
       await expect(service.postingAllowance(subject)).resolves.toEqual({
+        timeZone: "America/Los_Angeles",
         regularRemaining: 3,
         linkAllowed: true,
       });

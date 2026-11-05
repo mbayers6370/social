@@ -1,9 +1,14 @@
 import { captureScreenshot, test, expect } from "./fixtures";
 import { mockTicketmasterCatalog } from "./helpers/ticketmaster";
+import { eventSpacesEnabled } from "../../src/features/spaces/availability";
 
-test("starts with artist-only search, joins directly with a four-hour end, and lets an admin adjust it", async ({
+test("starts with artist-only search, joins with a four-hour end, and grants no administrator privileges", async ({
   page,
 }, info) => {
+  test.skip(
+    !eventSpacesEnabled,
+    "Event Spaces are temporarily hidden from the interface",
+  );
   test.skip(
     process.env.PLAYWRIGHT_PRODUCTION === "1",
     "Local Ticketmaster review",
@@ -88,19 +93,12 @@ test("starts with artist-only search, joins directly with a four-hour end, and l
   await expect(
     about.locator('time[datetime="2026-11-10T10:30:00.000Z"]'),
   ).toContainText("2:30 AM");
-  await options.getByRole("button", { name: "Edit end time" }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByLabel("Scheduled end")).toHaveValue(
-    "2026-11-08T02:30",
-  );
-  await dialog.getByLabel("Scheduled end").fill("2026-11-08T04:00");
-  await dialog
-    .getByRole("button", { name: "Save changes", exact: true })
-    .click();
-  await expect(dialog).toHaveCount(0);
   await expect(
-    about.locator('time[datetime="2026-11-10T12:00:00.000Z"]'),
-  ).toContainText("4:00 AM");
+    options.getByRole("button", { name: "Edit end time" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Delete Space", exact: true }),
+  ).toHaveCount(0);
   await expect(about).toContainText("48 hours after the event ends");
   await expect(page.locator(".margin-space-composer")).toBeVisible();
   await captureScreenshot(page, {

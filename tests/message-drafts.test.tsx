@@ -219,10 +219,10 @@ it("saves self notes as one-way notebook entries across navigation, isolates the
     name: "Notebook entries",
   });
   expect(within(entries).getAllByRole("listitem")).toHaveLength(1);
-  expect(within(entries).getByRole("listitem")).toHaveAttribute(
+  expect(within(entries).getByRole("listitem")).not.toHaveAttribute(
     "data-direction",
-    "outgoing",
   );
+  expect(within(entries).getByText("expires")).toBeInTheDocument();
   expect(entries).toHaveTextContent("Remember the camera");
   expect(
     screen.getByRole("button", { name: "Open notebook" }),

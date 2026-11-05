@@ -43,8 +43,25 @@ test("borders lime action buttons consistently without boxing quiet controls", a
     page.getByRole("button", { name: "Search profiles", exact: true }),
   ).toHaveCSS("border-top-width", "0px");
   const newPost = page.getByRole("button", { name: "New Post", exact: true });
-  await expect(newPost).toHaveCSS("border-top-color", "rgb(138, 145, 110)");
-  await expect(newPost).toHaveCSS("background-color", "rgb(185, 198, 90)");
+  await expect(newPost).toHaveCSS("border-top-width", "0px");
+  await expect(newPost).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  const target = (await newPost.boundingBox())!;
+  expect(target.height).toBeGreaterThanOrEqual(44);
+  const surface = await newPost.evaluate((button) => {
+    const style = getComputedStyle(button, "::before");
+    return {
+      border: style.borderTopWidth,
+      color: style.borderTopColor,
+      background: style.backgroundColor,
+      height: style.height,
+    };
+  });
+  expect(surface).toEqual({
+    border: "1px",
+    color: "rgba(138, 145, 110, 0.55)",
+    background: "rgb(185, 198, 90)",
+    height: "32px",
+  });
   await newPost.click();
   const publish = page.getByRole("button", { name: "Publish", exact: true });
   await expect(publish).toHaveCSS("border-top-color", "rgb(138, 145, 110)");

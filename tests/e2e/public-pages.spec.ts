@@ -193,11 +193,9 @@ test("public documents keep their content readable and their section links usabl
       const note = page.getByRole("complementary", {
         name: "Policy draft status",
       });
-      await note.getByText("Still to be confirmed", { exact: true }).click();
+      await expect(note).toContainText("not an active agreement");
       await expect(
-        note.getByText(
-          "Legal operator, address and dedicated privacy request process.",
-        ),
+        note.getByRole("link", { name: "support@margin.social" }),
       ).toBeVisible();
     }
   }
@@ -341,7 +339,7 @@ test("public pages expose the footer, practical rules and draft policies on desk
   const footer = page.getByRole("navigation", { name: "Footer", exact: true });
   await footer.getByRole("link", { name: "How it works" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "How margin works",
+    "How Margin works",
   );
   await expect(
     page.getByText(
@@ -358,7 +356,7 @@ test("public pages expose the footer, practical rules and draft policies on desk
   ).toContainText("support@margin.social");
   await expect(
     page.getByRole("complementary", { name: "Policy draft status" }),
-  ).toContainText("legal operator has not been confirmed");
+  ).toContainText("not an active agreement");
   expect(await page.locator("form, iframe, audio, video").count()).toBe(0);
   expect(
     await page.evaluate(

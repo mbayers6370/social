@@ -1,10 +1,12 @@
 import "server-only";
+import { isLocalReviewConfiguration } from "@/lib/local-review";
 
 /** One fail-closed configuration boundary for pages, proxy and server actions. */
 export function accountConfiguration() {
   const publishable = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
   const secret = process.env.CLERK_SECRET_KEY ?? "";
   const production = process.env.NODE_ENV === "production";
+  const localReview = isLocalReviewConfiguration(process.env);
   let origin: string | null = null;
   try {
     const url = new URL(
@@ -17,7 +19,8 @@ export function accountConfiguration() {
       url.pathname === "/" &&
       !url.search &&
       !url.hash &&
-      (url.protocol === "https:" || (!production && url.protocol === "http:"))
+      (url.protocol === "https:" ||
+        ((!production || localReview) && url.protocol === "http:"))
     )
       origin = url.origin;
   } catch {
@@ -28,7 +31,7 @@ export function accountConfiguration() {
     origin &&
     kind &&
     secret.startsWith(`sk_${kind}_`) &&
-    (!production || kind === "live"),
+    (!production || kind === "live" || (kind === "test" && localReview)),
   );
   return {
     configured,

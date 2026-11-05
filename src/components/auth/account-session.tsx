@@ -115,8 +115,9 @@ function ManagedSession({ children }: { children: ReactNode }) {
               sessionId: session.id,
               redirectUrl: "/welcome",
             });
-          else {
-            endPreviewLogin();
+          setPreview(null);
+          endPreviewLogin();
+          if (!isSignedIn || !session) {
             // A full navigation discards in-memory private preview state.
             // eslint-disable-next-line @next/next/no-location-assign-relative-destination
             window.location.assign("/welcome");

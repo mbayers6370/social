@@ -21,7 +21,7 @@ test("centers account cards and offers a single direct preview action", async ({
       const headingFont = await page
         .getByRole("heading", { level: 1 })
         .evaluate((heading) => getComputedStyle(heading).fontFamily);
-      expect(headingFont.toLowerCase()).toContain("hinge");
+      expect(headingFont.toLowerCase()).toContain("aside");
       expect(headingFont.toLowerCase()).not.toContain("caudex");
       const geometry = await card.evaluate((node) => {
         const box = node.getBoundingClientRect();

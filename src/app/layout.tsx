@@ -17,27 +17,29 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+  preload: false,
 });
-const hinge = localFont({
+const aside = localFont({
   src: [
     {
-      path: "../../public/fonts/margin/margin-hinge-light.woff2",
+      path: "../../public/fonts/margin-aside/margin-aside-light.woff2",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../../public/fonts/margin/margin-hinge-medium.woff2",
+      path: "../../public/fonts/margin-aside/margin-aside-medium.woff2",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../../public/fonts/margin/margin-hinge-bold.woff2",
+      path: "../../public/fonts/margin-aside/margin-aside-bold.woff2",
       weight: "700",
       style: "normal",
     },
   ],
-  variable: "--font-hinge",
+  variable: "--font-aside",
   display: "swap",
+  preload: false,
   fallback: ["Arial", "sans-serif"],
 });
 // A per-request nonce cannot be baked into cached HTML.
@@ -83,7 +85,7 @@ export default async function RootLayout({
     </>
   );
   return (
-    <html lang="en" className={`${inter.variable} ${hinge.variable}`}>
+    <html lang="en" className={`${inter.variable} ${aside.variable}`}>
       <body>
         <MobileViewport />
         {configured ? (

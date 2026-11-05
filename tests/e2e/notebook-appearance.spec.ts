@@ -48,6 +48,43 @@ test("Notebook uses an animated outlined book and the shared light conversation 
     "animation-name",
     "margin-page",
   );
+  await expect(notebook.getByText("Nothing here yet.")).toBeVisible();
+  const composer = notebook.locator(".margin-message-composer");
+  await expect(composer).toBeInViewport({ ratio: 1 });
+  await expect(
+    composer.getByText("Enter to save · Shift+Enter for a new line"),
+  ).toBeVisible();
+  await composer
+    .getByRole("textbox", { name: "Note to self" })
+    .fill("A journal page.");
+  await composer.getByRole("button", { name: "Save note" }).click();
+  const entry = notebook
+    .getByRole("list", { name: "Notebook entries" })
+    .getByRole("listitem")
+    .last();
+  await expect(entry.locator(".margin-notebook-expiry")).toContainText(
+    "expires",
+  );
+  await expect(entry.locator(".margin-notebook-body")).toHaveCSS(
+    "white-space",
+    "pre-wrap",
+  );
+  const history = notebook.locator(".margin-thread-scroll");
+  const geometry = await history.evaluate((element) => {
+    const body = element
+      .querySelector(".margin-notebook-body")!
+      .getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      width: body.width,
+      available:
+        rect.width -
+        parseFloat(style.paddingLeft) -
+        parseFloat(style.paddingRight),
+    };
+  });
+  expect(Math.abs(geometry.width - geometry.available)).toBeLessThan(3);
   await captureScreenshot(page, { path: info.outputPath("notebook.png") });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(header.locator(".margin-page")).toHaveCSS(

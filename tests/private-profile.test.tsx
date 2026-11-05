@@ -249,7 +249,9 @@ it("saves name and bio through the authenticated profile boundary and preserves 
     }),
   );
   render(<PrivateProfile data={profile()} />);
+  await user.click(screen.getByRole("button", { name: /^More options for/ }));
   await user.click(screen.getByRole("button", { name: "Edit profile" }));
+  await screen.findByRole("form", { name: "Edit profile" });
   await user.clear(screen.getByLabelText("Name"));
   await user.type(screen.getByLabelText("Name"), "Alice Saved");
   await user.type(screen.getByLabelText("Bio"), "A private introduction");

@@ -71,7 +71,6 @@ test("post names and portraits open the matching profile, with its own posts and
   await expect(
     page.getByRole("heading", { level: 1, name: "Samuel Okafor" }),
   ).toBeVisible();
-  await expect(page.locator(".margin-profile-handle")).toHaveText("@samuel");
   await expect(page.locator(".margin-profile-bio")).toContainText(
     "Weekend walks",
   );
@@ -179,7 +178,7 @@ test("all seven mock people keep their own identity when navigating between prof
     await expect(
       page.getByRole("heading", { level: 1, name, exact: true }),
     ).toBeVisible();
-    await expect(page.locator(".margin-profile-handle")).toHaveText(`@${id}`);
+    await expect(page).toHaveURL(new RegExp(`person=${id}(?:&|$)`));
     bios.add(await page.locator(".margin-profile-bio").innerText());
   }
   expect(bios.size).toBe(7);
@@ -228,7 +227,6 @@ test("notification identities open their own profile without nesting links insid
   await expect(
     page.getByRole("heading", { level: 1, name: "Nadia Haddad" }),
   ).toBeVisible();
-  await expect(page.locator(".margin-profile-handle")).toHaveText("@nadia");
   await expect(page.locator(".margin-profile-bio")).toContainText("Scientist");
   await expect(page.locator(".margin-profile-posts")).toContainText(
     "Posts are shared with friends.",

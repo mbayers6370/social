@@ -12,7 +12,7 @@ const record = (id: string, hasLink = false): PostingRecord => ({
   hasLink,
 });
 describe("daily posting policy", () => {
-  it("counts individual photographs across posts and restores the allowance after local midnight or deletion", () => {
+  it("counts individual photographs after deletion and resets after local midnight", () => {
     const records = [{ ...record("photos"), imageCount: 2 }];
     expect(
       postingEligibility(records, "ines", now, false, undefined, 1).allowed,
@@ -63,7 +63,7 @@ describe("daily posting policy", () => {
         undefined,
         3,
       ).allowed,
-    ).toBe(true);
+    ).toBe(false);
   });
   it("permits three regular posts or one exclusive link-containing post", () => {
     expect(postingEligibility([], "ines", now, true).allowed).toBe(true);
@@ -118,7 +118,7 @@ describe("daily posting policy", () => {
         now,
         false,
       ).regularRemaining,
-    ).toBe(3);
+    ).toBe(0);
     expect(
       postingEligibility(
         [record("1"), record("2"), { ...record("3"), deleted: true }],
@@ -126,7 +126,7 @@ describe("daily posting policy", () => {
         now,
         false,
       ).allowed,
-    ).toBe(true);
+    ).toBe(false);
   });
   it("scopes the calendar day and author, including DST boundaries", () => {
     const records = [record("1", true)];
@@ -183,5 +183,24 @@ describe("daily posting policy", () => {
     expect(
       containsPostLink({ paragraphs: ["A thought.", "https://example.com"] }),
     ).toBe(true);
+  });
+  it("distinguishes filenames, decimals and dotted prose from actual domains", () => {
+    for (const body of [
+      "Export photo.jpg or notes.txt",
+      "Edit index.ts and app.js",
+      "A value of 3.14",
+      "Use e.g. or i.e. in prose",
+    ])
+      expect(containsPostLink({ body })).toBe(false);
+    for (const body of [
+      "example.com",
+      "example.photography/photo",
+      "www.example.org",
+      "https://127.0.0.1/path",
+      "mailto:hello@example.com",
+      "例子.中国",
+      "foo.zip",
+    ])
+      expect(containsPostLink({ body })).toBe(true);
   });
 });

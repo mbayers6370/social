@@ -13,17 +13,22 @@ import {
   PHOTO_MAX_PIXELS,
 } from "@/lib/media-policy";
 import { getPrivateStorage } from "@/server/storage";
+import { isLocalReviewConfiguration } from "@/lib/local-review";
 import { SocialError } from "./errors";
 // Keep the private filesystem adapter out of production bundles/traces entirely.
 const developmentStore =
-  process.env.NODE_ENV === "development"
+  process.env.NODE_ENV === "development" ||
+  process.env.MARGIN_LOCAL_REVIEW === "1"
     ? import("./local-photo-store").then(({ localPhotoStore }) =>
         localPhotoStore(),
       )
     : null;
 function isLocalStoreEnabled() {
   if (process.env.MARGIN_LOCAL_PHOTO_STORE !== "1") return false;
-  if (process.env.NODE_ENV !== "development")
+  if (
+    process.env.NODE_ENV !== "development" &&
+    !isLocalReviewConfiguration(process.env)
+  )
     throw Error("Local photo storage is development-only");
   return true;
 }

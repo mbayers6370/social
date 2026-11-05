@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node scripts/application.mjs dev",
+    "build": "node scripts/application.mjs build",
+    "start": "node scripts/application.mjs start",
+    "review": "node --experimental-strip-types scripts/local-review.mjs",
+    "review:build": "node --experimental-strip-types scripts/local-review.mjs --build-only",
+    "clean:local": "node scripts/clean-local-artifacts.mjs",
+    "local:check": "node scripts/check-local-storage.mjs",
     "lint": "eslint .",
     "styles:check": "node scripts/check-styles.mjs",
     "typecheck": "next typegen && tsc --noEmit",
@@ -69,6 +73,7 @@
     "server-only": "^0.0.1",
     "sharp": "0.35.5",
     "tailwind-merge": "^2.5.0",
+    "tldts": "6.1.86",
     "zod": "^4.6.7"
   },
   "devDependencies": {

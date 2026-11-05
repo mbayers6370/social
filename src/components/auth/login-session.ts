@@ -1,3 +1,5 @@
+import { createLocalId } from "@/lib/local-id";
+
 const previewKey = "margin.preview-login";
 const entranceKey = "margin.brand-entrance";
 const played = new Set<string>();
@@ -11,7 +13,7 @@ export function previewLoginId() {
   } catch {
     /* In-memory preview remains usable when browser storage is blocked. */
   }
-  const id = memoryPreviewId ?? `preview-${crypto.randomUUID()}`;
+  const id = memoryPreviewId ?? `preview-${createLocalId()}`;
   memoryPreviewId = id;
   try {
     sessionStorage.setItem(previewKey, id);

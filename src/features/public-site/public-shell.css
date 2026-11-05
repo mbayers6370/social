@@ -7,9 +7,6 @@
 .margin-public-site > main {
   flex: 1;
 }
-.margin-public-site:has(> .margin-mobile-nav) {
-  padding-bottom: var(--margin-mobile-nav-height);
-}
 .margin-public-site > main:focus {
   outline: none;
   box-shadow: none;
@@ -79,12 +76,14 @@
   width: 100%;
 }
 .margin-public-footer-groups {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 28px;
   padding-block: 26px;
   padding-inline: var(--site-gutter);
-  border-bottom: 1px solid hsl(var(--header-foreground) / 0.2);
+  --divider-bottom-color: hsl(var(--header-foreground) / 0.2);
+  border-bottom: 1px solid transparent;
 }
 .margin-public-footer-groups h2 {
   font-size: var(--text-body);
@@ -127,6 +126,11 @@
   > .margin-public-information {
   display: none;
 }
+@media (max-width: 1023px) {
+  .margin-public-site:has(> .margin-mobile-nav) {
+    padding-bottom: var(--margin-mobile-nav-height);
+  }
+}
 @media (max-width: 639px) {
   .margin-public-site:has(.margin-public-hero) .margin-public-header {
     flex-wrap: nowrap;
@@ -162,6 +166,13 @@
   }
 }
 @media (min-width: 1024px) {
+  .margin-public-footer-groups [data-footer-group="Legal"] ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, auto);
+    grid-auto-flow: column;
+    column-gap: 24px;
+  }
   .margin-public-header {
     position: sticky;
     top: 0;

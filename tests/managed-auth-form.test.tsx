@@ -53,6 +53,23 @@ it("delegates credentials/recovery to Clerk and fixes post-auth destinations to 
     }),
   );
 });
+it("returns a shared-profile sign-in to that profile while rejecting other destinations", () => {
+  const rendered = render(
+    <ManagedAuthForm kind="sign-in" destination="/people/matt" />,
+  );
+  expect(sdk.signIn).toHaveBeenLastCalledWith(
+    expect.objectContaining({ forceRedirectUrl: "/people/matt" }),
+  );
+  rendered.rerender(
+    <ManagedAuthForm
+      kind="sign-in"
+      destination="https://evil.test/people/matt"
+    />,
+  );
+  expect(sdk.signIn).toHaveBeenLastCalledWith(
+    expect.objectContaining({ forceRedirectUrl: "/app/feed" }),
+  );
+});
 it.each(["degraded", "error"])(
   "offers an accessible retry and no credential form when the provider is %s",
   (status) => {

@@ -1,4 +1,5 @@
 "use client";
+import { createRequestId } from "@/lib/local-id";
 import {
   createContext,
   useCallback,
@@ -55,7 +56,7 @@ export function MemberProvider({
       throw Error(
         "The previous delivery is uncertain. Retry that unchanged draft before sending a different message.",
       );
-    return (messageAttempts.current[id] ??= { id: crypto.randomUUID(), body });
+    return (messageAttempts.current[id] ??= { id: createRequestId(), body });
   }, []);
   const clearMessageAttempt = useCallback((id: string) => {
     delete messageAttempts.current[id];

@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { ComponentExamples } from "./component-examples";
 import { PostCardPreview } from "@/features/feed/post-card-preview";
 import { PostContent } from "@/features/feed/post-content";
+import { InkRule } from "@/components/ui/ink-rule";
 
 export const metadata = {
   title: "Component workbench",
@@ -41,6 +42,26 @@ export default async function DesignSystemPage() {
             <PostCardPreview post={examplePost}>
               <PostContent post={examplePost} />
             </PostCardPreview>
+          </section>
+          <section aria-labelledby="ink-rules-title" className="space-y-6">
+            <div className="max-w-reading space-y-3">
+              <h2 id="ink-rules-title" className="text-2xl font-semibold">
+                Ink Rules
+              </h2>
+              <p className="text-muted-foreground">
+                Dry Ink, Ribbon, and Smudge. Each fills its container while
+                preserving the ink grain and inherits the surrounding text
+                color.
+              </p>
+            </div>
+            {(["dry", "ribbon", "smudge"] as const).map((variant) => (
+              <div key={variant} className="space-y-3">
+                <p className="text-sm capitalize">
+                  {variant === "dry" ? "Dry Ink" : variant}
+                </p>
+                <InkRule variant={variant} aria-label={`${variant} ink rule`} />
+              </div>
+            ))}
           </section>
           <ComponentExamples />
         </Container>

@@ -1,4 +1,5 @@
-import { dayKey, postTime } from "@/features/feed/format";
+import { dayKey, postTime, FEED_TIME_ZONE } from "@/features/feed/format";
+import { NOTEBOOK_LIFETIME_DAYS } from "@/lib/message-policy";
 import { continuesMessageGroup } from "./format";
 import type { PreviewMessage } from "./schema";
 /** Shared readable day/speaker groups; messages are supplied by the caller. */
@@ -20,9 +21,52 @@ export function MessageLog({
   return (
     <ol
       className="margin-message-log"
+      data-notebook={notebook || undefined}
       aria-label={notebook ? "Notebook entries" : `Messages with ${name}`}
     >
       {messages.map((message, index) => {
+        if (notebook) {
+          const startsDay =
+            index === 0 ||
+            dayKey(messages[index - 1].createdAt) !== dayKey(message.createdAt);
+          const expiresAt = new Date(
+            Date.parse(message.createdAt) + NOTEBOOK_LIFETIME_DAYS * 86_400_000,
+          );
+          return (
+            <li
+              key={message.id}
+              className="margin-notebook-entry"
+              data-day-start={(index > 0 && startsDay) || undefined}
+            >
+              {startsDay && (
+                <div className="margin-notebook-meta">
+                  <time
+                    className="margin-notebook-date"
+                    dateTime={message.createdAt}
+                  >
+                    {new Intl.DateTimeFormat("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      timeZone: FEED_TIME_ZONE,
+                    }).format(new Date(message.createdAt))}
+                  </time>{" "}
+                  <span className="margin-notebook-expiry">
+                    <span aria-hidden="true">{"//"}</span> expires{" "}
+                    <time dateTime={expiresAt.toISOString()}>
+                      {new Intl.DateTimeFormat("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        timeZone: FEED_TIME_ZONE,
+                      }).format(expiresAt)}
+                    </time>
+                  </span>
+                </div>
+              )}
+              <p className="margin-notebook-body">{message.body}</p>
+            </li>
+          );
+        }
         const date = dayKey(message.createdAt);
         const previous = messages[index - 1];
         const next = messages[index + 1];
@@ -31,7 +75,7 @@ export function MessageLog({
           <li
             key={message.id}
             className="margin-message-row"
-            data-direction={notebook ? "outgoing" : message.direction}
+            data-direction={message.direction}
             data-group-start={!continuesMessageGroup(previous, message)}
           >
             {(!previous || dayKey(previous.createdAt) !== date) && (

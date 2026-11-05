@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 import { getDevelopmentOrigins } from "./src/lib/development-hosts";
+import { nextBuildDirectory } from "./src/lib/local-review";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -17,7 +18,12 @@ const securityHeaders = [
     : []),
 ];
 
+const distDir = nextBuildDirectory(process.env);
 const nextConfig: NextConfig = {
+  ...(distDir ? { distDir } : {}),
+  ...(process.env.MARGIN_BROWSER_TEST === "1"
+    ? { devIndicators: false as const }
+    : {}),
   allowedDevOrigins:
     process.env.NODE_ENV === "development" ? getDevelopmentOrigins() : [],
   poweredByHeader: false,

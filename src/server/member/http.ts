@@ -1,4 +1,5 @@
 import "server-only";
+import { eventSpacesEnabled } from "@/features/spaces/availability";
 import { z } from "zod";
 import { requireViewer, UnauthorizedError } from "@/server/auth";
 import { getDb } from "@/server/db";
@@ -23,9 +24,17 @@ import {
 } from "@/features/social/member-schema";
 import { PHOTO_MAX_BYTES } from "@/lib/media-policy";
 import { MemberService } from "./service";
+import { ModerationService } from "@/server/safety/service";
 
 type Operation =
+  | "moderationReports"
+  | "moderationReport"
+  | "moderationReview"
+  | "moderationPhoto"
+  | "eventAdmin"
   | "postingAllowance"
+  | "topFriends"
+  | "topFriendsUpdate"
   | "identity"
   | "profileUpdate"
   | "preferences"
@@ -52,7 +61,11 @@ type Operation =
   | "personalPhotos"
   | "postPublish";
 const reads = new Set<Operation>([
+  "moderationReports",
+  "moderationReport",
+  "moderationPhoto",
   "postingAllowance",
+  "topFriends",
   "identity",
   "portrait",
   "musicSearch",
@@ -77,20 +90,23 @@ export async function memberRequest(
     const id = rawId === undefined ? undefined : memberId.parse(rawId);
     const query = new URL(request.url).searchParams;
     const allowed =
-      operation === "portrait"
-        ? ["v"]
-        : operation === "contacts"
-          ? ["q", "before"]
-          : operation === "musicSearch"
-            ? ["q"]
-            : [
-                  "conversation",
-                  "notifications",
-                  "threads",
-                  "personalPhotos",
-                ].includes(operation)
-              ? ["before"]
-              : [];
+      operation === "moderationPhoto"
+        ? ["photoId"]
+        : operation === "portrait"
+          ? ["v"]
+          : ["contacts", "topFriends"].includes(operation)
+            ? ["q", "before"]
+            : operation === "musicSearch"
+              ? ["q"]
+              : [
+                    "conversation",
+                    "notifications",
+                    "threads",
+                    "personalPhotos",
+                    "moderationReports",
+                  ].includes(operation)
+                ? ["before"]
+                : [];
     if (
       [...query.keys()].some(
         (key) => !allowed.includes(key) || query.getAll(key).length > 1,
@@ -117,8 +133,42 @@ export async function memberRequest(
       subject,
     );
     const service = new MemberService(getDb(), privatePhotoStore);
+    const moderation = new ModerationService(getDb(), privatePhotoStore);
     let result: unknown;
     switch (operation) {
+      case "moderationReports":
+        result = await moderation.reports(subject, before);
+        break;
+      case "moderationReport":
+        result = await moderation.report(subject, id!);
+        break;
+      case "moderationReview":
+        result = await moderation.review(subject, id!, await json(request));
+        break;
+      case "eventAdmin":
+        result = await moderation.assignEventAdmin(
+          subject,
+          id!,
+          await json(request),
+        );
+        break;
+      case "moderationPhoto":
+        return new Response(
+          new Uint8Array(
+            await moderation.reportPhoto(
+              subject,
+              id!,
+              memberId.parse(query.get("photoId")),
+            ),
+          ),
+          {
+            headers: {
+              ...privateHeaders,
+              "Content-Type": "image/webp",
+              "Cross-Origin-Resource-Policy": "same-origin",
+            },
+          },
+        );
       case "postingAllowance":
         result = await service.postingAllowance(subject);
         break;
@@ -136,6 +186,20 @@ export async function memberRequest(
         );
         break;
       }
+      case "topFriends":
+        result = await service.topFriends(
+          subject,
+          z
+            .string()
+            .trim()
+            .max(80)
+            .parse(query.get("q") ?? ""),
+          before,
+        );
+        break;
+      case "topFriendsUpdate":
+        result = await service.updateTopFriends(subject, await json(request));
+        break;
       case "identity":
         result = await service.identity(subject);
         break;
@@ -230,7 +294,11 @@ export async function memberRequest(
         result = await service.hideConversation(subject, id!);
         break;
       case "notifications":
-        result = await service.notifications(subject, before);
+        result = await service.notifications(
+          subject,
+          before,
+          eventSpacesEnabled,
+        );
         break;
       case "notificationsRead":
         result = await service.readNotifications(

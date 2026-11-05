@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createLocalId } from "@/lib/local-id";
+import { createLocalId, createRequestId } from "@/lib/local-id";
+import {
+  previewLoginId,
+  endPreviewLogin,
+} from "@/components/auth/login-session";
+import { memberMessageInput } from "@/features/social/member-schema";
 import { ConversationDialog } from "@/features/feed/conversation-dialog";
 import { previewPostState } from "@/features/feed/state";
 import { MessagesPreview } from "@/features/messages/messages-preview";
@@ -17,6 +22,7 @@ const getRandomValues = globalThis.crypto.getRandomValues.bind(
   globalThis.crypto,
 );
 beforeEach(() => {
+  endPreviewLogin();
   // HTTP LAN browsers expose getRandomValues but omit secure-context randomUUID.
   vi.stubGlobal("crypto", { getRandomValues });
   vi.stubGlobal("isSecureContext", false);
@@ -34,6 +40,7 @@ beforeEach(() => {
   );
 });
 afterEach(() => {
+  endPreviewLogin();
   window.history.replaceState(null, "", "/");
   vi.unstubAllGlobals();
 });
@@ -63,6 +70,39 @@ it("produces independent local record IDs when the secure-context UUID API is mi
   const ids = Array.from({ length: 100 }, () => createLocalId());
   expect(new Set(ids).size).toBe(100);
   for (const id of ids) expect(id).toMatch(/^[a-f0-9]{32}$/);
+});
+
+it("keeps the preview login marker stable and resets it on exit without randomUUID", () => {
+  const first = previewLoginId();
+  expect(first).toMatch(/^preview-[a-f0-9]{32}$/);
+  expect(previewLoginId()).toBe(first);
+  endPreviewLogin();
+  expect(previewLoginId()).not.toBe(first);
+});
+
+it("keeps a preview usable when both randomUUID and browser storage are unavailable", () => {
+  vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+    throw Error("Storage blocked");
+  });
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw Error("Storage blocked");
+  });
+  expect(previewLoginId()).toMatch(/^preview-[a-f0-9]{32}$/);
+  expect(previewLoginId()).toBe(previewLoginId());
+});
+
+it("creates UUID v4 request keys accepted by the message API on HTTP origins", () => {
+  const ids = Array.from({ length: 100 }, () => createRequestId());
+  expect(new Set(ids).size).toBe(100);
+  for (const requestId of ids) {
+    expect(requestId).toMatch(
+      /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/,
+    );
+    expect(
+      memberMessageInput.safeParse({ body: "From my phone", requestId })
+        .success,
+    ).toBe(true);
+  }
 });
 it("opens a mobile conversation, records its history marker, posts a comment and closes without randomUUID", async () => {
   const user = userEvent.setup();

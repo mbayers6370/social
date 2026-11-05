@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Margin Aside — gently worn</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #faf9f6;
+        --ink: #30383d;
+        --olive: #454d24;
+        --line: #dadad8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          15px/1.5 Arial,
+          sans-serif;
+      }
+      main {
+        max-width: 1140px;
+        padding: 38px 36px 30px;
+        margin: auto;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font:
+          500 28px/1.2 Arial,
+          sans-serif;
+      }
+      .intro {
+        max-width: 720px;
+        margin: 0;
+        color: #53595c;
+      }
+      .enlargement {
+        margin: 20px 0 6px;
+        font:
+          500 clamp(42px, 6vw, 86px)/1.4 "Margin Aside",
+          serif;
+        font-synthesis: none;
+        font-kerning: normal;
+      }
+      .closeup-note {
+        margin: 0;
+        color: #696e71;
+        font-size: 12px;
+      }
+      .controls {
+        display: flex;
+        gap: 28px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin: 24px 0 20px;
+        font-size: 14px;
+      }
+      label {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      input {
+        width: 150px;
+        accent-color: var(--olive);
+      }
+      button {
+        cursor: pointer;
+        padding: 7px 12px;
+        background: transparent;
+        color: var(--olive);
+        border: 1px solid #8a916e;
+        border-radius: 5px;
+        font: inherit;
+      }
+      :is(button, a, input, textarea):focus-visible {
+        outline: 2px solid var(--olive);
+        outline-offset: 4px;
+      }
+      #editor {
+        margin-bottom: 20px;
+      }
+      #editor[hidden] {
+        display: none;
+      }
+      textarea {
+        margin-top: 6px;
+        width: 100%;
+        max-width: 740px;
+        min-height: 100px;
+        padding: 12px;
+        color: inherit;
+        background: white;
+        border: 1px solid #8a916e;
+        border-radius: 4px;
+        font:
+          16px/1.6 Arial,
+          sans-serif;
+      }
+      .face {
+        display: grid;
+        grid-template-columns: 190px minmax(0, 1fr);
+        gap: 40px;
+        padding: 25px 0;
+        border-top: 1px solid var(--line);
+      }
+      h2 {
+        margin: 0 0 4px;
+        font:
+          500 25px/1.3 Arial,
+          sans-serif;
+      }
+      .weight {
+        font-size: 13px;
+        color: #696e71;
+        margin: 0 0 10px;
+      }
+      a {
+        color: var(--olive);
+        text-underline-offset: 3px;
+      }
+      .download {
+        display: inline-block;
+        margin-right: 12px;
+        font-size: 13px;
+      }
+      .sample {
+        max-width: 660px;
+        min-width: 0;
+        font-family: "Margin Aside", serif;
+        font-synthesis: none;
+        font-kerning: normal;
+        overflow-wrap: anywhere;
+      }
+      .fox {
+        font-size: 24px;
+        line-height: 1.5;
+        margin: 0 0 14px;
+      }
+      .paragraph {
+        font-size: var(--reading-size, 18px);
+        line-height: 1.65;
+        margin: 0;
+      }
+      .letters {
+        margin: 12px 0 0;
+        font-size: 31px;
+        line-height: 1.4;
+        color: var(--olive);
+      }
+      .light {
+        font-weight: 300;
+      }
+      .medium {
+        font-weight: 500;
+      }
+      .bold {
+        font-weight: 700;
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+        color: #696e71;
+        font-size: 12px;
+      }
+      @media (max-width: 700px) {
+        main {
+          padding: 28px 20px;
+        }
+        .face {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        .controls {
+          gap: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Margin Aside</h1>
+      <p class="intro">
+        Porous, worn-print lettering, in three draft weights. Shallow edge nicks
+        and uneven impressions keep the typewriter character. The letters share
+        the same spacing in every weight.
+      </p>
+      <div class="enlargement" aria-label="Enlarged Medium sample">
+        gently worn.
+      </div>
+      <p class="closeup-note">
+        Medium, enlarged to show the ink edges. Below: the same words at reading
+        size.
+      </p>
+      <div class="controls">
+        <label for="size"
+          >Reading size
+          <input id="size" type="range" min="14" max="24" value="18" /><output
+            id="size-value"
+            >18px</output
+          ></label
+        >
+        <button
+          id="edit"
+          type="button"
+          aria-expanded="false"
+          aria-controls="editor"
+        >
+          Try your own words
+        </button>
+      </div>
+      <div id="editor" hidden>
+        <label for="copy">Shared sample text</label
+        ><textarea id="copy">
+I took the long way home this morning. There was no particular reason, just good light and a little time to spare. I thought of something you said last week and wanted to write it down before I forgot.</textarea>
+      </div>
+      <section class="face" aria-labelledby="light-title">
+        <div>
+          <h2 id="light-title">Light</h2>
+          <p class="weight">300 · a quieter impression</p>
+          <a class="download" href="margin-aside-light.ttf" download>TTF</a
+          ><a class="download" href="margin-aside-light.woff2" download
+            >WOFF2</a
+          >
+        </div>
+        <div class="sample light">
+          <p class="fox">The quick brown fox jumps over the lazy dog.</p>
+          <p class="paragraph"></p>
+          <p style="font-size: 16px; line-height: 1.8">
+            0ctober 10, 2019 · OO00 · “The story” · ‘October’ · she’s · We’ve ·
+            - – — · I ill
+          </p>
+          <p class="letters">a g e m r l 1 I ! ? &amp;</p>
+        </div>
+      </section>
+      <section class="face" aria-labelledby="medium-title">
+        <div>
+          <h2 id="medium-title">Medium</h2>
+          <p class="weight">500 · the everyday voice</p>
+          <a class="download" href="margin-aside-medium.ttf" download>TTF</a
+          ><a class="download" href="margin-aside-medium.woff2" download
+            >WOFF2</a
+          >
+        </div>
+        <div class="sample medium">
+          <p class="fox">The quick brown fox jumps over the lazy dog.</p>
+          <p class="paragraph"></p>
+          <p style="font-size: 16px; line-height: 1.8">
+            0ctober 10, 2019 · OO00 · “The story” · ‘October’ · she’s · We’ve ·
+            - – — · I ill
+          </p>
+          <p class="letters">a g e m r l 1 I ! ? &amp;</p>
+        </div>
+      </section>
+      <section class="face" aria-labelledby="bold-title">
+        <div>
+          <h2 id="bold-title">Bold</h2>
+          <p class="weight">700 · a firmer strike</p>
+          <a class="download" href="margin-aside-bold.ttf" download>TTF</a
+          ><a class="download" href="margin-aside-bold.woff2" download>WOFF2</a>
+        </div>
+        <div class="sample bold">
+          <p class="fox">The quick brown fox jumps over the lazy dog.</p>
+          <p class="paragraph"></p>
+          <p style="font-size: 16px; line-height: 1.8">
+            0ctober 10, 2019 · OO00 · “The story” · ‘October’ · she’s · We’ve ·
+            - – — · I ill
+          </p>
+          <p class="letters">a g e m r l 1 I ! ? &amp;</p>
+        </div>
+      </section>
+      <footer>
+        Original Margin lettering. These are real TTF and WOFF2 fonts,
+        development release 0.1. The wear is part of each glyph; no texture
+        filter or simulated bold is used. The site’s typography is unchanged.
+      </footer>
+    </main>
+    <script>
+      const copy = document.querySelector("#copy");
+      const size = document.querySelector("#size");
+      function update() {
+        document
+          .querySelectorAll(".paragraph")
+          .forEach((p) => (p.textContent = copy.value));
+        document.documentElement.style.setProperty(
+          "--reading-size",
+          size.value + "px",
+        );
+        document.querySelector("#size-value").value = size.value + "px";
+      }
+      copy.addEventListener("input", update);
+      size.addEventListener("input", update);
+      document.querySelector("#edit").addEventListener("click", () => {
+        const editor = document.querySelector("#editor");
+        editor.hidden = !editor.hidden;
+        document
+          .querySelector("#edit")
+          .setAttribute("aria-expanded", String(!editor.hidden));
+        if (!editor.hidden) copy.focus();
+      });
+      update();
+    </script>
+  </body>
+</html>

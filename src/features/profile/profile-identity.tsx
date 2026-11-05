@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ProfileContactActions } from "./profile-contact-actions";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
-import { Edit, Settings } from "@/components/margin-icons";
+import { ProfileOwnerMenu } from "./profile-owner-menu";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Field, FieldError } from "@/components/ui/field";
 import {
   profileInputSchema,
+  PROFILE_BIO_LIMIT,
   type ProfileInput,
   type ProfilePreviewData,
 } from "./schema";
@@ -91,46 +92,35 @@ export function ProfileIdentity({
         />
       ) : (
         <>
-          <ProfileHeading profile={profile} live={live}>
+          <ProfileHeading
+            profile={profile}
+            live={live}
+            bio={identity.bio}
+            actions={
+              !readOnly ? (
+                <div className="margin-profile-actions">
+                  {live ? composeAction : <NewPostButton />}
+                  <ProfileOwnerMenu
+                    triggerRef={editButton}
+                    username={profile.handle}
+                    name={identity.name}
+                    live={live}
+                    onEdit={() => {
+                      trigger.current = editButton.current;
+                      setEditing(true);
+                    }}
+                  />
+                </div>
+              ) : (
+                (contactActions ??
+                (live ? null : (
+                  <ProfileContactActions person={profile.person} />
+                )))
+              )
+            }
+          >
             <h1>{identity.name}</h1>
           </ProfileHeading>
-          <p className="margin-profile-bio">{identity.bio}</p>
-          {!readOnly ? (
-            <div className="margin-profile-actions">
-              {live ? composeAction : <NewPostButton />}
-              <Button
-                ref={editButton}
-                className="margin-profile-owner-action"
-                variant="outline"
-                size="icon"
-                aria-label="Edit profile"
-                title="Edit profile"
-                onClick={(event) => {
-                  trigger.current = event.currentTarget;
-                  setEditing(true);
-                }}
-              >
-                <Edit aria-hidden="true" />
-              </Button>
-              <Button
-                className="margin-profile-owner-action"
-                variant="outline"
-                size="icon"
-                asChild
-              >
-                <Link
-                  href={live ? "/app/settings" : "/?view=settings"}
-                  aria-label="Settings"
-                  title="Settings"
-                >
-                  <Settings aria-hidden="true" />
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            (contactActions ??
-            (live ? null : <ProfileContactActions person={profile.person} />))
-          )}
         </>
       )}
       <p role="status" className="margin-status">
@@ -150,29 +140,33 @@ function ProfileHeading({
   editing = false,
   live = false,
   portraitEditor,
+  bio,
+  actions,
 }: {
   profile: ProfilePreviewData;
   children: ReactNode;
   editing?: boolean;
   live?: boolean;
   portraitEditor?: ReactNode;
+  bio?: string;
+  actions?: ReactNode;
 }) {
   return (
     <div className="margin-profile-heading">
       <div className="margin-profile-portrait">
         <Avatar
+          shape="rounded"
           person={profile.person}
           live={live}
-          sizes="(min-width: 1024px) 104px, 76px"
+          sizes="(min-width: 640px) 84px, 75px"
         />
         {editing && (live ? portraitEditor : <ProfilePhotoEditor />)}
       </div>
       <div className="margin-profile-name">
         {children}
-        <p className="margin-profile-handle">@{profile.handle}</p>
         {editing && (
           <p className="margin-profile-username-hint">
-            Your @username is editable in{" "}
+            Your username is editable in{" "}
             <Link
               href={
                 live
@@ -186,6 +180,8 @@ function ProfileHeading({
           </p>
         )}
       </div>
+      {actions && <div className="margin-profile-intro-actions">{actions}</div>}
+      {bio?.trim() && <p className="margin-profile-bio">{bio}</p>}
     </div>
   );
 }
@@ -217,7 +213,7 @@ function EditProfileForm({
     defaultValues: initial,
   });
   const bio = useWatch({ control, name: "bio" });
-  const nearLimit = bio.length >= 250;
+  const nearLimit = bio.length >= PROFILE_BIO_LIMIT - 50;
   useEffect(() => {
     setFocus("name");
   }, [setFocus]);
@@ -281,24 +277,23 @@ function EditProfileForm({
           className="margin-profile-bio-input"
           id="profile-bio"
           {...register("bio")}
-          maxLength={300}
+          maxLength={PROFILE_BIO_LIMIT}
           rows={4}
           disabled={isSubmitting}
           aria-invalid={Boolean(errors.bio)}
           aria-describedby={
-            [
-              nearLimit && "profile-bio-count",
-              errors.bio && "profile-bio-error",
-            ]
+            ["profile-bio-count", errors.bio && "profile-bio-error"]
               .filter(Boolean)
               .join(" ") || undefined
           }
         />
-        {nearLimit && (
-          <p id="profile-bio-count" className="margin-field-hint" role="status">
-            {300 - bio.length} characters remaining
-          </p>
-        )}
+        <p
+          id="profile-bio-count"
+          className="margin-field-hint"
+          role={nearLimit ? "status" : undefined}
+        >
+          {bio.length} of {PROFILE_BIO_LIMIT} characters
+        </p>
         {errors.bio && (
           <FieldError id="profile-bio-error">{errors.bio.message}</FieldError>
         )}

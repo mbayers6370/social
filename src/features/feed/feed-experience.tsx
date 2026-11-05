@@ -7,6 +7,7 @@ import {
   spacePostView,
 } from "@/features/spaces/space-post-card";
 import { EmptyFeed } from "./empty-feed";
+import { useFeedReveal } from "./use-feed-reveal";
 
 import { FeedComposer } from "@/features/compose/feed-composer";
 
@@ -100,6 +101,8 @@ export function FeedExperience({
       spacePosts,
     ],
   );
+  const feed = useRef<HTMLDivElement>(null);
+  useFeedReveal(feed, ordered, !profileId);
   const state = preview.interactions;
   const dispatch = preview.dispatchInteraction;
   const [selection, setSelection] = useState<ConversationSelection | null>(
@@ -249,6 +252,7 @@ export function FeedExperience({
         )}
         <div className="margin-feed-column">
           <div
+            ref={feed}
             aria-label={profileId ? "Profile posts" : "Chronological feed"}
             className="margin-feed-list"
             data-main-feed={!profileId || undefined}

@@ -1,22 +1,23 @@
 /* Settings is a working surface: frequent choices stay visible; secondary records disclose in place. */
 .margin-settings-page {
-  --text-control: 0.9375rem;
-  --text-meta: 0.875rem;
-  --text-note: 0.875rem;
-  width: min(1080px, calc(100% - 48px));
+  --text-control: calc(0.9375rem + var(--reading-size-adjustment));
+  --text-meta: calc(0.875rem + var(--reading-size-adjustment));
+  --text-note: calc(0.875rem + var(--reading-size-adjustment));
+  width: 100%;
+  max-width: var(--directory-page-width);
   margin-inline: auto;
-  padding-block: var(--space-section) 56px;
+  padding: var(--directory-page-padding);
 }
 .margin-settings-opening {
-  padding-bottom: var(--space-section);
+  padding-bottom: var(--space-group);
 }
 .margin-settings-page h1 {
-  margin-block: 16px 12px;
+  margin: 0;
   color: hsl(var(--blackened-olive));
-  font: 2.5rem/1.12 var(--font-serif);
-  letter-spacing: -0.035em;
+  font: var(--directory-heading-size)/1.2 var(--font-serif);
 }
 .margin-settings-opening > p {
+  margin-top: 8px;
   color: hsl(var(--muted-foreground));
   font: var(--text-body)/1.6 var(--font-body);
 }
@@ -61,11 +62,19 @@
 .margin-settings-section h2 {
   margin-bottom: var(--space-group);
   color: hsl(var(--blackened-olive));
-  font: 1.5rem/1.3 var(--font-serif);
+  font: var(--text-heading-sm)/1.3 var(--font-serif);
   letter-spacing: -0.02em;
 }
 .margin-settings-section fieldset + fieldset {
   margin-top: 24px;
+}
+.margin-settings-posting-zone {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.margin-settings-posting-zone .margin-form-actions {
+  margin-top: 0;
 }
 .margin-settings-section legend,
 .margin-setting-summary h3 {
@@ -366,6 +375,7 @@
   font: var(--text-meta)/1.6 var(--font-body);
 }
 .margin-settings-page > .margin-app-footer {
+  --divider-top-color: transparent;
   margin-top: 24px;
   border-top: 0;
 }

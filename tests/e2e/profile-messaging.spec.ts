@@ -76,9 +76,12 @@ test("a friend's profile has compact friendship and message controls and opens t
     expect(name.x).toBeGreaterThan(avatar.x + avatar.width);
     expect(name.y).toBeLessThan(avatar.y + avatar.height);
     expect(bio.y).toBeGreaterThanOrEqual(avatar.y + avatar.height);
-    expect((await message.boundingBox())!.y).toBeGreaterThan(
-      bio.y + bio.height,
+    expect((await message.boundingBox())!.y).toBeGreaterThanOrEqual(
+      name.y + name.height,
     );
+    expect(
+      (await message.boundingBox())!.y + (await message.boundingBox())!.height,
+    ).toBeLessThanOrEqual(bio.y);
     await expect(
       page
         .getByRole("navigation", { name: "Mobile navigation" })

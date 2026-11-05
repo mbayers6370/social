@@ -351,7 +351,7 @@ export function MessagesPreview({
           {!messages.length && (
             <p className="margin-message-empty">
               {notebook
-                ? "A little space for your thoughts. Write your first note below."
+                ? "Nothing here yet."
                 : `No messages yet. Say hello to ${active.contact.name.split(" ")[0]}.`}
             </p>
           )}

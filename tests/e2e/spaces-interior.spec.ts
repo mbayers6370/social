@@ -1,4 +1,5 @@
 import { captureScreenshot, test, expect, type Page } from "./fixtures";
+import { eventSpacesEnabled } from "../../src/features/spaces/availability";
 import { calvinEvent } from "../helpers/ticketmaster-fixture";
 
 // Exercise the Space UI without making any requests to the Ticketmaster API or image host.
@@ -108,6 +109,10 @@ test("keeps the Private Space composer above its feed with matching member and o
 test("keeps the Event Space composer above empty and populated feeds", async ({
   page,
 }, info) => {
+  test.skip(
+    !eventSpacesEnabled,
+    "Event Spaces are temporarily hidden from the interface",
+  );
   await page
     .getByRole("textbox", { name: "Search Event Spaces" })
     .fill("Calvin Harris");

@@ -61,7 +61,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: var(--text-control);
+  font-size: var(--text-body);
   font-weight: 600;
 }
 .margin-thread-open {
@@ -71,9 +71,9 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  margin-top: 6px;
+  margin-top: 2px;
   color: hsl(var(--muted-foreground));
-  font-size: var(--text-body);
+  font: 500 var(--text-control)/1.5 var(--font-post);
 }
 .margin-thread-open::after {
   content: "";
@@ -85,7 +85,6 @@
   z-index: 1;
 }
 .margin-thread-choice[data-unread="true"] .margin-thread-open {
-  font-weight: 500;
   color: hsl(var(--foreground));
 }
 .margin-thread-choice > time {
@@ -103,6 +102,7 @@
 .margin-thread {
   display: none;
   min-width: 0;
+  min-height: 0;
   border: 1px solid hsl(var(--button-border));
   background: hsl(var(--conversation));
 }
@@ -203,11 +203,12 @@
   font-weight: 400;
 }
 .margin-thread-scroll {
+  --message-history-inset: 16px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 24px 16px;
+  padding: 24px var(--message-history-inset);
   scrollbar-width: thin;
 }
 .margin-messages-heading {
@@ -283,7 +284,7 @@
   max-width: 85%;
   border-radius: 17px 17px 17px 3px;
   padding: 8px 12px;
-  font: var(--text-body)/1.5 var(--font-body);
+  font: 500 var(--text-body)/1.5 var(--font-post);
   background: hsl(var(--card));
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -297,6 +298,45 @@
   font-size: var(--text-meta);
   color: hsl(var(--muted-foreground));
   margin: 4px 3px 0;
+}
+.margin-message-log[data-notebook="true"] {
+  margin-inline: calc(-1 * var(--message-history-inset));
+}
+.margin-notebook-entry {
+  padding-inline: var(--message-history-inset);
+}
+.margin-notebook-entry + .margin-notebook-entry {
+  margin-top: var(--space-group);
+}
+.margin-notebook-entry[data-day-start="true"] {
+  position: relative;
+  padding-top: var(--space-group);
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
+}
+.margin-notebook-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-bottom: var(--space-related);
+}
+.margin-notebook-date {
+  font: 500 var(--text-control)/1.5 var(--font-body);
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+}
+.margin-notebook-body {
+  width: 100%;
+  font: 500 var(--text-body)/1.6 var(--font-post);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.margin-notebook-expiry {
+  font: 400 var(--text-note)/1.5 var(--font-body);
+  color: hsl(var(--note-foreground));
+  white-space: nowrap;
 }
 .margin-notebook-icon {
   display: flex;
@@ -316,6 +356,7 @@
 }
 .margin-message-composer {
   flex-shrink: 0;
+  margin-top: auto;
   padding: 12px 16px max(16px, env(safe-area-inset-bottom));
   background: hsl(var(--conversation));
 }
@@ -349,12 +390,14 @@
 }
 .margin-message-input .margin-send {
   border-radius: var(--radius-control);
-  width: 44px;
+  width: auto;
   height: 44px;
-  padding: 0;
+  padding-inline: 12px;
 }
-.margin-send span {
-  display: none;
+.margin-message-shortcut {
+  margin-top: var(--space-related);
+  font: 400 var(--text-note)/1.5 var(--font-body);
+  color: hsl(var(--note-foreground));
 }
 @media (min-width: 1024px) {
   :root:has(.margin-messages),
@@ -435,7 +478,7 @@
     font-size: var(--text-body);
   }
   .margin-thread-scroll {
-    padding-inline: 32px;
+    --message-history-inset: 32px;
   }
   .margin-message-retention {
     padding-inline: 32px;
@@ -448,15 +491,7 @@
     border-radius: var(--radius-control);
   }
   .margin-message-input .margin-send {
-    width: auto;
     padding-inline: 19px;
-    border-radius: var(--radius-control);
-  }
-  .margin-send svg {
-    display: none;
-  }
-  .margin-send span {
-    display: inline;
   }
 }
 
@@ -464,6 +499,10 @@
   color: hsl(var(--muted-foreground));
   text-align: center;
   margin-block: 24px;
+}
+.margin-thread[data-notebook="true"] .margin-message-empty {
+  font: 500 var(--text-body)/1.6 var(--font-post);
+  text-align: left;
 }
 .margin-message-unavailable {
   flex-shrink: 0;

@@ -14,16 +14,21 @@
   max-width: 17ch;
   margin-block: 16px 24px;
   color: hsl(var(--blackened-olive));
-  font: clamp(2.75rem, 5.6vw, 5.75rem)/1.08 var(--font-serif);
+  font: calc(
+      clamp(2.75rem, 5.6vw, 5.75rem) + var(--reading-size-adjustment)
+    )/1.08
+    var(--font-serif);
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
 .margin-public-document[data-category="Legal"] h1 {
-  font-size: clamp(2.5rem, 4.5vw, 4.75rem);
+  font-size: calc(
+    clamp(2.5rem, 4.5vw, 4.75rem) + var(--reading-size-adjustment)
+  );
 }
 .margin-public-document-opening .margin-public-intro {
   max-width: 44ch;
-  font-size: 1.125rem;
+  font-size: var(--text-title);
   line-height: 1.7;
 }
 .margin-public-document-summary {
@@ -33,7 +38,7 @@
 }
 .margin-public-document-summary > p {
   margin-bottom: 12px;
-  font: 1.25rem/1.4 var(--font-serif);
+  font: var(--text-subtitle)/1.4 var(--font-serif);
   color: hsl(var(--blackened-olive));
 }
 .margin-public-document-summary ul {
@@ -64,44 +69,27 @@
   color: hsl(var(--foreground));
   overflow-wrap: anywhere;
 }
-.margin-public-review {
-  margin-top: 12px;
-}
-.margin-public-review summary {
-  width: fit-content;
-  max-width: 100%;
-  min-height: 44px;
-  padding-block: 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  color: hsl(var(--blackened-olive));
-}
-.margin-public-review ul {
-  max-width: 80ch;
-  padding-left: 24px;
-  list-style: disc;
-}
-.margin-public-review li + li {
-  margin-top: 8px;
-}
 .margin-public-document-body {
   display: grid;
   gap: 40px;
 }
 .margin-public-contents {
+  position: relative;
   display: flex;
   align-content: start;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0 24px;
   padding-block: 16px;
-  border-block: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  --divider-bottom-color: hsl(var(--border));
+  border-block: 1px solid transparent;
 }
 .margin-public-contents > p {
   width: 100%;
   margin-bottom: 8px;
   color: hsl(var(--blackened-olive));
-  font: 1.25rem/1.5 var(--font-serif);
+  font: var(--text-subtitle)/1.5 var(--font-serif);
 }
 .margin-public-contents a {
   display: inline-flex;
@@ -131,18 +119,23 @@
   scroll-margin-top: 32px;
 }
 .margin-public-sections section + section {
+  position: relative;
   padding-top: 32px;
-  border-top: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
 }
 .margin-public-sections h2 {
   margin-bottom: 20px;
-  font: clamp(1.75rem, 2.5vw, 2.5rem)/1.25 var(--font-serif);
+  font: calc(
+      clamp(1.75rem, 2.5vw, 2.5rem) + var(--reading-size-adjustment)
+    )/1.25
+    var(--font-serif);
   letter-spacing: -0.025em;
   color: hsl(var(--blackened-olive));
   text-wrap: pretty;
 }
 .margin-public-document[data-category="Legal"] .margin-public-sections h2 {
-  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-size: calc(clamp(1.5rem, 2vw, 2rem) + var(--reading-size-adjustment));
 }
 .margin-public-sections p,
 .margin-public-sections li {
@@ -178,9 +171,11 @@
   text-decoration-color: currentColor;
 }
 .margin-public-document-related {
+  position: relative;
   margin-top: 64px;
   padding-top: 24px;
-  border-top: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
 }
 .margin-public-document-related > p {
   margin-bottom: 12px;
@@ -198,7 +193,7 @@
   min-height: 44px;
   padding-block: 8px;
   color: hsl(var(--blackened-olive));
-  font: 1.5rem/1.4 var(--font-serif);
+  font: var(--text-heading-sm)/1.4 var(--font-serif);
   text-decoration: underline;
   text-decoration-color: hsl(var(--citron));
   text-underline-offset: 6px;
@@ -237,6 +232,8 @@
     padding-block: 0;
     padding-right: 8px;
     border: 0;
+    --divider-top-color: transparent;
+    --divider-bottom-color: transparent;
     scrollbar-width: thin;
   }
   .margin-public-sections {

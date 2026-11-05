@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Friends, Search } from "@/components/margin-icons";
+import { Friends, Search } from "@/components/margin-icons";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,10 +72,6 @@ export function FriendsPage() {
   return (
     <section className="margin-friends-page" aria-labelledby="friends-title">
       <header>
-        <Link className="margin-back-link" href="/?view=profile">
-          <ChevronLeft aria-hidden="true" />
-          Profile
-        </Link>
         <div className="margin-section-heading">
           <SectionTitle
             as="h1"

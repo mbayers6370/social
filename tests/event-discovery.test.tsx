@@ -132,13 +132,18 @@ it("reuses one provider identity on repeated joins without changing its schedule
 });
 it("lets an admin adjust the end and expiry through the schedule dialog", async () => {
   const user = userEvent.setup();
-  const session = renderPreview(spacesFixture());
-  await act(async () => {
-    await session().client.request(
-      `/api/spaces/events/${calvinEvent.id}/join`,
-      { method: "POST", body: "{}" },
-    );
+  // This fixture represents a host explicitly appointed by the founder.
+  const data = spacesFixture();
+  data.spaces.push({
+    ...structuredClone(data.spaces[0]),
+    ...calvinEvent,
+    id: "appointed-event",
+    kind: "EVENT",
+    endsAt: "2026-11-08T10:30:00Z",
+    expiresAt: "2026-11-10T10:30:00Z",
+    role: "ADMIN",
   });
+  const session = renderPreview(data);
   await user.click(screen.getByRole("button", { name: "Edit end time" }));
   expect(screen.getByLabelText("Scheduled end")).toHaveValue(
     "2026-11-08T02:30",

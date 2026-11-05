@@ -20,8 +20,10 @@ import sharp from "sharp";
 import { createDatabaseAdapter } from "@/server/database-adapter";
 import { PrismaClient } from "@/generated/prisma/client";
 import { SpaceService } from "@/server/spaces/service";
+import { ModerationService } from "@/server/safety/service";
 import { calvinEvent } from "./helpers/ticketmaster-fixture";
 import { SocialService } from "@/server/social/service";
+import { MemberService } from "@/server/member/service";
 import { normalizePhoto, type PrivatePhotoStore } from "@/server/social/photo";
 import { getDb } from "@/server/db";
 import { privatePhotoStore } from "@/server/social/photo";
@@ -97,6 +99,9 @@ describe.skipIf(!enabled)(
     });
     afterEach(async () => {
       vi.useRealTimers();
+      await db.operatorAction.deleteMany({
+        where: { operatorId: { in: actors.map((a) => a.id) } },
+      });
       await db.user.deleteMany({
         where: { id: { in: actors.map((a) => a.id) } },
       });
@@ -110,6 +115,75 @@ describe.skipIf(!enabled)(
       await service.relationship(actors[a].clerkId, actors[b].id, "request");
       await service.relationship(actors[b].clerkId, actors[a].id, "accept");
     };
+    it("shared profile addresses resolve current usernames without granting private content access", async () => {
+      await db.account.update({
+        where: { userId: actors[0].id },
+        data: { username: "shared_member" },
+      });
+      await service.createPhotoPost(
+        actors[0].clerkId,
+        photo,
+        "image/jpeg",
+        "Private photo",
+      );
+      const target = await service.profileIdByUsername(
+        actors[1].clerkId,
+        "shared_member",
+      );
+      expect(target).toBe(actors[0].id);
+      const stranger = await service.profile(actors[1].clerkId, target);
+      expect(stranger.posts).toEqual([]);
+      expect(stranger.gallery).toEqual([]);
+      await friends();
+      expect(
+        (await service.profile(actors[1].clerkId, target)).posts,
+      ).toHaveLength(1);
+      await db.account.update({
+        where: { userId: target },
+        data: { username: "renamed_member" },
+      });
+      await expect(
+        service.profileIdByUsername(actors[1].clerkId, "shared_member"),
+      ).rejects.toMatchObject({ status: 404 });
+      expect(
+        await service.profileIdByUsername(actors[1].clerkId, "renamed_member"),
+      ).toBe(target);
+    });
+    it.each([0, 1])(
+      "shared profile addresses hide blocks in either direction (%s)",
+      async (blocker) => {
+        await db.account.update({
+          where: { userId: actors[0].id },
+          data: { username: "shared_member" },
+        });
+        await service.relationship(
+          actors[blocker].clerkId,
+          actors[1 - blocker].id,
+          "block",
+        );
+        await expect(
+          service.profileIdByUsername(actors[1].clerkId, "shared_member"),
+        ).rejects.toMatchObject({ status: 404 });
+      },
+    );
+    it("shared profile addresses reject missing, inactive targets and inactive viewers", async () => {
+      await db.account.update({
+        where: { userId: actors[0].id },
+        data: { username: "shared_member", status: "DEACTIVATED" },
+      });
+      await expect(
+        service.profileIdByUsername(actors[1].clerkId, "shared_member"),
+      ).rejects.toMatchObject({ status: 404 });
+      await expect(
+        service.profileIdByUsername(actors[1].clerkId, "missing_member"),
+      ).rejects.toMatchObject({ status: 404 });
+      await expect(
+        service.profileIdByUsername(actors[0].clerkId, "shared_member"),
+      ).rejects.toMatchObject({ status: 403 });
+      await expect(
+        service.profileIdByUsername("", "shared_member"),
+      ).rejects.toMatchObject({ status: 401 });
+    });
     const publicEvents = () =>
       new SpaceService(db, store, () => now, {
         event: async () => calvinEvent,
@@ -121,6 +195,40 @@ describe.skipIf(!enabled)(
           nextPage: null,
         }),
       });
+    // Positive invitations explicitly establish friendship; denial tests call the raw service.
+    async function inviteFriend(
+      spaces: SpaceService,
+      subject: string,
+      spaceId: string,
+      targetId: string,
+    ) {
+      const sender = actors.find((actor) => actor.clerkId === subject)!;
+      const recipient = actors.find((actor) => actor.id === targetId)!;
+      const [lowId, highId] = [sender.id, targetId].sort();
+      const friendship = await db.friendship.findUnique({
+        where: { lowId_highId: { lowId, highId } },
+      });
+      if (friendship?.status !== "ACCEPTED") {
+        await service.relationship(subject, targetId, "request");
+        await service.relationship(recipient.clerkId, sender.id, "accept");
+      }
+      return spaces.invite(subject, spaceId, targetId);
+    }
+    async function appointEventAdmin(spaceId: string, actor = actors[0]) {
+      await db.account.update({
+        where: { userId: actor.id },
+        data: { role: "FOUNDER" },
+      });
+      await new ModerationService(db, store, () => now).assignEventAdmin(
+        actor.clerkId,
+        spaceId,
+        {
+          userId: actor.id,
+          role: "ADMIN",
+          note: "Explicit test host assignment",
+        },
+      );
+    }
     it("space plans: adds and removes plans on the same invitation-only Space, preserving content and clearing RSVPs", async () => {
       const spaces = publicEvents();
       const [owner, member] = actors;
@@ -130,7 +238,7 @@ describe.skipIf(!enabled)(
       });
       await spaces.accept(
         member.clerkId,
-        (await spaces.invite(owner.clerkId, room.id, member.id)).id,
+        (await inviteFriend(spaces, owner.clerkId, room.id, member.id)).id,
       );
       const post = await spaces.publish(owner.clerkId, room.id, {
         body: "Keep our conversation",
@@ -312,7 +420,8 @@ describe.skipIf(!enabled)(
       );
       await spaces.accept(
         actors[1].clerkId,
-        (await spaces.invite(actors[0].clerkId, room.id, actors[1].id)).id,
+        (await inviteFriend(spaces, actors[0].clerkId, room.id, actors[1].id))
+          .id,
       );
       const revoked = new SpaceService(
         db,
@@ -439,7 +548,7 @@ describe.skipIf(!enabled)(
         where: { spaceId: results[0].id },
       });
       expect(members).toHaveLength(3);
-      expect(members.filter((m) => m.role === "ADMIN")).toHaveLength(1);
+      expect(members.filter((m) => m.role === "ADMIN")).toHaveLength(0);
       const row = await db.space.findUniqueOrThrow({
         where: { id: results[0].id },
       });
@@ -448,6 +557,7 @@ describe.skipIf(!enabled)(
         db.space.create({ data: { ...row, id: undefined } }),
       ).rejects.toMatchObject({ code: "P2002" });
       const creator = actors.find((a) => a.id === row.creatorId)!;
+      await appointEventAdmin(row.id, creator);
       expect(row.endsAt?.toISOString()).toBe("2026-11-08T10:30:00.000Z");
       const other = actors.find((a) => a.id !== row.creatorId)!;
       await expect(
@@ -600,13 +710,15 @@ describe.skipIf(!enabled)(
                 calvinEvent.id,
               )
             : await spaces.createSpace(actors[0].clerkId, input);
-        const invite = await spaces.invite(
+        if (kind === "EVENT") await appointEventAdmin(room.id);
+        const invite = await inviteFriend(
+          spaces,
           actors[0].clerkId,
           room.id,
           actors[1].id,
         );
         await spaces.accept(actors[1].clerkId, invite.id);
-        await spaces.invite(actors[0].clerkId, room.id, actors[2].id);
+        await inviteFriend(spaces, actors[0].clerkId, room.id, actors[2].id);
         const post = await spaces.publish(actors[0].clerkId, room.id, {
           body: "Keep this for remaining members",
           photoIds: [],
@@ -623,8 +735,8 @@ describe.skipIf(!enabled)(
         expect(
           await spaces.readSpace(actors[1].clerkId, room.id),
         ).toMatchObject({
-          creatorId: actors[1].id,
-          role: "ADMIN",
+          creatorId: actors[kind === "EVENT" ? 0 : 1].id,
+          role: kind === "EVENT" ? "MEMBER" : "ADMIN",
           memberCount: 1,
         });
         expect(
@@ -654,8 +766,8 @@ describe.skipIf(!enabled)(
           expect(
             await spaces.readSpace(actors[2].clerkId, room.id),
           ).toMatchObject({
-            creatorId: actors[2].id,
-            role: "ADMIN",
+            creatorId: actors[0].id,
+            role: "MEMBER",
             memberCount: 1,
           });
         } else
@@ -685,8 +797,8 @@ describe.skipIf(!enabled)(
       ).toBe(0);
       await spaces.joinEvent(actors[2].clerkId, room.id);
       expect(await spaces.readSpace(actors[2].clerkId, room.id)).toMatchObject({
-        creatorId: actors[2].id,
-        role: "ADMIN",
+        creatorId: actors[0].id,
+        role: "MEMBER",
       });
     });
     it("persists an invited account's UI read model, accepted-friend access and photo/post deletion", async () => {
@@ -838,7 +950,8 @@ describe.skipIf(!enabled)(
       await expect(
         spaces.readSpace(actors[1].clerkId, room.id),
       ).rejects.toMatchObject({ status: 404 });
-      const invitation = await spaces.invite(
+      const invitation = await inviteFriend(
+        spaces,
         actors[0].clerkId,
         room.id,
         actors[1].id,
@@ -891,7 +1004,8 @@ describe.skipIf(!enabled)(
         timeZone: "Europe/Paris",
         location: "At home",
       });
-      const invitation = await spaces.invite(
+      const invitation = await inviteFriend(
+        spaces,
         actors[0].clerkId,
         room.id,
         actors[1].id,
@@ -936,7 +1050,8 @@ describe.skipIf(!enabled)(
       });
       await spaces.accept(
         actors[1].clerkId,
-        (await spaces.invite(actors[0].clerkId, room.id, actors[1].id)).id,
+        (await inviteFriend(spaces, actors[0].clerkId, room.id, actors[1].id))
+          .id,
       );
       await service.createPost(
         actors[0].clerkId,
@@ -953,7 +1068,11 @@ describe.skipIf(!enabled)(
       expect(
         (await spaces.posts(actors[1].clerkId, room.id)).posts.map((p) => p.id),
       ).toContain(published.id);
-      expect((await spaces.feed(actors[1].clerkId)).posts).toEqual([]);
+      expect(
+        (await spaces.feed(actors[1].clerkId)).posts.filter(
+          (post) => post.space,
+        ),
+      ).toEqual([]);
       await spaces.member(actors[1].clerkId, room.id, {
         action: "preferences",
         includeInFeed: true,
@@ -961,7 +1080,11 @@ describe.skipIf(!enabled)(
       expect(
         (await spaces.feed(actors[1].clerkId)).posts.map((p) => p.id),
       ).toContain(published.id);
-      expect((await spaces.feed(actors[0].clerkId)).posts).toEqual([]);
+      expect(
+        (await spaces.feed(actors[0].clerkId)).posts.filter(
+          (post) => post.space,
+        ),
+      ).toEqual([]);
       expect(
         (await service.profile(actors[0].clerkId, actors[0].id)).posts,
       ).toHaveLength(1);
@@ -983,7 +1106,8 @@ describe.skipIf(!enabled)(
       });
       await spaces.accept(
         actors[1].clerkId,
-        (await spaces.invite(actors[0].clerkId, room.id, actors[1].id)).id,
+        (await inviteFriend(spaces, actors[0].clerkId, room.id, actors[1].id))
+          .id,
       );
       now = new Date(now.getTime() + 1000);
       const shared = await spaces.publish(actors[0].clerkId, room.id, {
@@ -1038,7 +1162,8 @@ describe.skipIf(!enabled)(
       for (const person of actors.slice(1))
         await spaces.accept(
           person.clerkId,
-          (await spaces.invite(actors[0].clerkId, room.id, person.id)).id,
+          (await inviteFriend(spaces, actors[0].clerkId, room.id, person.id))
+            .id,
         );
       const alice = await spaces.publish(actors[0].clerkId, room.id, {
         body: "Alice",
@@ -1091,7 +1216,8 @@ describe.skipIf(!enabled)(
       });
       await spaces.accept(
         actors[1].clerkId,
-        (await spaces.invite(actors[0].clerkId, room.id, actors[1].id)).id,
+        (await inviteFriend(spaces, actors[0].clerkId, room.id, actors[1].id))
+          .id,
       );
       const uploaded = await spaces.createPhotoPost(
         actors[0].clerkId,
@@ -1159,7 +1285,8 @@ describe.skipIf(!enabled)(
       });
       await spaces.accept(
         actors[1].clerkId,
-        (await spaces.invite(actors[0].clerkId, room.id, actors[1].id)).id,
+        (await inviteFriend(spaces, actors[0].clerkId, room.id, actors[1].id))
+          .id,
       );
       for (let i = 0; i < 19; i++)
         await db.photo.create({
@@ -1365,7 +1492,8 @@ describe.skipIf(!enabled)(
       });
       await spaces.accept(
         actors[1].clerkId,
-        (await spaces.invite(actors[0].clerkId, room.id, actors[1].id)).id,
+        (await inviteFriend(spaces, actors[0].clerkId, room.id, actors[1].id))
+          .id,
       );
       await spaces.member(actors[1].clerkId, room.id, {
         action: "preferences",
@@ -1430,7 +1558,8 @@ describe.skipIf(!enabled)(
           startsAt: "2027-01-01T12:00:00Z",
           timeZone: "UTC",
         });
-        const invitation = await spaces.invite(
+        const invitation = await inviteFriend(
+          spaces,
           owner.clerkId,
           room.id,
           member.id,
@@ -1438,7 +1567,7 @@ describe.skipIf(!enabled)(
         await spaces.accept(member.clerkId, invitation.id);
         await spaces.accept(
           other.clerkId,
-          (await spaces.invite(owner.clerkId, room.id, other.id)).id,
+          (await inviteFriend(spaces, owner.clerkId, room.id, other.id)).id,
         );
         await spaces.member(member.clerkId, room.id, {
           action: "preferences",
@@ -1515,7 +1644,8 @@ describe.skipIf(!enabled)(
       });
       await spaces.accept(
         actors[1].clerkId,
-        (await spaces.invite(actors[0].clerkId, room.id, actors[1].id)).id,
+        (await inviteFriend(spaces, actors[0].clerkId, room.id, actors[1].id))
+          .id,
       );
       await spaces.member(actors[0].clerkId, room.id, {
         action: "role",
@@ -1764,15 +1894,11 @@ describe.skipIf(!enabled)(
     });
     it("enforces the daily photograph limit independently of available post slots", async () => {
       const owner = actors[0];
-      // Gallery photos survive post deletion, leaving the post allowance unused.
+      // Gallery uploads consume photo slots without consuming publication slots.
+      // Deleted publications intentionally still count toward the post allowance.
+      const member = new MemberService(db, store, () => now);
       for (let index = 0; index < 2; index++) {
-        const post = await service.createPhotoPost(
-          owner.clerkId,
-          photo,
-          "image/jpeg",
-          "Red",
-        );
-        await service.deletePost(owner.clerkId, post.id);
+        await member.uploadGallery(owner.clerkId, photo, "image/jpeg", "Red");
       }
       expect(
         await db.post.count({ where: { ownerId: owner.id, deletedAt: null } }),
@@ -1798,6 +1924,14 @@ describe.skipIf(!enabled)(
       expect(
         await db.post.count({ where: { ownerId: owner.id, deletedAt: null } }),
       ).toBe(1);
+      await service.createPost(owner.clerkId, "A post slot remains");
+      await service.createPost(owner.clerkId, "The final post slot");
+      await expect(
+        service.createPost(owner.clerkId, "No more post slots"),
+      ).rejects.toMatchObject({
+        status: 409,
+        message: "Daily post allowance reached",
+      });
     });
     it("denies expired posts, pending/deactivated accounts, and revoked authors with stale sessions", async () => {
       const post = await service.createPost(actors[0].clerkId, "Expires");
@@ -2008,6 +2142,7 @@ describe.skipIf(!enabled)(
       ).toBeGreaterThan(0);
     });
     it("runs Space creation, invitation, canonical feed, conversation and deletion through the HTTP boundary", async () => {
+      await friends();
       vi.useFakeTimers({ toFake: ["Date"] });
       vi.setSystemTime(now);
       const request = (

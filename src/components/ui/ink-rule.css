@@ -1,0 +1,51 @@
+/* Fixed-size end masks and a repeating center preserve the ink grain at any width. */
+.margin-ink-rule {
+  --ink-rule-left: url("./ink-rule/dry-left.svg");
+  --ink-rule-middle: url("./ink-rule/dry-middle.svg");
+  --ink-rule-right: url("./ink-rule/dry-right.svg");
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 16px;
+  color: inherit;
+  flex-shrink: 0;
+}
+.margin-ink-rule[data-variant="ribbon"] {
+  --ink-rule-left: url("./ink-rule/ribbon-left.svg");
+  --ink-rule-middle: url("./ink-rule/ribbon-middle.svg");
+  --ink-rule-right: url("./ink-rule/ribbon-right.svg");
+}
+.margin-ink-rule[data-variant="smudge"] {
+  --ink-rule-left: url("./ink-rule/smudge-left.svg");
+  --ink-rule-middle: url("./ink-rule/smudge-middle.svg");
+  --ink-rule-right: url("./ink-rule/smudge-right.svg");
+}
+.margin-ink-rule::before,
+.margin-ink-rule::after,
+.margin-ink-rule-core {
+  display: block;
+  height: 16px;
+  min-width: 0;
+  background: currentColor;
+}
+.margin-ink-rule::before,
+.margin-ink-rule::after {
+  content: "";
+  mask-repeat: no-repeat;
+  mask-size: 24px 16px;
+}
+.margin-ink-rule::before {
+  flex: 0 1 24px;
+  mask-image: var(--ink-rule-left);
+}
+.margin-ink-rule::after {
+  flex: 0 1 24px;
+  mask-image: var(--ink-rule-right);
+  mask-position: right;
+}
+.margin-ink-rule-core {
+  flex: 1;
+  mask-image: var(--ink-rule-middle);
+  mask-size: 160px 16px;
+  mask-repeat: repeat-x;
+}

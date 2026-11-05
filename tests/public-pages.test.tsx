@@ -11,7 +11,7 @@ import {
   POSTING_EXCLUSIONS,
 } from "@/lib/platform-rules";
 afterEach(() => vi.unstubAllEnvs());
-it("keeps policies visibly draft with the confirmed support contact and unconfirmed operator", () => {
+it("keeps policies visibly draft with the working support contact and customer-facing status", () => {
   for (const document of Object.values(publicDocuments)) {
     const html = renderToStaticMarkup(<PublicDocument document={document} />);
     const page = new DOMParser().parseFromString(html, "text/html");
@@ -26,9 +26,8 @@ it("keeps policies visibly draft with the confirmed support contact and unconfir
       expect(note.textContent).not.toMatch(
         /placeholder|unmonitored|not a monitored/,
       );
-      expect(note.textContent).toContain(
-        "legal operator has not been confirmed",
-      );
+      expect(note.textContent).toContain("not an active agreement");
+      expect(note.querySelector("details")).toBeNull();
     }
     for (const link of page.querySelectorAll<HTMLAnchorElement>("a[href^='#']"))
       expect(page.getElementById(link.hash.slice(1))).not.toBeNull();
@@ -68,9 +67,13 @@ it("shares the exact posting copy between practical pages", () => {
       POSTING_EXCLUSIONS,
     ])
       expect(text).toContain(rule);
-    expect(text).toContain("America/Los_Angeles");
+    expect(text).toContain("account’s saved time zone");
+    expect(text).not.toContain("America/Los_Angeles");
   }
   expect(JSON.stringify(publicDocuments["how-it-works"])).toContain("18");
+  expect(JSON.stringify(publicDocuments)).not.toMatch(
+    /These instructions describe the local preview|Changes usually reset|reporting service is not open yet|Add an image description/,
+  );
 });
 it("renders the public home and footer as server markup with valid public destinations", () => {
   vi.stubEnv("NODE_ENV", "development");

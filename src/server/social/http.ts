@@ -1,4 +1,5 @@
 import "server-only";
+import { eventSpacesEnabled } from "@/features/spaces/availability";
 import { z } from "zod";
 import { requireViewer, UnauthorizedError } from "@/server/auth";
 import { getDb } from "@/server/db";
@@ -296,7 +297,7 @@ export async function socialRequest(
         result = await service.reusablePhotos(subject, id!, before);
         break;
       case "spaceFeed":
-        result = await service.feed(subject, before);
+        result = await service.feed(subject, before, eventSpacesEnabled);
         break;
       case "commentsRead":
         result = await service.comments(
@@ -319,7 +320,7 @@ export async function socialRequest(
         await service.deleteSpace(subject, id!);
         break;
       case "spaceList":
-        result = await service.listSpaces(subject, before);
+        result = await service.listSpaces(subject, before, eventSpacesEnabled);
         break;
       case "spaceCreate":
         result = await service.createSpace(

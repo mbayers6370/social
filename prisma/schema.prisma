@@ -13,10 +13,15 @@ model User {
   clerkId         String         @unique
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  topFriends ProfileTopFriend[] @relation("TopFriendOwner")
+  featuredBy ProfileTopFriend[] @relation("TopFriendSelection")
+  topFriendMutations ProfileTopFriendMutation[]
   songs           ProfileSong[]
   safetyReports   SafetyReport[]
+  operatorActions OperatorAction[]
   account         Account?
   posts           Post[]
+  postingUsage    PostingUsage[]
   photos          Photo[]
   gallery         GalleryEntry[]
   friendshipsLow  Friendship[]   @relation("FriendLow")
@@ -37,6 +42,9 @@ model User {
 
 /// Activation is separate from provider identity and legacy preview music users.
 model Account {
+  postingTimeZone String @default("America/Los_Angeles") @db.VarChar(100)
+  postingUsageCarryFrom DateTime?
+  postingUsageCarryUntil DateTime?
   portraitPhotoId String?
   portrait Photo? @relation(fields: [portraitPhotoId], references: [id], onDelete: SetNull)
   usernameChangedAt DateTime?
@@ -48,6 +56,7 @@ model Account {
   notifyFriends Boolean @default(true)
   notifyMessages Boolean @default(true)
   messagingEnabled Boolean @default(true)
+  showTopFriends Boolean @default(true)
   username String? @unique @db.VarChar(24)
   bio String @default("") @db.VarChar(300)
   emailVerifiedAt DateTime?
@@ -156,6 +165,19 @@ model Photo {
   @@unique([id, ownerId])
   @@index([ownerId, dayKey, state])
   @@index([state, uploadExpiresAt])
+}
+
+/// Minimal publication ledger survives post deletion. No post body or media data.
+model PostingUsage {
+  id String @id @default(cuid())
+  postId String @unique
+  ownerId String
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime
+  hasLink Boolean
+  timeZone String @db.VarChar(100)
+  @@index([ownerId, createdAt])
+  @@index([createdAt, id])
 }
 
 model PostPhoto {
@@ -309,7 +331,23 @@ model SafetyReport {
   status String @default("RECEIVED")
   createdAt DateTime @default(now())
   reporter User @relation(fields: [reporterId], references: [id], onDelete: Restrict)
+  review OperatorAction?
   @@index([reporterId, createdAt])
+  @@index([status, createdAt, id])
+}
+
+/// Purpose-limited operator audit. No message bodies, photographs or credentials.
+model OperatorAction {
+  id String @id @default(cuid())
+  operatorId String
+  operator User @relation(fields: [operatorId], references: [id], onDelete: Restrict)
+  reportId String? @unique
+  report SafetyReport? @relation(fields: [reportId], references: [id], onDelete: Restrict)
+  action String @db.VarChar(32)
+  targetId String
+  note String @db.VarChar(1000)
+  createdAt DateTime @default(now())
+  @@index([operatorId, createdAt])
 }
 
 
@@ -396,4 +434,29 @@ model PostComment {
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
   @@unique([id, postId])
   @@index([postId, createdAt, id])
+}
+
+/// Ordered profile detail; never a public friend list.
+model ProfileTopFriend {
+  ownerId String
+  friendId String
+  position Int
+  createdAt DateTime @default(now())
+  owner User @relation("TopFriendOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  friend User @relation("TopFriendSelection", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, friendId])
+  @@unique([ownerId, position])
+  @@index([friendId])
+}
+
+/// Retry receipts prevent an old request from overwriting a newer selection.
+model ProfileTopFriendMutation {
+  ownerId String
+  requestId String @db.Uuid
+  payloadHash String @db.VarChar(64)
+  createdAt DateTime @default(now())
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, requestId])
 }

@@ -42,7 +42,9 @@ describe("shared component contracts", () => {
       );
     }
     render(<EditableProfile />);
-    expect(screen.getByRole("button", { name: "Edit profile" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "More options for Ines Alvarez" }),
+    ).toBeVisible();
     const edit = screen.getByRole("button", {
       name: "Profile menu",
     });

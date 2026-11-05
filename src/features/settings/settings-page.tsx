@@ -1,7 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "@/components/margin-icons";
+import {
+  ChevronRight,
+  Settings as SettingsIcon,
+} from "@/components/margin-icons";
+import { SectionTitle, SectionMotif } from "@/components/shared/section-motif";
 import { PreviewDataControls } from "./preview-data-controls";
 import { ReadingSettings } from "./reading-settings";
 import { UsernameSettings } from "./username-settings";
@@ -38,11 +42,13 @@ export function SettingsPage() {
   return (
     <section className="margin-settings-page" aria-labelledby="settings-title">
       <header className="margin-settings-opening">
-        <Link href="/?view=profile" className="margin-back-link">
-          <ChevronLeft aria-hidden="true" />
-          Profile
-        </Link>
-        <h1 id="settings-title">Settings</h1>
+        <SectionTitle
+          as="h1"
+          id="settings-title"
+          motif={<SectionMotif icon={SettingsIcon} />}
+        >
+          Settings
+        </SectionTitle>
         <p>Reading, notifications and your account.</p>
       </header>
       <div className="margin-settings-columns">

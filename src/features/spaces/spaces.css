@@ -1,11 +1,11 @@
 /* Space directory, identity and membership layout. Form and composer styles have their own owners. */
 .margin-spaces-page {
   width: 100%;
-  max-width: 1000px;
+  max-width: var(--directory-page-width);
   margin-inline: auto;
   display: grid;
   gap: var(--space-group);
-  padding: 24px 20px 48px;
+  padding: var(--directory-page-padding);
 }
 .margin-spaces-heading {
   display: flex;
@@ -16,7 +16,7 @@
 }
 .margin-spaces-heading h1,
 .margin-space-identity h1 {
-  font: var(--text-heading-lg)/1.2 var(--font-serif);
+  font: var(--directory-heading-size)/1.2 var(--font-serif);
   overflow-wrap: anywhere;
 }
 .margin-spaces-heading p {
@@ -88,12 +88,14 @@
   scrollbar-gutter: stable;
 }
 .margin-event-results > li {
+  position: relative;
   display: grid;
   grid-template-columns: 80px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
   padding-block: 16px;
-  border-top: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
 }
 .margin-event-result-media {
   display: grid;
@@ -140,7 +142,9 @@
   background: hsl(var(--card));
 }
 .margin-space-directory > li + li {
-  border-top: 1px solid hsl(var(--border));
+  position: relative;
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
 }
 .margin-space-directory a {
   display: flex;
@@ -240,13 +244,15 @@
   margin: 0;
 }
 .margin-space-rows > li {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
   padding: 16px;
-  border-bottom: 1px solid hsl(var(--border));
+  --divider-bottom-color: hsl(var(--border));
+  border-bottom: 1px solid transparent;
   overflow-wrap: anywhere;
 }
 .margin-space-rows > li > span {
@@ -422,10 +428,12 @@
   transform: rotate(180deg);
 }
 .margin-space-panel-content {
+  position: relative;
   display: grid;
   gap: 20px;
   padding: 16px;
-  border-top: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
   font-size: var(--text-control);
 }
 .margin-space-event-detail {
@@ -576,13 +584,6 @@
   }
   .margin-event-results > li > :last-child {
     grid-column: auto;
-  }
-  .margin-spaces-page {
-    padding: 32px 32px 48px;
-  }
-  .margin-spaces-heading h1,
-  .margin-space-identity h1 {
-    font-size: var(--text-display-md);
   }
 }
 @media (min-width: 1024px) {

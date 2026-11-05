@@ -1,36 +1,21 @@
-"use client";
-import { useLayoutEffect, useRef, type ReactNode } from "react";
-/** Shared responsive profile geometry. Content and authority belong to callers. */
+import type { ReactNode } from "react";
+
+/** One profile rail keeps identity and details together without nested scrolling. */
 export function ProfileFrame({
-  personId,
+  identity,
+  details,
   children,
 }: {
-  personId: string;
+  identity: ReactNode;
+  details: ReactNode;
   children: ReactNode;
 }) {
-  const root = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const page = root.current;
-    const identity = page?.querySelector<HTMLElement>(
-      ".margin-profile-identity",
-    );
-    if (!page || !identity) return;
-    const measure = () =>
-      page.style.setProperty(
-        "--profile-identity-height",
-        `${identity.getBoundingClientRect().height}px`,
-      );
-    measure();
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", measure);
-      return () => window.removeEventListener("resize", measure);
-    }
-    const observer = new ResizeObserver(measure);
-    observer.observe(identity);
-    return () => observer.disconnect();
-  }, [personId]);
   return (
-    <div className="margin-profile" ref={root}>
+    <div className="margin-profile">
+      <div className="margin-profile-rail">
+        {identity}
+        {details}
+      </div>
       {children}
     </div>
   );

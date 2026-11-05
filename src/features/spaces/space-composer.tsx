@@ -527,6 +527,14 @@ export function SpaceComposer({
                           disappear after 30 days.
                         </p>
                         <p>
+                          Deleted posts still count. Daily limits reset at
+                          midnight in{" "}
+                          {allowance?.timeZone ??
+                            "your saved account time zone"}
+                          . A time-zone change carries recent usage forward for
+                          24 hours.
+                        </p>
+                        <p>
                           New photographs use your shared daily allowance of
                           three. Saved photographs can be reused. Your Gallery
                           keeps up to twenty photographs.

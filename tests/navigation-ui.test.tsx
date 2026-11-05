@@ -56,13 +56,20 @@ it("provides a desktop utility footer and grouped mobile utilities in Settings",
   expect(
     within(navigation).getByRole("link", { name: "Help & safety" }),
   ).toHaveAttribute("href", "/help");
-  const copyright = within(navigation.closest("footer")!).getByText(
-    "© 2026 margin",
-  );
+  for (const [name, href] of [
+    ["Copyright", "/copyright"],
+    ["Your data", "/your-data"],
+    ["Retention", "/retention"],
+    ["Cookies", "/cookies"],
+    ["Accessibility", "/accessibility"],
+  ])
+    expect(within(navigation).getByRole("link", { name })).toHaveAttribute(
+      "href",
+      href,
+    );
   expect(
-    navigation.compareDocumentPosition(copyright) &
-      Node.DOCUMENT_POSITION_FOLLOWING,
-  ).toBeTruthy();
+    within(navigation.closest("footer")!).queryByText("© 2026 margin"),
+  ).not.toBeInTheDocument();
   expect(
     within(navigation).queryByRole("link", { name: "Coming soon" }),
   ).not.toBeInTheDocument();

@@ -40,6 +40,10 @@ test("changes a profile photograph and offers selected account downloads", async
   await expect(
     page.getByRole("button", { name: "Change profile photograph" }),
   ).toHaveCount(0);
+  await page
+    .locator(".margin-profile-identity")
+    .getByRole("button", { name: /^More options for/ })
+    .click();
   await page.getByRole("button", { name: "Edit profile", exact: true }).click();
   const overlay = page.getByRole("button", {
     name: "Change profile photograph",
@@ -74,6 +78,10 @@ test("changes a profile photograph and offers selected account downloads", async
   await confirm.getByRole("button", { name: "Use photograph" }).click();
   await expect(confirm).toHaveCount(0);
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page
+    .locator(".margin-profile-identity")
+    .getByRole("button", { name: /^More options for/ })
+    .click();
   // Keep client navigation so the same tab account state is available.
   await page
     .getByRole("link", { name: "Settings", exact: true })

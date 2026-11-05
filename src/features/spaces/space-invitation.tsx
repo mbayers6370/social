@@ -84,7 +84,7 @@ export function SpaceInvitation({ spaceId }: { spaceId: string }) {
         <DialogHeader>
           <DialogTitle>Invite to this Space</DialogTitle>
           <DialogDescription>
-            Find a member by name or username. Your friends appear first.
+            Invite an accepted friend by name or username.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -93,7 +93,7 @@ export function SpaceInvitation({ spaceId }: { spaceId: string }) {
           autoComplete="off"
           onSubmit={(event) => event.preventDefault()}
         >
-          <Label htmlFor={id}>Search members</Label>
+          <Label htmlFor={id}>Search friends</Label>
           <Input
             id={id}
             type="search"
@@ -122,8 +122,8 @@ export function SpaceInvitation({ spaceId }: { spaceId: string }) {
                 : current?.data?.members.length
                   ? "Invitations appear in the recipient’s Spaces."
                   : term
-                    ? "No matching members are available to invite."
-                    : "Search by name or username to find more members.")}
+                    ? "No matching friends are available to invite."
+                    : "Search your accepted friends by name or username.")}
         </p>
         {current?.data && (
           <div
@@ -131,65 +131,47 @@ export function SpaceInvitation({ spaceId }: { spaceId: string }) {
             aria-label="Members available to invite"
             tabIndex={0}
           >
-            {[true, false].map((friend) => {
-              const members = current.data!.members.filter(
-                (member) => member.friend === friend,
-              );
-              return (
-                members.length > 0 && (
-                  <section
-                    key={String(friend)}
-                    aria-labelledby={`${id}-${friend}`}
-                  >
-                    <h3 id={`${id}-${friend}`}>
-                      {friend ? "Your friends" : "Other members"}
-                    </h3>
-                    <ul>
-                      {members.map(({ person, username }) => (
-                        <li key={person.id}>
-                          <Avatar
-                            person={person}
-                            live={!client.preview}
-                            small
-                          />
-                          <span>
-                            <strong>{person.name}</strong>
-                            <span>@{username}</span>
-                          </span>
-                          <Button
-                            variant="outline"
-                            disabled={action.busy || sent.includes(person.id)}
-                            aria-label={
-                              sent.includes(person.id)
-                                ? `${person.name} invited`
-                                : `Invite ${person.name}`
-                            }
-                            onClick={async () => {
-                              if (
-                                await action.run(
-                                  `/api/spaces/${spaceId}/invitations`,
-                                  "POST",
-                                  { targetId: person.id },
-                                  false,
-                                  { refresh: false },
-                                )
-                              ) {
-                                setSent((ids) => [...ids, person.id]);
-                                setMessage(
-                                  `Invitation sent to ${person.name}.`,
-                                );
-                              }
-                            }}
-                          >
-                            {sent.includes(person.id) ? "Invited" : "Invite"}
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                )
-              );
-            })}
+            {!!current.data.members.length && (
+              <section aria-labelledby={`${id}-friends`}>
+                <h3 id={`${id}-friends`}>Your friends</h3>
+                <ul>
+                  {current.data.members.map(({ person, username }) => (
+                    <li key={person.id}>
+                      <Avatar person={person} live={!client.preview} small />
+                      <span>
+                        <strong>{person.name}</strong>
+                        <span>@{username}</span>
+                      </span>
+                      <Button
+                        variant="outline"
+                        disabled={action.busy || sent.includes(person.id)}
+                        aria-label={
+                          sent.includes(person.id)
+                            ? `${person.name} invited`
+                            : `Invite ${person.name}`
+                        }
+                        onClick={async () => {
+                          if (
+                            await action.run(
+                              `/api/spaces/${spaceId}/invitations`,
+                              "POST",
+                              { targetId: person.id },
+                              false,
+                              { refresh: false },
+                            )
+                          ) {
+                            setSent((ids) => [...ids, person.id]);
+                            setMessage(`Invitation sent to ${person.name}.`);
+                          }
+                        }}
+                      >
+                        {sent.includes(person.id) ? "Invited" : "Invite"}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             {current.data.hasMore && (
               <p className="margin-field-hint">
                 Showing the first 20 matches. Refine your search to find someone

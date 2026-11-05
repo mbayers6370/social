@@ -121,14 +121,34 @@ test("real LCP image loading stays correct for tea anchors, reloads, history, pr
       { timeout: 10000 },
     )
     .toBe("eager");
-  // Cover native scroll restoration on the plain feed URL as well as anchors.
-  await page.evaluate(() => history.replaceState(history.state, "", "/"));
+  // The cold fragment navigation above covers LCP. Give this separate reload
+  // scenario an explicit position after fonts settle, so its baseline cannot
+  // race the browser's initial fragment adjustment on a cold Linux runner.
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    history.replaceState(history.state, "", "/");
+    const post = document.getElementById("post-tea")!;
+    const header = document.querySelector(".margin-header")!;
+    window.scrollTo({
+      top:
+        post.getBoundingClientRect().top +
+        window.scrollY -
+        header.getBoundingClientRect().height -
+        32,
+      behavior: "instant",
+    });
+  });
   const restoredY = await page.evaluate(() => scrollY);
+  const restoredImageTop = (await tea.boundingBox())!.y;
   expect(restoredY).toBeGreaterThan(0);
   await page.reload();
+  await page.evaluate(() => document.fonts.ready);
   await expect
     .poll(() => page.evaluate(() => scrollY))
     .toBeCloseTo(restoredY, 0);
+  await expect
+    .poll(async () => (await tea.boundingBox())!.y)
+    .toBeCloseTo(restoredImageTop, 0);
   await expect(tea).toBeInViewport();
   await expect
     .poll(() => tea.evaluate((node) => (node as HTMLImageElement).naturalWidth))

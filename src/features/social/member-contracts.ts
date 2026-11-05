@@ -1,6 +1,8 @@
 import type { Person } from "@/features/feed/schema";
 import type { ProfileTrack } from "@/features/profile/schema";
 export type MemberPreferences = {
+  postingTimeZone?: string;
+  showTopFriends?: boolean;
   readingSize: "standard" | "larger" | "extra-large";
   motion: "system" | "reduced";
   notifyComments: boolean;
@@ -10,6 +12,7 @@ export type MemberPreferences = {
   messagingEnabled: boolean;
 };
 export type MemberIdentity = {
+  founder?: boolean;
   person: Person;
   username: string;
   bio: string;
@@ -74,3 +77,5 @@ export type MemberProfileDetails = {
   galleryVersion: number;
   onRepeat: ProfileTrack[];
 };
+
+export type MemberTopFriends = MemberFriends & { selected: Person[] };

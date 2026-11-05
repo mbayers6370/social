@@ -19,7 +19,6 @@ export function AppleSongBadge({ track }: { track: ProfileTrack }) {
         height={20}
         unoptimized
         loading="eager"
-        style={{ display: "block", width: 64, height: "auto", opacity: 0.3 }}
       />
     </a>
   );

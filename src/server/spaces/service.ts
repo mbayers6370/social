@@ -4,7 +4,10 @@ import { memberPerson } from "@/lib/member-person";
 import { memberPostDraftInput } from "@/features/social/member-schema";
 import { containsPostLink } from "@/lib/platform-rules";
 import { randomUUID } from "node:crypto";
-import { dayKey } from "@/features/feed/format";
+import {
+  memberPostingWindow,
+  recordPublication,
+} from "@/server/social/posting-allowance";
 import { normalizePhoto } from "@/server/social/photo";
 import type {
   SpaceListData,
@@ -42,7 +45,12 @@ import {
 } from "./media-lifecycle";
 import { SocialService } from "@/server/social/service";
 import { SocialError, unavailable } from "@/server/social/errors";
-import { spaceAccess, requireSpaceAdmin, unblockedAuthor } from "./access";
+import {
+  spaceAccess,
+  requireSpaceAdmin,
+  unblockedAuthor,
+  acceptedFriendOf,
+} from "./access";
 import {
   spaceInput,
   spaceInvitationSearch,
@@ -113,7 +121,7 @@ export class SpaceService extends SocialService {
               expiresAt,
               imageUrl: event.imageUrl,
               sourceUrl: event.sourceUrl,
-              memberships: { create: { userId: actor, role: "ADMIN" } },
+              memberships: { create: { userId: actor, role: "MEMBER" } },
             },
             select: { id: true },
           });
@@ -151,12 +159,8 @@ export class SpaceService extends SocialService {
     if (current) return { id };
     if (space.archivedAt)
       throw new SocialError(409, "That event already exists and is archived.");
-    const empty =
-      (await tx.spaceMembership.count({ where: { spaceId: id } })) === 0;
-    if (empty)
-      await tx.space.update({ where: { id }, data: { creatorId: actor } });
     await tx.spaceMembership.create({
-      data: { spaceId: id, userId: actor, role: empty ? "ADMIN" : "MEMBER" },
+      data: { spaceId: id, userId: actor, role: "MEMBER" },
     });
     return { id };
   }
@@ -309,13 +313,18 @@ export class SpaceService extends SocialService {
       };
     }
   }
-  async listSpaces(subject: string, before?: string): Promise<SpaceListData> {
+  async listSpaces(
+    subject: string,
+    before?: string,
+    includeEvents = true,
+  ): Promise<SpaceListData> {
     return this.transaction(async (tx) => {
       const actor = await this.actor(tx, subject);
       const rows = await tx.space.findMany({
         where: {
           ...liveSpaceWhere(this.clock()),
           memberships: { some: { userId: actor } },
+          ...(!includeEvents ? { kind: { not: "EVENT" as const } } : {}),
           ...(before ? { id: { lt: before } } : {}),
         },
         orderBy: { id: "desc" },
@@ -341,8 +350,12 @@ export class SpaceService extends SocialService {
           inviteeId: actor,
           acceptedAt: null,
           expiresAt: { gt: this.clock() },
-          space: { ...liveSpaceWhere(this.clock()), archivedAt: null },
-          inviter: unblockedAuthor(actor),
+          space: {
+            ...liveSpaceWhere(this.clock()),
+            archivedAt: null,
+            ...(!includeEvents ? { kind: { not: "EVENT" as const } } : {}),
+          },
+          inviter: { ...unblockedAuthor(actor), ...acceptedFriendOf(actor) },
         },
         orderBy: { id: "desc" },
         take: 20,
@@ -451,14 +464,10 @@ export class SpaceService extends SocialService {
       requireSpaceAdmin(
         await spaceAccess(tx, actor, spaceId, true, this.clock()),
       );
-      const friend: Prisma.UserWhereInput = {
-        OR: [
-          { friendshipsLow: { some: { highId: actor, status: "ACCEPTED" } } },
-          { friendshipsHigh: { some: { lowId: actor, status: "ACCEPTED" } } },
-        ],
-      };
+      const friend = acceptedFriendOf(actor);
       const eligible: Prisma.UserWhereInput = {
         ...unblockedAuthor(actor),
+        AND: [friend],
         id: { not: actor },
         memberships: { none: { spaceId } },
         spaceInvitesReceived: {
@@ -501,26 +510,14 @@ export class SpaceService extends SocialService {
         { account: { displayName: "asc" } },
         { id: "asc" },
       ];
-      // Rank before limiting: a friend's name must not fall behind the first page of strangers.
+      // Filter friendship in SQL, before limiting or exposing introduction fields.
       const friends = await tx.user.findMany({
-        where: { AND: [eligible, friend] },
+        where: eligible,
         select,
         orderBy,
         take: 21,
       });
-      const others =
-        term && friends.length < 21
-          ? await tx.user.findMany({
-              where: { AND: [eligible, { NOT: friend }] },
-              select,
-              orderBy,
-              take: 21 - friends.length,
-            })
-          : [];
-      const rows = [
-        ...friends.map((row) => ({ row, friend: true })),
-        ...others.map((row) => ({ row, friend: false })),
-      ];
+      const rows = friends.map((row) => ({ row, friend: true }));
       return {
         members: rows.slice(0, 20).map(({ row, friend }) => ({
           person: memberPerson(row.id, row.account!),
@@ -546,6 +543,19 @@ export class SpaceService extends SocialService {
         }))
       )
         throw unavailable();
+      const friendship = await tx.friendship.findUnique({
+        where: {
+          lowId_highId:
+            actor < targetId
+              ? { lowId: actor, highId: targetId }
+              : { lowId: targetId, highId: actor },
+        },
+      });
+      if (friendship?.status !== "ACCEPTED")
+        throw new SocialError(
+          403,
+          "Only accepted friends can receive Space invitations.",
+        );
       if (
         await tx.spaceMembership.findUnique({
           where: { spaceId_userId: { spaceId, userId: targetId } },
@@ -606,7 +616,11 @@ export class SpaceService extends SocialService {
       requireSpaceAdmin(inviter);
       if (
         !(await tx.user.findFirst({
-          where: { id: invitation.inviterId, ...unblockedAuthor(actor) },
+          where: {
+            id: invitation.inviterId,
+            ...unblockedAuthor(actor),
+            ...acceptedFriendOf(actor),
+          },
           select: { id: true },
         }))
       )
@@ -736,6 +750,11 @@ export class SpaceService extends SocialService {
       }
       if (input.action === "role" || input.userId !== actor)
         requireSpaceAdmin(self);
+      if (input.action === "role" && self.space.kind === "EVENT")
+        throw new SocialError(
+          403,
+          "Event administrators are assigned by a founder.",
+        );
       if (leaving) {
         const successor = await tx.spaceMembership.findFirst({
           where: { spaceId: id, userId: { not: actor } },
@@ -746,7 +765,11 @@ export class SpaceService extends SocialService {
           await this.eraseSpace(tx, id);
           return;
         }
-        if (successor && self.space.creatorId === actor) {
+        if (
+          successor &&
+          self.space.creatorId === actor &&
+          self.space.kind !== "EVENT"
+        ) {
           await tx.space.update({
             where: { id },
             data: { creatorId: successor.userId },
@@ -759,7 +782,11 @@ export class SpaceService extends SocialService {
           });
         }
       }
-      if (!leaving && input.userId === self.space.creatorId)
+      if (
+        !leaving &&
+        input.userId === self.space.creatorId &&
+        self.space.kind !== "EVENT"
+      )
         throw new SocialError(
           409,
           "The creator must remain a Space administrator",
@@ -875,8 +902,15 @@ export class SpaceService extends SocialService {
           : {}),
         photos: { create: input.photoIds.map((photoId) => ({ photoId })) },
       },
-      select: { id: true },
+      select: {
+        id: true,
+        ownerId: true,
+        spaceId: true,
+        createdAt: true,
+        hasLink: true,
+      },
     });
+    await recordPublication(tx, post);
     await notifySpacePost(
       tx,
       actor,
@@ -959,7 +993,7 @@ export class SpaceService extends SocialService {
             data: {
               ownerId,
               objectKey: `social/${randomUUID()}.webp`,
-              dayKey: dayKey(now.toISOString()),
+              dayKey: (await memberPostingWindow(tx, ownerId, now)).key,
               createdAt: now,
               uploadExpiresAt: new Date(now.getTime() + 600_000),
               description: file.description?.trim() || "Photograph",
@@ -1006,7 +1040,7 @@ export class SpaceService extends SocialService {
             pending.ownerId !== ownerId ||
             pending.state !== "PENDING" ||
             pending.uploadExpiresAt <= now ||
-            pending.dayKey !== dayKey(now.toISOString())
+            pending.dayKey !== (await memberPostingWindow(tx, ownerId, now)).key
           )
             throw new SocialError(409, "Upload expired; try again");
           await this.photoQuota(tx, ownerId, now, pending.id);
@@ -1197,7 +1231,7 @@ export class SpaceService extends SocialService {
       return this.postPage(tx, actor, { spaceId: id }, before, atPost);
     });
   }
-  async feed(subject: string, before?: string) {
+  async feed(subject: string, before?: string, includeEvents = true) {
     return this.transaction(async (tx) => {
       const actor = await this.actor(tx, subject);
       const friends = await tx.friendship.findMany({
@@ -1224,6 +1258,7 @@ export class SpaceService extends SocialService {
               ownerId: { not: actor },
               space: {
                 deletedAt: null,
+                ...(!includeEvents ? { kind: { not: "EVENT" as const } } : {}),
                 memberships: { some: { userId: actor, includeInFeed: true } },
               },
             },
@@ -1404,6 +1439,11 @@ export class SpaceService extends SocialService {
     return this.transaction(async (tx) => {
       const actor = await this.actor(tx, subject);
       const membership = await spaceAccess(tx, actor, id, false, this.clock());
+      if (membership.space.kind === "EVENT")
+        throw new SocialError(
+          403,
+          "Public Event Spaces close through scheduled expiry.",
+        );
       if (membership.space.creatorId !== actor)
         throw new SocialError(403, "Only the creator can delete this Space");
       await this.eraseSpace(tx, id);

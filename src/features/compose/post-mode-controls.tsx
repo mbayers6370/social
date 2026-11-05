@@ -4,6 +4,7 @@ import { useId, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
 export type PostingAllowance = {
+  timeZone?: string;
   regularRemaining: number;
   linkAllowed: boolean;
 };

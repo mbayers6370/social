@@ -28,7 +28,9 @@ const client = {
   preview: false,
 };
 let identity: MemberIdentity;
+const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
 beforeEach(() => {
+  HTMLElement.prototype.scrollIntoView = vi.fn();
   vi.clearAllMocks();
   identity = structuredClone(sampleIdentity);
   vi.stubGlobal("matchMedia", () => ({
@@ -50,7 +52,10 @@ beforeEach(() => {
     throw Error("Unexpected fixture request");
   });
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  vi.unstubAllGlobals();
+});
 function view(children: ReactNode, initial = identity) {
   return (
     <SpaceClientProvider client={client}>
@@ -119,6 +124,50 @@ it("starts enabled, keeps messaging on after a save failure, and restores naviga
   await waitFor(() => expect(toggle).toBeChecked());
   expect(screen.getAllByRole("link", { name: "Messages" })).toHaveLength(2);
 });
+it("discloses time-zone editing without changing the saved zone until Save succeeds", async () => {
+  const user = userEvent.setup();
+  let attempts = 0;
+  request.mockImplementation(async (url, init) => {
+    if (url === "/api/member/preferences") {
+      if (++attempts === 1)
+        return Response.json({ error: "Try saving again." }, { status: 503 });
+      identity.preferences = {
+        ...identity.preferences,
+        ...JSON.parse(init!.body as string),
+      };
+      return Response.json(identity);
+    }
+    if (url === "/api/member/context") return Response.json(identity);
+    return Response.json({ activity: [], nextCursor: null });
+  });
+  render(
+    view(
+      <MemberSettings
+        initial={identity}
+        safety={{ blocked: [], reports: [] }}
+      />,
+    ),
+  );
+  expect(
+    screen.queryByRole("combobox", { name: "Time zone" }),
+  ).not.toBeVisible();
+  await user.click(screen.getByText("Change time zone", { exact: true }));
+  const zone = screen.getByRole("combobox", { name: "Time zone" });
+  await user.click(zone);
+  await user.type(zone, "New York");
+  await user.click(screen.getByRole("option", { name: "America / New York" }));
+  await user.click(screen.getByRole("button", { name: "Save time zone" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Try saving again.",
+  );
+  expect(zone).toHaveValue("America / New York");
+  await user.click(screen.getByRole("button", { name: "Save time zone" }));
+  await waitFor(() =>
+    expect(screen.getByText(/Your posting day follows/)).toHaveTextContent(
+      "America / New York",
+    ),
+  );
+});
 it.each([
   ["radio", "Larger", "readingSize", "larger"],
   ["radio", "Reduce motion", "motion", "reduced"],
@@ -173,6 +222,7 @@ it.each([
   },
 );
 it.each([
+  [false, false],
   [false, true],
   [true, false],
   [true, true],
@@ -196,9 +246,12 @@ it.each([
         />,
       ),
     );
-    expect(screen.queryByRole("link", { name: "Message" }) !== null).toBe(
-      viewer && recipient,
-    );
+    const message = screen.queryByRole("link", { name: "Message A friend" });
+    if (viewer && recipient) {
+      expect(message).toHaveAttribute("href", "/app/messages?thread=friend");
+    } else {
+      expect(message).not.toBeInTheDocument();
+    }
   },
 );
 it("clears a stale open conversation after a server denial reports that messaging is off", async () => {

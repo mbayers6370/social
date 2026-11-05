@@ -17,6 +17,7 @@ const fileGlobs = (names: string[]) => names.map((name) => `**/${name}`);
 const crossBrowserFiles = [
   "authentication.spec.ts",
   "foundation.spec.ts",
+  "ink-rules.spec.ts",
   "profile-compose.spec.ts",
   "gallery-delete.spec.ts",
   "post-recovery.spec.ts",
@@ -113,6 +114,7 @@ export default defineConfig({
           ? { gracefulShutdown: { signal: "SIGTERM" as const, timeout: 5_000 } }
           : {}),
         env: {
+          MARGIN_BROWSER_TEST: "1",
           ...(!production
             ? {
                 NODE_OPTIONS:

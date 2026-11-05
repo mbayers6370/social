@@ -1,5 +1,6 @@
 import { captureScreenshot, test, expect } from "./fixtures";
 import { eventFixtures, mockTicketmasterCatalog } from "./helpers/ticketmaster";
+import { eventSpacesEnabled } from "../../src/features/spaces/availability";
 
 test.beforeEach(() =>
   test.skip(
@@ -14,6 +15,10 @@ async function ready(page: import("@playwright/test").Page) {
 test("caps event results, supports scrolling, and lists joined events with their ticket in Your Spaces", async ({
   page,
 }, info) => {
+  test.skip(
+    !eventSpacesEnabled,
+    "Event Spaces are temporarily hidden from the interface",
+  );
   await mockTicketmasterCatalog(page, eventFixtures(6));
   await page.goto("/preview/spaces");
   await ready(page);
