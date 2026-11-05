@@ -16,7 +16,7 @@ const postingPoints = [
   POSTING_EDIT_RULE,
   POSTING_EXCLUSIONS,
   "Your posting day runs from midnight to midnight in your account’s saved time zone. Changing time zones does not give you a fresh allowance; recent usage carries forward for at least 24 hours.",
-  "A link pasted into your post text counts as a link-containing post, too.",
+  "Pasting a link into your words counts as a link post, too.",
 ];
 const supportContact =
   "Email " +
@@ -26,6 +26,14 @@ const photoProcessing =
   "Your uploaded photographs are checked for supported file type, size, and dimensions, then re-encoded with embedded source metadata removed. These technical and privacy checks are not automated content moderation: they do not determine whether an image is safe, lawful, or appropriate. Visible details in a photograph can still identify you or reveal a location.";
 const messagePrivacy =
   "Your messages are stored on our servers and are not end-to-end encrypted. Your Notebook is for notes to yourself. Reporting a message can make the reported message available to the founder for a safety review; it does not open your entire inbox to other members.";
+const sharedConversations =
+  "If someone you message deactivates their account, your conversation with them is removed too. Download it first if you want to keep a copy.";
+const photoChecksShort =
+  "These are technical and privacy checks, not content moderation. They don’t decide whether a photograph is safe or appropriate.";
+const messagePrivacyShort =
+  "Messages are stored on our servers and aren’t end-to-end encrypted. Notebook is just for you.";
+const removalShort =
+  "Deactivating ends your access and removes your posts, photographs, friendships, and messages. Complete erasure is a separate request to support.";
 const removalScope =
   "Deactivation ends your account access and removes your posts, Gallery placements, friendships, and messages from the active service. Your photographs become unavailable and are queued for storage cleanup. It does not automatically erase your sign-in identity with Clerk, every remaining account or safety record, or backups. Email support for a complete account-erasure request.";
 
@@ -53,7 +61,7 @@ export const publicDocuments = {
         id: "boundaries",
         title: "Leave a little room.",
         paragraphs: [
-          "You can share up to three regular posts a day, or one link-containing post as your only post that day. It’s an allowance, not a quota. You don’t need to post every day to belong here.",
+          "You can share up to three regular posts a day, or one post with a link if it’s your only post that day. It’s an allowance, not a quota. You don’t need to post every day to belong here.",
           "Your posts expire after 30 days. Your Gallery gives you room for up to 20 photographs you want to keep. Words and still photographs leave room to pause without another video starting.",
           "Expiration is not a promise to erase screenshots, exports, or backups at the same moment. You deserve to know that difference before you share.",
         ],
@@ -93,7 +101,7 @@ export const publicDocuments = {
     intro: "Your people. A few clear boundaries. Plenty of room within them.",
     summary: [
       "Join by invitation and connect through mutual friendship.",
-      "Share up to three regular posts a day, or one link-containing post.",
+      "Share up to three posts a day, or one post with a link.",
       "Keep photographs in Gallery and conversations in their own space.",
     ],
     sections: [
@@ -133,8 +141,9 @@ export const publicDocuments = {
             " days after it is sent. Each Notebook note expires " +
             NOTEBOOK_LIFETIME_DAYS +
             " days after it is saved. You can download an available conversation before it expires.",
-          messagePrivacy,
+          messagePrivacyShort,
         ],
+        links: [{ label: "Message privacy", href: "/privacy#audience" }],
       },
       {
         id: "thirty-days",
@@ -159,8 +168,15 @@ export const publicDocuments = {
         title: "Words, photographs, and a little music",
         paragraphs: [
           "You can upload still JPEG, PNG, and WebP photographs up to 8 MB, 10,000 pixels on either side, and 40 megapixels total. Export HEIC or HEIF photographs as JPEG or PNG first. Video, animated images, motion photos, and video embeds aren’t supported.",
-          photoProcessing,
+          "Your photographs are re-encoded with location and camera details removed. " +
+            photoChecksShort,
           "Choose a song for On Repeat to share what you keep coming back to. Listening links open an external music service; Margin doesn’t play or store music audio.",
+        ],
+        links: [
+          {
+            label: "How photographs are processed",
+            href: "/privacy#photographs",
+          },
         ],
       },
       {
@@ -204,6 +220,7 @@ export const publicDocuments = {
     sections: [
       {
         id: "account",
+        group: "Getting started",
         title: "Join or sign in",
         paragraphs: [
           "If you’re new, open an invitation link from someone already on Margin. Verify the invited email address and finish setting up your profile. You must be " +
@@ -214,6 +231,7 @@ export const publicDocuments = {
       },
       {
         id: "posting",
+        group: "Posting",
         title: "Publish a post",
         paragraphs: [
           "Open New Post on your profile or use the composer in your feed. Add your words and photographs, then choose Publish. A selected photograph isn’t published until you submit the post.",
@@ -222,6 +240,7 @@ export const publicDocuments = {
       },
       {
         id: "edit-post",
+        group: "Posting",
         title: "Edit or delete a post",
         paragraphs: [
           "Open the post on your profile and choose Edit. Your saved edits keep the original publication date, expiration, and conversation. On mobile, look for the edit icon.",
@@ -230,14 +249,16 @@ export const publicDocuments = {
       },
       {
         id: "saving",
+        group: "Posting",
         title: "Check whether a change saved",
         paragraphs: [
-          "Settings options save as you change them. Look for the saved confirmation beside the option. Profile, post, Top 4, and Gallery editors use their own Save or Done button.",
-          "If a submission’s result is uncertain, use the recovery action to check what saved before submitting again. Keep the draft open until you know the result. Unpublished drafts are temporary and aren’t a backup; save important writing elsewhere before closing or refreshing your browser.",
+          "Settings save automatically; look for the confirmation beside each option. Your profile, posts, Top 4, and Gallery have their own Save or Done button, and need that tap.",
+          "If you’re not sure something posted, check before trying again, and keep your draft open until you know. Drafts aren’t saved anywhere, so copy important writing somewhere safe before you close or refresh the page.",
         ],
       },
       {
         id: "expiration",
+        group: "Posting",
         title: "Understand expiration",
         paragraphs: [
           "Your posts and direct messages expire after 30 days. Notebook notes expire after 90 days. Editing a post or adding a new message does not extend an older item’s deadline.",
@@ -247,6 +268,7 @@ export const publicDocuments = {
       },
       {
         id: "gallery",
+        group: "Photos",
         title: "Organize or delete photographs",
         paragraphs: [
           "Open Gallery from your profile. Choose Add photo to upload or Arrange to change the order and featured selection. You have 20 Gallery places and three featured positions. Unfeature a photograph to free a featured position.",
@@ -256,6 +278,7 @@ export const publicDocuments = {
       },
       {
         id: "photo-problem",
+        group: "Photos",
         title: "If a photograph won’t attach",
         points: [
           "Choose a still JPEG, PNG, or WebP file of 8 MB or less. Export HEIC or HEIF first; video, animation, and motion photos aren’t supported.",
@@ -263,10 +286,17 @@ export const publicDocuments = {
           "Check your daily photo allowance and Gallery capacity. The picker explains which limit needs attention. An image description is not required.",
           "Wait for the preview before publishing. If the upload fails, keep your draft and try the available retry action.",
         ],
-        paragraphs: [photoProcessing],
+        paragraphs: [photoChecksShort],
+        links: [
+          {
+            label: "How photographs are processed",
+            href: "/privacy#photographs",
+          },
+        ],
       },
       {
         id: "profile",
+        group: "Your profile and friends",
         title: "Make your profile yours",
         paragraphs: [
           "Choose Edit profile to change your name and bio. In Settings, you can change your username once after setup. After that, it’s permanent. Usernames have 3–24 letters, numbers, or underscores, start with a letter, and are saved in lowercase.",
@@ -275,6 +305,7 @@ export const publicDocuments = {
       },
       {
         id: "managing-friends",
+        group: "Your profile and friends",
         title: "Manage friendships and boundaries",
         paragraphs: [
           "Find a profile and choose Add friend. In Friends, you can accept or decline received requests and cancel sent requests. Friendship is mutual; a sent request alone doesn’t unlock personal content.",
@@ -283,16 +314,20 @@ export const publicDocuments = {
       },
       {
         id: "messages",
+        group: "Messages and notifications",
         title: "Write a message or a note",
         paragraphs: [
           "Open Messages and choose a conversation. Enter sends; Shift+Enter starts a new line. In Notebook, Enter saves a note to yourself. Your composer stays below the conversation as you write.",
-          "You can turn messaging off in Settings. That stops reads and sends for conversations involving your account, including existing conversations, while the underlying retention deadlines continue. Turning it back on restores access to content that hasn’t expired.",
-          "Download an available conversation from its header. Your account download can include available messages and Notebook notes. Unsent drafts stay in the current tab and aren’t included in the saved-account export.",
-          messagePrivacy,
+          "You can turn messaging off in Settings. That pauses all your conversations, in both directions, but expiry deadlines keep running. Turn it back on to pick up anything that hasn’t expired.",
+          "Download a conversation from its header. Your account download can include your messages and Notebook notes. Messages you haven’t sent aren’t included.",
+          sharedConversations,
+          messagePrivacyShort,
         ],
+        links: [{ label: "Message privacy", href: "/privacy#audience" }],
       },
       {
         id: "notifications",
+        group: "Messages and notifications",
         title: "Choose what gets your attention",
         paragraphs: [
           "The bell brings together in-app activity such as friendship requests, comments, replies, messages, and Space invitations. Opening an item marks it read and takes you to the related content. You can also mark all as read.",
@@ -301,6 +336,7 @@ export const publicDocuments = {
       },
       {
         id: "privacy-safety",
+        group: "Privacy and safety",
         title: "Know who can see what",
         paragraphs: [
           "Your profile introduction can be found by other signed-in members. Your personal posts and Gallery require accepted friendship. Space posts are for eligible Space members; post comments share the post’s audience.",
@@ -312,16 +348,8 @@ export const publicDocuments = {
         ],
       },
       {
-        id: "your-data",
-        title: "Download your information or leave",
-        paragraphs: [
-          "In Settings, open the account download, choose the categories you want, and prepare an archive or PDF. You can include your available photographs. Expired or erased content cannot be reconstructed for the download.",
-          removalScope,
-        ],
-        links: [{ label: "Your data", href: "/your-data" }],
-      },
-      {
         id: "report",
+        group: "Privacy and safety",
         title: "Report harm or a problem",
         paragraphs: [
           "Use Report in the relevant profile, post, comment, or message options. Choose a reason and add only the context needed to understand what happened. You can see your submitted reports in Settings. A report can make the reported content and your explanation available for founder review.",
@@ -333,6 +361,7 @@ export const publicDocuments = {
       },
       {
         id: "appeals",
+        group: "Privacy and safety",
         title: "Ask us to review a decision",
         paragraphs: [
           "If you think a restriction or removal is a mistake, email support with your username, the relevant decision or content reference, and a short explanation. Use “Review request” in the subject. This is a manual request, not an automatic reinstatement or a promise of a particular outcome or response time.",
@@ -340,7 +369,18 @@ export const publicDocuments = {
         ],
       },
       {
+        id: "your-data",
+        group: "Your account",
+        title: "Download your information or leave",
+        paragraphs: [
+          "In Settings, open the account download, choose the categories you want, and prepare an archive or PDF. You can include your available photographs. Expired or erased content cannot be reconstructed for the download.",
+          removalShort,
+        ],
+        links: [{ label: "Your data", href: "/your-data" }],
+      },
+      {
         id: "accessibility",
+        group: "Your account",
         title: "Make reading more comfortable",
         paragraphs: [
           "In Settings, choose larger text or reduced motion. You can also use your browser’s zoom. Use Tab and Shift+Tab to move between controls, and Escape to close supported dialogs. Gallery move controls and conversation buttons give you alternatives to dragging and swiping.",
@@ -436,15 +476,15 @@ export const publicDocuments = {
         title: "Take a copy with you",
         paragraphs: [
           "In Settings, open the account download and choose the categories you want. Prepare an archive with available photographs or a readable PDF. You can also download an available conversation from its header.",
-          "Your download can include your profile and music, posts, photographs and Gallery arrangement, comments and likes, relationships, messages, Notebook notes, notifications, preferences, and your reports. It doesn’t expose provider credentials, private storage keys, other people’s full accounts, or other people’s reports.",
-          "Unpublished drafts remain in your tab and are excluded from the saved-account export. Expired and erased content isn’t recoverable through a download. If your account needs an assisted export or a category is missing, email support.",
+          "Your download can include your profile and music, Top 4, posts, photographs and Gallery arrangement, comments and likes, relationships, messages, Notebook notes, notifications, preferences, and your reports. It never includes passwords, other people’s private accounts, or their reports.",
+          "Drafts you haven’t posted aren’t included. Expired and erased content can’t be recovered through a download. If your account needs an assisted export or a category is missing, email support.",
         ],
       },
       {
         id: "correction",
         title: "Change what you share",
         paragraphs: [
-          "Use Edit profile for your name and bio, Settings for your one permitted username change, and the controls beside your posts, Gallery, Top 4, and On Repeat for those choices. Settings options save as you change them; editors with a Save or Done button need that final step.",
+          "Use Edit profile for your name and bio, and Settings for your one username change. Your posts, Gallery, Top 4, and On Repeat each have their own controls. Settings save automatically; anything with a Save or Done button needs that tap.",
           "Your personal posts and Gallery are for accepted friends. Your profile introduction can be visible to other signed-in members. Removing a friendship changes access; it does not erase a screenshot or downloaded copy.",
         ],
         links: [{ label: "Help with your profile", href: "/help#profile" }],
@@ -844,6 +884,7 @@ export const publicDocuments = {
             NOTEBOOK_LIFETIME_DAYS +
             " days after it is saved. New messages and notes do not renew earlier entries.",
           "Expired entries are excluded from conversation history, previews, and exports. Scheduled cleanup removes their stored rows. Turning messaging off does not pause these deadlines. Download available messages before expiration if you want to keep a copy.",
+          sharedConversations,
         ],
       },
       {
@@ -860,8 +901,14 @@ export const publicDocuments = {
         title: "Your account and settings",
         paragraphs: [
           "Your profile, relationships, preferences, and selected music are saved so your account works across visits. Unpublished drafts are temporary browser state, not a permanent archive.",
-          removalScope,
+          removalShort,
           "Deactivation can leave account, comment, report, review, and security records that require separate handling. Request complete erasure through support so we can verify ownership and explain any applicable exception. Don’t assume a sign-out or browser reset deletes server records.",
+        ],
+        links: [
+          {
+            label: "Deactivation and erasure",
+            href: "/your-data#delete-account",
+          },
         ],
       },
       {
@@ -877,7 +924,7 @@ export const publicDocuments = {
         title: "Backups and cleanup delays",
         paragraphs: [
           "Removing a live database record does not instantly erase database recovery logs, replicas, or backups. A storage outage or cleanup backlog can delay physical deletion while normal access remains denied.",
-          "The hosted backup rotation, deletion completion targets, and controls for reapplying deletions after restoration must be confirmed before this policy becomes effective. A one-minute cleanup schedule is an operating cadence, not a promise that every file disappears within one minute.",
+          "The hosted backup rotation, deletion completion targets, and controls for reapplying deletions after restoration must be confirmed before this policy becomes effective.",
         ],
       },
       {

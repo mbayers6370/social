@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { publicSiteDetails } from "./site-details";
 export type PublicDocumentData = {
@@ -9,12 +10,21 @@ export type PublicDocumentData = {
   draft?: boolean;
   sections: {
     id: string;
+    /** Optional heading that gathers neighbouring sections on long pages. */
+    group?: string;
     title: string;
     paragraphs?: string[];
     points?: string[];
     links?: { label: string; href: string }[];
   }[];
 };
+function startsGroup(
+  sections: PublicDocumentData["sections"],
+  index: number,
+): string | undefined {
+  const group = sections[index].group;
+  return group && group !== sections[index - 1]?.group ? group : undefined;
+}
 export function PublicDocument({ document }: { document: PublicDocumentData }) {
   return (
     <article
@@ -53,15 +63,30 @@ export function PublicDocument({ document }: { document: PublicDocumentData }) {
       <div className="margin-public-document-body">
         <nav className="margin-public-contents" aria-label="On this page">
           <p>On this page</p>
-          {document.sections.map((section) => (
-            <a key={section.id} href={`#${section.id}`}>
-              {section.title}
-            </a>
-          ))}
+          {document.sections.map((section, index) => {
+            const group = startsGroup(document.sections, index);
+            return (
+              <Fragment key={section.id}>
+                {group && (
+                  <p className="margin-public-contents-group">{group}</p>
+                )}
+                <a href={`#${section.id}`}>{section.title}</a>
+              </Fragment>
+            );
+          })}
         </nav>
         <div className="margin-public-sections">
-          {document.sections.map((section) => (
-            <section key={section.id} id={section.id}>
+          {document.sections.map((section, index) => (
+            <section
+              key={section.id}
+              id={section.id}
+              data-group-start={
+                startsGroup(document.sections, index) ? "" : undefined
+              }
+            >
+              {startsGroup(document.sections, index) && (
+                <p className="margin-public-section-group">{section.group}</p>
+              )}
               <h2>{section.title}</h2>
               {section.paragraphs?.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
