@@ -114,9 +114,21 @@ test("keeps profile details before posts on small screens and preserves the desk
 
 test("keeps the named friendship status, envelope and options together at mobile width", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/?view=profile&person=mara");
+  if (testInfo.project.name === "chromium-scrollbars") {
+    // Reproduce the reserved scrollbar width on Linux even on overlay-scrollbar Macs.
+    await page.addStyleTag({
+      content:
+        "html { overflow-y: scroll; } html::-webkit-scrollbar { width: 19px; }",
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(() => innerWidth - document.documentElement.clientWidth),
+      )
+      .toBe(19);
+  }
   const identity = page.locator(".margin-profile-identity");
   const friends = identity.getByRole("img", {
     name: "Friends with Mara Lindqvist",
@@ -133,6 +145,7 @@ test("keeps the named friendship status, envelope and options together at mobile
     [friends, message, options].map((control) => control.boundingBox()),
   );
   for (const box of boxes) {
+    expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.height).toBeGreaterThanOrEqual(44);
     expect(Math.abs(box!.y - boxes[0]!.y)).toBeLessThan(1);
   }
