@@ -142,16 +142,6 @@ export function PrivateProfile({
         }
         details={
           <div className="margin-profile-details">
-            <OnRepeat
-              live
-              own={own}
-              restricted={!visible}
-              tracks={visible ? tracks : []}
-              onSaved={(saved) => {
-                setTracks(saved);
-                router.refresh();
-              }}
-            />
             <TopFriends
               key={person.id}
               own={own}
@@ -164,6 +154,16 @@ export function PrivateProfile({
               href={galleryHref}
               visible={visible}
               own={own}
+            />
+            <OnRepeat
+              live
+              own={own}
+              restricted={!visible}
+              tracks={visible ? tracks : []}
+              onSaved={(saved) => {
+                setTracks(saved);
+                router.refresh();
+              }}
             />
           </div>
         }

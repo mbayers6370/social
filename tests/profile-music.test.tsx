@@ -18,7 +18,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-it("shows On Repeat above Gallery and lets the owner replace or remove their single song", async () => {
+it("shows On Repeat below Gallery and lets the owner replace or remove their single song", async () => {
   const consoleError = vi.spyOn(console, "error");
   const user = userEvent.setup();
   const data = bootstrap();
@@ -57,7 +57,7 @@ it("shows On Repeat above Gallery and lets the owner replace or remove their sin
   const music = screen.getByRole("region", { name: "On Repeat" });
   const gallery = screen.getByRole("region", { name: "Gallery" });
   expect(
-    music.compareDocumentPosition(gallery) & Node.DOCUMENT_POSITION_FOLLOWING,
+    gallery.compareDocumentPosition(music) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
   expect(within(music).getAllByRole("listitem")).toHaveLength(1);
   const trigger = within(music).getByRole("button", { name: "Find Music" });

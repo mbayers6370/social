@@ -69,17 +69,17 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
       }
       details={
         <div className="margin-profile-details">
-          <OnRepeat
-            key={`on-repeat-${current.person.id}`}
-            own={own}
-            tracks={visible ? (current.onRepeat ?? []) : []}
-            restricted={!visible}
-          />
           <ProfileGalleryPreview
             photos={gallery}
             href={galleryHref}
             visible={visible}
             own={own}
+          />
+          <OnRepeat
+            key={`on-repeat-${current.person.id}`}
+            own={own}
+            tracks={visible ? (current.onRepeat ?? []) : []}
+            restricted={!visible}
           />
         </div>
       }

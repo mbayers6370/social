@@ -5,7 +5,7 @@ test.beforeEach(() =>
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Development fixtures"),
 );
 
-test("feed writing is full width and three lines with the avatar beside posting status", async ({
+test("feed writing is full width and three lines with the avatar beside the post type toggle", async ({
   page,
   isMobile,
 }, info) => {
@@ -46,9 +46,9 @@ test("feed writing is full width and three lines with the avatar beside posting 
     ).toBeVisible();
   else {
     await expect(
-      page.locator(".margin-compose-posting-status .margin-avatar"),
+      page.locator(".margin-compose-avatar .margin-avatar"),
     ).toBeVisible();
-    await expect(page.locator(".margin-compose-posting-status")).toContainText(
+    await expect(page.locator(".margin-compose-limit-reason")).toContainText(
       "You’ve posted today",
     );
   }

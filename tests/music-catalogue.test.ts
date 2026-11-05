@@ -30,8 +30,8 @@ describe("Apple song catalogue boundary", () => {
       id: "itunes-123",
       title: "Anchor",
       source: "itunes",
-      spotifyUrl: "https://open.spotify.com/search/Anchor%20Novo%20Amor",
     });
+    expect(songs[0]).not.toHaveProperty("spotifyUrl");
     expect(JSON.stringify(songs)).not.toMatch(
       /previewUrl|m4a|music-video|private\.example/,
     );

@@ -11,6 +11,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
 import { useMember } from "@/features/social/member-provider";
 import {
   Image as ImageIcon,
@@ -432,7 +433,7 @@ export function SpaceComposer({
                   </p>
                 )}
                 {personal && link && (
-                  <>
+                  <Field>
                     <Label htmlFor={`${id}-url`}>Link</Label>
                     <Input
                       id={`${id}-url`}
@@ -444,7 +445,7 @@ export function SpaceComposer({
                       disabled={action.busy || action.uncertain}
                       placeholder="https://"
                     />
-                  </>
+                  </Field>
                 )}
                 {photos.length > 0 && (
                   <div className="margin-compose-photos">
@@ -491,70 +492,72 @@ export function SpaceComposer({
                     ))}
                   </div>
                 )}
-                {(!personal || !link) && (
-                  <div className="margin-compose-tools">
-                    <Button
-                      ref={addPhoto}
-                      variant="outline"
-                      disabled={
-                        action.busy || action.uncertain || photos.length >= 3
-                      }
-                      onClick={() => {
-                        setInitialFile(undefined);
-                        setPicking(true);
-                      }}
-                    >
-                      <ImageIcon aria-hidden="true" />
-                      Add photographs
-                    </Button>
-                    <p className="margin-field-hint">
-                      {photos.length
-                        ? `${photos.length} of 3 photographs`
-                        : "Up to 3 photographs"}
-                    </p>
-                  </div>
-                )}
-                <details className="margin-compose-rules">
-                  <summary>
-                    Posting guidelines <ChevronDown aria-hidden="true" />
-                  </summary>
-                  <div>
-                    {personal ? (
-                      <>
-                        <p>
-                          Share up to three posts per day, or one
-                          link-containing post as your only post that day. Posts
-                          disappear after 30 days.
-                        </p>
-                        <p>
-                          Deleted posts still count. Daily limits reset at
-                          midnight in{" "}
-                          {allowance?.timeZone ??
-                            "your saved account time zone"}
-                          . A time-zone change carries recent usage forward for
-                          24 hours.
-                        </p>
-                        <p>
-                          New photographs use your shared daily allowance of
-                          three. Saved photographs can be reused. Your Gallery
-                          keeps up to twenty photographs.
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p>
-                          Shared with members of {spaceName}. Space posts don’t
-                          use your personal post allowance.
-                        </p>
-                        <p>
-                          New photographs count toward your three daily uploads
-                          across Margin. Each Space holds up to{" "}
-                          {SPACE_PHOTO_LIMIT} distinct photographs.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </details>
+                <div className="margin-compose-toolbar">
+                  {(!personal || !link) && (
+                    <div className="margin-compose-tools">
+                      <Button
+                        ref={addPhoto}
+                        variant="ghost"
+                        disabled={
+                          action.busy || action.uncertain || photos.length >= 3
+                        }
+                        onClick={() => {
+                          setInitialFile(undefined);
+                          setPicking(true);
+                        }}
+                      >
+                        <ImageIcon aria-hidden="true" />
+                        Add photographs
+                      </Button>
+                      <p className="margin-field-hint">
+                        {photos.length
+                          ? `${photos.length} of 3 photographs`
+                          : "Up to 3 photographs"}
+                      </p>
+                    </div>
+                  )}
+                  <details className="margin-compose-rules">
+                    <summary>
+                      Posting guidelines <ChevronDown aria-hidden="true" />
+                    </summary>
+                    <div>
+                      {personal ? (
+                        <>
+                          <p>
+                            Share up to three posts per day, or one
+                            link-containing post as your only post that day.
+                            Posts disappear after 30 days.
+                          </p>
+                          <p>
+                            Deleted posts still count. Daily limits reset at
+                            midnight in{" "}
+                            {allowance?.timeZone ??
+                              "your saved account time zone"}
+                            . A time-zone change carries recent usage forward
+                            for 24 hours.
+                          </p>
+                          <p>
+                            New photographs use your shared daily allowance of
+                            three. Saved photographs can be reused. Your Gallery
+                            keeps up to twenty photographs.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p>
+                            Shared with members of {spaceName}. Space posts
+                            don’t use your personal post allowance.
+                          </p>
+                          <p>
+                            New photographs count toward your three daily
+                            uploads across Margin. Each Space holds up to{" "}
+                            {SPACE_PHOTO_LIMIT} distinct photographs.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </details>
+                </div>
                 {(validation || action.error) && (
                   <p ref={feedback} role="alert" tabIndex={-1}>
                     {validation || action.error}

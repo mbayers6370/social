@@ -41,7 +41,6 @@ export function parseCatalogue(payload: unknown): ProfileTrack[] {
       artist: song.artistName,
       source: "itunes",
       appleMusicUrl: song.trackViewUrl,
-      spotifyUrl: `https://open.spotify.com/search/${encodeURIComponent(`${song.trackName} ${song.artistName}`)}`,
       ...(song.artworkUrl100 && isAppleArtwork(song.artworkUrl100)
         ? { artwork: { src: song.artworkUrl100, width: 100, height: 100 } }
         : {}),

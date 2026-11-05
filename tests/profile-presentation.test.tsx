@@ -77,7 +77,7 @@ it("puts personal sections before the post stream in reading and keyboard order"
     screen
       .getAllByRole("heading", { level: 2 })
       .map((heading) => heading.textContent),
-  ).toEqual(["On Repeat", "Gallery", "Recent Posts"]);
+  ).toEqual(["Gallery", "On Repeat", "Recent Posts"]);
   const gallery = screen.getByRole("region", { name: "Gallery" });
   expect(
     within(gallery).getByRole("link", { name: "View More" }),
