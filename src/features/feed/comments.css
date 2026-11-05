@@ -231,9 +231,9 @@
   padding: 0;
 }
 .margin-comment-form[data-expanded="false"] textarea {
-  height: calc(1lh + 20px);
-  min-height: calc(1lh + 20px);
-  max-height: calc(1lh + 20px);
+  height: max(44px, calc(1lh + 20px));
+  min-height: max(44px, calc(1lh + 20px));
+  max-height: max(44px, calc(1lh + 20px));
   padding: 10px 12px;
   line-height: 1.5;
   resize: none;
