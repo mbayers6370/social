@@ -188,6 +188,9 @@ describe("daily posting policy", () => {
     for (const body of [
       "Export photo.jpg or notes.txt",
       "Edit index.ts and app.js",
+      "Read notes.md and run setup.py",
+      "Export clip.mov and app.zip",
+      "Open NOTES.MD, SETUP.PY, CLIP.MOV, or APP.ZIP.",
       "A value of 3.14",
       "Use e.g. or i.e. in prose",
     ])
@@ -199,7 +202,13 @@ describe("daily posting policy", () => {
       "https://127.0.0.1/path",
       "mailto:hello@example.com",
       "例子.中国",
-      "foo.zip",
+      "https://app.zip",
+      "www.app.zip",
+      "app.zip/download",
+      "clip.mov?download=1",
+      "notes.md#section",
+      "setup.py:8080",
+      "docs.example.md",
     ])
       expect(containsPostLink({ body })).toBe(true);
   });

@@ -50,7 +50,7 @@ export function ComposerEntry({
           </Button>
           <Button
             ref={photoRef}
-            variant="outline"
+            variant="ghost"
             size="icon"
             className="margin-feed-compose-photo"
             aria-label="New photo post"

@@ -2,16 +2,22 @@ import Image from "next/image";
 import { Music } from "@/components/margin-icons";
 import type { ProfileTrack } from "./schema";
 
-export function TrackIdentity({ track }: { track: ProfileTrack }) {
+export function TrackIdentity({
+  track,
+  artworkSize = 80,
+}: {
+  track: ProfileTrack;
+  artworkSize?: number;
+}) {
   return (
     <>
       {track.artwork ? (
         <Image
           {...track.artwork}
           alt=""
-          width={80}
-          height={80}
-          sizes="80px"
+          width={artworkSize}
+          height={artworkSize}
+          sizes={`${artworkSize}px`}
           loading="eager"
         />
       ) : (

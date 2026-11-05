@@ -11,6 +11,9 @@ export const POSTING_EDIT_RULE =
   "Published posts and uploaded photographs still count toward the day’s allowance after deletion. Editing uses the original posting day. Add a link only when there are no other publications that day; removing a link returns that post to the regular-post allowance.";
 export const POSTING_EXCLUSIONS =
   "Comments and private messages do not count toward this limit.";
+// These common filename extensions are also ICANN suffixes. Without URL syntax,
+// an isolated two-part name is treated as a filename rather than a pasted link.
+const AMBIGUOUS_FILE_SUFFIXES = new Set(["md", "py", "mov", "zip"]);
 /** Includes links pasted into ordinary body text, not only the dedicated Link mode. */
 export const containsPostLink = (post: {
   body?: string;
@@ -35,6 +38,13 @@ export const containsPostLink = (post: {
     try {
       const { hostname } = new URL(`https://${match[0]}`);
       const result = parse(hostname, { extractHostname: false });
+      const following = text.slice(match.index + match[0].length);
+      if (
+        AMBIGUOUS_FILE_SUFFIXES.has(result.publicSuffix ?? "") &&
+        !result.subdomain &&
+        !/^(?:[/?#]|:\d)/.test(following)
+      )
+        continue;
       if (result.isIcann && result.domain) return true;
     } catch {
       /* Plain text that is not a hostname. */

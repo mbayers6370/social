@@ -9,16 +9,8 @@
   margin: 0 auto;
   padding: var(--profile-top-gap) 0 80px;
 }
-.margin-profile-rail {
-  border-style: solid;
-  border-width: 1px 1px 0;
-  border-color: hsl(var(--border) / 0.65);
-  border-radius: var(--radius-card);
-  background: hsl(var(--feed-surface));
-}
 .margin-profile-identity {
   position: relative;
-  padding: var(--space-group) var(--profile-header-inset) var(--space-related);
 }
 .margin-profile-identity:has(.margin-profile-popover) {
   z-index: 2;
@@ -145,8 +137,8 @@
 }
 .margin-profile-details {
   display: grid;
-  gap: 0;
-  margin-top: 0;
+  gap: var(--space-group);
+  margin-top: var(--space-group);
 }
 .margin-profile-section-card {
   --profile-section-top: var(--space-group);
@@ -154,16 +146,13 @@
   min-width: 0;
   padding: var(--profile-section-top) var(--space-group)
     var(--profile-section-bottom, var(--space-group));
-  border: 1px solid hsl(var(--border) / 0.65);
+  border: 1px solid hsl(var(--profile-card-header));
   border-radius: var(--radius-card);
   background: hsl(var(--card));
 }
 .margin-profile-details > .margin-profile-section-card {
   --profile-section-top: 0px;
   --profile-section-bottom: var(--profile-section-content-gap);
-  border: 0;
-  border-radius: 0;
-  background: transparent;
 }
 .margin-profile-details > .margin-profile-section-card > .margin-empty-copy {
   padding-block: var(--profile-section-content-gap) 0;
@@ -171,21 +160,14 @@
 .margin-profile-section-card > .margin-section-heading {
   position: relative;
   align-items: center;
+  min-height: 52px;
   margin: calc(-1 * var(--profile-section-top)) calc(-1 * var(--space-group)) 0;
-  padding: 4px var(--profile-header-inset);
-  --divider-bottom-color: hsl(var(--border) / 0.65);
+  padding: 10px var(--profile-header-inset);
+  --divider-bottom-color: hsl(var(--profile-card-header));
   border-bottom: 1px solid transparent;
   border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0
     0;
-  background: hsl(var(--profile-card-header));
-}
-.margin-profile-details
-  > .margin-profile-section-card
-  > .margin-section-heading {
-  --divider-top-color: hsl(var(--blackened-olive) / 0.2);
-  --divider-bottom-color: hsl(var(--blackened-olive) / 0.2);
-  border-top: 1px solid transparent;
-  border-radius: 0;
+  background: transparent;
 }
 .margin-profile-section-card > .margin-section-heading h2 {
   font-size: calc(var(--text-heading-sm) - 0.25rem);
@@ -601,8 +583,8 @@
     column-gap: calc(var(--space-related) / 2);
   }
   .margin-profile-section-card > .margin-section-heading {
-    min-height: 41px;
-    padding-block: 0;
+    min-height: 48px;
+    padding-block: 4px;
   }
   .margin-profile-section-card > .margin-section-heading h2 {
     font-size: calc(var(--text-title) - 0.25rem);

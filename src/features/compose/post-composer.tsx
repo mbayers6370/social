@@ -407,7 +407,7 @@ export function PostComposer({
             <FieldError>{errors.photoIds.message}</FieldError>
           )}
           {errors.root && <FieldError>{errors.root.message}</FieldError>}
-          <div className="margin-compose-guidance">
+          <div className="margin-compose-toolbar">
             <div className="margin-compose-tools">
               {values.kind === "post" && (
                 <Button

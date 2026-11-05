@@ -19,7 +19,7 @@
 }
 .margin-feed-composer[data-expanded="true"] {
   display: block;
-  padding-block: 16px;
+  padding-block: 10px;
 }
 .margin-feed-compose-prompt {
   justify-content: flex-start;
@@ -42,7 +42,6 @@
 .margin-feed-compose-photo {
   color: hsl(var(--blackened-olive));
   background: transparent;
-  border: 1px solid hsl(var(--button-border));
   border-radius: var(--radius-control);
 }
 .margin-feed-compose-photo:hover {
@@ -112,11 +111,13 @@
 .margin-compose-inline .margin-compose-editor {
   padding: 0;
   overflow: visible;
-  gap: 16px;
+  gap: 12px;
 }
 .margin-compose-inline .margin-compose-actions {
-  margin: 16px -16px -16px;
-  padding: 16px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 @keyframes margin-compose-expand {
   from {
@@ -172,7 +173,7 @@ html[data-motion="reduced"] .margin-compose-inline {
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  gap: 20px;
+  gap: 16px;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   padding: 20px 24px 24px;
@@ -183,30 +184,66 @@ html[data-motion="reduced"] .margin-compose-inline {
   flex-shrink: 0;
 }
 .margin-compose-modes {
-  display: inline-flex;
-  align-self: flex-start;
-  padding: 4px;
-  gap: 4px;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 128px;
+}
+.margin-compose-modes::before,
+.margin-compose-modes::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 999px;
+}
+.margin-compose-modes::before {
+  z-index: -2;
+  inset: 6px 0;
+  border: 1px solid hsl(var(--button-border));
   background: hsl(var(--secondary));
-  border-radius: var(--radius-control);
+}
+.margin-compose-modes::after {
+  z-index: -1;
+  inset-block: 8px;
+  inset-inline-start: 2px;
+  width: calc(50% - 2px);
+  background: hsl(var(--blackened-olive));
+  transition: inset-inline-start 160ms ease;
+}
+.margin-compose-modes[data-mode="link"]::after {
+  inset-inline-start: 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .margin-compose-modes::after {
+    transition: none;
+  }
+}
+html[data-motion="reduced"] .margin-compose-modes::after {
+  transition: none;
 }
 .margin-compose-type {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 8px;
+}
+.margin-compose-avatar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
+  min-width: 0;
 }
 .margin-compose-posting-status {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
   min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
-.margin-compose-posting-status > div {
-  min-width: 0;
+.margin-compose-limit-reason {
+  grid-column: 1 / -1;
 }
-.margin-compose-posting-status .margin-avatar,
+.margin-compose-avatar .margin-avatar {
+  --margin-avatar-size: 36px;
+}
 .margin-compose-author .margin-avatar {
   --margin-avatar-size: 36px;
 }
@@ -229,12 +266,27 @@ html[data-motion="reduced"] .margin-compose-inline {
   min-width: 0;
 }
 .margin-compose-modes button {
-  border-radius: var(--radius-control);
-  min-width: 85px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  background: transparent;
+  color: hsl(var(--ink));
+  font: 500 var(--text-control)/1.5 var(--font-body);
+  cursor: pointer;
 }
 .margin-compose-modes button[aria-pressed="true"] {
-  background: hsl(var(--blackened-olive));
   color: hsl(var(--header-foreground));
+}
+.margin-compose-modes button:focus-visible {
+  outline: 2px solid hsl(var(--blackened-olive));
+  outline-offset: -2px;
+}
+.margin-compose-modes button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .margin-compose-author {
   display: flex;
@@ -319,9 +371,21 @@ html[data-motion="reduced"] .margin-compose-inline {
 .margin-compose-tools {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
+}
+.margin-compose-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+.margin-compose-toolbar > .margin-compose-tools {
+  flex: 1 1 280px;
+}
+.margin-compose-toolbar > .margin-compose-rules[open] {
+  flex-basis: 100%;
 }
 .margin-compose-guidance {
   display: grid;
@@ -330,15 +394,14 @@ html[data-motion="reduced"] .margin-compose-inline {
 }
 .margin-compose-allowances {
   display: grid;
-  flex: 1 1 180px;
+  flex: 1 1 140px;
   min-width: 0;
   gap: 4px;
-  text-align: right;
+  text-align: left;
 }
 @media (max-width: 639px) {
   .margin-compose-allowances {
     flex-basis: 100%;
-    text-align: left;
   }
 }
 .margin-compose-rules summary {

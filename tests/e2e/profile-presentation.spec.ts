@@ -23,8 +23,8 @@ test("keeps profile details before posts on small screens and preserves the desk
     const musicBox = (await music.boundingBox())!;
     const galleryBox = (await gallery.boundingBox())!;
     const postsBox = (await posts.boundingBox())!;
-    expect(galleryBox.y).toBeGreaterThanOrEqual(musicBox.y + musicBox.height);
-    expect(postsBox.y).toBeGreaterThanOrEqual(galleryBox.y + galleryBox.height);
+    expect(musicBox.y).toBeGreaterThanOrEqual(galleryBox.y + galleryBox.height);
+    expect(postsBox.y).toBeGreaterThanOrEqual(musicBox.y + musicBox.height);
     const images = gallery.locator(".margin-gallery-preview img");
     await expect(images).toHaveCount(3);
     const boxes = await Promise.all(

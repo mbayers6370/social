@@ -30,7 +30,7 @@ export function SongDialog({ track }: { track: ProfileTrack }) {
             className="margin-track-row margin-track-card"
             aria-label={`Open ${track.title} by ${track.artist}`}
           >
-            <TrackIdentity track={track} />
+            <TrackIdentity track={track} artworkSize={112} />
             <ChevronRight className="margin-track-chevron" aria-hidden="true" />
           </button>
         </DialogTrigger>
@@ -82,11 +82,11 @@ export function SongDialog({ track }: { track: ProfileTrack }) {
               </a>
             ))}
           </div>
-        ) : (
+        ) : track.source !== "itunes" ? (
           <p className="margin-field-hint">
             Listening links aren’t available for this song yet.
           </p>
-        )}
+        ) : null}
       </DialogContent>
     </Dialog>
   );

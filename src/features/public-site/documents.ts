@@ -964,6 +964,14 @@ export const publicDocuments = {
         ],
       },
       {
+        id: "music-credits",
+        title: "Music credits",
+        paragraphs: [
+          "Music artwork and catalog information for iTunes search results and On Repeat selections are supplied through Apple’s iTunes Search API. Each iTunes selection includes a link to that song in the iTunes Store.",
+          "Apple, the Apple logo, Apple Music, and iTunes are trademarks of Apple Inc., registered in the U.S. and other countries. iTunes Store is a service mark of Apple Inc., registered in the U.S. and other countries.",
+        ],
+      },
+      {
         id: "notices",
         title: "If you believe your work was copied",
         paragraphs: [
