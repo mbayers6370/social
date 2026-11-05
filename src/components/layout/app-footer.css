@@ -1,11 +1,13 @@
 /* Stacked mobile utilities in Settings and the desktop page footer. */
 .margin-app-footer {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 16px;
   padding-block: 16px 0;
-  border-top: 1px solid hsl(var(--border) / 0.65);
+  --divider-top-color: hsl(var(--border) / 0.65);
+  border-top: 1px solid transparent;
   font: var(--text-meta)/1.6 var(--font-body);
   color: hsl(var(--muted-foreground));
 }

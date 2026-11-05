@@ -52,7 +52,7 @@ export const PostCard = memo(function PostCard({
       onClick={(event) => onOpenConversation(post, event.currentTarget)}
     >
       <Conversation size={20} aria-hidden="true" />
-      <span>Conversation</span>
+      <span className="sr-only lg:not-sr-only">Conversation</span>
     </Button>
   );
 

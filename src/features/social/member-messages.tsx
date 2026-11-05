@@ -1,4 +1,5 @@
 "use client";
+import { createRequestId } from "@/lib/local-id";
 import Link from "next/link";
 import {
   useCallback,
@@ -562,7 +563,7 @@ export function MemberMessages({
             ) : !data.messages.length ? (
               <p className="margin-message-empty">
                 {active.notebook
-                  ? "A little space for your thoughts. Write your first note below."
+                  ? "Nothing here yet."
                   : `No messages yet. Say hello to ${active.contact.name.split(" ")[0]}.`}
               </p>
             ) : (
@@ -592,7 +593,7 @@ export function MemberMessages({
                 const attempt = member
                   ? member.messageAttempt(id, body)
                   : (localAttempts.current[id] ??= previous ?? {
-                      id: crypto.randomUUID(),
+                      id: createRequestId(),
                       body,
                     });
                 try {

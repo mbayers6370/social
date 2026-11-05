@@ -20,7 +20,7 @@ html[data-motion="reduced"] .margin-profile-music .margin-eq-bar {
   gap: 20px;
   list-style: none;
   padding: 0;
-  margin-top: 16px;
+  margin-top: var(--profile-section-content-gap);
 }
 .margin-music-results {
   display: grid;
@@ -246,6 +246,11 @@ html[data-motion="reduced"] .margin-profile-music .margin-eq-bar {
   min-height: 24px;
   padding: 2px 0;
   justify-self: start;
+}
+.margin-apple-song-badge > img {
+  display: block;
+  width: 64px;
+  height: auto;
 }
 .margin-music-selection {
   display: flex;

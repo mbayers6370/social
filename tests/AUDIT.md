@@ -10,7 +10,7 @@ Security coverage overlaps these categories; it is not counted twice.
 
 | Category                            | Original files / cases | Final files / cases |
 | ----------------------------------- | ---------------------: | ------------------: |
-| Unit/model and server contract      |               31 / 214 |            32 / 219 |
+| Unit/model and server contract      |               31 / 214 |            32 / 230 |
 | Component                           |               64 / 350 |            65 / 351 |
 | Real disposable PostgreSQL          |                9 / 160 |             9 / 160 |
 | Explicit opt-in service/local-music |                  2 / 4 |               2 / 4 |

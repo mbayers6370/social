@@ -30,7 +30,8 @@ test("main feed uses a ruled stream in both preview and member layouts", async (
           "[data-conversation-trigger] svg",
         );
         const avatar = card.querySelector(".margin-post-author .margin-avatar");
-        const lineCenter = box.top + parseFloat(rule.height) / 2;
+        const lineCenter =
+          box.top + parseFloat(rule.top) + parseFloat(rule.height) / 2;
         const compareSpacing =
           precedingIcon && avatar && !item.querySelector(".margin-day-heading");
         return {

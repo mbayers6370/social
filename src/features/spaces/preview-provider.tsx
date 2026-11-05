@@ -1,4 +1,5 @@
 "use client";
+import { createLocalId } from "@/lib/local-id";
 import { spaceInvitationSearch } from "./schema";
 import {
   createContext,
@@ -29,6 +30,7 @@ import type {
 } from "./contracts";
 import type { SpaceClient } from "./client";
 import { visibleSpacePosts, visibleSpaceDetails } from "./preview-selectors";
+import { spaceIsVisible } from "./availability";
 import { createSpacePreviewReport } from "./preview-report";
 import { eventSearchInput, matchesEventSearch } from "./event-discovery";
 import {
@@ -61,16 +63,14 @@ function joinPreviewEvent(data: SpacesPreviewData, room: Details) {
     return { id: room.id };
   if (room.archivedAt)
     throw Error("That event already exists and is archived.");
-  const empty = room.members.length === 0;
-  if (empty) room.creatorId = data.viewer.id;
   room.members.push({
     userId: data.viewer.id,
     name: data.viewer.name,
-    role: empty ? "ADMIN" : "MEMBER",
+    role: "MEMBER",
     rsvp: null,
   });
   room.memberCount = room.members.length;
-  room.role = empty ? "ADMIN" : "MEMBER";
+  room.role = "MEMBER";
   room.includeInFeed = false;
   room.rsvp = null;
   return { id: room.id };
@@ -250,7 +250,7 @@ export function SpacesPreviewProvider({
               archivedAt: null,
               creatorId: next.viewer.id,
               viewerId: next.viewer.id,
-              role: "ADMIN",
+              role: "MEMBER",
               includeInFeed: false,
               rsvp: null,
               memberCount: 1,
@@ -258,7 +258,7 @@ export function SpacesPreviewProvider({
                 {
                   userId: next.viewer.id,
                   name: next.viewer.name,
-                  role: "ADMIN",
+                  role: "MEMBER",
                   rsvp: null,
                 },
               ],
@@ -277,7 +277,7 @@ export function SpacesPreviewProvider({
           return response({ id: report.id }, 201);
         } else if (path === "/api/spaces" && method === "POST") {
           const input = spaceInput.parse(body);
-          const id = `preview-${crypto.randomUUID()}`;
+          const id = `preview-${createLocalId()}`;
           next.spaces.push({
             id,
             name: input.name,
@@ -330,7 +330,7 @@ export function SpacesPreviewProvider({
             throw Error("This Space is archived and read-only.");
           const input = commentInput.parse(body);
           const comment = {
-            id: `preview-${crypto.randomUUID()}`,
+            id: `preview-${createLocalId()}`,
             body: input.body,
             createdAt: new Date(preview?.now ?? Date.now()).toISOString(),
             author: next.viewer,
@@ -404,6 +404,10 @@ export function SpacesPreviewProvider({
           } else if (segments[3] === "join" && method === "POST") {
             result = joinPreviewEvent(next, room);
           } else if (method === "DELETE" && segments.length === 3) {
+            if (room.kind === "EVENT")
+              throw Error(
+                "Public Event Spaces close through scheduled expiry.",
+              );
             next.spaces = next.spaces.filter((s) => s.id !== id);
             for (const p of next.posts.filter((p) => p.space?.id === id))
               delete next.comments[p.id];
@@ -456,6 +460,10 @@ export function SpacesPreviewProvider({
               room.members.find((m) => m.userId === next.viewer.id)!.rsvp =
                 input.rsvp;
             } else if (input.action === "role") {
+              if (room.kind === "EVENT")
+                throw Error(
+                  "Only a founder can assign Event Space administrators.",
+                );
               const member = room.members.find(
                 (m) => m.userId === input.userId,
               );
@@ -480,7 +488,11 @@ export function SpacesPreviewProvider({
                   (post) => post.space?.id !== room.id,
                 );
               }
-              if (leaving && room.creatorId === next.viewer.id) {
+              if (
+                leaving &&
+                room.kind !== "EVENT" &&
+                room.creatorId === next.viewer.id
+              ) {
                 const others = room.members.filter(
                   (member) => member.userId !== next.viewer.id,
                 );
@@ -538,12 +550,14 @@ export function SpacesPreviewProvider({
                     pair.people.includes(person.id),
                 ),
               }))
-              .filter((member) =>
-                term
-                  ? `${member.person.name} ${member.username}`
-                      .toLowerCase()
-                      .includes(term)
-                  : member.friend,
+              .filter(
+                (member) =>
+                  member.friend &&
+                  (term
+                    ? `${member.person.name} ${member.username}`
+                        .toLowerCase()
+                        .includes(term)
+                    : true),
               )
               .sort(
                 (a, b) =>
@@ -555,11 +569,21 @@ export function SpacesPreviewProvider({
               hasMore: candidates.length > 20,
             });
           } else if (segments[3] === "invitations" && method === "POST") {
+            if (
+              room.role !== "ADMIN" ||
+              !preview?.state.friendships.some(
+                (pair) =>
+                  pair.status === "accepted" &&
+                  pair.people.includes(next.viewer.id) &&
+                  pair.people.includes(body.targetId),
+              )
+            )
+              throw Error("Space invitations require an accepted friendship.");
             if (!next.people.some((p) => p.id === body.targetId))
               throw Error(
                 "Choose one of the sample members. No real invitation will be sent.",
               );
-            result = { id: `preview-${crypto.randomUUID()}` };
+            result = { id: `preview-${createLocalId()}` };
           } else if (segments[3] === "photos" && method === "GET") {
             return response({
               photos: next.photos.filter((p) => p.ownerId === next.viewer.id),
@@ -615,7 +639,7 @@ export function SpacesPreviewProvider({
                 throw Error("That photograph could not be decoded.");
               }
               urls.current.push(src);
-              const photoId = `preview-${crypto.randomUUID()}`;
+              const photoId = `preview-${createLocalId()}`;
               next.photos.push({
                 id: photoId,
                 description: "Photograph",
@@ -641,7 +665,7 @@ export function SpacesPreviewProvider({
               throw Error("This sample Space already holds 20 photographs.");
             const createdAt = new Date(preview?.now ?? Date.now());
             const post = {
-              id: `preview-${crypto.randomUUID()}`,
+              id: `preview-${createLocalId()}`,
               body: content.body,
               createdAt: createdAt.toISOString(),
               expiresAt: new Date(
@@ -709,7 +733,10 @@ export function SpacesPreviewProvider({
   );
   const friendships = preview?.state.friendships ?? [];
   const now = preview?.now ?? bootstrap.now;
-  const feedPosts = visibleSpacePosts(data, friendships, now);
+  const feedPosts = visibleSpacePosts(data, friendships, now).filter((post) => {
+    const space = data.spaces.find((space) => space.id === post.space?.id);
+    return space && spaceIsVisible(space);
+  });
   const value = {
     now,
     reports,

@@ -89,6 +89,27 @@ it("mixes opted-in canonical Space posts with personal posts in the ordinary pre
   await user.click(screen.getByRole("button", { name: "Block Theo" }));
   expect(screen.queryByText("Shared suggestion")).not.toBeInTheDocument();
 });
+it("hides opted-in Event posts from the preview feed while preserving their data", () => {
+  const data = spacesFixture();
+  data.spaces[0].kind = "EVENT";
+  data.spaces[0].includeInFeed = true;
+  function Feed() {
+    const preview = useSpacesPreview();
+    return (
+      <>
+        <span>{preview.feedPosts.length} visible posts</span>
+        <span>{preview.data.posts.length} stored posts</span>
+      </>
+    );
+  }
+  render(
+    <SpacesPreviewProvider bootstrap={data}>
+      <Feed />
+    </SpacesPreviewProvider>,
+  );
+  expect(screen.getByText("0 visible posts")).toBeInTheDocument();
+  expect(screen.getByText("1 stored posts")).toBeInTheDocument();
+});
 it("keeps the live timeline's authenticated transport even when the development data provider is present", async () => {
   const user = userEvent.setup();
   const data = spacesFixture();

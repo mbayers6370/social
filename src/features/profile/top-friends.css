@@ -1,0 +1,72 @@
+.margin-top-friends {
+  --profile-section-bottom: var(--profile-section-content-gap);
+}
+.margin-top-friends-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-related);
+  padding-top: var(--profile-section-content-gap);
+}
+.margin-top-friends-grid > a {
+  display: flex;
+  min-width: 0;
+  min-height: 44px;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-related);
+  text-align: center;
+  font: 400 var(--text-note) / 1.4 var(--font-body);
+  overflow-wrap: anywhere;
+}
+.margin-top-friends-grid .margin-avatar {
+  --margin-avatar-size: 44px;
+}
+.margin-top-friends-prompt {
+  min-height: 44px;
+  margin-top: var(--space-related);
+}
+.margin-top-friends-editor {
+  font-family: var(--font-body);
+}
+.margin-top-friends-selection,
+.margin-top-friends-candidates {
+  display: grid;
+  gap: var(--space-related);
+  min-width: 0;
+}
+.margin-top-friends-candidates {
+  max-height: 240px;
+  overflow-y: auto;
+}
+.margin-top-friends-selection-row,
+.margin-top-friends-candidate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-related);
+  min-width: 0;
+}
+.margin-top-friends-selection-row > span:nth-child(2),
+.margin-top-friends-candidate > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.margin-top-friends-move {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.margin-top-friends-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-related);
+}
+@media (max-width: 420px) {
+  .margin-top-friends-selection-row {
+    flex-wrap: wrap;
+  }
+  .margin-top-friends-move {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

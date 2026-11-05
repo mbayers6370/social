@@ -5,6 +5,7 @@ import { SpaceDetails } from "@/features/spaces/space-details";
 import { SpaceTimeline } from "@/features/spaces/space-timeline";
 import { LiveAppShell } from "@/components/layout/live-app-shell";
 import { z } from "zod";
+import { spaceIsVisible } from "@/features/spaces/availability";
 const querySchema = z
   .object({
     before: resourceId.optional(),
@@ -25,10 +26,13 @@ export default async function Page({
   const query = querySchema.safeParse(await searchParams);
   if (!resourceId.safeParse(id).success || !query.success) notFound();
   const q = query.data;
-  const result = await memberPage(async (service, subject) => ({
-    space: await service.readSpace(subject, id),
-    posts: await service.posts(subject, id, q.before, q.post),
-  }));
+  const result = await memberPage(async (service, subject) => {
+    const space = await service.readSpace(subject, id);
+    return spaceIsVisible(space)
+      ? { space, posts: await service.posts(subject, id, q.before, q.post) }
+      : null;
+  });
+  if (!result.data && !result.error) notFound();
   return (
     <LiveAppShell active="spaces">
       {result.data ? (

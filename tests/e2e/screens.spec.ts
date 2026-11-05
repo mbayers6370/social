@@ -14,6 +14,20 @@ function navigation(page: Page) {
   });
 }
 
+async function openProfile(page: Page) {
+  if (page.viewportSize()!.width < 1024)
+    await navigation(page)
+      .getByRole("link", { name: "Profile", exact: true })
+      .click();
+  else {
+    await page.getByRole("button", { name: "Profile menu" }).click();
+    await page
+      .getByRole("navigation", { name: "Profile menu", exact: true })
+      .getByRole("link", { name: "View profile", exact: true })
+      .click();
+  }
+}
+
 test("text-size preferences scale content and portal fields and survive navigation", async ({
   page,
 }) => {
@@ -82,10 +96,7 @@ test("text-size preferences scale content and portal fields and survive navigati
       });
     }
   }
-  await page
-    .locator(".margin-settings-page")
-    .getByRole("link", { name: "Profile", exact: true })
-    .click();
+  await openProfile(page);
   await expect(page.locator(".margin-profile h1")).toHaveCSS(
     "font-size",
     `${standardHeadingSize * 1.5}px`,
@@ -128,17 +139,7 @@ test("navigation opens Messages and Profile with the correct current page", asyn
     path: testInfo.outputPath("messages.png"),
   });
   const mobile = page.viewportSize()!.width < 1024;
-  if (mobile)
-    await navigation(page)
-      .getByRole("link", { name: "Profile", exact: true })
-      .click();
-  else {
-    await page.getByRole("button", { name: "Profile menu" }).click();
-    await page
-      .getByRole("navigation", { name: "Profile menu", exact: true })
-      .getByRole("link", { name: "View profile", exact: true })
-      .click();
-  }
+  await openProfile(page);
   await expect(
     page.getByRole("heading", { level: 1, name: "Ines Alvarez" }),
   ).toBeVisible();

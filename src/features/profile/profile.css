@@ -116,17 +116,21 @@
 }
 .margin-profile-section-card {
   --profile-section-top: var(--space-group);
+  --profile-section-content-gap: 16px;
   min-width: 0;
-  padding: var(--profile-section-top) var(--space-group) var(--space-group);
+  padding: var(--profile-section-top) var(--space-group)
+    var(--profile-section-bottom, var(--space-group));
   border: 1px solid hsl(var(--border) / 0.65);
   border-radius: var(--radius-card);
   background: hsl(var(--card));
 }
 .margin-profile-section-card > .margin-section-heading {
+  position: relative;
   align-items: center;
   margin: calc(-1 * var(--profile-section-top)) calc(-1 * var(--space-group)) 0;
   padding: 16px var(--space-group);
-  border-bottom: 1px solid hsl(var(--border) / 0.65);
+  --divider-bottom-color: hsl(var(--border) / 0.65);
+  border-bottom: 1px solid transparent;
   border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0
     0;
 }
@@ -149,7 +153,9 @@
   padding: var(--space-group) var(--profile-post-inset);
 }
 .margin-profile-post + .margin-profile-post {
-  border-top: 1px solid hsl(var(--border) / 0.65);
+  position: relative;
+  --divider-top-color: hsl(var(--border) / 0.65);
+  border-top: 1px solid transparent;
 }
 .margin-profile-post-date {
   color: hsl(var(--muted-foreground));
@@ -158,7 +164,7 @@
 }
 .margin-profile-post > p {
   grid-column: 1;
-  font: var(--text-body)/1.7 var(--font-body);
+  font: 500 var(--text-body)/1.7 var(--font-post);
 }
 .margin-profile-post img {
   grid-column: 2;
@@ -259,7 +265,7 @@
     column-gap: var(--space-page);
     width: min(1080px, calc(100% - 48px));
   }
-  .margin-profile-identity {
+  .margin-profile-rail {
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
@@ -271,34 +277,13 @@
     margin-top: 0;
   }
   .margin-profile-details {
-    grid-column: 1;
-    grid-row: 1;
-    min-width: 0;
-    margin-top: calc(
-      var(--profile-identity-height, 320px) + var(--space-section)
-    );
+    margin-top: var(--space-section);
   }
 }
 @media (min-width: 72rem) and (min-height: 40rem) {
-  .margin-profile-identity {
+  .margin-profile-rail {
     position: sticky;
     top: calc(var(--margin-header-height) + var(--profile-top-gap));
-  }
-  .margin-profile-details {
-    position: sticky;
-    top: calc(
-      var(--margin-header-height) + var(--profile-top-gap) +
-        var(--profile-identity-height, 320px) + var(--space-section)
-    );
-    max-height: calc(
-      100dvh - var(--margin-header-height) -
-        var(--profile-identity-height, 320px) - var(--space-section) -
-        var(--profile-top-gap) - 24px
-    );
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
-    scrollbar-width: thin;
-    scroll-padding-block: 12px;
   }
 }
 @media (min-width: 72rem) {
@@ -315,10 +300,8 @@
     margin-top: var(--space-section);
   }
   html[data-reading-size]:not([data-reading-size="standard"])
-    :is(.margin-profile-identity, .margin-profile-details) {
+    .margin-profile-rail {
     position: static;
-    max-height: none;
-    overflow: visible;
   }
 }
 
@@ -524,6 +507,31 @@
   overflow-wrap: anywhere;
 }
 @media (max-width: 639px) {
+  .margin-profile-section-card > .margin-section-heading {
+    min-height: calc(44px + var(--space-related) * 2 + 1px);
+    padding-block: var(--space-related);
+  }
+  .margin-profile-section-card > .margin-section-heading h2 {
+    font-size: var(--text-title);
+  }
+  .margin-profile-section-card > .margin-section-heading .margin-section-title {
+    gap: var(--space-related);
+  }
+  .margin-profile-section-card > .margin-section-heading .margin-section-motif {
+    width: 16px;
+    height: 16px;
+  }
+  .margin-profile-section-card > .margin-section-heading .margin-section-link {
+    font-size: var(--text-note);
+    gap: 4px;
+  }
+  .margin-profile-section-card
+    > .margin-section-heading
+    .margin-section-link
+    svg {
+    width: 14px;
+    height: 14px;
+  }
   .margin-profile-photo-dialog {
     left: 0;
     top: auto;

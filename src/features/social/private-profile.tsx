@@ -9,6 +9,7 @@ import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { ProfileFrame } from "@/features/profile/profile-frame";
 import { ProfileIdentity } from "@/features/profile/profile-identity";
 import { ProfileGalleryPreview } from "@/features/profile/profile-gallery-preview";
+import { TopFriends } from "@/features/profile/top-friends";
 import { OnRepeat } from "@/features/profile/on-repeat";
 import type { ProfileTrack } from "@/features/profile/schema";
 import {
@@ -73,89 +74,100 @@ export function PrivateProfile({
       active="profile"
       viewer={data.viewer ?? (own ? data.profile : undefined)}
     >
-      <ProfileFrame personId={person.id}>
-        <ProfileIdentity
-          live
-          profile={{
-            person,
-            handle: data.profile.username ?? "",
-            bio: data.profile.bio ?? "",
-            onRepeat: tracks,
-            photos,
-            recent: [],
-          }}
-          readOnly={!own}
-          editRequested={
-            own && (editing || Boolean(member?.profileEditRequested))
-          }
-          onEditRequestHandled={() => {
-            setEditing(false);
-            member?.finishProfileEditRequest();
-          }}
-          onUpdate={async (value) => {
-            await requestMember(
-              client,
-              "/api/profiles/me",
-              memberJson("PATCH", value),
-            );
-            memberChanged();
-            router.refresh();
-          }}
-          composeAction={
-            <Button
-              className="margin-new-post-button"
-              variant="outline"
-              onClick={(event) => composer.current?.open(event.currentTarget)}
-            >
-              <Add aria-hidden="true" />
-              New Post
-            </Button>
-          }
-          portraitEditor={
-            <Button
-              className="margin-profile-photo-edit"
-              variant="ghost"
-              size="icon"
-              aria-label="Change profile photograph"
-              onClick={() => setPhotoPicker(true)}
-            >
-              <Edit aria-hidden="true" />
-            </Button>
-          }
-          contactActions={
-            <MemberProfileContact
-              contact={{
-                person,
-                username: data.profile.username ?? "",
-                relationship: data.profile.relationship,
-              }}
-              viewerId={data.viewerId}
-              messagingEnabled={
-                data.profile.messagingEnabled &&
-                member?.identity.preferences.messagingEnabled === true
-              }
-            />
-          }
-        />
-        <div className="margin-profile-details">
-          <OnRepeat
+      <ProfileFrame
+        identity={
+          <ProfileIdentity
             live
-            own={own}
-            restricted={!visible}
-            tracks={visible ? tracks : []}
-            onSaved={(saved) => {
-              setTracks(saved);
+            profile={{
+              person,
+              handle: data.profile.username ?? "",
+              bio: data.profile.bio ?? "",
+              onRepeat: tracks,
+              photos,
+              recent: [],
+            }}
+            readOnly={!own}
+            editRequested={
+              own && (editing || Boolean(member?.profileEditRequested))
+            }
+            onEditRequestHandled={() => {
+              setEditing(false);
+              member?.finishProfileEditRequest();
+            }}
+            onUpdate={async (value) => {
+              await requestMember(
+                client,
+                "/api/profiles/me",
+                memberJson("PATCH", value),
+              );
+              memberChanged();
               router.refresh();
             }}
+            composeAction={
+              <Button
+                className="margin-new-post-button"
+                variant="outline"
+                onClick={(event) => composer.current?.open(event.currentTarget)}
+              >
+                <Add aria-hidden="true" />
+                New Post
+              </Button>
+            }
+            portraitEditor={
+              <Button
+                className="margin-profile-photo-edit"
+                variant="ghost"
+                size="icon"
+                aria-label="Change profile photograph"
+                onClick={() => setPhotoPicker(true)}
+              >
+                <Edit aria-hidden="true" />
+              </Button>
+            }
+            contactActions={
+              <MemberProfileContact
+                contact={{
+                  person,
+                  username: data.profile.username ?? "",
+                  relationship: data.profile.relationship,
+                }}
+                viewerId={data.viewerId}
+                messagingEnabled={
+                  data.profile.messagingEnabled &&
+                  member?.identity.preferences.messagingEnabled === true
+                }
+              />
+            }
           />
-          <ProfileGalleryPreview
-            live
-            photos={photos}
-            href={galleryHref}
-            visible={visible}
-            own={own}
-          />
-        </div>
+        }
+        details={
+          <div className="margin-profile-details">
+            <OnRepeat
+              live
+              own={own}
+              restricted={!visible}
+              tracks={visible ? tracks : []}
+              onSaved={(saved) => {
+                setTracks(saved);
+                router.refresh();
+              }}
+            />
+            <TopFriends
+              key={person.id}
+              own={own}
+              friends={data.profile.topFriends}
+              onSaved={() => router.refresh()}
+            />
+            <ProfileGalleryPreview
+              live
+              photos={photos}
+              href={galleryHref}
+              visible={visible}
+              own={own}
+            />
+          </div>
+        }
+      >
         <section
           className="margin-profile-posts"
           aria-labelledby="recent-posts-title"

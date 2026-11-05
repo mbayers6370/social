@@ -3,20 +3,21 @@
   --text-control: 0.9375rem;
   --text-meta: 0.875rem;
   --text-note: 0.875rem;
-  width: min(1080px, calc(100% - 48px));
+  width: 100%;
+  max-width: var(--directory-page-width);
   margin-inline: auto;
-  padding-block: var(--space-section) 56px;
+  padding: var(--directory-page-padding);
 }
 .margin-settings-opening {
-  padding-bottom: var(--space-section);
+  padding-bottom: var(--space-group);
 }
 .margin-settings-page h1 {
-  margin-block: 16px 12px;
+  margin: 0;
   color: hsl(var(--blackened-olive));
-  font: 2.5rem/1.12 var(--font-serif);
-  letter-spacing: -0.035em;
+  font: var(--directory-heading-size)/1.2 var(--font-serif);
 }
 .margin-settings-opening > p {
+  margin-top: 8px;
   color: hsl(var(--muted-foreground));
   font: var(--text-body)/1.6 var(--font-body);
 }
@@ -366,6 +367,7 @@
   font: var(--text-meta)/1.6 var(--font-body);
 }
 .margin-settings-page > .margin-app-footer {
+  --divider-top-color: transparent;
   margin-top: 24px;
   border-top: 0;
 }

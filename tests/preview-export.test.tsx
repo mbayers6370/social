@@ -139,5 +139,5 @@ it("enforces the allowance at the local mutation boundary even if a caller bypas
   );
   expect(() =>
     publishLocalPost(linked, "ines", input, "post-two", now),
-  ).toThrow("only post for today");
+  ).toThrow("link-containing post");
 });

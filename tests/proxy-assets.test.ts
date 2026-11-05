@@ -107,6 +107,7 @@ for (const mode of ["development", "production"] as const) {
     vi.stubEnv("CLERK_SECRET_KEY", "");
     vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "");
     for (const asset of [
+      "/brand/margin-email.png",
       "/brands/apple-music.svg",
       "/brands/spotify.svg",
       "/brands/itunes-store.svg",
@@ -120,6 +121,9 @@ for (const mode of ["development", "production"] as const) {
       );
     }
     for (const path of [
+      "/brand/private.png",
+      "/brand/margin-email.png/extra",
+      "/brand/margin-email.png.bak",
       "/brands/private.svg",
       "/brands/apple-music.svg/extra",
       "/brands/spotify.svg.bak",
@@ -134,6 +138,7 @@ for (const mode of ["development", "production"] as const) {
     vi.stubEnv("NODE_ENV", mode);
     vi.stubEnv("CLERK_SECRET_KEY", "sk_live_fixture");
     vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "pk_live_fixture");
+    await request("/brand/margin-email.png");
     await request("/brands/apple-music.svg");
     await request("/brands/spotify.svg");
     expect(protect).not.toHaveBeenCalled();
@@ -141,6 +146,10 @@ for (const mode of ["development", "production"] as const) {
     expect(protect).toHaveBeenCalledOnce();
     await request("/brands/private.svg");
     expect(protect).toHaveBeenCalledTimes(2);
+    await request("/brand/margin-email.png/extra");
+    expect(protect).toHaveBeenCalledTimes(3);
+    await request("/brand/private.png");
+    expect(protect).toHaveBeenCalledTimes(4);
   });
 }
 
@@ -249,4 +258,18 @@ it("allows the exact onboarding preview only during development", async () => {
     (await request("/preview/onboarding")).headers.get("x-middleware-next"),
   ).toBe("1");
   expect((await request("/preview/onboarding/private")).status).toBe(503);
+});
+
+it("serves the localhost production shell without upgrading its HTTP assets", async () => {
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+  vi.stubEnv("CLERK_SECRET_KEY", "");
+  vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "");
+  const response = await request("/welcome");
+  expect(response.headers.get("Content-Security-Policy")).not.toContain(
+    "upgrade-insecure-requests",
+  );
+  expect(response.headers.get("Content-Security-Policy")).toContain(
+    "'strict-dynamic'",
+  );
 });

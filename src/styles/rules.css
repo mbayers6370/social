@@ -1,0 +1,86 @@
+/* Paint separators over their original transparent 1px layout borders.
+   Each owner retains its exact former color in --divider-top/bottom-color. */
+:where(
+  .margin-app-footer,
+  .margin-profile-menu-utilities,
+  .margin-mobile-nav,
+  .margin-invitation-history,
+  .margin-invitation-list > li + li,
+  .margin-account-download-footer,
+  .margin-compose-actions,
+  .margin-gallery-viewer-footer,
+  .margin-gallery-editor-footer,
+  .margin-gallery-editor-complete,
+  .margin-photo-picker-footer,
+  .margin-notebook-entry[data-day-start="true"],
+  .margin-profile-post + .margin-profile-post,
+  .margin-public-contents,
+  .margin-public-sections section + section,
+  .margin-public-document-related,
+  .margin-welcome-conversation,
+  .margin-event-results > li,
+  .margin-space-directory > li + li,
+  .margin-space-panel-content
+)::before,
+:where(
+  .margin-export-categories > label,
+  .margin-compose-header,
+  .margin-gallery-group-heading,
+  .margin-gallery-editor-header,
+  .margin-photo-picker-header,
+  .margin-profile-section-card > .margin-section-heading,
+  .margin-public-contents,
+  .margin-public-footer-groups,
+  .margin-welcome-differences,
+  .margin-welcome-message-thread > header,
+  .margin-space-rows > li
+)::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: var(--divider-art-height);
+  mask: var(--divider-mask) left center / 100% var(--divider-art-height)
+    no-repeat;
+  pointer-events: none;
+}
+:where(
+  .margin-app-footer,
+  .margin-profile-menu-utilities,
+  .margin-mobile-nav,
+  .margin-invitation-history,
+  .margin-invitation-list > li + li,
+  .margin-account-download-footer,
+  .margin-compose-actions,
+  .margin-gallery-viewer-footer,
+  .margin-gallery-editor-footer,
+  .margin-gallery-editor-complete,
+  .margin-photo-picker-footer,
+  .margin-notebook-entry[data-day-start="true"],
+  .margin-profile-post + .margin-profile-post,
+  .margin-public-contents,
+  .margin-public-sections section + section,
+  .margin-public-document-related,
+  .margin-welcome-conversation,
+  .margin-event-results > li,
+  .margin-space-directory > li + li,
+  .margin-space-panel-content
+)::before {
+  top: calc((var(--divider-art-height) + 1px) / -2);
+  background: var(--divider-top-color);
+}
+:where(
+  .margin-export-categories > label,
+  .margin-compose-header,
+  .margin-gallery-group-heading,
+  .margin-gallery-editor-header,
+  .margin-photo-picker-header,
+  .margin-profile-section-card > .margin-section-heading,
+  .margin-public-contents,
+  .margin-public-footer-groups,
+  .margin-welcome-differences,
+  .margin-welcome-message-thread > header,
+  .margin-space-rows > li
+)::after {
+  bottom: calc((var(--divider-art-height) + 1px) / -2);
+  background: var(--divider-bottom-color);
+}

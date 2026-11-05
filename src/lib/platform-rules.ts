@@ -1,4 +1,5 @@
 import { dayKey, FEED_TIME_ZONE } from "@/features/feed/format";
+import { parse } from "tldts";
 export const MINIMUM_AGE = 18;
 export const DAILY_REGULAR_POSTS = 3;
 export const DAILY_IMAGES = 3;
@@ -7,7 +8,7 @@ export const POSTING_TIME_ZONE = FEED_TIME_ZONE;
 export const POSTING_RULE_SUMMARY =
   "Up to three regular posts per calendar day, or one link-containing post as your only post that day. Up to three photographs total per day, shared between posts and Gallery.";
 export const POSTING_EDIT_RULE =
-  "Editing or deleting a post recalculates your post allowance. Uploaded photographs still count toward that day’s three-photo limit, even if you delete the post. Add a link only when no other posts remain that day; remove the link to return to the three-post allowance.";
+  "Published posts and uploaded photographs still count toward the day’s allowance after deletion. Editing uses the original posting day. Add a link only when there are no other publications that day; removing a link returns that post to the regular-post allowance.";
 export const POSTING_EXCLUSIONS =
   "Comments and private messages do not count toward this limit.";
 /** Includes links pasted into ordinary body text, not only the dedicated Link mode. */
@@ -17,13 +18,30 @@ export const containsPostLink = (post: {
   kind?: string;
   paragraphs?: string[];
   link?: unknown;
-}) =>
-  post.kind === "link" ||
-  !!post.link ||
-  (post.kind !== "post" && !!post.url?.trim()) ||
-  /(?:\b[a-z][a-z\d+.-]*:\/\/|\bwww\.|\b(?:[a-z\d](?:[a-z\d-]*[a-z\d])?\.)+[a-z]{2,63}\b)/i.test(
-    post.body ?? post.paragraphs?.join("\n") ?? "",
-  );
+}) => {
+  if (
+    post.kind === "link" ||
+    !!post.link ||
+    (post.kind !== "post" && !!post.url?.trim())
+  )
+    return true;
+  const text = post.body ?? post.paragraphs?.join("\n") ?? "";
+  if (/\b(?:[a-z][a-z\d+.-]*:\/\/|www\.|mailto:|tel:)/i.test(text)) return true;
+  // Use the platform URL parser for host boundaries, then the maintained suffix list.
+  // A filename such as photo.jpg or index.ts is not a bare web domain.
+  for (const match of text.matchAll(
+    /[\p{L}\p{N}](?:[\p{L}\p{N}.-]*[\p{L}\p{N}])?\.[\p{L}]{2,63}(?![\p{L}\p{N}-])/gu,
+  )) {
+    try {
+      const { hostname } = new URL(`https://${match[0]}`);
+      const result = parse(hostname, { extractHostname: false });
+      if (result.isIcann && result.domain) return true;
+    } catch {
+      /* Plain text that is not a hostname. */
+    }
+  }
+  return false;
+};
 export type PostingRecord = {
   id: string;
   authorId: string;
@@ -32,7 +50,7 @@ export type PostingRecord = {
   imageCount?: number;
   deleted?: boolean;
 };
-/** Recomputed from remaining records; replacingId models editing without consuming a second slot. */
+/** Publication records survive deletion; editing reuses the original slot. */
 export function postingEligibility(
   records: readonly PostingRecord[],
   actorId: string,
@@ -51,7 +69,6 @@ export function postingEligibility(
     (post) =>
       post.authorId === actorId &&
       post.id !== replacingId &&
-      !post.deleted &&
       dayKey(post.createdAt) === today,
   );
   const linked = remaining.some((post) => post.hasLink);
@@ -77,9 +94,9 @@ export function postingEligibility(
       : postAllowed
         ? `You can share up to three photographs per day. ${imagesRemaining} ${imagesRemaining === 1 ? "photograph" : "photographs"} remaining today.`
         : linked
-          ? "Your link-containing post is your only post for today. Remove its link or delete it before posting again."
+          ? "Your link-containing post is your only post for today. Editing it to remove the link returns it to the regular-post allowance."
           : hasLink
-            ? "A link-containing post must be your only post today. Remove the other posts before adding a link."
-            : "You’ve reached today’s three-post limit. Deleting a post makes room for another.",
+            ? "A link-containing post must be your only post today. Deleted posts still count."
+            : "You’ve reached today’s three-post limit. Deleted posts still count.",
   };
 }

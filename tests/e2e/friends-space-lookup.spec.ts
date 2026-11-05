@@ -50,7 +50,7 @@ test("groups the Friends invitation action with clear spacing and bold selected 
     caret: "initial",
   });
 });
-test("looks up Space invitees, puts friends first and sends the chosen invitation once", async ({
+test("looks up Space invitees, limits results to accepted friends and sends the chosen invitation once", async ({
   page,
 }, info) => {
   const privateRequests: string[] = [];
@@ -67,7 +67,7 @@ test("looks up Space invitees, puts friends first and sends the chosen invitatio
   });
   await trigger.click();
   const dialog = page.getByRole("dialog", { name: "Invite to this Space" });
-  const input = dialog.getByRole("searchbox", { name: "Search members" });
+  const input = dialog.getByRole("searchbox", { name: "Search friends" });
   await expect(input).toBeFocused();
   await expect(
     dialog.getByRole("textbox", { name: /profile link/i }),

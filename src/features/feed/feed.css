@@ -27,9 +27,11 @@
 .margin-feed-layout[data-profile="true"] .margin-feed-list > div + div::before {
   content: "";
   position: absolute;
-  top: 0;
+  top: calc((1px - var(--divider-art-height)) / 2);
   inset-inline: 0;
-  height: 1px;
+  height: var(--divider-art-height);
+  mask: var(--divider-mask) left center / 100% var(--divider-art-height)
+    no-repeat;
   background: hsl(var(--border) / 0.65);
 }
 .margin-feed-layout[data-profile="true"] .margin-day-heading {
@@ -53,9 +55,11 @@
   ~ :is(.margin-post-slot, [data-day-start])::before {
   content: "";
   position: absolute;
-  top: 0;
+  top: calc((1px - var(--divider-art-height)) / 2);
   inset-inline: var(--margin-post-inline-padding);
-  height: 1px;
+  height: var(--divider-art-height);
+  mask: var(--divider-mask) left center / 100% var(--divider-art-height)
+    no-repeat;
   background: hsl(var(--border) / 0.65);
 }
 .margin-feed-intro {

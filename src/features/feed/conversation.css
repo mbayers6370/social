@@ -172,6 +172,11 @@ html:has(.margin-conversation-frame[aria-modal="true"]) {
 .margin-conversation-reduced .margin-conversation-front {
   display: none;
 }
+@media (max-width: 1023px) {
+  .margin-conversation-scroll:not([data-empty="true"]) > .margin-post-summary {
+    margin-bottom: calc(var(--space-related) * 2);
+  }
+}
 @media (min-width: 1024px) {
   .margin-conversation-frame[data-layout="panel"] {
     --panel-height: max(var(--margin-conversation-height), var(--post-height));

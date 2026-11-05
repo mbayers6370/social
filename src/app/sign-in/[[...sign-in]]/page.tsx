@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,8 +11,9 @@ export const metadata: Metadata = {
   title: "Sign in to Margin",
   description: "Sign in to your Margin account.",
 };
-export default function SignInPage() {
+export default async function SignInPage() {
   const { configured } = accountConfiguration();
+  if (configured && (await auth()).userId) redirect("/app/feed");
   return (
     <AuthShell
       providerHeading={configured}

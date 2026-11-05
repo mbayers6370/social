@@ -95,10 +95,12 @@
   flex-shrink: 0;
 }
 .margin-profile-menu-utilities {
+  position: relative;
   display: grid;
   margin-top: 8px;
   padding: 8px 8px 0;
-  border-top: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
 }
 .margin-header-profile {
   display: inline-flex;
@@ -143,7 +145,8 @@
   padding: 1px max(8px, var(--margin-safe-area-right))
     calc(2px + var(--margin-safe-area-bottom))
     max(8px, var(--margin-safe-area-left));
-  border-top: 1px solid hsl(var(--header-foreground) / 0.25);
+  --divider-top-color: hsl(var(--header-foreground) / 0.25);
+  border-top: 1px solid transparent;
 }
 .margin-mobile-nav[data-messaging="false"] {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -175,6 +178,9 @@
   flex-shrink: 0;
   width: 40px;
   height: 24px;
+}
+.margin-bottom-icon .margin-avatar {
+  font-size: 0.5625rem;
 }
 @media (hover: hover) {
   .margin-bottom-item:hover {
@@ -320,10 +326,12 @@ html[data-motion="reduced"] .margin-profile-menu {
   .margin-nav-current::after {
     content: "";
     position: absolute;
-    bottom: 8px;
+    bottom: calc(8px + (1px - var(--divider-art-height)) / 2);
     left: 0;
     right: 0;
-    height: 1px;
+    height: var(--divider-art-height);
+    mask: var(--divider-mask) left center / 100% var(--divider-art-height)
+      no-repeat;
     background: currentColor;
   }
   .margin-mobile-nav {

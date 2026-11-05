@@ -48,7 +48,8 @@ export async function runLeasedJob(
         (counts.purged ?? 0) >= 20 ||
         (counts.orphaned ?? 0) >= 100 ||
         (counts.notifications ?? 0) >= 100 ||
-        (counts.retired ?? 0) >= 100,
+        (counts.retired ?? 0) >= 100 ||
+        (counts.usageErased ?? 0) >= 100,
     );
     if (signal.aborted) throw Error("Maintenance time budget exhausted");
     const completed = await db.maintenanceJob.updateMany({
@@ -99,6 +100,7 @@ export async function runMaintenanceCycle(
     },
     posts: async (signal) => ({
       erased: await service.expirePosts(20, signal),
+      usageErased: await service.erasePostingUsage(100),
     }),
     spaces: async (signal) => ({
       erased: await service.expireSpaces(20, signal),

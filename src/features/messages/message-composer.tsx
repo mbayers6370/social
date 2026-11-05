@@ -2,7 +2,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import { messageInputSchema, type MessageInput } from "./schema";
@@ -101,8 +100,20 @@ export function MessageComposer({
           placeholder={
             notebook ? "Write a note…" : `Write to ${name.split(" ")[0]}…`
           }
+          onKeyDown={(event) => {
+            if (
+              event.key !== "Enter" ||
+              event.shiftKey ||
+              event.nativeEvent.isComposing ||
+              event.keyCode === 229
+            )
+              return;
+            event.preventDefault();
+            if (!isSubmitting && !event.repeat)
+              event.currentTarget.form?.requestSubmit();
+          }}
           aria-invalid={Boolean(errors.body)}
-          aria-describedby={`message-hint${errors.body ? " message-error" : ""}`}
+          aria-describedby={`message-shortcut message-hint${errors.body ? " message-error" : ""}`}
         />
         <Button
           type="submit"
@@ -116,10 +127,13 @@ export function MessageComposer({
           disabled={isSubmitting}
           className="margin-send"
         >
-          <Send aria-hidden="true" />
           <span>{notebook ? "Save note" : "Send"}</span>
         </Button>
       </div>
+      <p id="message-shortcut" className="margin-message-shortcut">
+        {notebook ? "Enter to save" : "Enter to send"} · Shift+Enter for a new
+        line
+      </p>
       <p id="message-hint" className="sr-only">
         Expands up to three lines, then scrolls. Up to 2,000 characters.
         {notebook

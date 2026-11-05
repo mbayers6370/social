@@ -79,12 +79,14 @@
   width: 100%;
 }
 .margin-public-footer-groups {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 28px;
   padding-block: 26px;
   padding-inline: var(--site-gutter);
-  border-bottom: 1px solid hsl(var(--header-foreground) / 0.2);
+  --divider-bottom-color: hsl(var(--header-foreground) / 0.2);
+  border-bottom: 1px solid transparent;
 }
 .margin-public-footer-groups h2 {
   font-size: var(--text-body);

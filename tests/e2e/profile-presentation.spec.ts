@@ -46,6 +46,28 @@ test("keeps profile details before posts on small screens and preserves the desk
       identityBox.x + identityBox.width,
     );
     expect(Math.abs(postsBox.y - identityBox.y)).toBeLessThan(1);
+    const rail = profile.locator(".margin-profile-rail");
+    const initial = (await rail.boundingBox())!;
+    await page.evaluate(() => window.scrollTo(0, 200));
+    await expect
+      .poll(async () => (await rail.boundingBox())!.y)
+      .toBeCloseTo(initial.y, 0);
+    expect(
+      await rail.evaluate((element) => {
+        const details = element.querySelector(".margin-profile-details")!;
+        return [element, details].every(
+          (part) =>
+            !["auto", "scroll"].includes(getComputedStyle(part).overflowY),
+        );
+      }),
+    ).toBe(true);
+    const beforeWheel = await page.evaluate(() => window.scrollY);
+    await gallery.hover();
+    await page.mouse.wheel(0, 150);
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(beforeWheel);
+    await page.evaluate(() => window.scrollTo(0, 0));
   }
   const controls = [
     identity.getByRole("button", { name: "New Post", exact: true }),

@@ -170,3 +170,28 @@ it("offers preview exit only after an explicit fictional login", async () => {
   expect(screen.getByRole("button", { name: "Exit preview" })).toBeVisible();
   expect(clerk.signOut).not.toHaveBeenCalled();
 });
+
+it("clears the local preview marker when a managed account signs out", async () => {
+  function Probe() {
+    const session = useAccountSession()!;
+    return (
+      <>
+        <button onClick={session.enterPreview}>Enter sample view</button>
+        <button onClick={() => void session.leave()}>Leave account</button>
+        <p role="status">{session.signedIn ? "Back to Margin" : "Sign in"}</p>
+      </>
+    );
+  }
+  const view = () => (
+    <AccountSession enabled>
+      <Probe />
+    </AccountSession>
+  );
+  const user = userEvent.setup();
+  const { rerender } = render(view());
+  await user.click(screen.getByRole("button", { name: "Enter sample view" }));
+  await user.click(screen.getByRole("button", { name: "Leave account" }));
+  clerk.signedIn = false;
+  rerender(view());
+  expect(screen.getByRole("status")).toHaveTextContent("Sign in");
+});

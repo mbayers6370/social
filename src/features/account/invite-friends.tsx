@@ -1,4 +1,5 @@
 "use client";
+import { createRequestId } from "@/lib/local-id";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Friends } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
@@ -178,7 +179,7 @@ export function InvitationManager({ available }: { available: boolean }) {
   }, [open, available, summary, load]);
 
   async function create(): Promise<Invitation> {
-    requestId.current ??= crypto.randomUUID();
+    requestId.current ??= createRequestId();
     const fields = form.current ? new FormData(form.current) : null;
     const data: Invitation = await call("/api/invitations", {
       method: "POST",

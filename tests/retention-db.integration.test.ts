@@ -251,7 +251,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         objectKey: `purged/${photoId}`,
       });
       expect(await service.erasePurgedPhotoRecords()).toBe(0);
-      now = new Date(now.getTime() + 86_400_000);
+      now = new Date(now.getTime() + 2 * 86_400_000 + 1);
       expect(await service.erasePurgedPhotoRecords()).toBe(1);
       expect(await db.photo.findUnique({ where: { id: photoId } })).toBeNull();
     });

@@ -89,13 +89,16 @@
   gap: 40px;
 }
 .margin-public-contents {
+  position: relative;
   display: flex;
   align-content: start;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0 24px;
   padding-block: 16px;
-  border-block: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  --divider-bottom-color: hsl(var(--border));
+  border-block: 1px solid transparent;
 }
 .margin-public-contents > p {
   width: 100%;
@@ -131,8 +134,10 @@
   scroll-margin-top: 32px;
 }
 .margin-public-sections section + section {
+  position: relative;
   padding-top: 32px;
-  border-top: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
 }
 .margin-public-sections h2 {
   margin-bottom: 20px;
@@ -178,9 +183,11 @@
   text-decoration-color: currentColor;
 }
 .margin-public-document-related {
+  position: relative;
   margin-top: 64px;
   padding-top: 24px;
-  border-top: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
 }
 .margin-public-document-related > p {
   margin-bottom: 12px;
@@ -237,6 +244,8 @@
     padding-block: 0;
     padding-right: 8px;
     border: 0;
+    --divider-top-color: transparent;
+    --divider-bottom-color: transparent;
     scrollbar-width: thin;
   }
   .margin-public-sections {

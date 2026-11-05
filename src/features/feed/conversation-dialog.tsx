@@ -439,7 +439,7 @@ export function ConversationDialog({
   const conversationPreview = (
     <span className="margin-conversation-trigger">
       <Conversation size={20} aria-hidden="true" />
-      <span>Conversation</span>
+      <span className="sr-only lg:not-sr-only">Conversation</span>
     </span>
   );
 

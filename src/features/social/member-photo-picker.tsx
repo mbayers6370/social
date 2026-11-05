@@ -129,9 +129,6 @@ export function MemberPhotoPicker({
               ? "Choose from your gallery or upload a photograph. Your profile uses a small crop; the original keeps its existing audience."
               : "Add a photograph to your gallery. You can keep twenty photographs, with up to three featured."}
           </DialogDescription>
-          <p className="margin-field-hint">
-            Photos are checked before others see them.
-          </p>
         </header>
         <div className="margin-photo-picker-body">
           {portrait && selected ? (

@@ -1,4 +1,9 @@
 import "server-only";
+import {
+  topFriendCandidates,
+  readTopFriends,
+  saveTopFriends,
+} from "./top-friends";
 import { ownedReadablePhotos } from "./photo-visibility";
 import sharp from "sharp";
 import { SpaceService } from "@/server/spaces/service";
@@ -16,6 +21,7 @@ import { profileTrackFromRow } from "@/server/music/selections";
 import { musicChangeSchema } from "@/features/profile/music-schema";
 import { isReservedUsername } from "@/features/profile/username";
 import {
+  memberTopFriendsInput,
   memberProfileInput,
   memberPreferencesInput,
   memberUsernameInput,
@@ -33,6 +39,10 @@ import type {
 import { Prisma } from "@/generated/prisma/client";
 import { containsPostLink } from "@/lib/platform-rules";
 import { messageCutoff } from "@/lib/message-policy";
+import {
+  recordPublication,
+  memberPostingWindow,
+} from "@/server/social/posting-allowance";
 
 const active = { account: { is: { status: "ACTIVE" as const } } };
 const accountSelect = {
@@ -86,10 +96,11 @@ export class MemberService extends SpaceService {
           );
         await this.postAudience(tx, actor, post, true);
       } else await this.quota(tx, actor, hasLink, post.createdAt, id);
-      await tx.post.update({
+      const updated = await tx.post.update({
         where: { id },
         data: { body: body.trim(), hasLink },
       });
+      await recordPublication(tx, updated);
       return { saved: true };
     });
   }
@@ -132,6 +143,7 @@ export class MemberService extends SpaceService {
         where: { userId: id },
       });
       return {
+        founder: account.role === "FOUNDER",
         person: memberPerson(id, account),
         username: account.username ?? "",
         bio: account.bio,
@@ -139,6 +151,8 @@ export class MemberService extends SpaceService {
         usernameChangedAt: account.usernameChangedAt?.toISOString() ?? null,
         galleryVersion: account.galleryVersion,
         preferences: {
+          postingTimeZone: account.postingTimeZone,
+          showTopFriends: account.showTopFriends,
           readingSize:
             account.readingSize === "larger" ||
             account.readingSize === "extra-large"
@@ -171,7 +185,39 @@ export class MemberService extends SpaceService {
     await this.transaction(async (tx) => {
       const id = await this.actor(tx, subject);
       await this.lock(tx, [id]);
-      await tx.account.update({ where: { userId: id }, data });
+      const previous = await tx.account.findUniqueOrThrow({
+        where: { userId: id },
+        select: { postingTimeZone: true, postingUsageCarryUntil: true },
+      });
+      const previousWindow =
+        data.postingTimeZone &&
+        data.postingTimeZone !== previous.postingTimeZone
+          ? await memberPostingWindow(tx, id, this.clock())
+          : null;
+      await tx.account.update({
+        where: { userId: id },
+        data: {
+          ...data,
+          ...(data.postingTimeZone &&
+          data.postingTimeZone !== previous.postingTimeZone
+            ? {
+                postingUsageCarryFrom: new Date(
+                  Math.min(
+                    previousWindow!.start.getTime(),
+                    this.clock().getTime() - 86_400_000,
+                  ),
+                ),
+                postingUsageCarryUntil: new Date(
+                  Math.max(
+                    previousWindow!.end.getTime(),
+                    previous.postingUsageCarryUntil?.getTime() ?? 0,
+                    this.clock().getTime() + 86_400_000,
+                  ),
+                ),
+              }
+            : {}),
+        },
+      });
     });
     return this.identity(subject);
   }
@@ -380,6 +426,20 @@ export class MemberService extends SpaceService {
       };
     });
   }
+  async topFriends(subject: string, query = "", before?: string) {
+    return this.transaction(async (tx) => {
+      const ownerId = await this.actor(tx, subject);
+      return topFriendCandidates(tx, ownerId, query, before);
+    });
+  }
+  async updateTopFriends(subject: string, raw: unknown) {
+    const input = memberTopFriendsInput.parse(raw);
+    return this.transaction(async (tx) => {
+      const ownerId = await this.actor(tx, subject);
+      await this.lock(tx, [ownerId, ...input.friendIds]);
+      return saveTopFriends(tx, ownerId, input);
+    });
+  }
   async contacts(subject: string, query = "", before?: string) {
     const term = query.trim().replace(/^@/, "");
     if (term && (term.length < 2 || term.length > 80))
@@ -412,7 +472,16 @@ export class MemberService extends SpaceService {
                 { friendshipsHigh: { some: { lowId: actor } } },
               ],
         },
-        select: { id: true, account: { select: accountSelect } },
+        select: {
+          id: true,
+          account: {
+            select: {
+              displayName: true,
+              username: true,
+              portraitPhotoId: true,
+            },
+          },
+        },
         orderBy: { id: "asc" },
         take: 31,
       });
@@ -863,7 +932,7 @@ export class MemberService extends SpaceService {
       return { liked, count: await tx.postLike.count({ where: { postId } }) };
     });
   }
-  async notifications(subject: string, before?: string) {
+  async notifications(subject: string, before?: string, includeEvents = true) {
     return this.transaction(async (tx) => {
       const actor = await this.actor(tx, subject);
       if (!before) {
@@ -908,6 +977,7 @@ export class MemberService extends SpaceService {
       });
       const activity: MemberActivity[] = [];
       for (const row of rows.slice(0, 50)) {
+        if (!includeEvents && row.post?.space?.kind === "EVENT") continue;
         if (!row.actor.account || (await this.blocked(tx, actor, row.actorId)))
           continue;
         if (
@@ -948,7 +1018,11 @@ export class MemberService extends SpaceService {
                 row.actorId,
               )
             : null;
-          if (!invitation) continue;
+          if (
+            !invitation ||
+            (!includeEvents && invitation.space.kind === "EVENT")
+          )
+            continue;
           activity.push({
             id: row.id,
             actor: memberPerson(row.actor.id, row.actor.account),
@@ -1108,6 +1182,7 @@ export class MemberService extends SpaceService {
           notifyLikes: true,
           notifyMessages: true,
           messagingEnabled: true,
+          showTopFriends: true,
         },
       });
       // Export only this member's records; no session, provider credentials,
@@ -1252,6 +1327,7 @@ export class MemberService extends SpaceService {
           "This account needs an assisted export. Contact support@margin.social.",
         );
       return {
+        topFriends: await readTopFriends(tx, id),
         exportedAt: this.clock().toISOString(),
         profile,
         music,

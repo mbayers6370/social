@@ -63,7 +63,7 @@ export function SpacePhotoPicker({
           <DialogTitle>Choose a photograph</DialogTitle>
           <DialogDescription>
             Choose a saved photo or upload one. Nothing is shared until you
-            publish, and photos are checked before others see them.
+            publish.
           </DialogDescription>
         </DialogHeader>
         <SpacePhotoSelection

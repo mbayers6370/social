@@ -9,10 +9,13 @@ import { SpacesList } from "./spaces-list";
 import { SpaceDetails } from "./space-details";
 import { isSpaceExpired } from "./lifecycle";
 import { SpaceTimeline } from "./space-timeline";
+import { spaceIsVisible } from "./availability";
 export function SpacesPreview() {
   const { data, client, postsFor, detailsFor, now } = useSpacesPreview();
   const query = useSearchParams();
-  const selected = detailsFor(query.get("space") ?? "");
+  const candidate = detailsFor(query.get("space") ?? "");
+  const selected =
+    candidate && spaceIsVisible(candidate) ? candidate : undefined;
   return (
     <SpaceClientProvider client={client}>
       <MarginShell

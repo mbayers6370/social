@@ -117,7 +117,7 @@ export function SafetyReportButton({
             ? local
               ? "Saved in this tab and included in your account download. Live moderation is not connected in the preview."
               : "Your report has been recorded for review."
-            : `About ${target.label}. Include only information needed to understand the concern. Do not include passwords or unrelated private information.`}
+            : `About ${target.label}. ${local ? "" : "A founder can review the reported item and its attached photographs. "}Include only information needed to understand the concern. Do not include passwords or unrelated private information.`}
         </DialogDescription>
         {!saved && (
           <form

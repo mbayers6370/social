@@ -63,8 +63,8 @@ export function PhotoPicker({
           <DialogTitle>Choose a photograph</DialogTitle>
           <DialogDescription>
             {props.context === "gallery"
-              ? "Choose a saved photo or upload one. Photos are checked before you add them to your gallery."
-              : "Choose a saved photo or upload one. Nothing is shared until you publish, and photos are checked before others see them."}
+              ? "Choose a saved photo or upload one."
+              : "Choose a saved photo or upload one. Nothing is shared until you publish."}
           </DialogDescription>
         </DialogHeader>
         <PhotoSelection {...props} onCancel={() => onOpenChange(false)} />

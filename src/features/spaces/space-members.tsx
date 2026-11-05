@@ -84,35 +84,38 @@ export function SpaceMembers({ data }: { data: Data }) {
                       !data.archivedAt &&
                       m.userId !== data.creatorId && (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={
-                              m.role === "ADMIN"
-                                ? `Remove administrator role from ${m.name}`
-                                : `Make ${m.name} an administrator`
-                            }
-                            title={
-                              m.role === "ADMIN"
-                                ? `Remove administrator role from ${m.name}`
-                                : `Make ${m.name} an administrator`
-                            }
-                            aria-pressed={m.role === "ADMIN"}
-                            disabled={action.busy}
-                            onClick={() =>
-                              action.run(
-                                `/api/spaces/${data.id}/members`,
-                                "PATCH",
-                                {
-                                  action: "role",
-                                  userId: m.userId,
-                                  role: m.role === "ADMIN" ? "MEMBER" : "ADMIN",
-                                },
-                              )
-                            }
-                          >
-                            <Shield aria-hidden="true" />
-                          </Button>
+                          {data.kind !== "EVENT" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={
+                                m.role === "ADMIN"
+                                  ? `Remove administrator role from ${m.name}`
+                                  : `Make ${m.name} an administrator`
+                              }
+                              title={
+                                m.role === "ADMIN"
+                                  ? `Remove administrator role from ${m.name}`
+                                  : `Make ${m.name} an administrator`
+                              }
+                              aria-pressed={m.role === "ADMIN"}
+                              disabled={action.busy}
+                              onClick={() =>
+                                action.run(
+                                  `/api/spaces/${data.id}/members`,
+                                  "PATCH",
+                                  {
+                                    action: "role",
+                                    userId: m.userId,
+                                    role:
+                                      m.role === "ADMIN" ? "MEMBER" : "ADMIN",
+                                  },
+                                )
+                              }
+                            >
+                              <Shield aria-hidden="true" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -171,7 +174,7 @@ export function SpaceMembers({ data }: { data: Data }) {
           >
             Leave Space
           </Button>
-          {data.viewerId === data.creatorId && (
+          {data.kind !== "EVENT" && data.viewerId === data.creatorId && (
             <Button variant="outline" onClick={() => setDeleting(true)}>
               Delete Space
             </Button>
@@ -204,7 +207,8 @@ export function SpaceMembers({ data }: { data: Data }) {
             {data.kind === "EVENT"
               ? "You can find and join this Event Space again while it’s open."
               : "You’ll need a new invitation to rejoin. If you’re the last member, this private Space and its content will be deleted."}
-            {data.viewerId === data.creatorId &&
+            {data.kind !== "EVENT" &&
+              data.viewerId === data.creatorId &&
               data.memberCount > 1 &&
               " Another member will take over as administrator."}
           </DialogDescription>

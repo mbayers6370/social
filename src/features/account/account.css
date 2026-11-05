@@ -196,7 +196,9 @@
   font: var(--text-control)/1.6 var(--font-body);
 }
 .margin-invitation-history {
-  border-top: 1px solid hsl(var(--border));
+  position: relative;
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
   padding-top: 8px;
 }
 .margin-invitation-history-heading h3 {
@@ -212,7 +214,9 @@
   padding-block: 16px;
 }
 .margin-invitation-list > li + li {
-  border-top: 1px solid hsl(var(--border));
+  position: relative;
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
 }
 .margin-invitation-list-copy > p:first-child {
   font-size: 0.875rem;
@@ -257,10 +261,12 @@
   display: grid;
 }
 .margin-export-categories > label {
+  position: relative;
   display: flex;
   gap: 14px;
   padding-block: 16px;
-  border-bottom: 1px solid hsl(var(--border));
+  --divider-bottom-color: hsl(var(--border));
+  border-bottom: 1px solid transparent;
   cursor: pointer;
 }
 .margin-export-categories input,
@@ -296,7 +302,8 @@
   gap: 12px;
   margin-inline: -24px;
   padding: 16px 24px;
-  border-top: 1px solid hsl(var(--border));
+  --divider-top-color: hsl(var(--border));
+  border-top: 1px solid transparent;
   background: hsl(var(--card));
 }
 .margin-safety-report-form {

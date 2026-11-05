@@ -56,7 +56,11 @@ it("passes the verified identity and actual member to the shared feed", async ()
     await Page({ searchParams: Promise.resolve({ before: "saved-cursor" }) }),
   );
   expect(mocks.account).toHaveBeenCalledWith("verified-subject");
-  expect(mocks.feed).toHaveBeenCalledWith("verified-subject", "saved-cursor");
+  expect(mocks.feed).toHaveBeenCalledWith(
+    "verified-subject",
+    "saved-cursor",
+    false,
+  );
   expect(screen.getByRole("heading", { name: "Saved member" })).toBeVisible();
 });
 

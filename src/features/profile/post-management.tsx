@@ -25,9 +25,13 @@ export function PostManagement({ post }: { post: FriendPost }) {
     <div className="margin-post-management">
       <Dialog open={editing} onOpenChange={setEditing}>
         <DialogTrigger asChild>
-          <Button variant="ghost" aria-label="Edit post">
+          <Button
+            variant="ghost"
+            className="margin-post-edit-trigger"
+            aria-label="Edit post"
+          >
             <Edit aria-hidden="true" />
-            Edit
+            <span className="sr-only lg:not-sr-only">Edit</span>
           </Button>
         </DialogTrigger>
         {editing && (

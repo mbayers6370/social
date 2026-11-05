@@ -25,6 +25,7 @@ import { preserveTimeZoneMenu } from "./time-zone-picker";
 import { spaceKindLabel } from "./lifecycle";
 import { EventSearch } from "./event-search";
 import { SpaceDates } from "./space-dates";
+import { eventSpacesEnabled, spaceIsVisible } from "./availability";
 
 function SpaceRows({
   spaces,
@@ -67,8 +68,9 @@ function SpaceRows({
 export function SpacesList({ data }: { data: SpaceListData }) {
   const [create, setCreate] = useState(false);
   const client = useSpaceClient();
-  const current = data.spaces.filter((space) => !space.archivedAt);
-  const archived = data.spaces.filter((space) => space.archivedAt);
+  const visible = data.spaces.filter(spaceIsVisible);
+  const current = visible.filter((space) => !space.archivedAt);
+  const archived = visible.filter((space) => space.archivedAt);
   return (
     <section className="margin-spaces-page">
       <header className="margin-spaces-heading">
@@ -99,7 +101,8 @@ export function SpacesList({ data }: { data: SpaceListData }) {
       </header>
       <p className="margin-space-privacy">
         <Lock aria-hidden="true" size={14} />
-        Spaces are invitation-only. Event Spaces are open to Margin members.
+        Spaces are invitation-only.
+        {eventSpacesEnabled && " Event Spaces are open to Margin members."}
       </p>
       {data.invitations.length > 0 && (
         <section
@@ -138,13 +141,14 @@ export function SpacesList({ data }: { data: SpaceListData }) {
           <SpaceRows spaces={archived} label="Archived Spaces" />
         </section>
       )}
-      {!data.spaces.length && (
+      {!visible.length && (
         <div className="margin-space-empty">
           <Spaces aria-hidden="true" size={32} />
           <h2>A shared place starts here</h2>
           <p>
             You haven’t joined a Space yet. Create one for people you know, join
-            through an invitation, or find an Event Space below.
+            through an invitation.
+            {eventSpacesEnabled && " Or find an Event Space below."}
           </p>
           <Button variant="outline" onClick={() => setCreate(true)}>
             Create your first Space
@@ -162,7 +166,7 @@ export function SpacesList({ data }: { data: SpaceListData }) {
           <ChevronRight aria-hidden="true" />
         </Link>
       )}
-      <EventSearch />
+      {eventSpacesEnabled && <EventSearch />}
     </section>
   );
 }

@@ -14,6 +14,19 @@ Routes pass explicit data objects to feature components. Keep secrets and databa
 
 The root layout owns fonts, Clerk and session access. Only the `(development)` route-group layout installs fictional social/Spaces providers, and only in development. Production `/` renders the public website; development fixture routes and music APIs reject production requests. The separately gated `/app` layout installs an actual `MemberIdentity` behind the verified session monitor. No fictional provider is mounted above member pages.
 
+`npm run review` creates a production-optimized build directly from the current
+working tree and exposes it over one private-network HTTPS origin for desktop and
+phone review. `npm run review -- --localhost` instead binds only to
+`http://localhost:3000` for account review on the Mac. Its generated output is
+isolated under `.local/local-review/next`,
+so it cannot replace the standard `.next` build served by `npm start`; both are
+compiled from this same working tree, with no second source checkout. Test Clerk
+keys and filesystem media are accepted only when the explicit review flag,
+private HTTPS origin (or exact HTTP localhost), loopback `margin_local` runtime database, non-CI process,
+and local-media flag all agree. Hosted production continues to require live
+provider keys and hosted private storage. Local review is UX evidence, not
+hosted-provider or deployment evidence.
+
 The local provider keeps posts, galleries, friendships, notifications, and preferences in memory across navigation. A separate development-only Spaces provider shares canonical Space data across its pages and the main Feed without extending the personal provider. Feed selects opted-in, current-member, unexpired and unblocked Space references by other members, merges them chronologically with personal items, and uses the same Space post/conversation renderer as the live Feed. The adapter is scoped to fictional components; live HTTP clients keep the authenticated boundary. Messages keeps separate screen-local messages and drafts. Refresh resets social preview state; optional local music persistence is the exception. Nadia’s pending-request fixture exposes only her portrait and bio initially. Accepting the request loads her sample profile through a development-only Server Function, then commits the profile content and accepted relationship together. Loading failures leave the request pending; this function never creates a real account or friendship and rejects production requests.
 
 The preview identity is fictional and is not authenticated production access. All real writes must derive identity on the server and check authorization again at the resource boundary.
@@ -32,15 +45,17 @@ Space posts retain the existing 30-day lifetime and comments expire with their p
 
 ## Local posting and media rules
 
-- Each Los Angeles calendar day permits three regular posts or one exclusive link-containing post.
+- The member backend uses each account's saved IANA time zone for three regular posts or one exclusive link-containing post per calendar day. Changing zones carries recent usage forward for at least 24 hours; the fictional preview retains its fixed Los Angeles clock.
 - Posts and Gallery share a three-photograph daily allowance.
 - A post photograph enters Gallery and counts once; a photograph already added that day can be reused without charging it again.
 - Gallery holds at most 20 owned photographs with three featured entries.
-- Editing preserves post identity, date, expiry, and discussion. Deleting a post preserves Gallery photographs.
+- Editing preserves post identity, date, expiry, discussion and publication-day zone. Deleting a post preserves Gallery photographs and its publication allowance charge.
 
-The local model validates these rules and applies related changes together. Authoritative production enforcement still requires authenticated database transactions.
+The local model validates preview changes together. The backend enforces member publication/photograph allowances inside authenticated database transactions with per-member locks and durable usage markers.
 
-Device photographs are checked for type, signature, size, dimensions, and description. Animated images and motion photos are rejected. Accepted files use browser object URLs with cleanup; they are never uploaded by the preview. Server image DTOs and remote image hosts remain allowlisted.
+Device photographs are checked for format, size and dimensions; supported server uploads are decoded and re-encoded with metadata stripped. This is privacy processing, not harmful-content moderation. Animated images and motion photos are rejected. Accepted preview files use browser object URLs with cleanup and are never uploaded by the preview. Server image DTOs and remote image hosts remain allowlisted.
+
+The [repository review](repository-review.md) documents founder-only report review, explicit public Event administrator assignment, accepted-friend Space invitations, migration effects and remaining operational verification.
 
 ## Server integrations
 

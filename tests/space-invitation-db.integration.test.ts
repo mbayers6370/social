@@ -85,6 +85,18 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       });
       await service.relationship(people[0].clerkId, people[1].id, "request");
       await service.relationship(people[1].clerkId, people[0].id, "accept");
+      for (const index of [3, 6]) {
+        await service.relationship(
+          people[0].clerkId,
+          people[index].id,
+          "request",
+        );
+        await service.relationship(
+          people[index].clerkId,
+          people[0].id,
+          "accept",
+        );
+      }
       const invitation = await service.invite(
         people[0].clerkId,
         room.id,
@@ -107,7 +119,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       vi.clearAllMocks();
     });
     afterAll(async () => db.$disconnect());
-    it("shows friends initially, ranks them before other matching members, and excludes ineligible people", async () => {
+    it("shows only accepted friends, including for a matching search, and excludes ineligible people", async () => {
       const before = await db.spaceInvitation.count();
       const initial = await service.invitationCandidates(
         people[0].clerkId,
@@ -123,10 +135,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       );
       expect(
         results.members.map((member) => [member.person.id, member.friend]),
-      ).toEqual([
-        [people[1].id, true],
-        [people[2].id, false],
-      ]);
+      ).toEqual([[people[1].id, true]]);
       expect(results.hasMore).toBe(false);
       expect(await db.spaceInvitation.count()).toBe(before);
       const friend = await db.account.findUniqueOrThrow({
@@ -143,6 +152,8 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       ).toBe(people[1].id);
     });
     it("delivers one recipient-scoped notification per invitation, preserves read state, and joins through the existing acceptance checks", async () => {
+      await service.relationship(people[0].clerkId, people[2].id, "request");
+      await service.relationship(people[2].clerkId, people[0].id, "accept");
       const invitation = await service.invite(
         people[0].clerkId,
         room.id,
@@ -291,14 +302,21 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       },
     );
     it("ranks before applying the result cap and tells the caller to refine a broad search", async () => {
-      for (let i = 0; i < 24; i++) await person(`A Match ${i}`);
+      for (let i = 0; i < 24; i++) {
+        const member = await person(`ZZ Match ${i}`);
+        await service.relationship(people[0].clerkId, member.id, "request");
+        await service.relationship(member.clerkId, people[0].id, "accept");
+      }
       const result = await service.invitationCandidates(
         people[0].clerkId,
         room.id,
         "match",
       );
       expect(result.members).toHaveLength(20);
-      expect(result.members[0].person.id).toBe(people[1].id);
+      expect(result.members.every((member) => member.friend)).toBe(true);
+      expect(result.members.map((member) => member.person.name)).toEqual(
+        [...result.members.map((member) => member.person.name)].sort(),
+      );
       expect(result.hasMore).toBe(true);
       expect(
         result.members.map((member) => Object.keys(member).sort()),
@@ -323,6 +341,8 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       ).rejects.toMatchObject({ status: 409 });
     });
     it("rechecks eligibility when the sender chooses a result after a new block", async () => {
+      await service.relationship(people[0].clerkId, people[2].id, "request");
+      await service.relationship(people[2].clerkId, people[0].id, "accept");
       expect(
         (await service.invitationCandidates(people[0].clerkId, room.id, "Adam"))
           .members,

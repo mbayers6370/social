@@ -1,4 +1,5 @@
 import "server-only";
+import { readTopFriends, pruneTopFriends } from "@/server/member/top-friends";
 import { memberPerson } from "@/lib/member-person";
 import { profileTrackFromRow } from "@/server/music/selections";
 import { randomUUID } from "node:crypto";
@@ -10,7 +11,6 @@ import {
 import {
   containsPostLink,
   DAILY_IMAGES,
-  DAILY_REGULAR_POSTS,
   SPACE_PHOTO_LIMIT,
 } from "@/lib/platform-rules";
 import { dayKey } from "@/features/feed/format";
@@ -25,6 +25,11 @@ import { spaceAccess, liveSpaceWhere } from "@/server/spaces/access";
 import { notifySpacePost } from "@/server/spaces/post-notifications";
 import type { PrivateProfileData } from "@/features/social/contracts";
 import { messageCutoff } from "@/lib/message-policy";
+import {
+  dailyPostAllowance,
+  memberPostingWindow,
+  recordPublication,
+} from "./posting-allowance";
 
 const purgedPhoto = (id: string) => ({
   state: "PURGED" as const,
@@ -263,14 +268,18 @@ export class SocialService {
     now: Date,
     excludeId?: string,
   ) {
+    const window = await memberPostingWindow(tx, ownerId, now);
     const count = await tx.photo.count({
       where: {
         ownerId,
-        dayKey: dayKey(now.toISOString()),
         ...(excludeId ? { id: { not: excludeId } } : {}),
         OR: [
-          { uploadedAt: { not: null } },
-          { state: "PENDING", uploadExpiresAt: { gt: now } },
+          { uploadedAt: { gte: window.start, lt: window.end } },
+          {
+            state: "PENDING",
+            createdAt: { gte: window.start, lt: window.end },
+            uploadExpiresAt: { gt: now },
+          },
         ],
       },
     });
@@ -299,22 +308,7 @@ export class SocialService {
     now: Date,
     replacingId?: string,
   ) {
-    const posts = await tx.post.findMany({
-      where: {
-        ownerId,
-        spaceId: null,
-        dayKey: dayKey(now.toISOString()),
-        deletedAt: null,
-        ...(replacingId ? { id: { not: replacingId } } : {}),
-      },
-      select: { hasLink: true },
-    });
-    return {
-      regularRemaining: posts.some((post) => post.hasLink)
-        ? 0
-        : Math.max(0, DAILY_REGULAR_POSTS - posts.length),
-      linkAllowed: posts.length === 0,
-    };
+    return dailyPostAllowance(tx, ownerId, now, replacingId);
   }
   protected postData(ownerId: string, body: string, now: Date) {
     return {
@@ -364,6 +358,7 @@ export class SocialService {
               username: true,
               bio: true,
               portraitPhotoId: true,
+              showTopFriends: true,
               galleryVersion: true,
               messagingEnabled: true,
             },
@@ -515,6 +510,9 @@ export class SocialService {
           galleryVersion:
             relationship === "self" ? owner.account!.galleryVersion : 0,
           onRepeat: songs.map(profileTrackFromRow),
+          ...(canRead && owner.account!.showTopFriends
+            ? { topFriends: await readTopFriends(tx, targetId, viewerId) }
+            : {}),
           relationship,
         },
         posts: rows.slice(0, 20).map((post) => ({
@@ -551,18 +549,13 @@ export class SocialService {
           where: {
             id: input.target.id,
             createdAt: { gt: messageCutoff(this.clock()) },
-            OR: [
-              { senderId: reporter, hiddenBySender: false },
-              { recipientId: reporter, hiddenByRecipient: false },
-            ],
+            recipientId: reporter,
+            hiddenByRecipient: false,
           },
           select: { senderId: true, recipientId: true },
         });
-        if (!message) throw unavailable();
-        targetPersonId =
-          message.senderId === reporter
-            ? message.recipientId
-            : message.senderId;
+        if (!message || message.senderId === reporter) throw unavailable();
+        targetPersonId = message.senderId;
         if (
           targetPersonId === reporter ||
           targetPersonId !== input.target.personId
@@ -635,7 +628,7 @@ export class SocialService {
             ],
           },
         });
-      if (action === "block") {
+      if (action === "block" || action === "remove") {
         await tx.spaceInvitation.deleteMany({
           where: {
             OR: [
@@ -644,6 +637,8 @@ export class SocialService {
             ],
           },
         });
+      }
+      if (action === "block") {
         await tx.friendship.deleteMany({ where: key });
         await tx.block.upsert({
           where: {
@@ -690,6 +685,8 @@ export class SocialService {
           );
         }
       }
+      if (action === "remove" || action === "block")
+        await pruneTopFriends(tx, actorId, targetId);
     });
   }
   async createPost(subject: string, body: string) {
@@ -699,7 +696,12 @@ export class SocialService {
       const now = this.clock();
       const data = this.postData(actorId, body, now);
       await this.quota(tx, actorId, data.hasLink, now);
-      return tx.post.create({ data, select: postSelect });
+      const post = await tx.post.create({
+        data,
+        select: { ...postSelect, hasLink: true },
+      });
+      await recordPublication(tx, post);
+      return post;
     });
   }
   async createPhotoPost(
@@ -777,7 +779,7 @@ export class SocialService {
           ownerId,
           ...(spaceId ? { spaceReferences: { create: { spaceId } } } : {}),
           objectKey: `social/${randomUUID()}.webp`,
-          dayKey: dayKey(now.toISOString()),
+          dayKey: (await memberPostingWindow(tx, ownerId, now)).key,
           createdAt: now,
           uploadExpiresAt: new Date(now.getTime() + 600_000),
           description,
@@ -800,7 +802,7 @@ export class SocialService {
         if (
           pending.state !== "PENDING" ||
           pending.uploadExpiresAt <= now ||
-          pending.dayKey !== dayKey(now.toISOString())
+          pending.dayKey !== (await memberPostingWindow(tx, actorId, now)).key
         )
           throw new SocialError(409, "Upload expired; try again");
         const membership = spaceId
@@ -865,8 +867,9 @@ export class SocialService {
                   : {}),
                 photos: { create: { photoId: pending.id } },
               },
-              select: postSelect,
+              select: { ...postSelect, hasLink: true },
             });
+        if (post) await recordPublication(tx, post);
         if (post)
           await notifySpacePost(
             tx,
@@ -1036,6 +1039,7 @@ export class SocialService {
       await tx.friendship.deleteMany({
         where: { OR: [{ lowId: id }, { highId: id }] },
       });
+      await pruneTopFriends(tx, id);
       await tx.post.deleteMany({ where: { ownerId: id } });
       await tx.photo.updateMany({
         where: { ownerId: id, state: { not: "PURGED" } },
@@ -1120,14 +1124,18 @@ export class SocialService {
     if (failure) throw failure;
     return purged;
   }
-  /** Only today's minimal upload quota markers survive object deletion. */
+  /** Minimal markers survive timezone transitions; photo bytes have already been erased. */
   async erasePurgedPhotoRecords(limit = 100) {
     const rows = await this.db.photo.findMany({
       where: {
         state: "PURGED",
         OR: [
           { uploadedAt: null },
-          { dayKey: { lt: dayKey(this.clock().toISOString()) } },
+          {
+            uploadedAt: {
+              lt: new Date(this.clock().getTime() - 2 * 86_400_000),
+            },
+          },
         ],
       },
       select: { id: true },
@@ -1174,6 +1182,23 @@ export class SocialService {
     });
   }
   /** Access expires synchronously; this bounded job erases expired text/references later. */
+  async erasePostingUsage(limit = 100) {
+    // Keep the original publication zone throughout a post's 30-day editing lifetime.
+    const rows = await this.db.postingUsage.findMany({
+      where: {
+        createdAt: { lt: new Date(this.clock().getTime() - 35 * 86_400_000) },
+      },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      take: Math.max(1, Math.min(limit, 100)),
+      select: { id: true },
+    });
+    return (
+      await this.db.postingUsage.deleteMany({
+        where: { id: { in: rows.map((row) => row.id) } },
+      })
+    ).count;
+  }
+
   async expirePosts(limit = 20, signal?: AbortSignal) {
     const expired = await this.db.post.findMany({
       where: {

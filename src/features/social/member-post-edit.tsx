@@ -92,7 +92,7 @@ export function MemberPostEdit({
       <DialogTrigger asChild>
         <Button variant="ghost" className="margin-post-edit-trigger">
           <Edit aria-hidden="true" />
-          Edit
+          <span className="sr-only lg:not-sr-only">Edit</span>
         </Button>
       </DialogTrigger>
       <DialogContent

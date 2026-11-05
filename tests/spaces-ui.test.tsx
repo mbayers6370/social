@@ -64,7 +64,7 @@ it("keeps Spaces between Feed and Messages on both navigation bars", () => {
     "page",
   );
 });
-it("labels card dates in the Space time zone and uses the saved event disappearance deadline", () => {
+it("keeps private Space dates while hiding joined Event Spaces and discovery", () => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-03T12:00:00Z"));
   const common = {
@@ -109,15 +109,13 @@ it("labels card dates in the Space time zone and uses the saved event disappeara
       }}
     />,
   );
-  const event = screen.getByRole("link", { name: /An evening together/ });
-  expect(event).toHaveTextContent("Event Wed 11 Nov");
-  expect(event).toHaveTextContent(
-    "Disappears 14 Nov 2026 · 48 hours after the event ends",
-  );
-  expect(within(event).getByText("14 Nov 2026")).toHaveAttribute(
-    "datetime",
-    "2026-11-15T02:00:00Z",
-  );
+  expect(
+    screen.queryByRole("link", { name: /An evening together/ }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("region", { name: "Find an Event Space" }),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/Event Spaces are open/)).not.toBeInTheDocument();
   const gathering = screen.getByRole("link", { name: /Dinner/ });
   expect(gathering).toHaveTextContent("Wed 11 Nov");
   expect(gathering).not.toHaveTextContent(/Date|2026/);

@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
+  Settings as SettingsIcon,
 } from "@/components/margin-icons";
+import { SectionTitle, SectionMotif } from "@/components/shared/section-motif";
 import { LiveAppShell } from "@/components/layout/live-app-shell";
 import { Avatar } from "@/features/feed/post-content";
 import { ReadingSettings } from "@/features/settings/reading-settings";
@@ -24,6 +25,7 @@ import { useMember } from "./member-provider";
 import { memberJson, requestMember, memberChanged } from "./member-client";
 import { MemberDataControls } from "./member-data-controls";
 import type { MemberIdentity, MemberPreferences } from "./member-contracts";
+import { TimeZonePicker } from "@/features/spaces/time-zone-picker";
 export type MemberSafety = {
   blocked: { id: string; name: string }[];
   reports: {
@@ -46,6 +48,9 @@ export function MemberSettings({
   const member = useMember();
   const router = useRouter();
   const [saved, setSaved] = useState(initial);
+  const [postingZone, setPostingZone] = useState(
+    initial.preferences.postingTimeZone ?? "America/Los_Angeles",
+  );
   const identity = member?.identity ?? saved;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -96,12 +101,17 @@ export function MemberSettings({
         aria-labelledby="settings-title"
       >
         <header className="margin-settings-opening">
-          <Link href="/app" className="margin-back-link">
-            <ChevronLeft aria-hidden="true" />
-            Profile
-          </Link>
-          <h1 id="settings-title">Settings</h1>
+          <SectionTitle
+            as="h1"
+            id="settings-title"
+            motif={<SectionMotif icon={SettingsIcon} />}
+          >
+            Settings
+          </SectionTitle>
           <p>Reading, messaging, notifications and your account.</p>
+          {identity.founder && (
+            <Link href="/app/moderation">Review safety reports</Link>
+          )}
         </header>
         {error && (
           <p role="alert" className="margin-settings-feedback">
@@ -134,6 +144,37 @@ export function MemberSettings({
                 void updatePreferences({ messagingEnabled })
               }
             />
+            <section
+              className="margin-settings-section"
+              aria-labelledby="posting-zone-title"
+            >
+              <h2 id="posting-zone-title">Posting day</h2>
+              <p>
+                Daily post and photo limits use your saved time zone. Changing
+                it carries recent usage forward for at least 24 hours; deletion
+                does not restore an allowance.
+              </p>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void updatePreferences({ postingTimeZone: postingZone });
+                }}
+              >
+                <label htmlFor="posting-time-zone">Time zone</label>
+                <TimeZonePicker
+                  id="posting-time-zone"
+                  value={postingZone}
+                  onChange={setPostingZone}
+                />
+                <Button type="submit" variant="outline" disabled={busy}>
+                  Save time zone
+                </Button>
+                <SettingSaveStatus
+                  feedback={feedback}
+                  setting="postingTimeZone"
+                />
+              </form>
+            </section>
             <section
               className="margin-settings-section"
               id="activity-settings"
@@ -214,6 +255,26 @@ export function MemberSettings({
                   <ChevronRight aria-hidden="true" />
                 </span>
               </Link>
+              <label className="margin-notification-preference">
+                <input
+                  type="checkbox"
+                  checked={identity.preferences.showTopFriends !== false}
+                  disabled={busy}
+                  onChange={(event) =>
+                    void updatePreferences({
+                      showTopFriends: event.target.checked,
+                    })
+                  }
+                />
+                <span>
+                  <strong>Show Top 4 on your profile</strong>
+                  <span>
+                    Visible to you and your accepted friends. Hiding it keeps
+                    your selections.
+                  </span>
+                </span>
+              </label>
+              <SettingSaveStatus setting="showTopFriends" feedback={feedback} />
               <UsernameSettings
                 account={{
                   id: identity.person.id,

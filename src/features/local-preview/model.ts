@@ -432,6 +432,17 @@ export function deleteLocalPost(
   deletePhotos = false,
 ): LocalState {
   const post = ownedPost(state, viewerId, id, now);
+  // Gallery's upload ledger will count tracked photos after their post is gone.
+  const untrackedImages = (post.media ?? []).filter(
+    (media) =>
+      !state.photos.some(
+        (photo) =>
+          photo.image.src === media.image.src &&
+          (state.galleryAdditions ?? []).some(
+            (record) => record.photoId === photo.id,
+          ),
+      ),
+  ).length;
   if (deletePhotos) {
     const sources = new Set(post.media?.map((photo) => photo.image.src));
     const ids = state.photos
@@ -447,7 +458,17 @@ export function deleteLocalPost(
   return {
     ...state,
     posts: state.posts.filter((post) => post.id !== id),
-    postingRecords: state.postingRecords?.filter((post) => post.id !== id),
+    postingRecords: [
+      ...(state.postingRecords ?? []).filter((record) => record.id !== id),
+      {
+        id,
+        authorId: viewerId,
+        createdAt: post.createdAt,
+        hasLink: containsPostLink(post),
+        imageCount: untrackedImages,
+        deleted: true,
+      },
+    ],
     profiles: state.profiles.map((profile) =>
       profile.person.id === viewerId
         ? {

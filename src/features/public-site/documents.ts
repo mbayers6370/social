@@ -143,7 +143,7 @@ export const publicDocuments = {
         id: "media",
         title: "Words, photographs and a little music",
         paragraphs: [
-          "Still JPEG, PNG and WebP photographs are supported. Add an image description for people using screen readers. The current limit is 8 MB, with additional checks on dimensions and file contents. Export HEIC or HEIF images as JPEG or PNG first.",
+          "Still JPEG, PNG and WebP photographs are supported. The current limit is 8 MB, with additional checks on dimensions and file contents. Uploaded photographs are re-encoded with source metadata removed. These checks do not detect harmful content. Export HEIC or HEIF images as JPEG or PNG first.",
           "Video, animated images, motion photos and video embeds are not permitted. On Repeat lets you choose music for your profile and opens listening services when selected; Margin has no music player.",
         ],
       },
@@ -763,7 +763,7 @@ export const publicDocuments = {
         id: "posts",
         title: "Posts and their conversations",
         paragraphs: [
-          "Posts expire thirty days after creation, or earlier when their Event Space ends its availability. Editing does not renew the deadline. The member app denies access at expiry; manual deletion removes the post and its conversation immediately.",
+          "Posts expire thirty days after creation. Editing does not renew the deadline. The member app denies access at expiry; manual deletion removes the post and its conversation immediately.",
           "The separate maintenance worker removes expired post rows, comments, likes, notifications and photo attachments. Hosted worker deployment, monitoring, object deletion and backup behavior still require launch verification; database deletion does not erase recipient copies or backups instantly.",
         ],
       },
@@ -781,7 +781,7 @@ export const publicDocuments = {
         paragraphs: [
           "Photographs selected for Gallery are intended to stay until you remove or replace them. One canonical photo record and stored original can be referenced by Gallery, portraits, posts and multiple Spaces. Reusing its photo ID never creates another stored copy. A post expiring does not remove a photograph that still has another valid reference.",
           "Replacing a gallery selection only changes that selection. Delete photograph is a broader action: in the local preview it removes image references from your posts, gallery and drafts while preserving post text and conversations. Files selected from your device remain temporary browser references in this preview.",
-          "The cleanup worker deletes a private photo original only when no valid reference remains. Failed deletions retain a retry intent; a deletion failure does not restore access. A minimal daily upload quota marker can remain until the end of that upload day. Actual hosted storage deletion, backup handling and operational completion still require verification.",
+          "The cleanup worker deletes a private photo original only when no valid reference remains. Failed deletions retain a retry intent; a deletion failure does not restore access. A minimal upload quota marker remains for 48 hours before a later cleanup sweep removes it, so deletion and time-zone changes do not refill the allowance. Actual hosted storage deletion, backup handling and operational completion still require verification.",
         ],
       },
       {

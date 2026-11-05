@@ -131,3 +131,35 @@ describe("security boundaries", () => {
     expect(() => getRedisEnv()).not.toThrow(/secret-value/);
   });
 });
+
+it.each(["localhost", "127.0.0.1", "[::1]"])(
+  "keeps local production assets on HTTP for the configured loopback host %s",
+  (host) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+    const csp = createContentSecurityPolicy(
+      "nonce123",
+      false,
+      new URL(`http://${host}:3000/welcome`),
+    );
+    expect(csp).not.toContain("upgrade-insecure-requests");
+    expect(csp).toContain("'nonce-nonce123' 'strict-dynamic'");
+    expect(csp).not.toContain("'unsafe-eval'");
+    expect(csp).toContain("object-src 'none'");
+  },
+);
+it.each([
+  ["https://margin.example", "http://localhost:3000"],
+  ["http://localhost:3000", "http://margin.example"],
+  ["http://localhost:3000", "http://localhost.attacker.example"],
+  ["http://localhost:3000", "http://10.0.0.77:3000"],
+  ["http://localhost:3000", "https://localhost:3000"],
+  ["", "http://localhost:3000"],
+])(
+  "retains production HTTPS upgrades for configured %s and requested %s",
+  (origin, url) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", origin);
+    expect(
+      createContentSecurityPolicy("nonce123", false, new URL(url)),
+    ).toContain("upgrade-insecure-requests");
+  },
+);

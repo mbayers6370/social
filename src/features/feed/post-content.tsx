@@ -154,7 +154,12 @@ export function PostFooter({
               timeZone: FEED_TIME_ZONE,
             }).format(new Date(post.createdAt))}
           </time>
-          <span aria-hidden="true">·</span>
+          <span aria-hidden="true" className="lg:hidden">
+            {"//"}
+          </span>
+          <span aria-hidden="true" className="hidden lg:inline">
+            ·
+          </span>
           <time className="margin-post-expiry" dateTime={post.expiresAt}>
             Expires{" "}
             {new Intl.DateTimeFormat("en-GB", {

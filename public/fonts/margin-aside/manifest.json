@@ -1,0 +1,69 @@
+{
+  "version": "0.110",
+  "unitsPerEm": 1000,
+  "faces": [
+    {
+      "family": "Margin Aside",
+      "style": "Light",
+      "weight": 300,
+      "fixedPitch": false,
+      "glyphCount": 304,
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−",
+      "inkAreaRetained": 0.91267,
+      "files": [
+        {
+          "path": "margin-aside-light.ttf",
+          "bytes": 581144,
+          "sha256": "effdb7f310bb2e899932080edbae305df29eb4fc46195d55c066731f6529f5e6"
+        },
+        {
+          "path": "margin-aside-light.woff2",
+          "bytes": 177200,
+          "sha256": "a910d2509063779acdd695ad5381dc3aff3ea971b3050f4da3813a445c62d122"
+        }
+      ]
+    },
+    {
+      "family": "Margin Aside",
+      "style": "Medium",
+      "weight": 500,
+      "fixedPitch": false,
+      "glyphCount": 304,
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−",
+      "inkAreaRetained": 0.90876,
+      "files": [
+        {
+          "path": "margin-aside-medium.ttf",
+          "bytes": 767808,
+          "sha256": "036486349d35bc933c1a001c59c8c3c6a67a71cdce91a078bf02793e1c7ff645"
+        },
+        {
+          "path": "margin-aside-medium.woff2",
+          "bytes": 230952,
+          "sha256": "429c6f6829ff36ea2344be8351356f280e8d043e6fea7415264ccbca7ccd31c1"
+        }
+      ]
+    },
+    {
+      "family": "Margin Aside",
+      "style": "Bold",
+      "weight": 700,
+      "fixedPitch": false,
+      "glyphCount": 304,
+      "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¥¨©«®¯°´·¸»¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĨĩĪīĬĭĮįİıĴĵĶķĹĺĻļĽľŁłŃńŅņŇňŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ‑–—‘’‚“”„•…€−",
+      "inkAreaRetained": 0.9238,
+      "files": [
+        {
+          "path": "margin-aside-bold.ttf",
+          "bytes": 810628,
+          "sha256": "1c9c1b5d926fe7f965e7a9ff85d8ffb35ac62f447c2936ceb5efcdde0b599458"
+        },
+        {
+          "path": "margin-aside-bold.woff2",
+          "bytes": 240068,
+          "sha256": "d5dd829c27cda03ffc94840fa7658ed33410fdca4451f3544e23c7ab40b23e02"
+        }
+      ]
+    }
+  ]
+}

@@ -17,6 +17,7 @@ function isPublic(pathname: string) {
     pathname === "/icon" ||
     pathname === "/apple-icon" ||
     // Public brand artwork only; other asset paths retain their auth boundary.
+    pathname === "/brand/margin-email.png" ||
     pathname === "/brands/apple-music.svg" ||
     pathname === "/brands/spotify.svg" ||
     pathname === "/brands/itunes-store.svg" ||
@@ -149,6 +150,7 @@ export default async function proxy(
   const csp = createContentSecurityPolicy(
     nonce,
     process.env.NODE_ENV !== "production",
+    request.nextUrl,
   );
   const headers = new Headers(request.headers);
   headers.set("x-nonce", nonce);

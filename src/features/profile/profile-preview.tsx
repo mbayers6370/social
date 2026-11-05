@@ -56,29 +56,34 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
     ? "/?view=gallery"
     : `/?view=gallery&person=${encodeURIComponent(current.person.id)}`;
   return (
-    <ProfileFrame personId={current.person.id}>
-      <ProfileIdentity
-        key={`identity-${current.person.id}`}
-        profile={current}
-        readOnly={!own}
-        onUpdate={preview.updateProfile}
-        editRequested={own && preview.profileEditRequested}
-        onEditRequestHandled={preview.finishProfileEditRequest}
-      />
-      <div className="margin-profile-details">
-        <OnRepeat
-          key={`on-repeat-${current.person.id}`}
-          own={own}
-          tracks={visible ? (current.onRepeat ?? []) : []}
-          restricted={!visible}
+    <ProfileFrame
+      identity={
+        <ProfileIdentity
+          key={`identity-${current.person.id}`}
+          profile={current}
+          readOnly={!own}
+          onUpdate={preview.updateProfile}
+          editRequested={own && preview.profileEditRequested}
+          onEditRequestHandled={preview.finishProfileEditRequest}
         />
-        <ProfileGalleryPreview
-          photos={gallery}
-          href={galleryHref}
-          visible={visible}
-          own={own}
-        />
-      </div>
+      }
+      details={
+        <div className="margin-profile-details">
+          <OnRepeat
+            key={`on-repeat-${current.person.id}`}
+            own={own}
+            tracks={visible ? (current.onRepeat ?? []) : []}
+            restricted={!visible}
+          />
+          <ProfileGalleryPreview
+            photos={gallery}
+            href={galleryHref}
+            visible={visible}
+            own={own}
+          />
+        </div>
+      }
+    >
       <section
         className="margin-profile-posts"
         aria-labelledby="recent-posts-title"

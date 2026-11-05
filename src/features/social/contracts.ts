@@ -10,6 +10,7 @@ export type PrivateProfileData = {
   viewer?: import("@/features/feed/schema").Person;
   viewerId: string;
   profile: {
+    topFriends?: import("@/features/feed/schema").Person[];
     username?: string;
     bio?: string;
     portraitPhotoId?: string | null;

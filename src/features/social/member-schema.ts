@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { profileInputSchema } from "@/features/profile/schema";
 import { usernameSchema } from "@/features/profile/username";
+import { validTimeZone } from "@/lib/posting-day";
 export const memberId = z
   .string()
   .min(1)
@@ -13,6 +14,12 @@ export const memberPortraitInput = z.strictObject({
 });
 export const memberPreferencesInput = z
   .strictObject({
+    postingTimeZone: z
+      .string()
+      .min(1)
+      .max(100)
+      .refine(validTimeZone, "Choose a valid IANA time zone.")
+      .optional(),
     readingSize: z.enum(["standard", "larger", "extra-large"]).optional(),
     motion: z.enum(["system", "reduced"]).optional(),
     notifyComments: z.boolean().optional(),
@@ -20,6 +27,7 @@ export const memberPreferencesInput = z
     notifyFriends: z.boolean().optional(),
     notifyMessages: z.boolean().optional(),
     messagingEnabled: z.boolean().optional(),
+    showTopFriends: z.boolean().optional(),
   })
   .refine(
     (value) => Object.keys(value).length > 0,
@@ -62,3 +70,14 @@ export const memberPostDraftInput = z
     (value) => new Set(value.photoIds).size === value.photoIds.length,
     "Choose each photograph once.",
   );
+
+export const memberTopFriendsInput = z.strictObject({
+  friendIds: z
+    .array(memberId)
+    .max(4)
+    .refine(
+      (ids) => new Set(ids).size === ids.length,
+      "Choose each friend only once.",
+    ),
+  requestId: z.string().uuid(),
+});

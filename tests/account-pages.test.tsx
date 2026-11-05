@@ -38,6 +38,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 import OnboardingPage from "@/app/onboarding/page";
+import SignInPage from "@/app/sign-in/[[...sign-in]]/page";
 import SignUpPage from "@/app/sign-up/[[...sign-up]]/page";
 beforeEach(() => {
   state.auth.mockResolvedValue({ userId: null });
@@ -215,4 +216,13 @@ it("keeps founder recovery behind the registration gate even with a reserved inv
     "Registration is currently closed.",
   );
   expect(state.founderInvitation).not.toHaveBeenCalled();
+});
+
+it("sends an existing signed-in member directly from sign-in to the feed", async () => {
+  state.auth.mockResolvedValue({ userId: "user-one" });
+  await expect(SignInPage()).rejects.toThrow("redirect:/app/feed");
+});
+it("keeps the sign-in form available for signed-out visitors", async () => {
+  render(await SignInPage());
+  expect(screen.getByRole("status")).toBeVisible();
 });

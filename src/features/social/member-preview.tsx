@@ -65,6 +65,7 @@ export const sampleProfile: PrivateProfileData = {
     bio: sampleIdentity.bio,
     relationship: "self",
     galleryVersion: 0,
+    topFriends: [],
     onRepeat: [],
   },
   posts: [

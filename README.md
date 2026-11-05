@@ -37,6 +37,51 @@ The development server runs at [localhost:3000](http://localhost:3000). `/welcom
 
 Preview state persists during navigation within a tab and resets on refresh. Preview uploads remain in browser memory. Production `/` serves the public website, and development preview routes are unavailable in production.
 
+### Local production review
+
+Use one production-optimized review build for desktop and phone UI/UX checks:
+
+```sh
+npm run review
+```
+
+For Clerk sign-in and account review on this Mac at `http://localhost:3000`, use
+`npm run review -- --localhost`. This builds the same production-optimized source
+with the existing local Clerk account and database, and binds only to localhost.
+Use Node 22 (`nvm use`) and stop any existing server on port 3000 first.
+
+This command replaces its isolated `.local/local-review/next` output, builds the
+current root source, and prints one private-network HTTPS address to use on both
+devices. It never copies or patches the source tree, and it never replaces the
+standard `.next` output used by `npm start`. The review remains fail-closed
+unless it has matching Clerk test keys, the known loopback `margin_local`
+runtime database, and local private-photo storage. It is not a
+hosted-production security check.
+
+`npm run dev` hot-reloads changes, including CSS variables, while using the
+configured real account backend. Production commands serve compiled snapshots:
+`npm start` requires an unchanged `npm run build` output; `npm run review` builds
+the current source before starting. Both now check build/source identity, and a
+running local review shows an explicit out-of-date response on document reload
+after source/configuration changes. Rebuild it rather than expecting production
+hot reload. All supported server commands reject an occupied port across IPv4
+and IPv6 and share a process lease instead of silently launching another site.
+For signed-in UI changes, rebuild/restart and verify the actual `/app` route;
+fictional previews do not establish that the running account app was updated.
+Stop `npm run review` with Ctrl-C. To remove obsolete build,
+test, trace, and review artifacts while preserving the local database, private
+photographs, credentials, and Node toolchain, run:
+
+```sh
+npm run clean:local -- --apply
+```
+
+Repository copies and Git worktrees are forbidden under `.local`. Verification
+uses the operating system temporary directory for its disposable source snapshot,
+always removes that snapshot, and retains at most three small reports. Check the
+guardrail at any time with `npm run local:check`; the command fails on unexpected
+entries, nested Git metadata, excess reports, or more than 2 GiB of local data.
+
 ### Authenticated development
 
 The member application requires:
@@ -115,7 +160,7 @@ npm run check -- tests/profile-posts-ui.test.tsx
 npm run verify
 ```
 
-`check` and `verify` run in isolated, credential-free copies under `.local/`, leaving the working development server undisturbed. Fast checks select the unit/component projects. Full verification retains real disposable PostgreSQL, security and integration checks, a production build, essential desktop/mobile browser journeys in development and production, and dependency audits. `npm run verify:extended` adds presentation exploration and Firefox/WebKit journeys. See [the testing guide](tests/README.md) and [audit evidence](tests/AUDIT.md) for the test levels, inventory and measurements. The pre-push hook still requires a clean working tree and full verification of the commit being pushed; GitHub Actions runs the same full workflow.
+`check` and `verify` run credential-free source snapshots in the operating system temporary directory, remove them on exit, and retain only bounded reports under `.local/verification/`, leaving the working development server undisturbed. Fast checks select the unit/component projects. Full verification retains real disposable PostgreSQL, security and integration checks, a production build, essential desktop/mobile browser journeys in development and production, and dependency audits. `npm run verify:extended` adds presentation exploration and Firefox/WebKit journeys. See [the testing guide](tests/README.md) and [audit evidence](tests/AUDIT.md) for the test levels, inventory and measurements. The pre-push hook still requires a clean working tree and full verification of the commit being pushed; GitHub Actions runs the same full workflow.
 
 Install the browser dependency and local Git hook with:
 
