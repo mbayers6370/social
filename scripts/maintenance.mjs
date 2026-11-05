@@ -18,6 +18,8 @@ const { maintenanceWorker } = await import("../src/server/jobs/worker.ts");
 const { privatePhotoStore } = await import("../src/server/social/photo.ts");
 const { invitationMaintenanceProvider } =
   await import("../src/server/account/invitation-maintenance.ts");
+const { deleteClerkIdentity } =
+  await import("../src/server/account/erasure-provider.ts");
 const { getDatabaseEnv } = await import("../src/server/env.ts");
 const db = new PrismaClient({
   adapter: new PrismaPg({
@@ -38,6 +40,7 @@ async function run() {
     db,
     privatePhotoStore,
     invitationMaintenanceProvider(),
+    deleteClerkIdentity,
   );
   for (const job of result) {
     const log = job.status === "failed" ? console.error : console.log;

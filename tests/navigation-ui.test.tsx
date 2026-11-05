@@ -268,9 +268,10 @@ it("uses the mobile profile photograph, falling back to a circled icon on load f
   });
   expect(image).toHaveStyle({
     objectPosition: "center",
-    borderRadius: "50%",
-    clipPath: "circle(50%)",
+    objectFit: "cover",
   });
+  expect(image.style.borderRadius).toBe("");
+  expect(image.style.clipPath).toBe("");
   fireEvent.error(image);
   expect(profile.querySelector(".margin-mobile-profile-photo")).toBe(frame);
   expect(frame).toHaveStyle({ borderRadius: "50%", clipPath: "circle(50%)" });

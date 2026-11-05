@@ -1,4 +1,5 @@
 "use client";
+import { useInteractionRefresh } from "@/hooks/use-interaction-refresh";
 import { createRequestId } from "@/lib/local-id";
 import {
   createContext,
@@ -69,21 +70,28 @@ export function MemberProvider({
       setMessageDrafts((current) => ({ ...current, [id]: body })),
     [],
   );
-  const reload = useCallback(async () => {
-    setIdentity(
-      await requestMember<MemberIdentity>(client, "/api/member/context"),
-    );
-  }, [client]);
+  const loadIdentity = useCallback(
+    async (signal: AbortSignal) => {
+      const next = await requestMember<MemberIdentity>(
+        client,
+        "/api/member/context",
+        { signal },
+      );
+      if (!signal.aborted) setIdentity(next);
+    },
+    [client],
+  );
+  const { refresh: reload } = useInteractionRefresh(loadIdentity, {
+    initial: false,
+  });
   useEffect(() => {
     const refresh = () => {
       if (document.visibilityState !== "hidden")
         void reload().catch(() => undefined);
     };
     window.addEventListener("margin:member-updated", refresh);
-    window.addEventListener("focus", refresh);
     return () => {
       window.removeEventListener("margin:member-updated", refresh);
-      window.removeEventListener("focus", refresh);
     };
   }, [reload]);
   useEffect(() => {

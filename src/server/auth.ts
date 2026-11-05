@@ -2,6 +2,8 @@ import "server-only";
 import { cache } from "react";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { geofenceRequired, regionAccess } from "./security/geofence";
 import { accountConfiguration } from "./account/config";
 import { enforceRateLimit, RateLimitError } from "./security/rate-limit";
 
@@ -27,6 +29,12 @@ export class AuthenticationUnavailableError extends Error {
 
 /** React cache is request/render-scoped, never a cross-request session cache. */
 async function checkSession() {
+  // Also enforce at the DAL boundary: a Server Action on a public page is not an exemption.
+  if (
+    geofenceRequired() &&
+    regionAccess(new Headers(await headers())) !== "allowed"
+  )
+    throw new AuthenticationUnavailableError();
   if (!accountConfiguration().configured)
     throw new AuthenticationUnavailableError();
   try {

@@ -6,22 +6,21 @@ import {
   type NextRequest,
   type NextFetchEvent,
 } from "next/server";
-import { isPublicPage } from "@/lib/public-routes";
+import { isPublicPage, isPublicAsset } from "@/lib/public-routes";
 import { createContentSecurityPolicy } from "@/server/security/csp";
+import {
+  isRegionRestrictedPath,
+  regionAccess,
+  regionUnavailable,
+} from "@/server/security/geofence";
 
 function isPublic(pathname: string) {
   return (
     pathname === "/" ||
     isPublicPage(pathname) ||
     pathname === "/api/health" ||
-    pathname === "/icon" ||
-    pathname === "/apple-icon" ||
-    // Public brand artwork only; other asset paths retain their auth boundary.
-    pathname === "/brand/margin-email.png" ||
-    pathname === "/brands/apple-music.svg" ||
-    pathname === "/brands/spotify.svg" ||
-    pathname === "/brands/itunes-store.svg" ||
-    pathname === "/brands/photo-open-cursor.svg" ||
+    pathname === "/api/webhooks/clerk" ||
+    isPublicAsset(pathname) ||
     pathname === "/sign-in" ||
     pathname.startsWith("/sign-in/") ||
     pathname === "/sign-up" ||
@@ -29,8 +28,6 @@ function isPublic(pathname: string) {
     pathname === "/onboarding" ||
     /^\/invite\/(?:claim\/)?[A-Za-z0-9_-]{43}$/.test(pathname) ||
     /^\/api\/invite\/[A-Za-z0-9_-]{43}$/.test(pathname) ||
-    pathname === "/fonts/NotoSans-Regular.ttf" ||
-    pathname === "/fonts/OFL.txt" ||
     (process.env.NODE_ENV === "development" &&
       [
         "/api/development/music",
@@ -110,6 +107,10 @@ export default async function proxy(
     process.env.NODE_ENV !== "development"
   )
     return new NextResponse(null, { status: 404 });
+  if (isRegionRestrictedPath(request.nextUrl.pathname)) {
+    const access = regionAccess(request.headers);
+    if (access !== "allowed") return regionUnavailable(request, access);
+  }
   if (accountConfiguration().configured) {
     try {
       const response = await clerkProxy(request, event);

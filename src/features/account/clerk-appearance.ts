@@ -1,7 +1,9 @@
 import type { Appearance } from "@clerk/ui";
+import { accountProfileAppearance } from "./account-profile-appearance";
 
 /** Shared Margin form tokens, including Clerk's explicit interactive variants. */
 export const clerkAppearance = {
+  userProfile: accountProfileAppearance,
   variables: {
     fontFamily: "var(--font-body)",
     fontFamilyButtons: "var(--font-body)",

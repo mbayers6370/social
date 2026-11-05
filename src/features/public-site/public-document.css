@@ -12,7 +12,7 @@
 }
 .margin-public-document h1 {
   max-width: 17ch;
-  margin-block: 16px 24px;
+  margin-block: 0 24px;
   color: hsl(var(--blackened-olive));
   font: calc(
       clamp(2.75rem, 5.6vw, 5.75rem) + var(--reading-size-adjustment)
@@ -107,21 +107,6 @@
 .margin-public-contents a:hover {
   color: hsl(var(--blackened-olive));
   text-decoration-color: currentColor;
-}
-.margin-public-contents-group {
-  width: 100%;
-  margin-top: 16px;
-  color: hsl(var(--muted-foreground));
-  font: var(--text-caption)/1.5 var(--font-body);
-}
-.margin-public-section-group {
-  margin-bottom: 12px;
-  color: hsl(var(--muted-foreground));
-  font: var(--text-caption)/1.5 var(--font-body);
-}
-.margin-public-sections section + section[data-group-start] {
-  padding-top: 56px;
-  --divider-top-color: transparent;
 }
 .margin-public-sections {
   display: grid;

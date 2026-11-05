@@ -142,7 +142,7 @@ it("creates only on request and preserves founder fields and request ID across a
   });
 });
 
-it("refreshes an open modal quietly and stops polling after closing", async () => {
+it("refreshes an open modal on return without idle polling", async () => {
   vi.useFakeTimers();
   vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
   let accepted = false;
@@ -160,7 +160,9 @@ it("refreshes an open modal quietly and stops polling after closing", async () =
   expect(screen.getByLabelText("Your invitation link")).toHaveValue(link.url);
   accepted = true;
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(600_000);
+    expect(screen.getByText("2 of 3 invitations left")).toBeVisible();
+    window.dispatchEvent(new Event("focus"));
   });
   expect(screen.getByText("3 of 3 invitations left")).toBeVisible();
   expect(screen.getByRole("button", { name: "Copy link" })).toBeDisabled();

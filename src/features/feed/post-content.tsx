@@ -44,7 +44,6 @@ export function Avatar({
           initials={person.initials}
           sizes={sizes ?? (small ? "29px" : "76px")}
           live={live}
-          shape={shape}
         />
       ) : (
         person.initials

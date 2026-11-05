@@ -168,6 +168,7 @@ try {
                         "tests/notification-links-db.integration.test.ts",
                         "tests/communication-db.integration.test.ts",
                         "tests/retention-db.integration.test.ts",
+                        "tests/account-erasure-db.integration.test.ts",
                         "tests/review-remediation-db.integration.test.ts",
                       ]),
     ],

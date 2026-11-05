@@ -6,12 +6,13 @@ export const avatarShapeStyles = {
   rounded: { borderRadius: "12px", clipPath: "inset(0 round 12px)" },
 } satisfies Record<AvatarShape, CSSProperties>;
 
+// The frame owns clipping, including the inner curve of its 1px border. Rounding
+// the inset image separately leaves a gap between the photo and border corners.
 // Critical crop styles belong in the initial markup, not delayed stylesheets or load handlers.
 export const avatarImageStyle: CSSProperties = {
   display: "block",
   objectFit: "cover",
   objectPosition: "center",
-  ...avatarShapeStyles.circle,
 };
 
 export function AvatarFrame({

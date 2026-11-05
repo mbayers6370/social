@@ -1,5 +1,9 @@
 # Account flows and limited launch
 
+Current pre-launch status (November 5, 2026): Margin is an individual’s personal project, not a separate incorporated entity. Legal documents remain DRAFT; operator legal name/public mailing or agent contact, final legal review, acceptance/version records and support response workflows remain outstanding before public beta. The owner confirmed `support@margin.social` is live on November 5; this does not establish round-the-clock monitoring or a response SLA.
+
+Production product access now requires the [trusted Cloudflare U.S. edge](../ops/cloudflare/README.md). Permanent account erasure adds strict Clerk reverification, a signed deletion webhook, a durable queue and an independent private restore journal; see [account erasure](account-erasure.md) for deployment and restore controls. The owner approved 30-day maximum backups and 90-day completed receipts, with hosted settings still requiring verification. No live provider or application-database change is implied by these source changes.
+
 The authoritative [onboarding and activation rules](#invitation-onboarding-and-activation) distinguish automatic invited-member activation from operator-controlled founder setup and legacy recovery. Earlier verification records below describe behavior at those milestones; they do not override the current rules. Production registration remains closed.
 
 ## Implemented in the development website

@@ -11,11 +11,17 @@ import {
   POSTING_EXCLUSIONS,
 } from "@/lib/platform-rules";
 afterEach(() => vi.unstubAllEnvs());
-it("keeps policies visibly draft with the working support contact and customer-facing status", () => {
+it("keeps policies draft with the live support contact and no category eyebrows", () => {
   for (const document of Object.values(publicDocuments)) {
     const html = renderToStaticMarkup(<PublicDocument document={document} />);
     const page = new DOMParser().parseFromString(html, "text/html");
     expect(page.querySelectorAll("h1")).toHaveLength(1);
+    expect(page.querySelector(".margin-public-kicker")).toBeNull();
+    expect(page.body.textContent).not.toMatch(
+      /mailbox.*pending|intended support contact/i,
+    );
+    if (document.category === "Legal")
+      expect(document).toHaveProperty("draft", true);
     if ("draft" in document && document.draft) {
       const note = page.querySelector("aside")!;
       expect(note.textContent).toContain("Draft · No effective date");
@@ -27,6 +33,7 @@ it("keeps policies visibly draft with the working support contact and customer-f
         /placeholder|unmonitored|not a monitored/,
       );
       expect(note.textContent).toContain("not an active agreement");
+      expect(note.textContent).toContain("operator details remain outstanding");
       expect(note.querySelector("details")).toBeNull();
     }
     for (const link of page.querySelectorAll<HTMLAnchorElement>("a[href^='#']"))
@@ -52,12 +59,8 @@ it("keeps policies visibly draft with the working support contact and customer-f
     }
   }
 });
-it("shares the exact posting copy between practical pages", () => {
-  for (const document of [
-    publicDocuments["how-it-works"],
-    publicDocuments.help,
-    publicDocuments.terms,
-  ]) {
+it("keeps the full posting rules in one place and links there from help and terms", () => {
+  for (const document of [publicDocuments["how-it-works"]]) {
     const html = renderToStaticMarkup(<PublicDocument document={document} />);
     const text = new DOMParser().parseFromString(html, "text/html").body
       .textContent!;
@@ -69,6 +72,19 @@ it("shares the exact posting copy between practical pages", () => {
       expect(text).toContain(rule);
     expect(text).toContain("account’s saved time zone");
     expect(text).not.toContain("America/Los_Angeles");
+  }
+  for (const document of [publicDocuments.help, publicDocuments.terms]) {
+    expect(
+      document.sections.flatMap((section) =>
+        "links" in section ? (section.links ?? []) : [],
+      ),
+    ).toContainEqual({
+      label:
+        document === publicDocuments.help
+          ? "Full posting rules"
+          : "Posting rules",
+      href: "/how-it-works#posting",
+    });
   }
   expect(JSON.stringify(publicDocuments["how-it-works"])).toContain("18");
   expect(JSON.stringify(publicDocuments)).not.toMatch(

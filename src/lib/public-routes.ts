@@ -19,3 +19,21 @@ export const PUBLIC_PAGE_PATHS = [
 ] as const;
 export const isPublicPage = (pathname: string) =>
   PUBLIC_PAGE_PATHS.some((path) => path === pathname);
+
+/** Shared exact allowlist for authentication and country access; no asset suffix exemptions. */
+const PUBLIC_ASSET_PATHS = [
+  "/icon",
+  "/apple-icon",
+  "/favicon.ico",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/brand/margin-email.png",
+  "/brands/apple-music.svg",
+  "/brands/spotify.svg",
+  "/brands/itunes-store.svg",
+  "/brands/photo-open-cursor.svg",
+  "/fonts/NotoSans-Regular.ttf",
+  "/fonts/OFL.txt",
+] as const;
+export const isPublicAsset = (pathname: string) =>
+  PUBLIC_ASSET_PATHS.some((path) => path === pathname);

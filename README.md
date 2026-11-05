@@ -6,7 +6,7 @@ You can share up to three regular posts a day, or one link-containing post as yo
 
 Your personal posts and Gallery are for accepted friends. Your profile introduction is discoverable by signed-in members, and Spaces have their own member audiences. Messages are stored on the server and are **not end-to-end encrypted**. Reported content can be available for restricted founder review. Photo validation and metadata removal are technical privacy processing, **not automated content moderation**. Expiration and deactivation do not promise immediate erasure of backups, provider records, or copies another person saved.
 
-You can find practical instructions in [Help](https://margin.social/help), understand the boundaries in [Privacy](https://margin.social/privacy) and [Retention](https://margin.social/retention), and contact [support@margin.social](mailto:support@margin.social). The legal pages remain drafts pending legal and operational review. Our launch is planned for adults 18 and older in the United States; geographic enforcement is still a launch requirement, not a verified capability of this source.
+You can find practical instructions in [Help](https://margin.social/help), understand the boundaries in [Privacy](https://margin.social/privacy) and [Retention](https://margin.social/retention), and contact [support@margin.social](mailto:support@margin.social) for support. The legal pages remain drafts pending legal and operational review. Our launch is planned for adults 18 and older in the United States; production product routes now enforce a trusted U.S. connection-country signal through Cloudflare; deploying and verifying that edge is a public-beta requirement. Public help and policy pages remain accessible globally. IP location does not prove residency or prevent every VPN.
 
 If you’re working on Margin, this repository is your single source for the public website, authenticated member application, and backend. The development-only demonstrations use fictional data and never authorize access to real member resources. The setup and operations guidance below is for you as a contributor or operator, not a separate customer website.
 
@@ -126,7 +126,7 @@ Invitation and founder commands are guarded operator tools. Their usage is docum
 | Friends  | `/app/friends`  | Mutual requests, member lookup, invitations, and relationship controls                                                   |
 | Gallery  | `/app/gallery`  | Private photograph upload, selection, ordering, and deletion                                                             |
 | Spaces   | `/app/spaces`   | Invitation-only Spaces, optional plans, and accepted-friend invitations; public Event Spaces are paused                  |
-| Messages | `/app/messages` | Participant-authorized conversations, personal Notebook, pagination, and polling                                         |
+| Messages | `/app/messages` | Participant-authorized conversations, personal Notebook, pagination, and interaction refresh                             |
 | Settings | `/app/settings` | Reading, motion, notifications, safety records, account controls, and data downloads                                     |
 
 You can copy your profile link from the profile’s More options menu. Addresses such as `/people/matt` open your profile after sign-in; they do not grant access to friends-only posts or photographs. Changing your username changes this address. Ordinary sign-ins still open Feed.
@@ -141,7 +141,7 @@ Active members can have three personal invitations open at a time. Completed acc
 
 ### Messaging and notifications
 
-Messaging uses server persistence and polling. Members can disable messaging in Settings, which removes its navigation and denies reads and sends for both participants, including existing conversations. Re-enabling restores access to retained conversations and Notebook notes. Account exports remain available while messaging is disabled.
+Messaging uses server persistence and refreshes when opened or returned to. Member conversations also offer manual Refresh; incoming messages do not appear automatically while idle. Session-security checks remain active in the background. Members can disable messaging in Settings, which removes its navigation and denies reads and sends for both participants, including existing conversations. Re-enabling restores access to retained conversations and Notebook notes. Account exports remain available while messaging is disabled.
 
 In-app notifications cover friendship activity, comments, replies, likes, messages, Space invitations, and new posts in invitation-only Spaces. Like notifications are off by default for new accounts and can be enabled in Settings. Space post notifications reach eligible active, unblocked members regardless of friendship; Event Space posts do not generate them. Push and email notification delivery are separate from the current implementation.
 
@@ -157,7 +157,7 @@ Worker installation, health alerts, and hosted storage and backup verification a
 
 You can report profiles, posts, comments, and messages through their options and review your submitted reports in Settings. The founder-only moderation workflow records dispositions and supports removal of available reported posts, messages, and photographs, or account deactivation. It does not provide an unrestricted private-inbox browser. You can request another review through the support inbox; response coverage, decision notices, escalation, and restricted-record retention still need operational sign-off.
 
-You can download selected available account records and photographs in Settings. Unpublished drafts are excluded from the saved-account export. Deactivation removes access and active shared content but is separate from erasing Clerk identity, all remaining records, and backups. You must complete the assisted-erasure procedure and retention schedule before presenting removal as complete account erasure.
+You can download selected available account records and photographs in Settings. Unpublished drafts are excluded from the saved-account export. Deactivation removes access and active shared content but is separate from erasing Clerk identity, all remaining records, and backups. Settings also offers a separate permanent-erasure flow with Clerk reverification, a durable deletion queue, private R2 restore receipts and retryable provider/object cleanup. Configure the signed Clerk deletion webhook and worker before enabling it in hosting. See [account erasure](docs/account-erasure.md). The approved beta plan caps backups at 30 days and completed receipts at 90 days; hosted backup/journal recovery and independent provider records still require verification.
 
 ## Verification
 
@@ -217,6 +217,7 @@ Commit test sources and deterministic fixtures. Keep reports, screenshots, trace
 | Reference                                              | Contents                                                         |
 | ------------------------------------------------------ | ---------------------------------------------------------------- |
 | [Architecture](docs/architecture.md)                   | Application boundaries, identity, persistence, and APIs          |
+| [Upstash usage](docs/upstash-usage.md)                 | Environment audit, idle measurements and refresh behavior        |
 | [Account flows](docs/account-flows.md)                 | Authentication, invitations, activation, and hosted checks       |
 | [Spaces](docs/spaces.md)                               | Optional plans, membership, permissions, and event discovery     |
 | [Private backend](docs/private-backend-slice.md)       | Backend authorization, API contracts, and media lifecycle        |
@@ -226,8 +227,8 @@ Commit test sources and deterministic fixtures. Keep reports, screenshots, trace
 
 ## Deployment status
 
-Your intended production domain is `margin.social`, and your confirmed working support inbox is `support@margin.social`. Margin is independently operated from California. Personal operator details are deliberately not published in this repository’s customer copy; you still need counsel to resolve required operator identification and an appropriate business or agent contact. A U.S.-only launch is the owner’s plan, but this source does not yet implement geographic access enforcement. Local functionality and fixture tests do not establish hosted production readiness.
+Your intended production domain is `margin.social`, and your live support inbox is `support@margin.social`. Margin is independently operated from California. Personal operator details are deliberately not published in this repository’s customer copy; you still need counsel to resolve required operator identification and an appropriate business or agent contact. The owner plans a U.S. public beta; the production geofence is implemented, with Cloudflare/Render configuration and hosted checks still required. See [edge setup](ops/cloudflare/README.md). Local functionality and fixture tests do not establish hosted production readiness.
 
-Launch requires reviewed production migrations, provider and domain configuration, real-service integration evidence, private storage permissions, maintenance worker deployment and monitoring, backup and restoration procedures, moderation operations, complete identity-provider account erasure, and final policy review. The OpenMLS experiment does not provide encryption guarantees for application messaging.
+Launch requires reviewed production migrations, provider and domain configuration, real-service integration evidence, private storage permissions, maintenance worker deployment and monitoring, backup and restoration procedures, moderation operations, verification of identity-provider account erasure and independent deletion journals, and final policy review. Margin remains an individual’s pre-launch personal project; operator identity/public address decisions, support response workflows and policy acceptance/versioning remain outstanding. No legal document is finalized or represented as legally reviewed. The OpenMLS experiment does not provide encryption guarantees for application messaging.
 
 Public registration, infrastructure provisioning, deployment, and production database changes require explicit operational authorization. Development preview access must remain private.

@@ -30,7 +30,7 @@ export function SongDialog({ track }: { track: ProfileTrack }) {
             className="margin-track-row margin-track-card"
             aria-label={`Open ${track.title} by ${track.artist}`}
           >
-            <TrackIdentity track={track} artworkSize={112} />
+            <TrackIdentity track={track} />
             <ChevronRight className="margin-track-chevron" aria-hidden="true" />
           </button>
         </DialogTrigger>
