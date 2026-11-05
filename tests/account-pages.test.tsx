@@ -26,7 +26,11 @@ vi.mock("@/server/account/invitations", () => ({
 vi.mock("@/server/account/config", () => ({
   accountConfiguration: state.config,
 }));
-vi.mock("@clerk/nextjs", () => ({ useSession: vi.fn(), useClerk: vi.fn() }));
+vi.mock("@clerk/nextjs", () => ({
+  useSession: vi.fn(),
+  useClerk: vi.fn(),
+  useReverification: (fetcher: () => Promise<Response>) => fetcher,
+}));
 vi.mock("@clerk/nextjs/server", () => ({ auth: state.auth }));
 vi.mock("@/features/account/managed-auth-form", () => ({
   ManagedAuthForm: () => <p role="status">Provider signup</p>,

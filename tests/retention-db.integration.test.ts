@@ -527,7 +527,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           .trim()
           .split("\n")
           .map((line) => JSON.parse(line));
-        expect(logs).toHaveLength(5);
+        expect(logs).toHaveLength(6);
         expect(logs.every((job) => job.status === "completed")).toBe(true);
         const status = spawnSync(process.execPath, [...args, "status"], {
           env,

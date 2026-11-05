@@ -33,6 +33,11 @@ vi.mock("@clerk/nextjs/server", () => ({
   }),
 }));
 vi.mock("next/headers", () => ({
+  headers: async () =>
+    new Headers({
+      "x-margin-edge-token": "auth-db-edge-".padEnd(43, "x"),
+      "x-margin-country": "US",
+    }),
   cookies: async () => ({
     get: (name: string) =>
       jar.has(name) ? { value: jar.get(name) } : undefined,
@@ -95,6 +100,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
       vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "pk_test_fixture");
       vi.stubEnv("CLERK_SECRET_KEY", "sk_test_fixture");
+      vi.stubEnv("MARGIN_EDGE_SECRET", "auth-db-edge-".padEnd(43, "x"));
       vi.stubEnv("MARGIN_REGISTRATION_ENABLED", "1");
       vi.stubEnv("INVITATION_LINK_SECRET", "s".repeat(43));
       vi.mocked(getDb).mockReturnValue(db);

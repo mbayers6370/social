@@ -8,6 +8,10 @@ import {
   type InvitationProvider,
 } from "@/server/account/invitation-provider";
 import { reconcilePhotoObjects } from "./photo-orphans";
+import {
+  AccountErasureService,
+  type ErasureProvider,
+} from "@/server/account/erasure";
 
 export const MAINTENANCE_INTERVAL_MS = 60_000;
 export const MAINTENANCE_JOBS = [
@@ -16,6 +20,7 @@ export const MAINTENANCE_JOBS = [
   "posts",
   "spaces",
   "photos",
+  "accounts",
 ] as const;
 type JobName = (typeof MAINTENANCE_JOBS)[number];
 type Counts = Record<string, number>;
@@ -51,6 +56,8 @@ export async function runLeasedJob(
         (counts.retired ?? 0) >= 100 ||
         (counts.usageErased ?? 0) >= 100,
     );
+    if (name === "accounts" && (counts.pending ?? 0) > 0) counts.backlog = 1;
+    if ((counts.receiptsErased ?? 0) >= 100) counts.backlog = 1;
     if (signal.aborted) throw Error("Maintenance time budget exhausted");
     const completed = await db.maintenanceJob.updateMany({
       where: { name, leaseOwner: token },
@@ -82,12 +89,25 @@ export async function runMaintenanceCycle(
   db: PrismaClient,
   store: PrivatePhotoStore,
   provider: Pick<InvitationProvider, "find" | "revoke">,
+  deleteIdentity?: ErasureProvider["deleteUser"],
 ) {
   const service = new MemberService(db, store);
   const work: Record<
     JobName,
     (signal: AbortSignal, leaseOwner: string) => Promise<Counts>
   > = {
+    accounts: (signal) =>
+      new AccountErasureService(db, store).process(
+        {
+          ...provider,
+          deleteUser:
+            deleteIdentity ??
+            (async () => {
+              throw Error("Account erasure provider is unavailable");
+            }),
+        },
+        signal,
+      ),
     invitations: async (signal) => ({
       checked: await synchronizeInvitations(db, provider, new Date(), {
         limit: 20,

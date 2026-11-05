@@ -200,7 +200,10 @@ test.describe("invitation interaction fixtures, not live provider delivery", () 
       fullPage: true,
     });
     accepted = true;
-    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("blur"));
+      window.dispatchEvent(new Event("focus"));
+    });
     await expect(dialog.getByText("1 of 3 invitations left")).toBeVisible();
     await expect(
       dialog.getByRole("button", { name: "Copy link" }),

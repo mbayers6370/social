@@ -31,14 +31,22 @@ vi.mock("@clerk/nextjs/server", () => ({
 import proxy, { config } from "@/proxy";
 import { PUBLIC_PAGE_PATHS } from "@/lib/public-routes";
 
-beforeEach(() => vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://margin.example"));
+beforeEach(() => {
+  vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://margin.example");
+  vi.stubEnv("MARGIN_EDGE_SECRET", "unit-edge-secret-".padEnd(43, "x"));
+});
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.clearAllMocks();
 });
 async function request(path: string) {
   const result = await proxy(
-    new NextRequest(`http://localhost:3000${path}`),
+    new NextRequest(`http://localhost:3000${path}`, {
+      headers: {
+        "x-margin-edge-token": "unit-edge-secret-".padEnd(43, "x"),
+        "x-margin-country": "US",
+      },
+    }),
     {} as NextFetchEvent,
   );
   expect(result).toBeInstanceOf(NextResponse);
@@ -232,7 +240,11 @@ it("fails closed with a readable unavailable page when Clerk fails during route 
   protect.mockRejectedValueOnce(Error("PRIVATE_PROVIDER_CANARY"));
   const response = await proxy(
     new NextRequest("https://margin.example/app", {
-      headers: { accept: "text/html" },
+      headers: {
+        accept: "text/html",
+        "x-margin-edge-token": "unit-edge-secret-".padEnd(43, "x"),
+        "x-margin-country": "US",
+      },
     }),
     {} as NextFetchEvent,
   );

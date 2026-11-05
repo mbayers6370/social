@@ -1,5 +1,6 @@
 import { beforeEach, afterEach, it, expect, vi } from "vitest";
 import {
+  act,
   render,
   screen,
   fireEvent,
@@ -38,6 +39,7 @@ beforeEach(() => {
   );
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -152,6 +154,9 @@ it("omits conversation options from Notebook while retaining its notes and compo
   );
   expect(screen.getByRole("heading", { name: "Notebook" })).toBeVisible();
   expect(
+    screen.queryByRole("button", { name: "Refresh conversation" }),
+  ).not.toBeInTheDocument();
+  expect(
     screen.queryByRole("button", { name: "Conversation options" }),
   ).not.toBeInTheDocument();
   expect(
@@ -207,4 +212,54 @@ it("exports through the existing endpoint and allows retry after an inline failu
   expect(clicked).toHaveBeenCalledOnce();
   expect(createObjectURL).toHaveBeenCalledOnce();
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+it("retrieves incoming messages with Refresh, preserves a draft and makes no idle reads", async () => {
+  let incoming = false;
+  let failed = false;
+  request.mockImplementation(async () =>
+    failed
+      ? Response.json({ error: "Could not refresh messages." }, { status: 503 })
+      : Response.json({
+          ...sampleConversation,
+          thread: { ...sampleConversation.thread, unread: false },
+          messages: incoming
+            ? [
+                ...sampleConversation.messages,
+                {
+                  id: "incoming-refresh",
+                  body: "An incoming update.",
+                  direction: "incoming",
+                  createdAt: "2026-11-03T12:00:00Z",
+                },
+              ]
+            : sampleConversation.messages,
+        }),
+  );
+  render(view("fictional-friend"));
+  await act(async () => {});
+  const draft = screen.getByRole("textbox", {
+    name: "Message to Alex Example",
+  });
+  fireEvent.change(draft, { target: { value: "Keep this draft" } });
+  const initialReads = request.mock.calls.length;
+  vi.useFakeTimers();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(600000);
+  });
+  expect(request).toHaveBeenCalledTimes(initialReads);
+  const refresh = screen.getByRole("button", { name: "Refresh conversation" });
+  failed = true;
+  await act(async () => {
+    fireEvent.click(refresh);
+  });
+  expect(screen.getByText("Could not refresh messages.")).toBeVisible();
+  expect(refresh).toBeEnabled();
+  incoming = true;
+  failed = false;
+  await act(async () => {
+    fireEvent.click(refresh);
+  });
+  expect(screen.getByText("An incoming update.")).toBeVisible();
+  expect(draft).toHaveValue("Keep this draft");
 });

@@ -55,7 +55,7 @@ Before activating even a closed hosted pilot:
 2. Provision approved test accounts and prove real Clerk login, cookie/origin behavior, revoked/banned sessions, recovery and activation policy. No credentials are included in source.
 3. Prove the R2 bucket has no public access, authenticated byte delivery rejects other accounts and blocks, the optimizer cannot proxy it, and deleted objects/derivatives cannot be fetched through caches.
 4. Prove Redis outage/limit behavior, configure appropriate read/upload resource limits, and exercise interrupted uploads, quota conflicts and ambiguous-create recovery.
-5. Configure and observe retention/deletion/reconciliation workers; validate backup retention and restoration do not revive denied content. Complete full provider account erasure separately.
+5. Configure and observe retention/deletion/reconciliation workers; validate backup retention and restoration do not revive denied content. Deploy and verify the implemented [account-erasure queue, Clerk deletion webhook and independent restore journal](account-erasure.md).
 6. Connect only the implemented UI paths, add end-to-end real-provider coverage, finish moderation/export/operational requirements and independently review privacy-sensitive code before public launch.
 
 ## Local setup and remaining evidence

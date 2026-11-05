@@ -12,6 +12,7 @@ import {
 } from "@/server/account/invitations";
 import { InvitationClaim } from "@/features/account/invitation-landing";
 import { getDb } from "@/server/db";
+import { AccountErasureControl } from "@/features/account/account-erasure-control";
 
 export default async function OnboardingPage() {
   const { configured: managed, registrationEnabled } = accountConfiguration();
@@ -56,6 +57,7 @@ export default async function OnboardingPage() {
         intro="This account no longer has access to Margin."
       >
         <AccountControls />
+        <AccountErasureControl />
       </AuthShell>
     );
   if (setup.account?.onboardedAt) {

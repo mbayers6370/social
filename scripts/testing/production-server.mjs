@@ -7,6 +7,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { localTestPort } from "./environment.mjs";
+import { randomBytes } from "node:crypto";
 
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 3100);
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
@@ -47,6 +48,8 @@ let backendPort;
 do {
   backendPort = await localTestPort();
 } while (backendPort === port);
+// Local trusted-edge fixture, never sent to the browser or inherited from live credentials.
+const edgeSecret = randomBytes(32).toString("base64url");
 const backend = spawn(
   process.execPath,
   [
@@ -57,7 +60,7 @@ const backend = spawn(
     "--port",
     String(backendPort),
   ],
-  { stdio: "inherit", env: process.env },
+  { stdio: "inherit", env: { ...process.env, MARGIN_EDGE_SECRET: edgeSecret } },
 );
 const server = createServer(
   { key: readFileSync(key), cert: readFileSync(cert) },
@@ -68,7 +71,12 @@ const server = createServer(
         port: backendPort,
         path: incoming.url,
         method: incoming.method,
-        headers: { ...incoming.headers, "x-forwarded-proto": "https" },
+        headers: {
+          ...incoming.headers,
+          "x-forwarded-proto": "https",
+          "x-margin-edge-token": edgeSecret,
+          "x-margin-country": "US",
+        },
       },
       (response) => {
         outgoing.writeHead(response.statusCode ?? 502, response.headers);

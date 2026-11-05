@@ -1,18 +1,12 @@
 /* On Repeat cards, catalog selection and song service dialogs. */
 .margin-profile-music {
-  --track-artwork-size: 112px;
-  --track-detail-align: center;
+  --track-artwork-size: 80px;
   --track-title-size: calc(var(--text-body) + 2px);
   --track-artist-size: calc(var(--text-control) + 2px);
   min-width: 0;
 }
 .margin-profile-music > .margin-empty-copy {
   padding-block: 16px 0;
-}
-@media (max-width: 639px) {
-  .margin-profile-music {
-    --track-artwork-size: 96px;
-  }
 }
 html[data-motion="reduced"] .margin-profile-music .margin-eq-bar {
   animation: none;
@@ -50,7 +44,7 @@ html[data-motion="reduced"] .margin-profile-music .margin-eq-bar {
 .margin-track-identity {
   display: block;
   min-width: 0;
-  text-align: var(--track-detail-align, start);
+  text-align: start;
 }
 .margin-track-card {
   width: calc(100% + 16px);
@@ -248,7 +242,7 @@ html[data-motion="reduced"] .margin-profile-music .margin-eq-bar {
   align-items: center;
   min-height: 44px;
   padding: 14px 2px;
-  justify-self: var(--track-detail-align, start);
+  justify-self: start;
 }
 .margin-apple-song-badge > img {
   display: block;
@@ -277,7 +271,7 @@ html[data-motion="reduced"] .margin-profile-music .margin-eq-bar {
   height: 14px;
   flex: none;
 }
-/* On Repeat centers artwork beside the text and badge. Search results place
+/* On Repeat vertically centers left-aligned details beside the artwork. Search results place
    the badge below the selection button so their 44px tap targets never overlap. */
 .margin-song-card,
 .margin-music-results > li {
@@ -312,7 +306,7 @@ html[data-motion="reduced"] .margin-profile-music .margin-eq-bar {
   display: contents;
 }
 .margin-song-card .margin-track-identity > :is(strong, span) {
-  padding-inline: 16px;
+  padding-inline-end: 24px;
 }
 .margin-song-card .margin-track-identity strong,
 .margin-music-results .margin-track-identity strong {

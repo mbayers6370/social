@@ -45,11 +45,6 @@
   background: hsl(var(--citron));
   color: hsl(var(--ink));
 }
-.margin-public-kicker {
-  color: hsl(var(--muted-foreground));
-  font-size: var(--text-body);
-  line-height: 1.6;
-}
 .margin-public-intro {
   max-width: 40ch;
   font: var(--text-body)/1.75 var(--font-body);

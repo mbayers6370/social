@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useInteractionRefresh } from "@/hooks/use-interaction-refresh";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Close } from "@/components/margin-icons";
@@ -57,50 +58,39 @@ export function MemberNotifications() {
     () => visibleActivity.filter((row) => !row.read).map((row) => row.id),
     [visibleActivity],
   );
-  const refresh = useCallback(
-    async (signal?: AbortSignal) => {
-      const next = await requestMember<ActivityPage>(
-        client,
-        "/api/notifications",
-        { signal },
-      );
-      if (!signal?.aborted) {
-        setData(next);
-        setError("");
-      }
-    },
-    [client],
-  );
-  useEffect(() => {
-    if (!enabled) return;
-    const controller = new AbortController();
-    let busy = false;
-    const poll = async () => {
-      if (busy || document.visibilityState === "hidden") return;
-      busy = true;
+  const loadActivity = useCallback(
+    async (signal: AbortSignal) => {
       try {
-        await refresh(controller.signal);
+        const next = await requestMember<ActivityPage>(
+          client,
+          "/api/notifications",
+          { signal },
+        );
+        if (!signal.aborted) {
+          setData(next);
+          setError("");
+        }
       } catch (error) {
-        if (!controller.signal.aborted)
+        if (!signal.aborted)
           setError(
             error instanceof Error
               ? error.message
               : "Activity could not be loaded.",
           );
-      } finally {
-        busy = false;
+        throw error;
       }
+    },
+    [client],
+  );
+  const { refresh } = useInteractionRefresh(loadActivity, { enabled });
+  useEffect(() => {
+    if (!enabled) return;
+    const changed = () => {
+      if (document.visibilityState !== "hidden")
+        void refresh().catch(() => undefined);
     };
-    void poll();
-    const timer = window.setInterval(() => void poll(), 30000);
-    window.addEventListener("margin:member-updated", poll);
-    window.addEventListener("focus", poll);
-    return () => {
-      controller.abort();
-      window.clearInterval(timer);
-      window.removeEventListener("margin:member-updated", poll);
-      window.removeEventListener("focus", poll);
-    };
+    window.addEventListener("margin:member-updated", changed);
+    return () => window.removeEventListener("margin:member-updated", changed);
   }, [enabled, refresh]);
   async function mark(id?: string) {
     await requestMember(

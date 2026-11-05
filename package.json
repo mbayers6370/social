@@ -32,6 +32,7 @@
     "hooks:install": "git config --local core.hooksPath .githooks",
     "test:social-db": "node scripts/test-social-db.mjs",
     "account:activate": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types --env-file-if-exists=.env scripts/activate-account.mjs",
+    "account:erasure": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types --env-file-if-exists=.env scripts/account-erasure.mjs",
     "test:auth-db": "node scripts/test-social-db.mjs --auth",
     "test:auth-redis:live": "RUN_LIVE_AUTH_TESTS=1 node --env-file-if-exists=.env node_modules/vitest/vitest.mjs run tests/auth-redis-live.integration.test.ts",
     "test:auth:live": "RUN_LIVE_AUTH_TESTS=1 node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types --env-file-if-exists=.env scripts/test-auth-live.mjs",

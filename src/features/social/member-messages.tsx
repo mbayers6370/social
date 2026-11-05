@@ -1,4 +1,5 @@
 "use client";
+import { useInteractionRefresh } from "@/hooks/use-interaction-refresh";
 import { createRequestId } from "@/lib/local-id";
 import Link from "next/link";
 import {
@@ -13,6 +14,7 @@ import {
   ChevronLeft,
   Message,
   NotebookAnimated,
+  Refresh,
 } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
@@ -148,19 +150,14 @@ export function MemberMessages({
         : router.replace("/app/messages", { scroll: false }),
     [router, onSelect],
   );
-  useEffect(() => {
-    if (!messagingEnabled) return;
-    const controller = new AbortController();
-    let busy = false;
-    const refresh = async () => {
-      if (busy || document.visibilityState === "hidden") return;
-      busy = true;
+  const loadInbox = useCallback(
+    async (signal: AbortSignal) => {
       try {
         const result = await requestMember<{
           threads: MemberThread[];
           nextCursor: string | null;
-        }>(client, "/api/messages", { signal: controller.signal });
-        if (!controller.signal.aborted) {
+        }>(client, "/api/messages", { signal });
+        if (!signal.aborted) {
           setLatestThreads({
             source: initialThreads,
             rows: result.threads,
@@ -171,34 +168,26 @@ export function MemberMessages({
       } catch (error) {
         if (error instanceof MemberRequestError && error.status === 403)
           void reloadIdentity?.().catch(() => undefined);
-        if (!controller.signal.aborted)
+        if (!signal.aborted)
           setInboxError(
             "The conversation list couldn’t refresh. Your open conversation is still here.",
           );
-      } finally {
-        busy = false;
       }
-    };
-    const timer = window.setInterval(() => void refresh(), 30000);
-    window.addEventListener("focus", refresh);
-    return () => {
-      controller.abort();
-      window.clearInterval(timer);
-      window.removeEventListener("focus", refresh);
-    };
-  }, [client, initialThreads, messagingEnabled, reloadIdentity]);
-  useEffect(() => {
-    if (!messagingEnabled) return;
-    const controller = new AbortController();
-    let busy = false;
-    const id = active?.id;
-    if (!id) return;
-    const refresh = async () => {
-      if (busy || document.visibilityState === "hidden") return;
-      busy = true;
+    },
+    [client, initialThreads, reloadIdentity],
+  );
+  useInteractionRefresh(loadInbox, {
+    enabled: messagingEnabled,
+    initial: false,
+  });
+  const activeId = active?.id;
+  const loadConversation = useCallback(
+    async (signal: AbortSignal) => {
+      const id = activeId;
+      if (!id) return;
       try {
-        const result = await read(id, undefined, controller.signal);
-        if (controller.signal.aborted || current.current !== id) return;
+        const result = await read(id, undefined, signal);
+        if (signal.aborted || current.current !== id) return;
         setDeniedId(null);
         setLoaded((previous) =>
           paginated.current && previous?.thread.id === id
@@ -220,39 +209,32 @@ export function MemberMessages({
         if (result.thread.unread && through) {
           await requestMember(
             client,
-            `/api/messages/${encodeURIComponent(id)}/read`,
+            "/api/messages/" + encodeURIComponent(id) + "/read",
             memberJson("PUT", { through }),
           );
           memberChanged();
         }
       } catch (error) {
-        if (
-          !controller.signal.aborted &&
-          current.current === id &&
-          error instanceof MemberRequestError &&
-          [401, 403, 404].includes(error.status)
-        ) {
-          denyConversation(id, error.status);
-        }
-        if (!controller.signal.aborted && current.current === id)
+        if (!signal.aborted && current.current === id) {
+          if (
+            error instanceof MemberRequestError &&
+            [401, 403, 404].includes(error.status)
+          )
+            denyConversation(id, error.status);
           setError(
             error instanceof Error
               ? error.message
               : "Messages could not be loaded.",
           );
-      } finally {
-        busy = false;
+        }
       }
-    };
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 10000);
-    window.addEventListener("focus", refresh);
-    return () => {
-      controller.abort();
-      window.clearInterval(timer);
-      window.removeEventListener("focus", refresh);
-    };
-  }, [active?.id, client, read, messagingEnabled, denyConversation]);
+    },
+    [activeId, read, denyConversation, client],
+  );
+  const { refresh: refreshConversation, refreshing } = useInteractionRefresh(
+    loadConversation,
+    { enabled: messagingEnabled && Boolean(activeId), scope: activeId },
+  );
   useEffect(() => {
     if (selectedId && !window.matchMedia("(min-width: 1024px)").matches)
       back.current?.focus({ preventScroll: true });
@@ -474,6 +456,24 @@ export function MemberMessages({
                 )}
               </div>
             </div>
+            {!active.notebook && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="margin-thread-refresh"
+                aria-label="Refresh conversation"
+                title={
+                  refreshing
+                    ? "Refreshing conversation…"
+                    : "Refresh conversation"
+                }
+                aria-busy={refreshing}
+                disabled={refreshing}
+                onClick={() => void refreshConversation()}
+              >
+                <Refresh aria-hidden="true" />
+              </Button>
+            )}
             {data && !active.notebook && (
               <MemberConversationMenu
                 data={data}

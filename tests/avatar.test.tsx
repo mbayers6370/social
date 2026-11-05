@@ -33,8 +33,8 @@ it.each([false, true])(
     expect(frame.style.overflow).toBe("hidden");
     expect(frame.style.borderRadius).toBe("50%");
     expect(frame.style.clipPath).toBe("circle(50%)");
-    expect(image.style.borderRadius).toBe("50%");
-    expect(image.style.clipPath).toBe("circle(50%)");
+    expect(image.style.borderRadius).toBe("");
+    expect(image.style.clipPath).toBe("");
     expect(image.style.objectFit).toBe("cover");
     expect(image.style.objectPosition).toBe("center");
     expect(image.getAttribute("data-nimg")).toBe("fill");
@@ -61,8 +61,9 @@ it("renders a rounded profile portrait before stylesheets load without changing 
   const document = new DOMParser().parseFromString(html, "text/html");
   const frame = document.querySelector<HTMLElement>(".margin-avatar")!;
   const image = frame.querySelector("img")!;
-  for (const element of [frame, image]) {
-    expect(element.style.borderRadius).toBe("12px");
-    expect(element.style.clipPath).toBe("inset(0 round 12px)");
-  }
+  expect(frame.style.borderRadius).toBe("12px");
+  expect(frame.style.clipPath).toBe("inset(0 round 12px)");
+  // The frame clips the photo to its inner border curve, without a second inset mask.
+  expect(image.style.borderRadius).toBe("");
+  expect(image.style.clipPath).toBe("");
 });

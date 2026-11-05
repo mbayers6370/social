@@ -90,6 +90,12 @@ export async function completeAccountOnboarding(
   return transaction(db, async (tx) => {
     // Serialize retries and duplicate submissions for this immutable Clerk subject.
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${identity.subject}, 0))`;
+    if (
+      await tx.accountErasure.findUnique({
+        where: { clerkId: identity.subject },
+      })
+    )
+      throw new AccountSetupError("This account is being deleted.");
     const existing = await tx.user.findUnique({
       where: { clerkId: identity.subject },
       include: { account: true },

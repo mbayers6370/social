@@ -21,6 +21,8 @@ import {
 } from "@/features/settings/account-export";
 import { requestMember } from "./member-client";
 import { SettingsHelp } from "@/features/settings/settings-help";
+import { useAccountSession } from "@/components/auth/account-session";
+import { AccountErasureControl } from "@/features/account/account-erasure-control";
 
 type SavedExport = {
   exportedAt: string;
@@ -30,6 +32,7 @@ type SavedExport = {
 } & Record<string, unknown>;
 const sections = exportSections.filter((section) => section.id !== "drafts");
 export function MemberDataControls() {
+  const session = useAccountSession();
   const client = useSpaceClient();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -251,12 +254,14 @@ export function MemberDataControls() {
           <p className="margin-field-hint">
             Deactivation immediately ends access to Margin and removes your
             shared content from view. It does not erase your Clerk identity or
-            backups. Contact support@margin.social for complete account erasure.
+            backups. Use Delete account below for permanent erasure, or contact
+            support@margin.social if you cannot sign in.
           </p>
           <Button variant="ghost" onClick={() => setRemoving(true)}>
             <Trash aria-hidden="true" />
             Deactivate account
           </Button>
+          {session?.managed && <AccountErasureControl />}
         </div>
       </details>
       <Dialog

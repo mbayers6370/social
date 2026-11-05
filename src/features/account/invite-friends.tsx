@@ -1,4 +1,5 @@
 "use client";
+import { useInteractionRefresh } from "@/hooks/use-interaction-refresh";
 import { createRequestId } from "@/lib/local-id";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Friends } from "@/components/margin-icons";
@@ -156,13 +157,18 @@ export function InvitationManager({ available }: { available: boolean }) {
     [fetchSummary],
   );
 
+  const loadOnReturn = useCallback(async () => {
+    await load();
+  }, [load]);
+  useInteractionRefresh(loadOnReturn, {
+    enabled: open && available,
+    initial: false,
+  });
   useEffect(() => {
     if (!open || !available) return;
     const refresh = () => {
       if (document.visibilityState !== "hidden") void load();
     };
-    window.addEventListener("focus", refresh);
-    const interval = window.setInterval(refresh, 15_000);
     const deadlines =
       summary?.links
         .filter(isActive)
@@ -172,8 +178,6 @@ export function InvitationManager({ available }: { available: boolean }) {
       ? window.setTimeout(refresh, Math.min(Math.max(0, delay), 2_147_483_647))
       : undefined;
     return () => {
-      window.removeEventListener("focus", refresh);
-      window.clearInterval(interval);
       window.clearTimeout(deadline);
     };
   }, [open, available, summary, load]);

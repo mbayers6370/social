@@ -236,6 +236,19 @@ model MaintenanceJob {
   objectCursor String?
 }
 
+/// Deletion queue and 90-day restore-suppression receipt. Intentionally no FK:
+/// deleting User must not discard provider retries or the restoration receipt.
+model AccountErasure {
+  userId String @id
+  clerkId String? @unique
+  requestedAt DateTime @default(now())
+  nextAttemptAt DateTime @default(now())
+  attempts Int @default(0)
+  providerDeletedAt DateTime?
+  completedAt DateTime?
+  @@index([completedAt, nextAttemptAt])
+}
+
 model MemberNotification {
   id String @id @default(cuid())
   recipientId String
@@ -298,6 +311,8 @@ model Invitation {
   @@index([linkId, email])
   @@index([revokedAt, providerRevokedAt])
   @@index([founderSubject])
+  @@index([createdBy, claimedBy, providerRevokedAt])
+  @@index([claimedBy])
 }
 
 /// Members may hold three active personal links; completed claims, expiry and revocation free slots.
@@ -334,6 +349,7 @@ model SafetyReport {
   review OperatorAction?
   @@index([reporterId, createdAt])
   @@index([status, createdAt, id])
+  @@index([targetPersonId])
 }
 
 /// Purpose-limited operator audit. No message bodies, photographs or credentials.
@@ -348,6 +364,7 @@ model OperatorAction {
   note String @db.VarChar(1000)
   createdAt DateTime @default(now())
   @@index([operatorId, createdAt])
+  @@index([targetId])
 }
 
 
@@ -389,6 +406,7 @@ model Space {
   photos SpacePhoto[]
   @@index([kind, archivedAt, id])
   @@index([expiresAt])
+  @@index([creatorId])
 }
 model SpaceMembership {
   spaceId String
@@ -434,6 +452,7 @@ model PostComment {
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
   @@unique([id, postId])
   @@index([postId, createdAt, id])
+  @@index([authorId])
 }
 
 /// Ordered profile detail; never a public friend list.

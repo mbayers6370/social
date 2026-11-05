@@ -31,7 +31,7 @@ CSP, HSTS and response headers remain intact.
 - **Components:** `tests/*.test.tsx`, project `component`. Testing Library checks
   visible behavior, keyboard controls, recovery and focus. React unmounts before
   a test restores browser stubs. Real browser geometry belongs in Playwright.
-- **PostgreSQL integration:** nine `*-db.integration.test.ts` files, project
+- **PostgreSQL integration:** `*-db.integration.test.ts` files, project
   `database`. `npm run test:social-db` creates and migrates one disposable
   loopback database, grants the restricted runtime role, runs suites serially,
   then drops it. Intentional concurrency stays inside the individual tests.
@@ -51,7 +51,7 @@ See [the audit](AUDIT.md) for the coverage matrix and consolidation record.
 
 ## Determinism and failure evidence
 
-The verification runner copies sources into a credential-free `.local/verify-*`
+The verification runner copies sources into a credential-free operating-system temporary
 workspace, leaving the open development server alone. It clears ambient live-test
 flags, provider keys and remote browser URLs, and allocates an independent local
 port. Unit/component tests reject forgotten `fetch` doubles immediately. Browser
@@ -79,3 +79,5 @@ CI permits one retry for diagnosis and rejects flaky passes. Superseded runs of
 the same workflow event are cancelled; push and pull-request checks remain
 independent because they may test different merge trees. Manual workflow dispatch
 can select the extended level. Live-provider checks are never enabled by CI flags.
+
+Geofencing checks cover trusted-edge header replacement, direct-origin/forged-country denial, unknown and non-US countries, exact public exemptions and noncacheable failures. The production browser TLS proxy supplies a fresh private local edge credential and a US signal, so tests exercise the same production gate without bypassing authentication or inheriting live credentials. Account-erasure checks cover same-origin/current-session/reverification requirements, actual Clerk/Svix signature verification, provider error handling, irreversible UI confirmation, private journal write ordering, real disposable PostgreSQL deletion/retries/Space succession and receipt restoration. Provider/storage doubles do not prove live Cloudflare, R2, Clerk deletion or hosted backup settings.
