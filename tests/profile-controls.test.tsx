@@ -26,11 +26,41 @@ function profile() {
   );
 }
 
+it("keeps the live username out of the introduction and puts copying behind profile options", async () => {
+  const user = userEvent.setup();
+  const { bootstrap } = notificationFixture();
+  const { container } = render(
+    <ProfileIdentity live profile={bootstrap.profiles[0]} />,
+  );
+  expect(
+    container.querySelector(".margin-profile-handle"),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Copy profile link" }),
+  ).not.toBeInTheDocument();
+  await user.click(
+    screen.getByRole("button", {
+      name: `More options for ${bootstrap.profiles[0].person.name}`,
+    }),
+  );
+  expect(
+    within(screen.getByRole("dialog", { name: "Profile options" })).getByRole(
+      "button",
+      { name: "Copy profile link" },
+    ),
+  ).toBeVisible();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
 it("offers editing and settings on the owner's profile without self friendship controls", async () => {
   const user = userEvent.setup();
   const { bootstrap } = notificationFixture();
   const update = vi.fn();
   render(<ProfileIdentity profile={bootstrap.profiles[0]} onUpdate={update} />);
+  await user.click(
+    screen.getByRole("button", { name: /^More options for Ines/ }),
+  );
   const edit = screen.getByRole("button", { name: "Edit profile" });
   expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
     "href",
@@ -43,13 +73,13 @@ it("offers editing and settings on the owner's profile without self friendship c
     screen.queryByRole("link", { name: "Friends" }),
   ).not.toBeInTheDocument();
   expect(
-    screen.queryByRole("button", { name: /Add friend|More options/ }),
+    screen.queryByRole("button", { name: /Add friend/ }),
   ).not.toBeInTheDocument();
   expect(
     screen.queryByRole("link", { name: /Message Ines/ }),
   ).not.toBeInTheDocument();
   await user.click(edit);
-  let form = screen.getByRole("form", { name: "Edit profile" });
+  let form = await screen.findByRole("form", { name: "Edit profile" });
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   const name = within(form).getByRole("textbox", { name: "Name" });
   expect(name).toHaveValue("Ines");
@@ -60,10 +90,15 @@ it("offers editing and settings on the owner's profile without self friendship c
   expect(update).not.toHaveBeenCalled();
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Ines");
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Edit profile" })).toHaveFocus(),
+    expect(
+      screen.getByRole("button", { name: /^More options for Ines/ }),
+    ).toHaveFocus(),
+  );
+  await user.click(
+    screen.getByRole("button", { name: /^More options for Ines/ }),
   );
   await user.click(screen.getByRole("button", { name: "Edit profile" }));
-  form = screen.getByRole("form", { name: "Edit profile" });
+  form = await screen.findByRole("form", { name: "Edit profile" });
   const restoredName = within(form).getByRole("textbox", { name: "Name" });
   expect(restoredName).toHaveValue("Ines");
   await user.clear(restoredName);
@@ -84,8 +119,11 @@ it("offers editing and settings on the owner's profile without self friendship c
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
     "Ines, locally",
   );
+  await user.click(
+    screen.getByRole("button", { name: /^More options for Ines/ }),
+  );
   await user.click(screen.getByRole("button", { name: "Edit profile" }));
-  form = screen.getByRole("form", { name: "Edit profile" });
+  form = await screen.findByRole("form", { name: "Edit profile" });
   expect(within(form).getByRole("textbox", { name: "Name" })).toHaveValue(
     "Ines, locally",
   );
@@ -94,7 +132,9 @@ it("offers editing and settings on the owner's profile without self friendship c
     screen.queryByRole("form", { name: "Edit profile" }),
   ).not.toBeInTheDocument();
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Edit profile" })).toHaveFocus(),
+    expect(
+      screen.getByRole("button", { name: /^More options for Ines/ }),
+    ).toHaveFocus(),
   );
 });
 

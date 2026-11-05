@@ -11,6 +11,7 @@ import {
 } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { authAppearance } from "./clerk-appearance";
+import { profileSignInDestination } from "@/lib/profile-links";
 
 export function AuthenticationRetry() {
   return (
@@ -52,7 +53,13 @@ class AuthenticationBoundary extends Component<
     return this.state.failed ? <AuthenticationRetry /> : this.props.children;
   }
 }
-function ReadyForm({ kind }: { kind: "sign-in" | "sign-up" }) {
+function ReadyForm({
+  kind,
+  destination,
+}: {
+  kind: "sign-in" | "sign-up";
+  destination?: string;
+}) {
   const clerk = useClerk();
   if (clerk.status !== "ready") return null;
   return kind === "sign-in" ? (
@@ -62,7 +69,7 @@ function ReadyForm({ kind }: { kind: "sign-in" | "sign-up" }) {
       routing="path"
       path="/sign-in"
       signUpUrl="/sign-up"
-      forceRedirectUrl="/app/feed"
+      forceRedirectUrl={profileSignInDestination(destination)}
       appearance={authAppearance}
     />
   ) : (
@@ -76,7 +83,13 @@ function ReadyForm({ kind }: { kind: "sign-in" | "sign-up" }) {
   );
 }
 /** Passwords, email challenges, MFA and recovery remain entirely inside Clerk. */
-export function ManagedAuthForm({ kind }: { kind: "sign-in" | "sign-up" }) {
+export function ManagedAuthForm({
+  kind,
+  destination,
+}: {
+  kind: "sign-in" | "sign-up";
+  destination?: string;
+}) {
   return (
     <AuthenticationBoundary>
       <ClerkLoading>
@@ -89,7 +102,7 @@ export function ManagedAuthForm({ kind }: { kind: "sign-in" | "sign-up" }) {
         <AuthenticationRetry />
       </ClerkDegraded>
       <ClerkLoaded>
-        <ReadyForm kind={kind} />
+        <ReadyForm kind={kind} destination={destination} />
       </ClerkLoaded>
     </AuthenticationBoundary>
   );

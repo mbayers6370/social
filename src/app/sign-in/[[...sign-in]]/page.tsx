@@ -7,13 +7,22 @@ import { buttonVariants } from "@/components/ui/button";
 import { accountConfiguration } from "@/server/account/config";
 import { ManagedAuthForm } from "@/features/account/managed-auth-form";
 import { AuthShell } from "@/features/account/auth-shell";
+import { profileSignInDestination } from "@/lib/profile-links";
 export const metadata: Metadata = {
   title: "Sign in to Margin",
   description: "Sign in to your Margin account.",
 };
-export default async function SignInPage() {
-  const { configured } = accountConfiguration();
-  if (configured && (await auth()).userId) redirect("/app/feed");
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+} = {}) {
+  const { configured, origin } = accountConfiguration();
+  const destination = profileSignInDestination(
+    (await searchParams)?.redirect_url,
+    origin,
+  );
+  if (configured && (await auth()).userId) redirect(destination);
   return (
     <AuthShell
       providerHeading={configured}
@@ -28,7 +37,7 @@ export default async function SignInPage() {
     >
       {configured ? (
         <Suspense fallback={<p role="status">Loading sign-in…</p>}>
-          <ManagedAuthForm kind="sign-in" />
+          <ManagedAuthForm kind="sign-in" destination={destination} />
         </Suspense>
       ) : (
         <div className="margin-auth-unavailable">

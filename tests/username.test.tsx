@@ -132,14 +132,14 @@ it("requires confirmation, permits cancellation, updates the profile and permane
   expect(
     within(confirmation).getByRole("button", { name: "Cancel" }),
   ).toHaveFocus();
-  expect(container.querySelector(".margin-profile-handle")).toHaveTextContent(
+  expect(container.querySelector(".margin-username-current")).toHaveTextContent(
     "@ines",
   );
   await user.click(
     within(confirmation).getByRole("button", { name: "Cancel" }),
   );
   await waitFor(() => expect(review).toHaveFocus());
-  expect(container.querySelector(".margin-profile-handle")).toHaveTextContent(
+  expect(container.querySelector(".margin-username-current")).toHaveTextContent(
     "@ines",
   );
   await user.click(review);
@@ -147,7 +147,7 @@ it("requires confirmation, permits cancellation, updates the profile and permane
   await user.click(
     within(confirmation).getByRole("button", { name: "Confirm change" }),
   );
-  expect(container.querySelector(".margin-profile-handle")).toHaveTextContent(
+  expect(container.querySelector(".margin-username-current")).toHaveTextContent(
     "@ines_science",
   );
   expect(

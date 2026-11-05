@@ -14,16 +14,21 @@
   max-width: 17ch;
   margin-block: 16px 24px;
   color: hsl(var(--blackened-olive));
-  font: clamp(2.75rem, 5.6vw, 5.75rem)/1.08 var(--font-serif);
+  font: calc(
+      clamp(2.75rem, 5.6vw, 5.75rem) + var(--reading-size-adjustment)
+    )/1.08
+    var(--font-serif);
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
 .margin-public-document[data-category="Legal"] h1 {
-  font-size: clamp(2.5rem, 4.5vw, 4.75rem);
+  font-size: calc(
+    clamp(2.5rem, 4.5vw, 4.75rem) + var(--reading-size-adjustment)
+  );
 }
 .margin-public-document-opening .margin-public-intro {
   max-width: 44ch;
-  font-size: 1.125rem;
+  font-size: var(--text-title);
   line-height: 1.7;
 }
 .margin-public-document-summary {
@@ -33,7 +38,7 @@
 }
 .margin-public-document-summary > p {
   margin-bottom: 12px;
-  font: 1.25rem/1.4 var(--font-serif);
+  font: var(--text-subtitle)/1.4 var(--font-serif);
   color: hsl(var(--blackened-olive));
 }
 .margin-public-document-summary ul {
@@ -84,7 +89,7 @@
   width: 100%;
   margin-bottom: 8px;
   color: hsl(var(--blackened-olive));
-  font: 1.25rem/1.5 var(--font-serif);
+  font: var(--text-subtitle)/1.5 var(--font-serif);
 }
 .margin-public-contents a {
   display: inline-flex;
@@ -121,13 +126,16 @@
 }
 .margin-public-sections h2 {
   margin-bottom: 20px;
-  font: clamp(1.75rem, 2.5vw, 2.5rem)/1.25 var(--font-serif);
+  font: calc(
+      clamp(1.75rem, 2.5vw, 2.5rem) + var(--reading-size-adjustment)
+    )/1.25
+    var(--font-serif);
   letter-spacing: -0.025em;
   color: hsl(var(--blackened-olive));
   text-wrap: pretty;
 }
 .margin-public-document[data-category="Legal"] .margin-public-sections h2 {
-  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-size: calc(clamp(1.5rem, 2vw, 2rem) + var(--reading-size-adjustment));
 }
 .margin-public-sections p,
 .margin-public-sections li {
@@ -185,7 +193,7 @@
   min-height: 44px;
   padding-block: 8px;
   color: hsl(var(--blackened-olive));
-  font: 1.5rem/1.4 var(--font-serif);
+  font: var(--text-heading-sm)/1.4 var(--font-serif);
   text-decoration: underline;
   text-decoration-color: hsl(var(--citron));
   text-underline-offset: 6px;

@@ -338,6 +338,23 @@ export class SocialService {
         }
       : null;
   }
+  /** Resolve a shareable address only for active members, preserving block privacy. */
+  async profileIdByUsername(subject: string, username: string) {
+    return this.transaction(async (tx) => {
+      const viewerId = await this.actor(tx, subject);
+      const target = await tx.account.findUnique({
+        where: { username },
+        select: { userId: true, status: true },
+      });
+      if (
+        !target ||
+        target.status !== "ACTIVE" ||
+        (await this.blocked(tx, viewerId, target.userId))
+      )
+        throw unavailable();
+      return target.userId;
+    });
+  }
   /** Only names and relationship state are visible before friendship; content is server filtered. */
   async profile(
     subject: string,

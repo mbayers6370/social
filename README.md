@@ -129,6 +129,8 @@ Invitation and founder commands are guarded operator tools. Their usage is docum
 | Messages | `/app/messages` | Participant-authorized conversations, personal Notebook, pagination, and polling                                         |
 | Settings | `/app/settings` | Reading, motion, notifications, safety records, account controls, and data downloads                                     |
 
+You can copy your profile link from the profile’s More options menu. Addresses such as `/people/matt` open your profile after sign-in; they do not grant access to friends-only posts or photographs. Changing your username changes this address. Ordinary sign-ins still open Feed.
+
 Your member application and test demonstrations share components, design tokens, and interactions. Member requests independently enforce verified identity, account eligibility, ownership, and current audience permissions on the server. Your optional Top 4 contains up to four accepted friends, respects visibility and blocking, and disappears from visitor layouts when hidden or empty.
 
 ### Membership and activation

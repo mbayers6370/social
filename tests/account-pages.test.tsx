@@ -226,3 +226,25 @@ it("keeps the sign-in form available for signed-out visitors", async () => {
   render(await SignInPage());
   expect(screen.getByRole("status")).toBeVisible();
 });
+it("returns an already signed-in member to a shared profile instead of the feed", async () => {
+  state.auth.mockResolvedValue({ userId: "user-one" });
+  await expect(
+    SignInPage({
+      searchParams: Promise.resolve({ redirect_url: "/people/matt" }),
+    }),
+  ).rejects.toThrow("redirect:/people/matt");
+});
+it("rejects an external sign-in return address", async () => {
+  state.auth.mockResolvedValue({ userId: "user-one" });
+  state.config.mockReturnValue({
+    configured: true,
+    origin: "https://margin.social",
+  });
+  await expect(
+    SignInPage({
+      searchParams: Promise.resolve({
+        redirect_url: "https://evil.test/people/matt",
+      }),
+    }),
+  ).rejects.toThrow("redirect:/app/feed");
+});

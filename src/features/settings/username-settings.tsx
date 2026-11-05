@@ -198,9 +198,9 @@ export function UsernameSettings({
           <DialogHeader>
             <DialogTitle>Change username?</DialogTitle>
             <DialogDescription>
-              Change @{profile.handle} to @{pending}? Your friends and profile
-              links stay the same. This is your only username change; you cannot
-              change it again.
+              Change @{profile.handle} to @{pending}? Your friends stay the
+              same, but your shareable profile link changes. This is your only
+              username change; you cannot change it again.
             </DialogDescription>
           </DialogHeader>
           <div className="margin-username-actions">

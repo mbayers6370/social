@@ -85,21 +85,26 @@ it("does not exempt private paths that resemble public asset filenames", () => {
     );
 });
 
-it("marks protected responses noncacheable and nonindexable with and without Clerk", async () => {
-  vi.stubEnv("NODE_ENV", "production");
-  for (const credentials of [false, true]) {
-    vi.stubEnv("CLERK_SECRET_KEY", credentials ? "sk_live_fixture" : "");
-    vi.stubEnv(
-      "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-      credentials ? "pk_live_fixture" : "",
-    );
-    const response = await request("/api/private.json");
-    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
-    expect(response.headers.get("X-Robots-Tag")).toBe(
-      "noindex, noarchive, nosnippet",
-    );
-  }
-});
+it.each(["/api/private.json", "/people/matt"])(
+  "marks protected responses for %s noncacheable and nonindexable with and without Clerk",
+  async (path) => {
+    vi.stubEnv("NODE_ENV", "production");
+    for (const credentials of [false, true]) {
+      vi.stubEnv("CLERK_SECRET_KEY", credentials ? "sk_live_fixture" : "");
+      vi.stubEnv(
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        credentials ? "pk_live_fixture" : "",
+      );
+      const response = await request(path);
+      if (credentials) expect(protect).toHaveBeenCalled();
+      else expect(response.status).toBe(503);
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(response.headers.get("X-Robots-Tag")).toBe(
+        "noindex, noarchive, nosnippet",
+      );
+    }
+  },
+);
 
 for (const mode of ["development", "production"] as const) {
   it(`allows only the approved brand images without auth credentials in ${mode}`, async () => {

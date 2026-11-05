@@ -40,6 +40,10 @@ test("shows the approved profile, recovers a failed edit, and uses live music se
         : { json: { saved: true } },
     );
   });
+  const more = page
+    .locator(".margin-profile-identity")
+    .getByRole("button", { name: /^More options for/ });
+  await more.click();
   const edit = page.getByRole("button", { name: "Edit profile", exact: true });
   await edit.click();
   await page.getByLabel("Name", { exact: true }).fill("Sample Saved");
@@ -53,7 +57,7 @@ test("shows the approved profile, recovers a failed edit, and uses live music se
   );
   reject = false;
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
-  await expect(edit).toBeFocused();
+  await expect(more).toBeFocused();
   expect(payloads).toEqual(
     Array(2).fill({ name: "Sample Saved", bio: "A new introduction" }),
   );

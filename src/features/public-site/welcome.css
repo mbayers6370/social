@@ -18,7 +18,10 @@
 .margin-public-hero h1 {
   margin: 0;
   color: hsl(var(--blackened-olive));
-  font: clamp(2.75rem, 7.2vw, 7.25rem)/1.04 var(--font-serif);
+  font: calc(
+      clamp(2.75rem, 7.2vw, 7.25rem) + var(--reading-size-adjustment)
+    )/1.04
+    var(--font-serif);
   letter-spacing: -0.055em;
 }
 .margin-public-hero h1 > span {
@@ -101,7 +104,7 @@
   margin-bottom: 16px;
 }
 .margin-welcome-example-label > span:first-child {
-  font: 1.5rem/1.2 var(--font-serif);
+  font: var(--text-heading-sm)/1.2 var(--font-serif);
 }
 .margin-welcome-example-label > span:last-child {
   color: hsl(var(--note-foreground));
@@ -254,7 +257,7 @@
   padding-top: 24px;
   text-align: center;
   color: hsl(var(--blackened-olive));
-  font: 1rem/1.5 var(--font-serif);
+  font: var(--text-body)/1.5 var(--font-serif);
 }
 .margin-welcome-caught-up > span:last-child {
   color: hsl(var(--note-foreground));
@@ -275,7 +278,8 @@
 .margin-welcome-section-copy h2,
 .margin-welcome-gallery-heading h2,
 .margin-welcome-joining h2 {
-  font: clamp(2.5rem, 4.6vw, 5.5rem)/1.1 var(--font-serif);
+  font: calc(clamp(2.5rem, 4.6vw, 5.5rem) + var(--reading-size-adjustment))/1.1
+    var(--font-serif);
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
@@ -285,7 +289,9 @@
 }
 .margin-welcome-interlude h2 {
   color: hsl(var(--parchment));
-  font-size: clamp(1.75rem, 12cqi, 5.5rem);
+  font-size: calc(
+    clamp(1.75rem, 12cqi, 5.5rem) + var(--reading-size-adjustment)
+  );
 }
 .margin-welcome-interlude h2 > span {
   display: block;
@@ -366,7 +372,7 @@
 .margin-welcome-message-preface,
 .margin-welcome-message-afterword {
   color: hsl(var(--muted-foreground));
-  font: 1.125rem/1.5 var(--font-serif);
+  font: var(--text-title)/1.5 var(--font-serif);
 }
 .margin-welcome-message-preface {
   margin-bottom: 24px;
@@ -497,7 +503,7 @@
 }
 .margin-welcome-joining h2 {
   max-width: none;
-  font-size: clamp(2rem, 5.8vw, 5.5rem);
+  font-size: calc(clamp(2rem, 5.8vw, 5.5rem) + var(--reading-size-adjustment));
   color: hsl(var(--blackened-olive));
 }
 .margin-welcome-joining h2 > span {
@@ -634,7 +640,7 @@ html[data-motion="reduced"] .margin-welcome-preview .margin-welcome-example {
     padding-top: 40px;
   }
   .margin-public-hero h1 {
-    font-size: clamp(4rem, 6.2vw, 7rem);
+    font-size: calc(clamp(4rem, 6.2vw, 7rem) + var(--reading-size-adjustment));
   }
   .margin-welcome-interlude {
     padding-inline: max(var(--site-gutter), calc((100vw - 1600px) / 2));
@@ -652,7 +658,7 @@ html[data-motion="reduced"] .margin-welcome-preview .margin-welcome-example {
     margin-top: 40px;
   }
   .margin-welcome-copy .margin-public-intro {
-    font-size: 1.125rem;
+    font-size: var(--text-title);
   }
   .margin-welcome-connection {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);

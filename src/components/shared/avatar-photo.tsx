@@ -1,17 +1,23 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
-import { avatarImageStyle } from "./avatar-frame";
+import {
+  avatarImageStyle,
+  avatarShapeStyles,
+  type AvatarShape,
+} from "./avatar-frame";
 export function AvatarPhoto({
   src,
   initials,
   sizes,
   live,
+  shape = "circle",
 }: {
   src: string;
   initials: string;
   sizes: string;
   live: boolean;
+  shape?: AvatarShape;
 }) {
   const [failed, setFailed] = useState(false);
   return failed ? (
@@ -24,7 +30,7 @@ export function AvatarPhoto({
       className="margin-avatar-image"
       sizes={sizes}
       loading="eager"
-      style={avatarImageStyle}
+      style={{ ...avatarImageStyle, ...avatarShapeStyles[shape] }}
       unoptimized={live || src.startsWith("/api/") || src.startsWith("blob:")}
       onError={() => setFailed(true)}
     />

@@ -41,12 +41,12 @@ textarea::placeholder {
   opacity: 1;
 }
 
-/* Relative sizing respects the browser's default text size and native zoom. */
+/* Additive reading steps preserve browser-default sizing and native zoom. */
 html[data-reading-size="larger"] {
-  font-size: 125%;
+  --reading-size-adjustment: 0rem;
 }
 html[data-reading-size="extra-large"] {
-  font-size: 150%;
+  --reading-size-adjustment: 0.125rem;
 }
 
 /* Radix locks scrolling; the reserved gutter already accounts for the scrollbar. */

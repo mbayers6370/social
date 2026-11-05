@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PreviewProvider } from "@/features/local-preview/provider";
 import { ProfilePreview } from "@/features/profile/profile-preview";
+import { ProfileIdentity } from "@/features/profile/profile-identity";
 import { previewBootstrap } from "./helpers/local-preview-fixture";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -15,7 +16,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-it("puts New Post before Edit and Settings and opens the composer from the identity", async () => {
+it("keeps New Post and profile options in the identity action row", async () => {
   const user = userEvent.setup();
   const data = previewBootstrap();
   const { container } = render(
@@ -26,7 +27,11 @@ it("puts New Post before Edit and Settings and opens the composer from the ident
   const actions = container.querySelector(".margin-profile-actions")!;
   expect(
     [...actions.children].map((action) => action.getAttribute("aria-label")),
-  ).toEqual(["New Post", "Edit profile", "Settings"]);
+  ).toEqual(["New Post", `More options for ${data.profiles[0].person.name}`]);
+  expect(actions.parentElement).toHaveClass("margin-profile-intro-actions");
+  expect(
+    container.querySelector(".margin-profile-bio")?.previousElementSibling,
+  ).toHaveClass("margin-profile-intro-actions");
   expect(
     within(screen.getByRole("region", { name: "Recent Posts" })).queryByRole(
       "button",
@@ -36,6 +41,30 @@ it("puts New Post before Edit and Settings and opens the composer from the ident
   await user.click(screen.getByRole("button", { name: "New Post" }));
   expect(await screen.findByRole("dialog", { name: "New Post" })).toBeVisible();
 });
+
+it.each([
+  "",
+  "  ",
+  "A short introduction.",
+  "A longer introduction. ".repeat(14).slice(0, 300),
+])(
+  "lets the introduction follow its content without an empty bio row: %j",
+  (bio) => {
+    const data = previewBootstrap();
+    const { container } = render(
+      <ProfileIdentity readOnly live profile={{ ...data.profiles[0], bio }} />,
+    );
+    const paragraph = container.querySelector(".margin-profile-bio");
+    if (!bio.trim()) expect(paragraph).not.toBeInTheDocument();
+    else {
+      expect(paragraph).toHaveTextContent(bio.trim());
+      expect(paragraph?.previousElementSibling).toHaveClass(
+        "margin-profile-name",
+      );
+      expect(paragraph?.parentElement).toHaveClass("margin-profile-heading");
+    }
+  },
+);
 
 it("puts personal sections before the post stream in reading and keyboard order", () => {
   const data = previewBootstrap();

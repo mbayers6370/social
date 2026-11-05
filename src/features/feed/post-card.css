@@ -45,7 +45,7 @@
 }
 .margin-person-name {
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: var(--text-caption);
   line-height: 1.45;
   font-weight: 500;
   letter-spacing: -0.025em;
@@ -54,7 +54,7 @@
 .margin-post-time {
   display: block;
   color: hsl(var(--muted-foreground));
-  font-size: 0.6875rem;
+  font-size: var(--text-caption-sm);
   line-height: 1.4;
 }
 .margin-post-metadata {
@@ -66,7 +66,7 @@
 .margin-post-prose {
   touch-action: pan-y;
   font-family: var(--font-post);
-  font-size: 0.9375rem;
+  font-size: var(--text-label);
   font-weight: 500;
   line-height: 1.5;
   letter-spacing: normal;
@@ -112,13 +112,16 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
+  gap: 4px 8px;
 }
 .margin-post-published {
+  font: 500 var(--text-control)/1.5 var(--font-body);
   color: hsl(var(--foreground));
+  white-space: nowrap;
 }
-.margin-post-details time {
-  font-size: 0.6875rem;
+.margin-post-expiry {
+  font: 400 var(--text-note)/1.5 var(--font-body);
+  color: hsl(var(--note-foreground));
   white-space: nowrap;
 }
 .margin-post-actions {
@@ -236,7 +239,6 @@
   }
   .margin-post-details {
     flex-wrap: nowrap;
-    gap: 4px;
   }
   .margin-post-actions {
     flex-shrink: 0;

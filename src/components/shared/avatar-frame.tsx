@@ -1,22 +1,29 @@
 import type { CSSProperties, ReactNode } from "react";
 
+export type AvatarShape = "circle" | "rounded";
+export const avatarShapeStyles = {
+  circle: { borderRadius: "50%", clipPath: "circle(50%)" },
+  rounded: { borderRadius: "12px", clipPath: "inset(0 round 12px)" },
+} satisfies Record<AvatarShape, CSSProperties>;
+
 // Critical crop styles belong in the initial markup, not delayed stylesheets or load handlers.
 export const avatarImageStyle: CSSProperties = {
   display: "block",
   objectFit: "cover",
   objectPosition: "center",
-  borderRadius: "50%",
-  clipPath: "circle(50%)",
+  ...avatarShapeStyles.circle,
 };
 
 export function AvatarFrame({
   children,
   className,
   size = 40,
+  shape = "circle",
 }: {
   children: ReactNode;
   className?: string;
   size?: number;
+  shape?: AvatarShape;
 }) {
   return (
     <span
@@ -32,9 +39,8 @@ export function AvatarFrame({
         width: `var(--margin-avatar-size, ${size}px)`,
         height: `var(--margin-avatar-size, ${size}px)`,
         border: "1px solid var(--avatar-border, #30383D)",
-        borderRadius: "50%",
         overflow: "hidden",
-        clipPath: "circle(50%)",
+        ...avatarShapeStyles[shape],
       }}
     >
       {children}

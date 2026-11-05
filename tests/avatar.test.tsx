@@ -40,3 +40,29 @@ it.each([false, true])(
     expect(image.getAttribute("data-nimg")).toBe("fill");
   },
 );
+
+it("renders a rounded profile portrait before stylesheets load without changing default circular avatars", () => {
+  const html = renderToStaticMarkup(
+    <Avatar
+      shape="rounded"
+      person={{
+        id: "matt",
+        name: "Matt",
+        initials: "MB",
+        tone: "paper",
+        photo: {
+          src: "/_next/static/media/portrait.test.jpg",
+          width: 640,
+          height: 960,
+        },
+      }}
+    />,
+  );
+  const document = new DOMParser().parseFromString(html, "text/html");
+  const frame = document.querySelector<HTMLElement>(".margin-avatar")!;
+  const image = frame.querySelector("img")!;
+  for (const element of [frame, image]) {
+    expect(element.style.borderRadius).toBe("12px");
+    expect(element.style.clipPath).toBe("inset(0 round 12px)");
+  }
+});

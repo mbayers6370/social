@@ -34,7 +34,7 @@
 }
 .margin-auth-panel h1 {
   color: hsl(var(--blackened-olive));
-  font: 2rem/1.2 var(--font-serif);
+  font: var(--text-heading-lg)/1.2 var(--font-serif);
   letter-spacing: -0.025em;
 }
 .margin-auth-panel > header p {
@@ -57,7 +57,7 @@
   align-items: center;
   min-height: 44px;
   color: hsl(var(--muted-foreground));
-  font-size: 0.875rem;
+  font-size: var(--text-caption);
 }
 .margin-auth-unavailable {
   display: grid;
@@ -66,12 +66,12 @@
   overflow-wrap: anywhere;
 }
 .margin-auth-unavailable h2 {
-  font: 1.5rem/1.3 var(--font-serif);
+  font: var(--text-heading-sm)/1.3 var(--font-serif);
   color: hsl(var(--blackened-olive));
 }
 .margin-auth-next {
   margin-top: 24px;
-  font: 0.875rem/1.6 var(--font-body);
+  font: var(--text-caption)/1.6 var(--font-body);
   text-align: center;
 }
 .margin-auth-next a {
@@ -124,7 +124,7 @@
   min-height: 44px;
   justify-content: center;
   padding: 8px 4px;
-  font: 400 0.875rem/1.4 var(--font-body);
+  font: 400 var(--text-caption)/1.4 var(--font-body);
 }
 .margin-account-menu-actions > p {
   grid-column: 1 / -1;
@@ -219,7 +219,7 @@
   border-top: 1px solid transparent;
 }
 .margin-invitation-list-copy > p:first-child {
-  font-size: 0.875rem;
+  font-size: var(--text-caption);
 }
 .margin-invitation-list .margin-invitation-actions {
   margin-left: -12px;
@@ -236,7 +236,7 @@
 }
 .margin-account-download > h2 {
   padding-inline: 24px 48px;
-  font: 1.75rem/1.2 var(--font-serif);
+  font: var(--text-heading-md)/1.2 var(--font-serif);
 }
 .margin-account-download > p {
   padding-inline: 24px;
@@ -383,7 +383,7 @@
   border-radius: 6px;
   color: hsl(var(--parchment));
   background: hsl(var(--ink));
-  font: 0.875rem/1.4 var(--font-body);
+  font: var(--text-caption)/1.4 var(--font-body);
   pointer-events: auto;
 }
 .margin-report-tooltip::after {
@@ -403,7 +403,7 @@
 }
 .margin-auth-preview-note {
   color: hsl(var(--muted-foreground));
-  font: 0.875rem/1.6 var(--font-body);
+  font: var(--text-caption)/1.6 var(--font-body);
   text-align: center;
 }
 @media (max-width: 639px) {
@@ -442,7 +442,7 @@
     padding: 8px 16px 12px;
   }
   .margin-auth-panel h1 {
-    font-size: 1.75rem;
+    font-size: var(--text-heading-md);
   }
   .margin-auth-unavailable {
     gap: 8px;
@@ -458,7 +458,7 @@
   justify-self: start;
   min-height: 44px;
   color: hsl(var(--muted-foreground));
-  font: 0.875rem/1.5 var(--font-body);
+  font: var(--text-caption)/1.5 var(--font-body);
   text-decoration: underline;
   text-underline-offset: 4px;
 }

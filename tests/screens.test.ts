@@ -156,6 +156,10 @@ describe("screen preview boundaries", () => {
       expect(messageInputSchema.safeParse(input).success).toBe(false);
   });
   it("bounds profile changes and rejects unexpected account fields", () => {
+    expect(
+      profileInputSchema.safeParse({ name: "Ines", bio: "x".repeat(300) })
+        .success,
+    ).toBe(true);
     expect(profileInputSchema.parse({ name: " Ines ", bio: " Hi " })).toEqual({
       name: "Ines",
       bio: "Hi",

@@ -22,6 +22,7 @@ import { useSpaceClient } from "@/features/spaces/client";
 import { MemberFriendActions } from "./member-friend-actions";
 import { requestMember, memberJson, memberChanged } from "./member-client";
 import type { MemberContact } from "./member-contracts";
+import { ProfileLink } from "@/features/profile/profile-link";
 export function MemberProfileContact({
   contact,
   viewerId,
@@ -48,13 +49,15 @@ export function MemberProfileContact({
           <Button
             variant="outline"
             className="margin-profile-message-action"
+            size="icon"
             asChild
           >
             <Link
               href={`/app/messages?thread=${encodeURIComponent(contact.person.id)}`}
+              aria-label={`Message ${contact.person.name}`}
+              title="Message"
             >
               <Message aria-hidden="true" />
-              Message
             </Link>
           </Button>
         )}
@@ -76,6 +79,12 @@ export function MemberProfileContact({
               </DialogDescription>
             </DialogHeader>
             <div className="margin-member-profile-options-actions">
+              {contact.username && (
+                <ProfileLink
+                  key={contact.username}
+                  username={contact.username}
+                />
+              )}
               <MemberFriendActions
                 person={contact.person}
                 relationship={contact.relationship}

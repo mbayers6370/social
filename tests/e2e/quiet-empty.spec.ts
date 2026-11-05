@@ -18,7 +18,7 @@ test("centers empty conversation copy and keeps menu buttons compact", async ({
     { exact: true },
   );
   await expect(empty).toBeVisible();
-  await expect(empty).toHaveCSS("font-size", "14px");
+  await expect(empty).toHaveCSS("font-size", "12px");
   await expect(empty).toHaveCSS("color", "rgb(105, 110, 113)");
   const center = await empty.evaluate((node) => {
     const viewport = node.closest(".margin-conversation-scroll")!;

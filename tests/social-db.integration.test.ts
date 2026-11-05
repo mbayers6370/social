@@ -115,6 +115,75 @@ describe.skipIf(!enabled)(
       await service.relationship(actors[a].clerkId, actors[b].id, "request");
       await service.relationship(actors[b].clerkId, actors[a].id, "accept");
     };
+    it("shared profile addresses resolve current usernames without granting private content access", async () => {
+      await db.account.update({
+        where: { userId: actors[0].id },
+        data: { username: "shared_member" },
+      });
+      await service.createPhotoPost(
+        actors[0].clerkId,
+        photo,
+        "image/jpeg",
+        "Private photo",
+      );
+      const target = await service.profileIdByUsername(
+        actors[1].clerkId,
+        "shared_member",
+      );
+      expect(target).toBe(actors[0].id);
+      const stranger = await service.profile(actors[1].clerkId, target);
+      expect(stranger.posts).toEqual([]);
+      expect(stranger.gallery).toEqual([]);
+      await friends();
+      expect(
+        (await service.profile(actors[1].clerkId, target)).posts,
+      ).toHaveLength(1);
+      await db.account.update({
+        where: { userId: target },
+        data: { username: "renamed_member" },
+      });
+      await expect(
+        service.profileIdByUsername(actors[1].clerkId, "shared_member"),
+      ).rejects.toMatchObject({ status: 404 });
+      expect(
+        await service.profileIdByUsername(actors[1].clerkId, "renamed_member"),
+      ).toBe(target);
+    });
+    it.each([0, 1])(
+      "shared profile addresses hide blocks in either direction (%s)",
+      async (blocker) => {
+        await db.account.update({
+          where: { userId: actors[0].id },
+          data: { username: "shared_member" },
+        });
+        await service.relationship(
+          actors[blocker].clerkId,
+          actors[1 - blocker].id,
+          "block",
+        );
+        await expect(
+          service.profileIdByUsername(actors[1].clerkId, "shared_member"),
+        ).rejects.toMatchObject({ status: 404 });
+      },
+    );
+    it("shared profile addresses reject missing, inactive targets and inactive viewers", async () => {
+      await db.account.update({
+        where: { userId: actors[0].id },
+        data: { username: "shared_member", status: "DEACTIVATED" },
+      });
+      await expect(
+        service.profileIdByUsername(actors[1].clerkId, "shared_member"),
+      ).rejects.toMatchObject({ status: 404 });
+      await expect(
+        service.profileIdByUsername(actors[1].clerkId, "missing_member"),
+      ).rejects.toMatchObject({ status: 404 });
+      await expect(
+        service.profileIdByUsername(actors[0].clerkId, "shared_member"),
+      ).rejects.toMatchObject({ status: 403 });
+      await expect(
+        service.profileIdByUsername("", "shared_member"),
+      ).rejects.toMatchObject({ status: 401 });
+    });
     const publicEvents = () =>
       new SpaceService(db, store, () => now, {
         event: async () => calvinEvent,

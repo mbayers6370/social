@@ -35,6 +35,10 @@ test("text-size preferences scale content and portal fields and survive navigati
   const standardHeadingSize = await page
     .locator(".margin-profile h1")
     .evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
+  await page
+    .locator(".margin-profile-identity")
+    .getByRole("button", { name: /^More options for/ })
+    .click();
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   const standardNavigationSize = await navigation(page)
     .getByRole("link", { name: "Feed", exact: true })
@@ -53,15 +57,15 @@ test("text-size preferences scale content and portal fields and survive navigati
   );
   const preview = page.getByRole("group", { name: "Text size preview" });
   for (const [label, size, meta] of [
-    ["Standard", 16, 14],
-    ["Larger", 20, 17.5],
-    ["Extra large", 24, 21],
+    ["Standard", 14, 12],
+    ["Larger", 16, 14],
+    ["Extra large", 18, 16],
   ] as const) {
     await page.getByRole("radio", { name: label, exact: true }).check();
     await expect(preview.locator("p")).toHaveCSS("font-size", `${size}px`);
     await expect(settingsHeading).toHaveCSS(
       "font-size",
-      `${(standardSettingsHeadingSize * size) / 16}px`,
+      `${standardSettingsHeadingSize + size - 14}px`,
     );
     await expect(preview.locator("span")).toHaveCSS("font-size", `${meta}px`);
     const navigationSize = await navigation(page)
@@ -72,7 +76,7 @@ test("text-size preferences scale content and portal fields and survive navigati
             .fontSize,
         ),
       );
-    expect(navigationSize / standardNavigationSize).toBeCloseTo(size / 16, 2);
+    expect(navigationSize - standardNavigationSize).toBeCloseTo(size - 14, 2);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -99,7 +103,7 @@ test("text-size preferences scale content and portal fields and survive navigati
   await openProfile(page);
   await expect(page.locator(".margin-profile h1")).toHaveCSS(
     "font-size",
-    `${standardHeadingSize * 1.5}px`,
+    `${standardHeadingSize + 4}px`,
   );
   expect(
     await page.evaluate(
@@ -108,15 +112,19 @@ test("text-size preferences scale content and portal fields and survive navigati
   ).toBe(true);
   await expect(page.locator(".margin-profile-bio")).toHaveCSS(
     "font-size",
-    "24px",
+    "18px",
   );
   await expect(page.locator("html")).toHaveAttribute(
     "data-reading-size",
     "extra-large",
   );
+  await page
+    .locator(".margin-profile-identity")
+    .getByRole("button", { name: /^More options for/ })
+    .click();
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   await page.getByRole("radio", { name: "Standard", exact: true }).check();
-  await expect(preview.locator("p")).toHaveCSS("font-size", "16px");
+  await expect(preview.locator("p")).toHaveCSS("font-size", "14px");
 });
 
 test("navigation opens Messages and Profile with the correct current page", async ({

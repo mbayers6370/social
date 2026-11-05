@@ -47,6 +47,26 @@ test("keeps profile details before posts on small screens and preserves the desk
     );
     expect(Math.abs(postsBox.y - identityBox.y)).toBeLessThan(1);
     const rail = profile.locator(".margin-profile-rail");
+    for (const size of ["larger", "extra-large"]) {
+      await page.evaluate((size) => {
+        document.documentElement.dataset.readingSize = size;
+      }, size);
+      const enlargedIdentity = (await identity.boundingBox())!;
+      const enlargedPosts = (await posts.boundingBox())!;
+      expect(enlargedPosts.x).toBeGreaterThanOrEqual(
+        enlargedIdentity.x + enlargedIdentity.width,
+      );
+      expect(Math.abs(enlargedPosts.y - enlargedIdentity.y)).toBeLessThan(1);
+      await expect(rail).toHaveCSS("position", "sticky");
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    }
+    await page.evaluate(() => {
+      document.documentElement.dataset.readingSize = "standard";
+    });
     const initial = (await rail.boundingBox())!;
     await page.evaluate(() => window.scrollTo(0, 200));
     await expect
@@ -67,12 +87,10 @@ test("keeps profile details before posts on small screens and preserves the desk
     await expect
       .poll(() => page.evaluate(() => window.scrollY))
       .toBeGreaterThan(beforeWheel);
-    await page.evaluate(() => window.scrollTo(0, 0));
   }
   const controls = [
     identity.getByRole("button", { name: "New Post", exact: true }),
-    identity.getByRole("button", { name: "Edit profile", exact: true }),
-    identity.getByRole("link", { name: "Settings", exact: true }),
+    identity.getByRole("button", { name: /^More options for/ }),
   ];
   const identityBox = (await identity.boundingBox())!;
   const boxes = await Promise.all(
@@ -127,7 +145,7 @@ test("keeps pending-request profile cards private and gives Decline a visible bo
   await expect(decline).toBeVisible();
   expect(
     await decline.evaluate((button) =>
-      Number.parseFloat(getComputedStyle(button).borderTopWidth),
+      Number.parseFloat(getComputedStyle(button, "::before").borderTopWidth),
     ),
   ).toBeGreaterThan(0);
   const profile = page.locator(".margin-profile");

@@ -50,10 +50,19 @@ export default {
         serif: ["var(--font-serif)"],
       },
       fontSize: {
+        base: ["var(--text-body)", { lineHeight: "1.5" }],
+        lg: ["var(--text-title)", { lineHeight: "1.5" }],
+        xl: ["var(--text-subtitle)", { lineHeight: "1.4" }],
+        "2xl": ["var(--text-heading-sm)", { lineHeight: "1.3" }],
+        "3xl": [
+          "calc(1.875rem + var(--reading-size-adjustment))",
+          { lineHeight: "1.2" },
+        ],
+        "4xl": ["var(--text-display-sm)", { lineHeight: "1.15" }],
         sm: ["var(--text-control)", { lineHeight: "1.5" }],
         xs: ["var(--text-meta)", { lineHeight: "1.5" }],
         display: [
-          "clamp(2.5rem, 6vw, 4rem)",
+          "calc(clamp(2.5rem, 6vw, 4rem) + var(--reading-size-adjustment))",
           { lineHeight: "1.08", letterSpacing: "-0.045em", fontWeight: "600" },
         ],
       },
