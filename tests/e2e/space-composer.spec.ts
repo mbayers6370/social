@@ -6,7 +6,7 @@ test.beforeEach(() =>
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Local Space composer"),
 );
 
-test("matches the feed entry and preserves a text/photo draft until one Publish", async ({
+test("shares feed entry typography and preserves a text/photo draft until one Publish", async ({
   page,
 }, info) => {
   await page.goto("/");
@@ -19,8 +19,6 @@ test("matches the feed entry and preserves a text/photo draft until one Publish"
         node.querySelector(".margin-feed-compose-prompt")!,
       );
       return {
-        border: style.border,
-        radius: style.borderRadius,
         padding: style.padding,
         font: prompt.font,
         color: prompt.color,
@@ -39,14 +37,16 @@ test("matches the feed entry and preserves a text/photo draft until one Publish"
     exact: true,
   });
   await expect(entry).toBeVisible();
+  // Space entries retain their standalone outline; the main feed owns its
+  // shared outer card. Their writing controls keep the same spacing and type.
+  await expect(entry).toHaveCSS("border-top-width", "1px");
+  await expect(entry).toHaveCSS("border-radius", "14px");
   const actual = await entry.evaluate((node) => {
     const style = getComputedStyle(node);
     const prompt = getComputedStyle(
       node.querySelector(".margin-feed-compose-prompt")!,
     );
     return {
-      border: style.border,
-      radius: style.borderRadius,
       padding: style.padding,
       font: prompt.font,
       color: prompt.color,

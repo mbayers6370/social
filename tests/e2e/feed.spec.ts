@@ -374,7 +374,9 @@ test("desktop conversations flip within their feed slot and restore neighboring 
   await page.setViewportSize({ width: 1280, height: 900 });
   for (const id of ["post-book", "post-porch", "post-notebook", "post-tea"]) {
     const post = page.locator(`#${id}`);
-    await post.scrollIntoViewIfNeeded();
+    // A tall photo can leave the footer below the viewport. Capture the
+    // return position after revealing the control, as it is when activated.
+    await post.locator("[data-conversation-trigger]").scrollIntoViewIfNeeded();
     const before = (await post.boundingBox())!;
     const originalScroll = await page.evaluate(() => scrollY);
     const neighbors = await page
