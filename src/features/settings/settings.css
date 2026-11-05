@@ -68,6 +68,14 @@
 .margin-settings-section fieldset + fieldset {
   margin-top: 24px;
 }
+.margin-settings-posting-zone {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.margin-settings-posting-zone .margin-form-actions {
+  margin-top: 0;
+}
 .margin-settings-section legend,
 .margin-setting-summary h3 {
   font: 500 var(--text-control)/1.5 var(--font-body);

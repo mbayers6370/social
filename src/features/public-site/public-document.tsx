@@ -6,7 +6,6 @@ export type PublicDocumentData = {
   intro: string;
   summary: string[];
   related?: { label: string; href: string }[];
-  review?: string[];
   draft?: boolean;
   sections: {
     id: string;
@@ -29,7 +28,7 @@ export function PublicDocument({ document }: { document: PublicDocumentData }) {
           <p className="margin-public-intro">{document.intro}</p>
         </div>
         <div className="margin-public-document-summary">
-          <p>{document.draft ? "About this draft" : "Before you read"}</p>
+          <p>At a glance</p>
           <ul>
             {document.summary.map((item) => (
               <li key={item}>{item}</li>
@@ -41,23 +40,14 @@ export function PublicDocument({ document }: { document: PublicDocumentData }) {
         <aside className="margin-public-draft" aria-label="Policy draft status">
           <strong>Draft · No effective date</strong>
           <p>
-            For review before launch. The legal operator has not been confirmed;
-            margin is the platform name. General support:{" "}
+            You’re reading a policy draft, not an active agreement. We’ll
+            publish an effective date after legal review. If you have a
+            question, email{" "}
             <a href={`mailto:${publicSiteDetails.supportEmail}`}>
               {publicSiteDetails.supportEmail}
             </a>
-            . These policies still require review before publication.
+            .
           </p>
-          {document.review && (
-            <details className="margin-public-review">
-              <summary>Still to be confirmed</summary>
-              <ul>
-                {document.review.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </details>
-          )}
         </aside>
       )}
       <div className="margin-public-document-body">

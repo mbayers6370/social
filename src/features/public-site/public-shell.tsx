@@ -1,39 +1,10 @@
 import Link from "next/link";
 import { ChevronRight } from "@/components/margin-icons";
 import type { ReactNode } from "react";
+import { publicFooterGroups } from "@/components/layout/footer-links";
 import { PublicNavigation } from "./public-navigation";
 export const publicHomeHref = () =>
   process.env.NODE_ENV === "development" ? "/welcome" : "/";
-const groups = [
-  {
-    title: "Explore",
-    links: [
-      ["Why Margin", "/why-margin"],
-      ["How it works", "/how-it-works"],
-      ["About", "/why-margin#about"],
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      ["Help", "/help"],
-      ["Contact", "/contact"],
-      ["Community Guidelines", "/community-guidelines"],
-      ["Accessibility", "/accessibility"],
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      ["Privacy", "/privacy"],
-      ["Terms", "/terms"],
-      ["Copyright", "/copyright"],
-      ["Your data", "/your-data"],
-      ["Retention", "/retention"],
-      ["Cookies", "/cookies"],
-    ],
-  },
-];
 export function PublicFooter() {
   return (
     <footer className="margin-public-footer">
@@ -42,8 +13,8 @@ export function PublicFooter() {
           className="margin-public-footer-groups margin-navigation-theme"
           aria-label="Footer"
         >
-          {groups.map((group) => (
-            <div key={group.title}>
+          {publicFooterGroups.map((group) => (
+            <div key={group.title} data-footer-group={group.title}>
               <h2>{group.title}</h2>
               <ul>
                 {group.links.map(([title, href]) => (

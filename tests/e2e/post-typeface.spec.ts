@@ -88,7 +88,10 @@ test("real post content uses Medium with kerning while UI text keeps its existin
   ).toBe(false);
   const widths = await page.evaluate(() => {
     const context = document.createElement("canvas").getContext("2d")!;
-    context.font = '500 16px "Margin Aside"';
+    // Measure shaping at a larger scale: at 16px Linux can round a small
+    // kerning adjustment to zero. The DOM and glyph-coverage checks above/below
+    // still verify the actual 16px reading size.
+    context.font = '500 128px "Margin Aside"';
     return [
       "To",
       "Th",

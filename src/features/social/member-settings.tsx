@@ -149,31 +149,49 @@ export function MemberSettings({
               aria-labelledby="posting-zone-title"
             >
               <h2 id="posting-zone-title">Posting day</h2>
-              <p>
-                Daily post and photo limits use your saved time zone. Changing
-                it carries recent usage forward for at least 24 hours; deletion
-                does not restore an allowance.
+              <p className="margin-settings-sharing">
+                Your posting day follows{" "}
+                {identity.preferences.postingTimeZone
+                  ?.replaceAll("_", " ")
+                  .replaceAll("/", " / ") ?? "America / Los Angeles"}
+                .
               </p>
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void updatePreferences({ postingTimeZone: postingZone });
-                }}
-              >
-                <label htmlFor="posting-time-zone">Time zone</label>
-                <TimeZonePicker
-                  id="posting-time-zone"
-                  value={postingZone}
-                  onChange={setPostingZone}
-                />
-                <Button type="submit" variant="outline" disabled={busy}>
-                  Save time zone
-                </Button>
-                <SettingSaveStatus
-                  feedback={feedback}
-                  setting="postingTimeZone"
-                />
-              </form>
+              <details className="margin-settings-record">
+                <summary>
+                  <span>Change time zone</span>
+                  <ChevronDown aria-hidden="true" />
+                </summary>
+                <div>
+                  <p className="margin-field-hint">
+                    Daily post and photo limits use your saved time zone.
+                    Changing it carries recent usage forward for at least 24
+                    hours; deleting content does not restore an allowance.
+                  </p>
+                  <form
+                    className="margin-settings-posting-zone"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void updatePreferences({ postingTimeZone: postingZone });
+                    }}
+                  >
+                    <label htmlFor="posting-time-zone">Time zone</label>
+                    <TimeZonePicker
+                      id="posting-time-zone"
+                      value={postingZone}
+                      onChange={setPostingZone}
+                    />
+                    <div className="margin-form-actions">
+                      <Button type="submit" variant="outline" disabled={busy}>
+                        Save time zone
+                      </Button>
+                      <SettingSaveStatus
+                        feedback={feedback}
+                        setting="postingTimeZone"
+                      />
+                    </div>
+                  </form>
+                </div>
+              </details>
             </section>
             <section
               className="margin-settings-section"

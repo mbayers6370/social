@@ -64,26 +64,6 @@
   color: hsl(var(--foreground));
   overflow-wrap: anywhere;
 }
-.margin-public-review {
-  margin-top: 12px;
-}
-.margin-public-review summary {
-  width: fit-content;
-  max-width: 100%;
-  min-height: 44px;
-  padding-block: 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  color: hsl(var(--blackened-olive));
-}
-.margin-public-review ul {
-  max-width: 80ch;
-  padding-left: 24px;
-  list-style: disc;
-}
-.margin-public-review li + li {
-  margin-top: 8px;
-}
 .margin-public-document-body {
   display: grid;
   gap: 40px;
