@@ -111,18 +111,21 @@ test("shows Ines's three photos before text, supports mobile swiping, and return
   await expect(trigger).toBeFocused();
 });
 
-test("can view a photograph while keeping the desktop conversation open", async ({
+test("returns from a desktop conversation flip to view the original photograph", async ({
   page,
   isMobile,
 }) => {
-  test.skip(
-    isMobile,
-    "The original post is beside the conversation on desktop",
-  );
+  test.skip(isMobile, "Desktop inline flip");
   await page.goto("/");
   const post = page.locator("#post-porch");
   await post.locator("[data-conversation-trigger]").click();
   await expect(post).toHaveAttribute("data-phase", "open");
+  const conversation = page.getByRole("dialog", {
+    name: "Conversation on June Park’s post",
+  });
+  await expect(conversation).toHaveAttribute("data-layout", "inline-flip");
+  await conversation.getByRole("button", { name: "Back to post" }).click();
+  await expect(conversation).not.toBeVisible();
   await post.getByRole("button", { name: /^View photograph 1/ }).click();
   const viewer = page.getByRole("dialog", {
     name: "Photographs from June Park’s post",
@@ -132,6 +135,7 @@ test("can view a photograph while keeping the desktop conversation open", async 
     .getByRole("button", { name: "Back to post", exact: true })
     .click();
   await expect(viewer).not.toBeVisible();
+  await post.locator("[data-conversation-trigger]").click();
   await expect(
     page.getByRole("dialog", { name: "Conversation on June Park’s post" }),
   ).toBeVisible();

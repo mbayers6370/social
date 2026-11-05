@@ -10,6 +10,7 @@ import { EmptyFeed } from "./empty-feed";
 import { useFeedReveal } from "./use-feed-reveal";
 
 import { FeedComposer } from "@/features/compose/feed-composer";
+import { cn } from "@/lib/utils";
 
 import dynamic from "next/dynamic";
 import {
@@ -117,18 +118,13 @@ export function FeedExperience({
         document.querySelector(".margin-conversation-frame")
       )
         return;
-      const next = selectConversation(
-        post,
-        trigger,
-        Boolean(profileId),
-        commentId,
-      );
+      const next = selectConversation(post, trigger, true, commentId);
       if (!next) return;
       selectionRef.current = next;
       setPhase("opening");
       setSelection(next);
     },
-    [profileId],
+    [],
   );
   const completeClose = useCallback(() => {
     const previous = selectionRef.current;
@@ -236,10 +232,6 @@ export function FeedExperience({
                 }).format(new Date(displayDate))}
               </time>
             </p>
-            <FeedComposer />
-            <p role="status" className="margin-status">
-              {preview.notificationNavigationStatus}
-            </p>
           </section>
         )}
         {profileId && (
@@ -250,7 +242,20 @@ export function FeedExperience({
             {preview.notificationNavigationStatus}
           </p>
         )}
-        <div className="margin-feed-column">
+        <div
+          className={cn(
+            "margin-feed-column",
+            !profileId && "margin-feed-surface",
+          )}
+        >
+          {!profileId && (
+            <>
+              <FeedComposer />
+              <p role="status" className="margin-status">
+                {preview.notificationNavigationStatus}
+              </p>
+            </>
+          )}
           <div
             ref={feed}
             aria-label={profileId ? "Profile posts" : "Chronological feed"}
@@ -305,6 +310,7 @@ export function FeedExperience({
                         phase={selected ? phase : undefined}
                         onOpenConversation={openConversation}
                         profileDate={Boolean(profileId)}
+                        conversationLayout="flip"
                         actions={
                           profileId === preview.bootstrap.viewerId ? (
                             <PostManagement post={post as FriendPost} />
@@ -319,8 +325,9 @@ export function FeedExperience({
               );
             })}
           </div>
-          {!profileId && (ordered.length ? <FeedEnd /> : <EmptyFeed />)}
+          {!profileId && !ordered.length && <EmptyFeed />}
         </div>
+        {!profileId && ordered.length > 0 && <FeedEnd />}
       </div>
       {selection && selectedPost && (
         <ConversationDialog
@@ -329,7 +336,8 @@ export function FeedExperience({
               (profile) => profile.person.id === preview.bootstrap.viewerId,
             )!.person
           }
-          forceFlip={Boolean(profileId)}
+          forceFlip
+          profileDate={Boolean(profileId)}
           selection={{ ...selection, post: selectedPost }}
           state={previewPostState(state, selection.post.id)}
           referenceTime={referenceTime}

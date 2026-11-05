@@ -44,11 +44,12 @@ test.beforeEach(() =>
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Development fixture"),
 );
 
-test("fits five short comments in the desktop panel with a plain like count", async ({
+test("fits five short comments and the post summary in a full-height desktop flip", async ({
   page,
   isMobile,
 }) => {
-  test.skip(isMobile, "Desktop panel density");
+  test.skip(isMobile, "Desktop flip density");
+  await page.setViewportSize({ width: 1280, height: 900 });
   const dialog = await openDiscussion(page);
   await expect(dialog.locator(".margin-comment")).toHaveCount(5);
   const scroll = dialog.locator(".margin-conversation-scroll");

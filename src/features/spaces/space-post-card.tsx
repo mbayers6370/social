@@ -89,7 +89,6 @@ export function SpacePostCard({
         window.scrollTo({ top: previous.scrollY, behavior: "instant" });
     });
   }, [p.id, router]);
-  const forceFlip = profileDate || !inFeed;
   const photos: PostMedia[] = useMemo(
     () =>
       p.photos.map((photo) => ({
@@ -118,13 +117,13 @@ export function SpacePostCard({
         document.querySelector(".margin-conversation-frame")
       )
         return;
-      const next = selectConversation(post, trigger, forceFlip, commentId);
+      const next = selectConversation(post, trigger, true, commentId);
       if (!next) return;
       selected.current = next;
       setPhase("opening");
       setSelection(next);
     },
-    [post, forceFlip],
+    [post],
   );
   const handledTarget = useRef<string | null>(null);
   useEffect(() => {
@@ -176,7 +175,7 @@ export function SpacePostCard({
           post={post}
           selected={Boolean(selection)}
           phase={selection ? phase : undefined}
-          conversationLayout={forceFlip ? "flip" : "panel"}
+          conversationLayout="flip"
           live={!client.preview}
           profileDate={profileDate}
           reportAction={null}
@@ -215,7 +214,7 @@ export function SpacePostCard({
       <LiveConversation
         post={post}
         selection={selection}
-        forceFlip={forceFlip}
+        forceFlip
         profileDate={profileDate}
         source={source}
         onOpened={opened}

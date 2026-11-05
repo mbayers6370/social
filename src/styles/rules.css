@@ -14,10 +14,14 @@
   .margin-photo-picker-footer,
   .margin-notebook-entry[data-day-start="true"],
   .margin-profile-post + .margin-profile-post,
+  .margin-profile-details
+    > .margin-profile-section-card
+    > .margin-section-heading,
   .margin-public-contents,
   .margin-public-sections section + section,
   .margin-public-document-related,
   .margin-welcome-conversation,
+  .margin-welcome-differences,
   .margin-event-results > li,
   .margin-space-directory > li + li,
   .margin-space-panel-content
@@ -57,10 +61,14 @@
   .margin-photo-picker-footer,
   .margin-notebook-entry[data-day-start="true"],
   .margin-profile-post + .margin-profile-post,
+  .margin-profile-details
+    > .margin-profile-section-card
+    > .margin-section-heading,
   .margin-public-contents,
   .margin-public-sections section + section,
   .margin-public-document-related,
   .margin-welcome-conversation,
+  .margin-welcome-differences,
   .margin-event-results > li,
   .margin-space-directory > li + li,
   .margin-space-panel-content

@@ -100,8 +100,7 @@ test("opens Spaces without credentials and keeps canonical conversations in the 
   await page
     .getByRole("dialog")
     .getByRole("button", {
-      name:
-        info.project.name === "mobile" ? "Back to post" : "Close conversation",
+      name: "Back to post",
       exact: true,
     })
     .click();

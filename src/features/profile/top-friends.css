@@ -23,7 +23,7 @@
 }
 .margin-top-friends-prompt {
   min-height: 44px;
-  margin-top: var(--space-related);
+  margin-top: var(--profile-section-content-gap);
 }
 .margin-top-friends-editor {
   font-family: var(--font-body);

@@ -10,9 +10,40 @@
 }
 .margin-feed-intro,
 .margin-feed-column,
+.margin-feed-end,
 .margin-feed-notification-status {
   grid-column: reading-start / reading-end;
   min-width: 0;
+}
+.margin-feed-surface {
+  border: 1px solid hsl(var(--border) / 0.65);
+  border-radius: var(--radius-card);
+  background: hsl(var(--feed-surface));
+}
+.margin-feed-surface > .margin-feed-composer {
+  position: relative;
+  border: 0;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background: transparent;
+}
+.margin-feed-surface > .margin-feed-composer::after {
+  content: "";
+  position: absolute;
+  bottom: calc((1px - var(--divider-art-height)) / 2);
+  inset-inline: 0;
+  height: var(--divider-art-height);
+  mask: var(--divider-mask) left center / 100% var(--divider-art-height)
+    no-repeat;
+  background: hsl(var(--border) / 0.65);
+  pointer-events: none;
+}
+.margin-feed-surface > :is(.margin-status, [role="alert"], a),
+[data-main-feed="true"] > a {
+  padding: var(--space-group) var(--margin-post-inline-padding);
+}
+.margin-feed-surface > a,
+[data-main-feed="true"] > a {
+  display: block;
 }
 .margin-feed-layout[data-profile="true"] {
   width: 100%;
@@ -41,7 +72,7 @@
   display: grid;
   gap: var(--space-group);
 }
-/* Main feed only: dividers stay on the reading grid when posts move. */
+/* Main-feed posts share one surface, separated by edge-to-edge rules. */
 :is(.margin-feed-list, .margin-space-timeline)[data-main-feed="true"] {
   gap: 0;
 }
@@ -56,7 +87,7 @@
   content: "";
   position: absolute;
   top: calc((1px - var(--divider-art-height)) / 2);
-  inset-inline: var(--margin-post-inline-padding);
+  inset-inline: 0;
   height: var(--divider-art-height);
   mask: var(--divider-mask) left center / 100% var(--divider-art-height)
     no-repeat;
@@ -67,7 +98,7 @@
   grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: 12px;
-  padding-block: var(--space-group);
+  padding-block: var(--space-group) 12px;
 }
 .margin-feed-intro > .margin-status {
   grid-column: 1 / -1;
@@ -86,6 +117,9 @@
 }
 .margin-feed-list[data-main-feed="true"] > [data-day-start="true"] {
   padding-top: var(--space-group);
+}
+.margin-feed-list[data-main-feed="true"] .margin-day-heading {
+  padding-inline: var(--margin-post-inline-padding);
 }
 .margin-day-heading {
   margin-block: 0 12px;

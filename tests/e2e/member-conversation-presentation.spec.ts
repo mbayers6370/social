@@ -70,11 +70,7 @@ for (const area of ["feed-posts", "profile"]) {
     const scroll = await page.evaluate(() => scrollY);
     await trigger.click();
     const dialog = page.getByRole("dialog", { name: /^Conversation on/ });
-    const mode = isMobile
-      ? "flip"
-      : area === "profile"
-        ? "inline-flip"
-        : "panel";
+    const mode = isMobile ? "flip" : "inline-flip";
     await expect(dialog).toHaveAttribute("data-layout", mode);
     await expect(post).toHaveAttribute("data-phase", "open");
     const motion = await dialog.evaluate((node) =>
@@ -85,18 +81,14 @@ for (const area of ["feed-posts", "profile"]) {
           .map((frame) => frame.transform),
       })),
     );
-    expect(
-      motion.some(
-        (animation) => animation.duration === (mode === "panel" ? 320 : 520),
-      ),
-    ).toBe(true);
+    expect(motion.some((animation) => animation.duration === 520)).toBe(true);
     expect(
       motion.some((animation) =>
         animation.transforms.some((transform) =>
           String(transform).includes("rotateY"),
         ),
       ),
-    ).toBe(mode !== "panel");
+    ).toBe(true);
     await expect(dialog.locator(".margin-space-conversation")).toHaveCount(0);
     await expect(dialog.locator(".margin-conversation-scroll")).toHaveCSS(
       "overflow-y",
@@ -106,16 +98,7 @@ for (const area of ["feed-posts", "profile"]) {
       "flex-shrink",
       "0",
     );
-    if (mode === "panel") {
-      const source = (await post.boundingBox())!;
-      const panel = (await dialog.boundingBox())!;
-      expect(source.x).toBeLessThan(before.x - 100);
-      expect(panel.y).toBeCloseTo(source.y + 16, 0);
-      expect(panel.height).toBeCloseTo(source.height - 32, 0);
-      expect(panel.x + panel.width).toBeLessThanOrEqual(
-        page.viewportSize()!.width,
-      );
-    } else if (isMobile) {
+    if (isMobile) {
       const bounds = (await dialog.boundingBox())!;
       expect(bounds.x).toBeCloseTo(0, 0);
       expect(bounds.y).toBeCloseTo(0, 0);

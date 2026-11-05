@@ -72,7 +72,11 @@ describe("Top 4 profile interface", () => {
         within(card)
           .getAllByRole("link")
           .map((link) => link.textContent),
-      ).toEqual(friends.slice(0, count).map((p) => p.initials + p.name));
+      ).toEqual(
+        ["Alex E.", "Morgan N.", "Casey", "Robin"]
+          .slice(0, count)
+          .map((name, index) => friends[index].initials + name),
+      );
       expect(
         within(card)
           .getAllByRole("link")

@@ -10,6 +10,7 @@ test("keeps profile details before posts on small screens and preserves the desk
   await page.goto("/?view=profile");
   const profile = page.locator(".margin-profile");
   const identity = profile.locator(".margin-profile-identity");
+  const rail = profile.locator(".margin-profile-rail");
   const music = profile.getByRole("region", { name: "On Repeat", exact: true });
   const gallery = profile.getByRole("region", { name: "Gallery", exact: true });
   const posts = profile.getByRole("region", {
@@ -45,8 +46,9 @@ test("keeps profile details before posts on small screens and preserves the desk
     expect(postsBox.x).toBeGreaterThanOrEqual(
       identityBox.x + identityBox.width,
     );
-    expect(Math.abs(postsBox.y - identityBox.y)).toBeLessThan(1);
-    const rail = profile.locator(".margin-profile-rail");
+    expect(Math.abs(postsBox.y - (await rail.boundingBox())!.y)).toBeLessThan(
+      1,
+    );
     for (const size of ["larger", "extra-large"]) {
       await page.evaluate((size) => {
         document.documentElement.dataset.readingSize = size;
@@ -56,7 +58,9 @@ test("keeps profile details before posts on small screens and preserves the desk
       expect(enlargedPosts.x).toBeGreaterThanOrEqual(
         enlargedIdentity.x + enlargedIdentity.width,
       );
-      expect(Math.abs(enlargedPosts.y - enlargedIdentity.y)).toBeLessThan(1);
+      expect(
+        Math.abs(enlargedPosts.y - (await rail.boundingBox())!.y),
+      ).toBeLessThan(1);
       await expect(rail).toHaveCSS("position", "sticky");
       expect(
         await page.evaluate(
@@ -110,9 +114,21 @@ test("keeps profile details before posts on small screens and preserves the desk
 
 test("keeps the named friendship status, envelope and options together at mobile width", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/?view=profile&person=mara");
+  if (testInfo.project.name === "chromium-scrollbars") {
+    // Reproduce the reserved scrollbar width on Linux even on overlay-scrollbar Macs.
+    await page.addStyleTag({
+      content:
+        "html { overflow-y: scroll; } html::-webkit-scrollbar { width: 19px; }",
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(() => innerWidth - document.documentElement.clientWidth),
+      )
+      .toBe(19);
+  }
   const identity = page.locator(".margin-profile-identity");
   const friends = identity.getByRole("img", {
     name: "Friends with Mara Lindqvist",
@@ -129,6 +145,7 @@ test("keeps the named friendship status, envelope and options together at mobile
     [friends, message, options].map((control) => control.boundingBox()),
   );
   for (const box of boxes) {
+    expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.height).toBeGreaterThanOrEqual(44);
     expect(Math.abs(box!.y - boxes[0]!.y)).toBeLessThan(1);
   }

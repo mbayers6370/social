@@ -18,7 +18,7 @@ test(
     );
     expect(lines).toBeCloseTo(2, 1);
     const note = section.getByText(
-      "Margin grows through invitations from existing members. Open a link from someone you know to begin.",
+      "A friend sends you a personal invitation link. Open it to create your account and join them on Margin.",
       { exact: true },
     );
     expect((await note.boundingBox())!.y).toBeGreaterThan(
@@ -26,7 +26,7 @@ test(
     );
     await expect(section.getByRole("button")).toHaveCount(0);
     await expect(
-      section.getByRole("link", { name: "Membership by invitation" }),
+      section.getByRole("link", { name: "How invitations work" }),
     ).toHaveAttribute("href", "/how-it-works");
     await expect(section.locator('a[href="/sign-up"]')).toHaveCount(0);
     await captureScreenshot(section, {
@@ -69,7 +69,7 @@ test(
     await page.evaluate(() => document.fonts.ready);
     await expect(
       page.getByRole("link", { name: "Membership by invitation", exact: true }),
-    ).toHaveCount(2);
+    ).toHaveCount(1);
     await expect(page.getByText("Newest first", { exact: true })).toBeVisible();
     await expect(
       page
@@ -81,16 +81,16 @@ test(
         .getByRole("navigation", { name: "Public navigation" })
         .getByRole("link", { name: "Sign in", exact: true }),
     ).toHaveCSS("font-weight", "600");
+    const headingColor = await page
+      .locator("#public-title")
+      .evaluate((node) => getComputedStyle(node).color);
     for (const id of [
       "public-title",
       "welcome-connection-title",
       "welcome-gallery-title",
       "welcome-joining-title",
     ])
-      await expect(page.locator(`#${id}`)).toHaveCSS(
-        "color",
-        "rgb(69, 77, 36)",
-      );
+      await expect(page.locator(`#${id}`)).toHaveCSS("color", headingColor);
     const strip = page.getByRole("list", { name: "What’s different" });
     await expect(strip.getByRole("listitem")).toHaveText([
       "No like counts in the feed",
@@ -100,11 +100,12 @@ test(
       "Up to three posts a day",
     ]);
     expect((await strip.boundingBox())!.y).toBeGreaterThanOrEqual(
-      (await page.locator(".margin-welcome-interlude").boundingBox())!.y +
-        (await page.locator(".margin-welcome-interlude").boundingBox())!.height,
+      (await page.locator(".margin-welcome-connection").boundingBox())!.y +
+        (await page.locator(".margin-welcome-connection").boundingBox())!
+          .height,
     );
     expect(
-      (await page.locator(".margin-welcome-connection").boundingBox())!.y,
+      (await page.locator(".margin-welcome-gallery-section").boundingBox())!.y,
     ).toBeGreaterThanOrEqual(
       (await strip.boundingBox())!.y + (await strip.boundingBox())!.height,
     );

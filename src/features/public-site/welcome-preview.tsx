@@ -75,7 +75,6 @@ export function WelcomePreview() {
           </WelcomePost>
           <p className="margin-welcome-caught-up">
             <BrandBrackets>That’s everything for now.</BrandBrackets>
-            <span>Go enjoy the rest of your day.</span>
           </p>
         </div>
       </div>

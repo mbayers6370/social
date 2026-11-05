@@ -101,13 +101,13 @@ it("renders the public home and footer as server markup with valid public destin
   expect(html).not.toContain("Ines");
   expect(page.querySelectorAll("form, iframe, video, audio")).toHaveLength(0);
   const hero = page.querySelector<HTMLElement>(".margin-public-hero")!;
-  expect(hero.textContent).toContain("grown through personal invitations.");
+  expect(hero.textContent).not.toContain("grown through personal invitations.");
   const primary = hero.querySelector<HTMLAnchorElement>(".margin-welcome-cta")!;
   expect(primary.getAttribute("href")).toBe("/how-it-works");
   expect(primary.textContent).toBe("Membership by invitation");
   expect(page.getElementById("welcome-preview")).not.toBeNull();
   expect(page.querySelector(".margin-welcome-joining")?.textContent).toContain(
-    "Open a link from someone you know to begin.",
+    "Open it to create your account and join them on Margin.",
   );
   expect(page.querySelectorAll('a[href="/sign-up"]')).toHaveLength(0);
   expect(hero.querySelectorAll("figure")).toHaveLength(1);

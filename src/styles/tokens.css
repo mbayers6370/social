@@ -8,14 +8,17 @@
   --ink: 203.076923 11.926606% 21.372549%; /* smoky blue-black #30383D */
   --citron: 67.222222 48.648649% 56.470588%; /* #B9C65A */
   --blackened-olive: 71.707317 36.283186% 22.156863%; /* #454D24 */
-  /* Parchment on Blackened Olive has 8.52:1 contrast. */
-  --header: var(--blackened-olive);
-  --header-accent: 71.707317 36.283186% 19.156863%; /* darker interactive surface */
+  --olive-hs: 63.157895 26.760563%;
+  --profile-card-header: var(--olive-hs) 72.156863%; /* #C9CBA5 */
+  /* Navigation and profile card headers share one olive hue and saturation. */
+  --header: var(--olive-hs) 17%;
+  --header-accent: var(--olive-hs) 13%; /* darker interactive surface */
   --header-foreground: var(--parchment);
   --background: 45 23.529412% 93.333333%; /* warm cream #F2F0EA */
   --foreground: var(--ink);
   --card: 30 25% 98.431373%; /* parchment lifted with white: #FCFBFA */
   --card-foreground: var(--foreground);
+  --feed-surface: 0 0% 100%;
   --surface-heading: 52.941176 24.637681% 86.470588%; /* warm olive paper #E5E3D4 */
   --popover: var(--card);
   --popover-foreground: var(--foreground);

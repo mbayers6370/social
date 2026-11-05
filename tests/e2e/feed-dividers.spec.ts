@@ -1,7 +1,7 @@
 import { captureScreenshot, expect, test } from "./fixtures";
 import { memberFixture } from "./helpers/member-fixture";
 
-test("main feed uses a ruled stream in both preview and member layouts", async ({
+test("main feed joins its composer and posts in one white surface with full-width rules", async ({
   page,
 }, info) => {
   test.skip(process.env.PLAYWRIGHT_PRODUCTION === "1", "Development fixtures");
@@ -11,7 +11,11 @@ test("main feed uses a ruled stream in both preview and member layouts", async (
     ["member", "/preview/auth?view=member&area=feed-posts"],
   ]) {
     await page.goto(route);
-    const stream = page.locator('[data-main-feed="true"]');
+    const surface = page.locator(".margin-feed-surface");
+    await expect(surface).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(surface).toHaveCSS("border-top-left-radius", "14px");
+    await expect(surface.locator(".margin-feed-composer")).toBeVisible();
+    const stream = surface.locator('[data-main-feed="true"]');
     await expect(stream).toBeVisible();
     const posts = stream.locator(".margin-post-card");
     await expect(posts.first()).toBeVisible();
@@ -24,8 +28,6 @@ test("main feed uses a ruled stream in both preview and member layouts", async (
         )!;
         const rule = getComputedStyle(item, "::before");
         const box = item.getBoundingClientRect();
-        const photo = card.querySelector(".margin-post-photos");
-        const photoBox = photo?.getBoundingClientRect();
         const precedingIcon = cards[index - 1]?.querySelector(
           "[data-conversation-trigger] svg",
         );
@@ -41,8 +43,8 @@ test("main feed uses a ruled stream in both preview and member layouts", async (
           divider: rule.content !== "none",
           dividerWidth: parseFloat(rule.width),
           dividerLeft: box.left + parseFloat(rule.left),
-          photoWidth: photoBox?.width,
-          photoLeft: photoBox?.left,
+          itemWidth: box.width,
+          itemLeft: box.left,
           above: compareSpacing
             ? lineCenter - precedingIcon.getBoundingClientRect().bottom
             : undefined,
@@ -57,9 +59,9 @@ test("main feed uses a ruled stream in both preview and member layouts", async (
       expect(post.side).toBe("0px");
       expect(post.radius).toBe("0px");
       expect(post.divider).toBe(index !== 0);
-      if (post.divider && post.photoWidth !== undefined) {
-        expect(post.dividerWidth).toBeCloseTo(post.photoWidth, 1);
-        expect(post.dividerLeft).toBeCloseTo(post.photoLeft!, 1);
+      if (post.divider) {
+        expect(post.dividerWidth).toBeCloseTo(post.itemWidth, 1);
+        expect(post.dividerLeft).toBeCloseTo(post.itemLeft, 1);
       }
       if (post.divider && post.above !== undefined && post.below !== undefined)
         expect(Math.abs(post.above - post.below)).toBeLessThanOrEqual(1);
@@ -84,15 +86,20 @@ test("main feed uses a ruled stream in both preview and member layouts", async (
       await expect(page.getByRole("dialog")).toBeVisible();
       await expect(post).toHaveAttribute("data-phase", "open");
       const after = (await post.boundingBox())!;
-      expect(after.x).toBeLessThan(before.x - 100);
+      expect(after.x).toBeCloseTo(before.x, 1);
       expect(after.width).toBeCloseTo(before.width, 1);
       const fixedLine = (await item.boundingBox())!;
       expect(fixedLine.x).toBeCloseTo(before.x, 1);
       expect(fixedLine.width).toBeCloseTo(before.width, 1);
       const panel = (await page.getByRole("dialog").boundingBox())!;
       const nextLine = (await next.boundingBox())!;
-      expect(panel.y - fixedLine.y).toBeGreaterThanOrEqual(16);
-      expect(nextLine.y - (panel.y + panel.height)).toBeGreaterThanOrEqual(16);
+      await expect(page.getByRole("dialog")).toHaveAttribute(
+        "data-layout",
+        "inline-flip",
+      );
+      expect(panel.x).toBeCloseTo(fixedLine.x, 1);
+      expect(panel.width).toBeCloseTo(fixedLine.width, 1);
+      expect(nextLine.y).toBeGreaterThanOrEqual(panel.y + panel.height - 1);
       expect(
         await post.evaluate((node) => {
           const style = getComputedStyle(node);

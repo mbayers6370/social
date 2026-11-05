@@ -78,20 +78,15 @@ it.each(["profile", "feed"] as const)(
     const dialog = await screen.findByRole("dialog", {
       name: `Conversation on ${current.author.name}’s post`,
     });
-    expect(dialog).toHaveAttribute(
-      "data-layout",
-      profile ? "inline-flip" : "panel",
-    );
+    expect(dialog).toHaveAttribute("data-layout", "inline-flip");
     expect(dialog).not.toHaveAttribute("aria-modal", "true");
-    if (profile) {
-      expect(
-        document
-          .getElementById(post.id)
-          ?.closest<HTMLElement>(".margin-post-slot")?.style.height,
-      ).toBe("var(--margin-conversation-height)");
-    }
+    expect(
+      document
+        .getElementById(current.id)
+        ?.closest<HTMLElement>(".margin-post-slot")?.style.height,
+    ).toBe("var(--margin-conversation-height)");
     const back = within(dialog).getByRole("button", {
-      name: profile ? "Back to post" : "Close conversation",
+      name: "Back to post",
     });
     expect(back).toHaveFocus();
     await user.click(back);
