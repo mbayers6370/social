@@ -91,8 +91,9 @@ export default defineConfig({
       ? [
           {
             name: "chromium-scrollbars",
-            testMatch: /(?:feed|profile-compose)\.spec\.ts/,
-            grep: /opens the correct conversation, keeps Like|keeps the active experience usable|profile opens New Post/,
+            testMatch:
+              /(?:feed|profile-compose|profile-presentation)\.spec\.ts/,
+            grep: /opens the correct conversation, keeps Like|keeps the active experience usable|profile opens New Post|keeps the named friendship status/,
             use: {
               ...devices["Desktop Chrome"],
               launchOptions: { ignoreDefaultArgs: ["--hide-scrollbars"] },

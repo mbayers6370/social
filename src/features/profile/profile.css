@@ -594,6 +594,12 @@
   overflow-wrap: anywhere;
 }
 @media (max-width: 639px) {
+  .margin-profile-heading {
+    column-gap: var(--space-related);
+  }
+  .margin-profile-contact-actions {
+    column-gap: calc(var(--space-related) / 2);
+  }
   .margin-profile-section-card > .margin-section-heading {
     min-height: 41px;
     padding-block: 0;
