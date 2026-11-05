@@ -302,8 +302,13 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       },
     );
     it("ranks before applying the result cap and tells the caller to refine a broad search", async () => {
-      for (let i = 0; i < 24; i++) {
-        const member = await person(`ZZ Match ${i}`);
+      // Keep bytewise and locale-aware collations in agreement. "ZZ" and
+      // "Zoe" sort differently in macOS's local DB and Linux CI.
+      for (const name of [
+        ...Array.from({ length: 24 }, (_, i) => `Zzz Match ${i}`),
+        "Aaron Match",
+      ]) {
+        const member = await person(name);
         await service.relationship(people[0].clerkId, member.id, "request");
         await service.relationship(member.clerkId, people[0].id, "accept");
       }
@@ -314,6 +319,8 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
       );
       expect(result.members).toHaveLength(20);
       expect(result.members.every((member) => member.friend)).toBe(true);
+      // This friend was inserted last, beyond the cap, but must rank first.
+      expect(result.members[0].person.name).toBe("Aaron Match");
       expect(result.members.map((member) => member.person.name)).toEqual(
         [...result.members.map((member) => member.person.name)].sort(),
       );

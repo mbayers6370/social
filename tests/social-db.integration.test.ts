@@ -23,6 +23,7 @@ import { SpaceService } from "@/server/spaces/service";
 import { ModerationService } from "@/server/safety/service";
 import { calvinEvent } from "./helpers/ticketmaster-fixture";
 import { SocialService } from "@/server/social/service";
+import { MemberService } from "@/server/member/service";
 import { normalizePhoto, type PrivatePhotoStore } from "@/server/social/photo";
 import { getDb } from "@/server/db";
 import { privatePhotoStore } from "@/server/social/photo";
@@ -1824,15 +1825,11 @@ describe.skipIf(!enabled)(
     });
     it("enforces the daily photograph limit independently of available post slots", async () => {
       const owner = actors[0];
-      // Gallery photos survive post deletion, leaving the post allowance unused.
+      // Gallery uploads consume photo slots without consuming publication slots.
+      // Deleted publications intentionally still count toward the post allowance.
+      const member = new MemberService(db, store, () => now);
       for (let index = 0; index < 2; index++) {
-        const post = await service.createPhotoPost(
-          owner.clerkId,
-          photo,
-          "image/jpeg",
-          "Red",
-        );
-        await service.deletePost(owner.clerkId, post.id);
+        await member.uploadGallery(owner.clerkId, photo, "image/jpeg", "Red");
       }
       expect(
         await db.post.count({ where: { ownerId: owner.id, deletedAt: null } }),
@@ -1858,6 +1855,14 @@ describe.skipIf(!enabled)(
       expect(
         await db.post.count({ where: { ownerId: owner.id, deletedAt: null } }),
       ).toBe(1);
+      await service.createPost(owner.clerkId, "A post slot remains");
+      await service.createPost(owner.clerkId, "The final post slot");
+      await expect(
+        service.createPost(owner.clerkId, "No more post slots"),
+      ).rejects.toMatchObject({
+        status: 409,
+        message: "Daily post allowance reached",
+      });
     });
     it("denies expired posts, pending/deactivated accounts, and revoked authors with stale sessions", async () => {
       const post = await service.createPost(actors[0].clerkId, "Expires");
