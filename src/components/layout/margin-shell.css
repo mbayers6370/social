@@ -145,7 +145,7 @@
   padding: 1px max(8px, var(--margin-safe-area-right))
     calc(2px + var(--margin-safe-area-bottom))
     max(8px, var(--margin-safe-area-left));
-  --divider-top-color: hsl(var(--header-foreground) / 0.25);
+  --divider-top-color: hsl(var(--separator));
   border-top: 1px solid transparent;
 }
 .margin-mobile-nav[data-messaging="false"] {
@@ -184,13 +184,13 @@
 }
 @media (hover: hover) {
   .margin-bottom-item:hover {
-    --avatar-border: hsl(var(--citron));
-    color: hsl(var(--citron));
+    --avatar-border: hsl(var(--highlight));
+    color: hsl(var(--highlight));
   }
 }
 .margin-bottom-item:active {
-  --avatar-border: hsl(var(--citron));
-  color: hsl(var(--citron));
+  --avatar-border: hsl(var(--highlight));
+  color: hsl(var(--highlight));
 }
 .margin-bottom-icon > svg {
   width: 20px;
@@ -200,8 +200,8 @@
   max-width: 100%;
 }
 .margin-bottom-item[aria-current] {
-  --avatar-border: hsl(var(--citron));
-  color: hsl(var(--citron));
+  --avatar-border: hsl(var(--highlight));
+  color: hsl(var(--highlight));
   font-weight: 600;
 }
 @media (max-width: 1023px) {

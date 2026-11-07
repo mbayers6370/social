@@ -9,7 +9,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: hsl(var(--citron));
+  background: hsl(var(--warm-accent));
 }
 .margin-bottom-item.margin-notification-bell .margin-notification-dot {
   top: 9px;
@@ -159,7 +159,7 @@
   height: 1.125rem;
   border-radius: 50%;
   background: hsl(var(--secondary));
-  color: hsl(var(--citron));
+  color: hsl(var(--olive));
   pointer-events: none;
 }
 .margin-notification-type svg {
@@ -175,7 +175,7 @@
   height: 2rem;
   border-radius: 50%;
   background: hsl(var(--conversation));
-  color: hsl(var(--citron));
+  color: hsl(var(--olive));
 }
 .margin-notification-symbol svg {
   display: block;

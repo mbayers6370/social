@@ -69,6 +69,7 @@ it("restricts account routes and APIs while preserving exact public information,
     "/privacy/export",
     "/api/health/private",
     "/api/webhooks/clerk/private",
+    "/api/waitlist/private",
   ])
     expect(isRegionRestrictedPath(path), path).toBe(true);
   for (const path of [
@@ -80,6 +81,7 @@ it("restricts account routes and APIs while preserving exact public information,
     "/your-data",
     "/contact",
     "/api/health",
+    "/api/waitlist",
     "/api/webhooks/clerk",
     "/brands/itunes-store.svg",
     "/_next/static/chunks/app.js",

@@ -131,6 +131,7 @@
   letter-spacing: normal;
 }
 .margin-feed-end {
+  --brand-corner-color: hsl(var(--olive));
   padding-top: 37px;
   padding-bottom: calc(var(--space-group) + var(--space-related) * 2);
   text-align: center;
@@ -220,7 +221,7 @@ html[data-motion="reduced"]
   text-align: center;
 }
 .margin-empty-feed-mark {
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
   font: var(--text-body)/1.5 var(--font-serif);
 }
 .margin-empty-feed h2 {
@@ -229,7 +230,7 @@ html[data-motion="reduced"]
   font: calc(clamp(2rem, 4vw, 3rem) + var(--reading-size-adjustment))/1.15
     var(--font-serif);
   letter-spacing: -0.035em;
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-empty-feed > p {
   max-width: 36ch;

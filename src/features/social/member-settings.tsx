@@ -22,7 +22,12 @@ import { Button } from "@/components/ui/button";
 import { AppFooter } from "@/components/layout/app-footer";
 import { useSpaceClient } from "@/features/spaces/client";
 import { useMember } from "./member-provider";
-import { memberJson, requestMember, memberChanged } from "./member-client";
+import {
+  memberJson,
+  requestMember,
+  requestMemberIdentity,
+  memberChanged,
+} from "./member-client";
 import { MemberDataControls } from "./member-data-controls";
 import type { MemberIdentity, MemberPreferences } from "./member-contracts";
 import { TimeZonePicker } from "@/features/spaces/time-zone-picker";
@@ -74,7 +79,7 @@ export function MemberSettings({
     const key = Object.keys(patch)[0];
     setFeedback({ key, state: "saving" });
     try {
-      const next = await requestMember<MemberIdentity>(
+      const next = await requestMemberIdentity(
         client,
         "/api/member/preferences",
         memberJson("PATCH", patch),
@@ -299,7 +304,7 @@ export function MemberSettings({
                   username: identity.username,
                   usernameChangedAt: identity.usernameChangedAt,
                   onChange: async (username) => {
-                    const next = await requestMember<MemberIdentity>(
+                    const next = await requestMemberIdentity(
                       client,
                       "/api/member/username",
                       memberJson("PUT", { username }),

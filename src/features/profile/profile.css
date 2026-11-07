@@ -1,5 +1,6 @@
 /* Profile identity, recent posts and the gallery preview. */
 .margin-profile {
+  --profile-card-border: hsl(var(--border));
   --profile-top-gap: var(--space-group);
   --profile-header-inset: calc(var(--space-related) * 2);
   --profile-name-size: calc(1.375rem + var(--reading-size-adjustment));
@@ -11,6 +12,11 @@
 }
 .margin-profile-identity {
   position: relative;
+  min-width: 0;
+  padding: var(--profile-header-inset);
+  border: 1px solid var(--profile-card-border);
+  border-radius: var(--radius-card);
+  background: hsl(var(--card));
 }
 .margin-profile-identity:has(.margin-profile-popover) {
   z-index: 2;
@@ -96,11 +102,12 @@
   width: 44px;
   height: 44px;
   padding: 0;
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-profile-actions > .margin-new-post-button {
-  --profile-action-fill: hsl(var(--citron));
-  --profile-action-hover-fill: hsl(var(--citron) / 0.85);
+  --profile-action-fill: hsl(var(--primary));
+  --profile-action-foreground: var(--primary-foreground);
+  --profile-action-hover-fill: hsl(var(--primary-hover));
 }
 .margin-post-edit-delete {
   margin-right: auto;
@@ -146,7 +153,7 @@
   min-width: 0;
   padding: var(--profile-section-top) var(--space-group)
     var(--profile-section-bottom, var(--space-group));
-  border: 1px solid hsl(var(--profile-card-header));
+  border: 1px solid var(--profile-card-border);
   border-radius: var(--radius-card);
   background: hsl(var(--card));
 }
@@ -163,7 +170,7 @@
   min-height: 52px;
   margin: calc(-1 * var(--profile-section-top)) calc(-1 * var(--space-group)) 0;
   padding: 10px var(--profile-header-inset);
-  --divider-bottom-color: hsl(var(--profile-card-header));
+  --divider-bottom-color: var(--profile-card-border);
   border-bottom: 1px solid transparent;
   border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0
     0;
@@ -175,12 +182,12 @@
 .margin-profile-section-card
   > .margin-section-heading
   :is(.margin-section-title, .margin-section-motif) {
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-profile-section-card > .margin-section-heading .margin-section-link {
   /* Keep the 44px target inside header padding without enlarging the title row. */
   margin-block: calc(-1 * var(--space-related));
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-profile-posts-card > .margin-section-heading {
   margin: 0;
@@ -348,7 +355,7 @@
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius-control);
   background: hsl(var(--surface-heading));
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
   font: 400 var(--text-control)/1.3 var(--font-body);
 }
 .margin-profile-intro-actions .margin-profile-friend-status {
@@ -375,7 +382,7 @@
   padding: 6px 12px;
   border: 0;
   background: transparent;
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--profile-action-foreground, var(--ink)));
 }
 .margin-profile-intro-actions
   :where(
@@ -402,7 +409,11 @@
     .margin-friend-buttons,
     .margin-profile-overflow
   )
-  > :is([aria-haspopup], .margin-profile-message-action, [role="img"]) {
+  > :is(
+    [aria-haspopup]:not(.margin-new-post-button),
+    .margin-profile-message-action,
+    [role="img"]
+  ) {
   --profile-action-inset: 6px;
   padding: 0;
 }
@@ -422,7 +433,7 @@
   height: 16px;
 }
 .margin-profile-message-action {
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-profile-contact-actions svg,
 .margin-profile-options-list svg {
@@ -524,17 +535,17 @@
   border: 0;
   border-radius: 12px;
   z-index: 1;
-  background: hsl(var(--citron) / 0.7);
-  color: #fff;
+  background: hsl(var(--highlight) / 0.7);
+  color: hsl(var(--ink));
 }
 .margin-profile-photo-edit:hover {
-  background: hsl(var(--citron) / 0.82);
-  color: #fff;
+  background: hsl(var(--highlight) / 0.82);
+  color: hsl(var(--ink));
 }
 .margin-profile-photo-edit svg {
   width: 24px;
   height: 24px;
-  filter: drop-shadow(0 1px 2px hsl(var(--blackened-olive) / 0.6));
+  filter: drop-shadow(0 1px 2px hsl(var(--ink) / 0.6));
 }
 .margin-profile-username-hint {
   max-width: 32ch;

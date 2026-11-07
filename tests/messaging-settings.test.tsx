@@ -168,6 +168,31 @@ it("discloses time-zone editing without changing the saved zone until Save succe
     ),
   );
 });
+it("keeps the saved settings and member navigation after an unreadable save response", async () => {
+  const user = userEvent.setup();
+  request.mockImplementation(async (url) => {
+    if (url === "/api/member/preferences") return Response.json(null);
+    if (url === "/api/member/context") return Response.json(identity);
+    return Response.json({ activity: [], nextCursor: null });
+  });
+  render(
+    view(
+      <MemberSettings
+        initial={identity}
+        safety={{ blocked: [], reports: [] }}
+      />,
+    ),
+  );
+  const toggle = screen.getByRole("checkbox", { name: /Allow messaging/ });
+  await user.click(toggle);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Please try again",
+  );
+  expect(toggle).toBeChecked();
+  expect(toggle).not.toBeDisabled();
+  expect(screen.queryByText("Saved", { exact: true })).not.toBeInTheDocument();
+  expect(screen.getAllByRole("link", { name: "Messages" })).toHaveLength(2);
+});
 it.each([
   ["radio", "Larger", "readingSize", "larger"],
   ["radio", "Reduce motion", "motion", "reduced"],

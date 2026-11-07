@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test(
-  "highlights the displayed conversation from entry with the light green selection and olive border",
+  "highlights the displayed conversation from entry with the cinnamon selection and olive border",
   { tag: "@extended" },
   async ({ page, isMobile }, info) => {
     await page.goto("/preview/auth?view=member&area=messages");
@@ -20,26 +20,26 @@ test(
     await expect(notebook).toHaveAttribute("data-active", "true");
     await expect(notebook).toHaveCSS(
       "background-color",
-      isMobile ? "rgb(255, 255, 255)" : "rgba(185, 198, 90, 0.35)",
+      isMobile ? "rgb(252, 251, 250)" : "rgba(201, 155, 97, 0.28)",
     );
     await expect(notebook).toHaveCSS(
       "border-top-color",
-      isMobile ? "rgb(223, 227, 229)" : "rgb(138, 145, 110)",
+      isMobile ? "rgb(218, 218, 216)" : "rgb(119, 117, 54)",
     );
     await page
       .getByRole("button", { name: "Open conversation with Alex Example" })
       .click();
     await expect(page.locator(".margin-thread")).toHaveCSS(
       "border-top-color",
-      "rgb(138, 145, 110)",
+      "rgb(119, 117, 54)",
     );
     if (!isMobile) {
       await expect(
         page.locator('.margin-thread-choice[data-active="true"]'),
-      ).toHaveCSS("background-color", "rgba(185, 198, 90, 0.35)");
+      ).toHaveCSS("background-color", "rgba(201, 155, 97, 0.28)");
       await expect(notebook).toHaveCSS(
         "background-color",
-        "rgb(255, 255, 255)",
+        "rgb(252, 251, 250)",
       );
     } else await page.getByRole("button", { name: "Back to messages" }).click();
     await page.getByRole("button", { name: "Open notebook" }).click();
@@ -54,12 +54,9 @@ test(
     if (!isMobile) {
       await expect(notebook).toHaveCSS(
         "background-color",
-        "rgba(185, 198, 90, 0.35)",
+        "rgba(201, 155, 97, 0.28)",
       );
-      await expect(notebook).toHaveCSS(
-        "border-top-color",
-        "rgb(138, 145, 110)",
-      );
+      await expect(notebook).toHaveCSS("border-top-color", "rgb(119, 117, 54)");
     }
     await captureScreenshot(page, {
       path: info.outputPath("notebook-selection.png"),

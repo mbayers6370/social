@@ -20,6 +20,10 @@ export const PUBLIC_PAGE_PATHS = [
 export const isPublicPage = (pathname: string) =>
   PUBLIC_PAGE_PATHS.some((path) => path === pathname);
 
+/** Anonymous public-site submission only; private account APIs remain protected. */
+export const isPublicSubmission = (pathname: string) =>
+  pathname === "/api/waitlist";
+
 /** Shared exact allowlist for authentication and country access; no asset suffix exemptions. */
 const PUBLIC_ASSET_PATHS = [
   "/icon",

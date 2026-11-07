@@ -33,7 +33,7 @@
   display: none;
 }
 .margin-auth-panel h1 {
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
   font: var(--text-heading-lg)/1.2 var(--font-serif);
   letter-spacing: -0.025em;
 }
@@ -67,7 +67,7 @@
 }
 .margin-auth-unavailable h2 {
   font: var(--text-heading-sm)/1.3 var(--font-serif);
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-auth-next {
   margin-top: 24px;
@@ -104,7 +104,7 @@
 .margin-account-confirmation input {
   width: 20px;
   height: 20px;
-  accent-color: hsl(var(--blackened-olive));
+  accent-color: hsl(var(--ink));
 }
 .margin-account-controls,
 .margin-account-menu-actions {
@@ -141,7 +141,7 @@
 }
 .margin-invitation-title {
   padding-right: 28px;
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
   font: var(--text-heading-sm)/1.3 var(--font-serif);
   letter-spacing: -0.025em;
 }
@@ -179,7 +179,7 @@
   cursor: pointer;
 }
 .margin-invitation-text-action:hover {
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-invitation-help:not([hidden]) {
   display: grid;
@@ -274,7 +274,7 @@
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  accent-color: hsl(var(--blackened-olive));
+  accent-color: hsl(var(--ink));
   margin-top: 3px;
 }
 .margin-export-categories > label > span {
@@ -320,14 +320,14 @@
   background: hsl(var(--card));
 }
 .margin-report-button {
-  color: #8b9092;
+  color: hsl(var(--muted-foreground));
   width: 44px;
   height: 44px;
   padding: 0;
 }
 .margin-report-button:hover,
 .margin-report-button:focus-visible {
-  color: hsl(var(--muted-foreground));
+  color: hsl(var(--ink));
 }
 .margin-blocked-people,
 .margin-saved-reports {

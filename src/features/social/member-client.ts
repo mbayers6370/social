@@ -1,5 +1,6 @@
 "use client";
 import type { SpaceClient } from "@/features/spaces/client";
+import { memberIdentitySchema, type MemberIdentity } from "./member-contracts";
 export class MemberRequestError extends Error {
   readonly status: number;
   readonly uncertain: boolean;
@@ -42,6 +43,22 @@ export async function requestMember<T>(
       response.status >= 500 && !["GET", "HEAD"].includes(init.method ?? "GET"),
     );
   return data as T;
+}
+/** An unreadable success must never replace the last valid account state. */
+export async function requestMemberIdentity(
+  client: SpaceClient,
+  url: string,
+  init: RequestInit = {},
+): Promise<MemberIdentity> {
+  const data = await requestMember<unknown>(client, url, init);
+  const identity = memberIdentitySchema.safeParse(data);
+  if (!identity.success)
+    throw new MemberRequestError(
+      "Margin returned an incomplete account response. Please try again.",
+      502,
+      !["GET", "HEAD"].includes((init.method ?? "GET").toUpperCase()),
+    );
+  return identity.data;
 }
 export const memberJson = (method: string, value: unknown): RequestInit => ({
   method,

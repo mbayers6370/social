@@ -17,6 +17,15 @@ it("keeps policies draft with the live support contact and no category eyebrows"
     const page = new DOMParser().parseFromString(html, "text/html");
     expect(page.querySelectorAll("h1")).toHaveLength(1);
     expect(page.querySelector(".margin-public-kicker")).toBeNull();
+    if (document === publicDocuments["why-margin"]) {
+      const about = page.getElementById("about")!;
+      expect(about.textContent).toContain(
+        "After a long shift, on my drive home",
+      );
+      expect(
+        about.querySelector('img[alt="Matthew wearing glasses and an apron."]'),
+      ).not.toBeNull();
+    }
     expect(page.body.textContent).not.toMatch(
       /mailbox.*pending|intended support contact/i,
     );
@@ -101,12 +110,16 @@ it("renders the public home and footer as server markup with valid public destin
   const page = new DOMParser().parseFromString(html, "text/html");
   expect(page.querySelectorAll("main")).toHaveLength(1);
   expect(page.querySelectorAll("h1")).toHaveLength(1);
+  expect(
+    page.querySelector('img[alt="Matthew wearing glasses and an apron."]'),
+  ).toBeNull();
+  expect(page.body.textContent).not.toContain("Why I made Margin");
   expect(page.querySelector("footer")?.textContent).toContain(
     "A little less, a little closer.",
   );
   expect(
     [...page.querySelectorAll("footer h2")].map((node) => node.textContent),
-  ).toEqual(["Explore", "Support", "Legal"]);
+  ).toEqual(["Explore", "Support", "Legal", "Your information"]);
   for (const link of page.querySelectorAll<HTMLAnchorElement>("a"))
     expect(
       isPublicPage(
@@ -115,36 +128,46 @@ it("renders the public home and footer as server markup with valid public destin
       ),
     ).toBe(true);
   expect(html).not.toContain("Ines");
-  expect(page.querySelectorAll("form, iframe, video, audio")).toHaveLength(0);
+  expect(page.querySelectorAll("iframe, video, audio")).toHaveLength(0);
   const hero = page.querySelector<HTMLElement>(".margin-public-hero")!;
   expect(hero.textContent).not.toContain("grown through personal invitations.");
+  expect(hero.querySelector("h1")?.textContent).toBe(
+    "A feed that ends. Imagine.",
+  );
+  expect(hero.querySelector(".margin-public-intro")?.textContent).toBe(
+    "A private social space for the people you actually know. Invite-only. Three posts a day. No ads, no algorithm.",
+  );
   const primary = hero.querySelector<HTMLAnchorElement>(".margin-welcome-cta")!;
   expect(primary.getAttribute("href")).toBe("/how-it-works");
   expect(primary.textContent).toBe("Membership by invitation");
-  expect(page.getElementById("welcome-preview")).not.toBeNull();
+  expect(page.getElementById("welcome-preview")?.tagName).toBe("FIGURE");
   expect(page.querySelector(".margin-welcome-joining")?.textContent).toContain(
     "Open it to create your account and join them on Margin.",
   );
   expect(page.querySelectorAll('a[href="/sign-up"]')).toHaveLength(0);
-  expect(hero.querySelectorAll("figure")).toHaveLength(1);
-  const preview = page.querySelector("figure")!;
-  expect(preview.getAttribute("aria-label")).toBe("Feed and conversation");
-  expect(preview.textContent).toContain("That’s everything for now.");
-  // The bounded public control opens only fictional discussion, never private app data.
-  expect(preview.querySelectorAll("button")).toHaveLength(2);
-  expect(preview.querySelector("button")?.getAttribute("aria-expanded")).toBe(
-    "false",
-  );
-  expect(preview.querySelectorAll("a, input, textarea")).toHaveLength(0);
-  const photo = preview.querySelector("img")!;
-  expect(photo.getAttribute("loading")).toBe("eager");
-  expect(photo.getAttribute("fetchPriority")?.toLowerCase()).toBe("high");
-  expect(photo.getAttribute("alt")).toBeTruthy();
-  expect(photo.getAttribute("src")).toContain("coffee-shop");
+  expect(page.querySelectorAll(".margin-welcome-basics > li")).toHaveLength(3);
+  expect(page.querySelectorAll('input[type="email"]')).toHaveLength(1);
+  expect(page.querySelectorAll(".margin-welcome-faq")).toHaveLength(0);
+  expect(
+    page.querySelectorAll(".margin-welcome-privacy, .margin-welcome-step"),
+  ).toHaveLength(0);
+  expect(page.body.textContent).toContain("Join for invitation news only");
+  expect(hero.querySelectorAll("figure")).toHaveLength(0);
+  expect(page.querySelector(".margin-welcome-overview")).toBeNull();
+  expect(page.body.textContent).not.toContain("All caught up.");
+  expect(page.body.textContent).not.toContain("A different kind of social");
+  for (const removed of [
+    "A small gallery of photographs, chosen by you.",
+    "And just like that, Saturday has plans.",
+    "A little later, in messages…",
+  ])
+    expect(page.body.textContent).not.toContain(removed);
   const messages = page.querySelector(
     'figure[aria-label="Messages between friends"]',
   )!;
   expect(messages.textContent).toContain("Coffee there this weekend?");
+  expect(page.getElementById("welcome-preview")).toBe(messages);
+  expect(hero.querySelector('a[href="#welcome-preview"]')).not.toBeNull();
   expect(messages.querySelectorAll("button, a, input, textarea")).toHaveLength(
     0,
   );
@@ -152,14 +175,13 @@ it("renders the public home and footer as server markup with valid public destin
     /encrypted|end.to.end|delivered|online/i,
   );
   expect(hero.contains(messages)).toBe(false);
-  for (const id of [
-    "welcome-pace-title",
-    "welcome-connection-title",
-    "welcome-gallery-title",
-  ])
+  for (const id of ["welcome-connection-title", "welcome-gallery-title"])
     expect(page.getElementById(id)?.tagName).toBe("H2");
   const gallery = page.querySelector(".margin-welcome-gallery")!;
   expect(gallery.querySelectorAll("img")).toHaveLength(3);
+  expect(gallery.querySelectorAll("figcaption")).toHaveLength(0);
+  expect(page.body.textContent).not.toContain("10:14 am");
+  expect(page.querySelector(".margin-welcome-invitation a")).toBeNull();
   expect(gallery.querySelectorAll("button, a")).toHaveLength(0);
   for (const link of page.querySelectorAll<HTMLAnchorElement>(
     'a[href^="/how-it-works#"]',

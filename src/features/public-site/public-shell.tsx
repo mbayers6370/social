@@ -7,12 +7,9 @@ export const publicHomeHref = () =>
   process.env.NODE_ENV === "development" ? "/welcome" : "/";
 export function PublicFooter() {
   return (
-    <footer className="margin-public-footer">
+    <footer className="margin-public-footer margin-navigation-theme">
       <div className="margin-public-footer-inner">
-        <nav
-          className="margin-public-footer-groups margin-navigation-theme"
-          aria-label="Footer"
-        >
+        <nav className="margin-public-footer-groups" aria-label="Footer">
           {publicFooterGroups.map((group) => (
             <div key={group.title} data-footer-group={group.title}>
               <h2>{group.title}</h2>
@@ -26,7 +23,7 @@ export function PublicFooter() {
             </div>
           ))}
         </nav>
-        <div className="margin-public-footer-bottom margin-navigation-theme">
+        <div className="margin-public-footer-bottom">
           <span>© 2026 margin</span>
           <span>A little less, a little closer.</span>
         </div>
@@ -57,10 +54,11 @@ export function PublicTextLink({
   children: ReactNode;
   "aria-describedby"?: string;
 }) {
+  const Component = href.startsWith("#") ? "a" : Link;
   return (
-    <Link href={href} className="margin-public-text-link" {...props}>
+    <Component href={href} className="margin-public-text-link" {...props}>
       {children}
       <ChevronRight aria-hidden="true" />
-    </Link>
+    </Component>
   );
 }

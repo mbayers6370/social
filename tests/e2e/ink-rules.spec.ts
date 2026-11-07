@@ -45,7 +45,7 @@ test("keeps dry ink grain and straight caps at different widths", async ({
   expect(pixel(100, 15)).toEqual([255, 255, 255]);
 });
 
-test("retains separator layout and original light/dark alpha colors", async ({
+test("retains separator layout and shared gray/olive colors", async ({
   page,
 }) => {
   const geometry = await page.locator(".edges").evaluateAll((elements) =>
@@ -77,7 +77,7 @@ test("retains separator layout and original light/dark alpha colors", async ({
     width: 240,
     height: 40,
     border: "1px",
-    color: "rgba(250, 249, 246, 0.25)",
+    color: "rgb(119, 117, 54)",
     ruleHeight: "16px",
   });
   for (const divider of geometry)

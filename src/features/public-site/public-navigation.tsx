@@ -3,10 +3,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAccountSession } from "@/components/auth/account-session";
 import { LiveAppNavigation } from "@/components/layout/live-app-shell";
+import { ScrollHeader } from "@/components/layout/scroll-header";
 import { MemberProvider } from "@/features/social/member-provider";
 import {
   MemberRequestError,
-  requestMember,
+  requestMemberIdentity,
 } from "@/features/social/member-client";
 import type { MemberIdentity } from "@/features/social/member-contracts";
 import { useSpaceClient } from "@/features/spaces/client";
@@ -29,7 +30,7 @@ export function PublicNavigation({ homeHref }: { homeHref: string }) {
   useEffect(() => {
     if (!id || !canLoad) return;
     const controller = new AbortController();
-    void requestMember<MemberIdentity>(client, "/api/member/context", {
+    void requestMemberIdentity(client, "/api/member/context", {
       signal: controller.signal,
     }).then(
       (identity) => {
@@ -52,7 +53,7 @@ export function PublicNavigation({ homeHref }: { homeHref: string }) {
       </MemberProvider>
     );
   return (
-    <header className="margin-public-header margin-topbar margin-navigation-theme">
+    <ScrollHeader className="margin-public-header margin-topbar margin-navigation-theme">
       <PublicHomeLink signedOutHref={homeHref} />
       <nav aria-label="Public navigation" className="margin-public-primary">
         <Link href="/why-margin" className="margin-public-information">
@@ -84,7 +85,12 @@ export function PublicNavigation({ homeHref }: { homeHref: string }) {
             Sign in
           </Link>
         )}
+        {(!session || (session.ready && !session.signedIn)) && (
+          <Link href="/how-it-works#joining" className="margin-public-join">
+            Have an invitation?
+          </Link>
+        )}
       </nav>
-    </header>
+    </ScrollHeader>
   );
 }

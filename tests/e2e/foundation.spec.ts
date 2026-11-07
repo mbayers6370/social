@@ -42,7 +42,7 @@ test("public shell is responsive, keyboard accessible, and uses a fresh CSP nonc
   const response = await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     process.env.PLAYWRIGHT_PRODUCTION === "1"
-      ? /A little less\.\s*A little closer\./
+      ? /A feed that ends\.\s*Imagine\./
       : "Feed",
   );
   // Safari's default link-navigation shortcut is Option-Tab.
@@ -194,7 +194,7 @@ test("production hides the workbench and excludes development CSP permissions", 
     expect(previewHtml).not.toContain("Ines Alvarez");
     expect(previewHtml).not.toContain("Meet at the lot");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      /A little less\.\s*A little closer\./,
+      /A feed that ends\.\s*Imagine\./,
     );
   }
   const csp = (await request.get("/")).headers()["content-security-policy"];

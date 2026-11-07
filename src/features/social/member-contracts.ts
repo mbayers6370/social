@@ -1,26 +1,32 @@
-import type { Person } from "@/features/feed/schema";
+import { z } from "zod";
+import { imageSchema, personSchema, type Person } from "@/features/feed/schema";
 import type { ProfileTrack } from "@/features/profile/schema";
-export type MemberPreferences = {
-  postingTimeZone?: string;
-  showTopFriends?: boolean;
-  readingSize: "standard" | "larger" | "extra-large";
-  motion: "system" | "reduced";
-  notifyComments: boolean;
-  notifyLikes: boolean;
-  notifyFriends: boolean;
-  notifyMessages: boolean;
-  messagingEnabled: boolean;
-};
-export type MemberIdentity = {
-  founder?: boolean;
-  person: Person;
-  username: string;
-  bio: string;
-  portraitPhotoId: string | null;
-  usernameChangedAt: string | null;
-  galleryVersion: number;
-  preferences: MemberPreferences;
-};
+export const memberPreferencesSchema = z.object({
+  postingTimeZone: z.string().optional(),
+  showTopFriends: z.boolean().optional(),
+  readingSize: z.enum(["standard", "larger", "extra-large"]),
+  motion: z.enum(["system", "reduced"]),
+  notifyComments: z.boolean(),
+  notifyLikes: z.boolean(),
+  notifyFriends: z.boolean(),
+  notifyMessages: z.boolean(),
+  messagingEnabled: z.boolean(),
+});
+export type MemberPreferences = z.infer<typeof memberPreferencesSchema>;
+export const memberIdentitySchema = z.object({
+  founder: z.boolean().optional(),
+  person: personSchema.extend({
+    // Live portraits use authenticated API URLs; feed fixtures use static assets.
+    photo: imageSchema.extend({ src: z.string().min(1) }).optional(),
+  }),
+  username: z.string(),
+  bio: z.string(),
+  portraitPhotoId: z.string().nullable(),
+  usernameChangedAt: z.string().nullable(),
+  galleryVersion: z.number().int().nonnegative(),
+  preferences: memberPreferencesSchema,
+});
+export type MemberIdentity = z.infer<typeof memberIdentitySchema>;
 export type MemberContact = {
   person: Person;
   username: string;
