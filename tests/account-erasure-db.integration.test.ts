@@ -122,6 +122,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           body: "Journal outage canary",
           hasLink: false,
           dayKey: "2026-11-05",
+          createdAt: now,
           expiresAt: new Date(now.getTime() + 86_400_000),
         },
       });
@@ -156,6 +157,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           createdBy: people[0].id,
           digest: randomUUID(),
           requestId: randomUUID(),
+          createdAt: now,
           expiresAt: new Date(now.getTime() + 86_400_000),
         },
       });
@@ -210,6 +212,7 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
           body: "Other member content",
           hasLink: false,
           dayKey: "2026-11-05",
+          createdAt: now,
           expiresAt: new Date(now.getTime() + 86_400_000),
         },
       });

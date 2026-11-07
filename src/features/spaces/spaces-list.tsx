@@ -10,6 +10,7 @@ import {
 } from "@/components/margin-icons";
 import { SectionTitle, SectionMotif } from "@/components/shared/section-motif";
 import { Button } from "@/components/ui/button";
+import { BrandCorner } from "@/components/shared/brand-brackets";
 import {
   Dialog,
   DialogContent,
@@ -73,37 +74,36 @@ export function SpacesList({ data }: { data: SpaceListData }) {
   const archived = visible.filter((space) => space.archivedAt);
   return (
     <section className="margin-spaces-page">
-      <header className="margin-spaces-heading">
-        <div>
+      <header className="margin-spaces-banner">
+        <BrandCorner className="margin-spaces-corner-start" />
+        <div className="margin-spaces-heading">
           <SectionTitle as="h1" motif={<SectionMotif icon={Spaces} />}>
             Spaces
           </SectionTitle>
-          <p>A place for your people, plans and shared moments.</p>
+          <Dialog open={create} onOpenChange={setCreate}>
+            <DialogTrigger asChild>
+              <Button>
+                <Add aria-hidden="true" />
+                New Space
+              </Button>
+            </DialogTrigger>
+            <DialogContent onEscapeKeyDown={preserveTimeZoneMenu}>
+              <DialogTitle>Create a Space</DialogTitle>
+              <DialogDescription>
+                A private place for your people, shared thoughts, and plans.
+              </DialogDescription>
+              <SpaceForm
+                onSaved={() => setCreate(false)}
+                onCancel={() => setCreate(false)}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
-        <Dialog open={create} onOpenChange={setCreate}>
-          <DialogTrigger asChild>
-            <Button>
-              <Add aria-hidden="true" />
-              New Space
-            </Button>
-          </DialogTrigger>
-          <DialogContent onEscapeKeyDown={preserveTimeZoneMenu}>
-            <DialogTitle>Create a Space</DialogTitle>
-            <DialogDescription>
-              A private place for your people, shared thoughts, and plans.
-            </DialogDescription>
-            <SpaceForm
-              onSaved={() => setCreate(false)}
-              onCancel={() => setCreate(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <p className="margin-spaces-description">
+          A place for your people, plans and shared moments.
+        </p>
+        <BrandCorner className="margin-spaces-corner-end" />
       </header>
-      <p className="margin-space-privacy">
-        <Lock aria-hidden="true" size={14} />
-        Spaces are invitation-only.
-        {eventSpacesEnabled && " Event Spaces are open to Margin members."}
-      </p>
       {data.invitations.length > 0 && (
         <section
           id="space-invitations"
@@ -126,12 +126,17 @@ export function SpacesList({ data }: { data: SpaceListData }) {
           </ul>
         </section>
       )}
-      {current.length > 0 && (
-        <section className="margin-spaces-group">
-          <h2>Your Spaces</h2>
+      <section className="margin-spaces-group">
+        <h2>Your Spaces</h2>
+        <p className="margin-space-privacy">
+          <Lock aria-hidden="true" size={14} />
+          Spaces are invitation-only.
+          {eventSpacesEnabled && " Event Spaces are open to Margin members."}
+        </p>
+        {current.length > 0 && (
           <SpaceRows spaces={current} label="Your Spaces" />
-        </section>
-      )}
+        )}
+      </section>
       {archived.length > 0 && (
         <section className="margin-spaces-group">
           <h2>Archived</h2>

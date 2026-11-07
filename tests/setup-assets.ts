@@ -2,6 +2,13 @@ import { vi } from "vitest";
 
 // Vitest doesn't run Next's static-image loader. Mirror its metadata contract;
 // Playwright verifies the real loader, optimized image responses, and rendering.
+vi.mock("@/assets/public-site/matthew-headshot.png", () => ({
+  default: {
+    src: "/_next/static/media/matthew-headshot.test.png",
+    width: 941,
+    height: 1672,
+  },
+}));
 vi.mock("@/assets/fixtures/coffee-shop.jpg", () => ({
   default: {
     src: "/_next/static/media/coffee-shop.test.jpg",

@@ -1,8 +1,8 @@
 /* Inbox, message thread, composer and mobile full-screen shell state. */
-.margin-app:has(.margin-messages) {
-  background: #fff;
-}
 .margin-messages {
+  /* Sulphur canvas outside a white reading panel; cinnamon marks personal state. */
+  --conversation: var(--card);
+  --message-outgoing: var(--accent);
   max-width: 1168px;
   margin: 0 auto;
 }
@@ -40,14 +40,14 @@
   max-width: 100%;
   align-items: start;
   padding: 15px 11px;
-  border: 1px solid #dfe3e5;
+  border: 1px solid hsl(var(--border));
   border-radius: 12px;
-  background: #fff;
+  background: hsl(var(--card));
   overflow: hidden;
   text-align: left;
 }
 .margin-thread-choice:hover {
-  background: #f5f7f8;
+  background: hsl(var(--accent));
 }
 .margin-thread-choice > :is(.margin-avatar-link, .margin-notebook-icon) {
   align-self: center;
@@ -100,6 +100,7 @@
   background: hsl(var(--foreground));
 }
 .margin-thread {
+  --message-panel-inset: 16px;
   display: none;
   min-width: 0;
   min-height: 0;
@@ -122,12 +123,14 @@
   display: none;
 }
 .margin-thread-header {
+  --message-header-padding: 8px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: max(12px, env(safe-area-inset-top)) 16px 12px;
-  min-height: 76px;
+  gap: 12px;
+  padding: max(var(--message-header-padding), env(safe-area-inset-top))
+    var(--message-panel-inset) var(--message-header-padding);
+  min-height: calc(44px + 2 * var(--message-header-padding));
   background: hsl(var(--conversation));
   color: hsl(var(--ink));
 }
@@ -141,7 +144,7 @@
   min-width: 0;
 }
 .margin-thread-person h2 {
-  font: var(--text-title)/1.3 var(--font-serif);
+  font: 500 var(--text-body)/1.5 var(--font-body);
   overflow-wrap: anywhere;
 }
 .margin-thread-links > :is(a, span) {
@@ -157,9 +160,20 @@
   color: hsl(var(--muted-foreground));
 }
 .margin-message-retention {
+  --divider-top-color: hsl(var(--border));
+  --message-retention-padding: 4px;
+  position: relative;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0 12px;
   margin: 0;
-  padding: 8px 16px;
+  /* Match the export control's row even when Notebook has no action. */
+  min-height: calc(44px + 2 * var(--message-retention-padding) + 1px);
+  padding: var(--message-retention-padding) var(--message-panel-inset);
+  border-top: 1px solid transparent;
   font-size: var(--text-meta);
   line-height: 1.5;
   color: hsl(var(--muted-foreground));
@@ -206,7 +220,7 @@
   font-weight: 400;
 }
 .margin-thread-scroll {
-  --message-history-inset: 16px;
+  --message-history-inset: var(--message-panel-inset);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -237,10 +251,10 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 4px 12px;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 @media (max-width: 1023px) {
-  .margin-thread-links > a {
+  .margin-thread-links > :is(a, span) {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -288,12 +302,12 @@
   border-radius: 17px 17px 17px 3px;
   padding: 8px 12px;
   font: 500 var(--text-body)/1.5 var(--font-post);
-  background: hsl(var(--card));
+  background: hsl(var(--muted));
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 .margin-message-row[data-direction="outgoing"] .margin-message-bubble {
-  background: hsl(var(--border) / 0.65);
+  background: hsl(var(--message-outgoing));
   border-radius: 17px 17px 3px 17px;
 }
 .margin-message-row > time {
@@ -314,7 +328,7 @@
 .margin-notebook-entry[data-day-start="true"] {
   position: relative;
   padding-top: var(--space-group);
-  --divider-top-color: hsl(var(--border));
+  --divider-top-color: hsl(var(--warm-accent) / 0.65);
   border-top: 1px solid transparent;
 }
 .margin-notebook-meta {
@@ -350,7 +364,7 @@
   height: 44px;
   border: 1px solid currentColor;
   border-radius: 50%;
-  background: transparent;
+  background: hsl(var(--warm-accent) / 0.2);
   color: inherit;
 }
 .margin-notebook-icon svg {
@@ -360,7 +374,8 @@
 .margin-message-composer {
   flex-shrink: 0;
   margin-top: auto;
-  padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+  padding: 12px var(--message-panel-inset)
+    max(16px, env(safe-area-inset-bottom));
   background: hsl(var(--conversation));
 }
 .margin-message-input {
@@ -447,6 +462,7 @@
   }
   .margin-thread,
   .margin-messages[data-thread-open="true"] .margin-thread {
+    --message-panel-inset: 20px;
     display: flex;
     position: static;
     flex-direction: column;
@@ -464,13 +480,11 @@
   .margin-thread-choice[data-active="true"] {
     --muted-foreground: var(--ink);
     border-color: hsl(var(--button-border));
-    background: hsl(var(--citron) / 0.35);
+    background: hsl(var(--warm-accent) / 0.28);
     color: hsl(var(--ink));
   }
   .margin-thread-header {
-    margin-inline: 32px;
-    padding: 16px 0;
-    min-height: 76px;
+    --message-header-padding: 12px;
   }
   .margin-thread-header .margin-thread-back {
     display: none;
@@ -480,14 +494,8 @@
     width: 40px;
     font-size: var(--text-body);
   }
-  .margin-thread-scroll {
-    --message-history-inset: 32px;
-  }
-  .margin-message-retention {
-    padding-inline: 32px;
-  }
   .margin-message-composer {
-    margin-inline: 32px;
+    margin-inline: var(--message-panel-inset);
     padding: 16px 0 24px;
   }
   .margin-message-input {

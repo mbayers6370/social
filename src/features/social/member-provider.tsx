@@ -13,7 +13,7 @@ import {
 } from "react";
 import { useSpaceClient } from "@/features/spaces/client";
 import type { MemberIdentity } from "./member-contracts";
-import { requestMember } from "./member-client";
+import { requestMemberIdentity } from "./member-client";
 
 const Context = createContext<{
   identity: MemberIdentity;
@@ -72,11 +72,9 @@ export function MemberProvider({
   );
   const loadIdentity = useCallback(
     async (signal: AbortSignal) => {
-      const next = await requestMember<MemberIdentity>(
-        client,
-        "/api/member/context",
-        { signal },
-      );
+      const next = await requestMemberIdentity(client, "/api/member/context", {
+        signal,
+      });
       if (!signal.aborted) setIdentity(next);
     },
     [client],

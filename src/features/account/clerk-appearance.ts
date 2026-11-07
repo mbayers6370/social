@@ -19,8 +19,8 @@ export const clerkAppearance = {
     colorInputForeground: "hsl(var(--ink))",
     colorInput: "hsl(var(--background))",
     colorBackground: "hsl(var(--card))",
-    // Text links need Olive's contrast; the primary action uses Citron below.
-    colorPrimary: "hsl(var(--blackened-olive))",
+    // Text links use dark ink; primary actions share the application button pair.
+    colorPrimary: "hsl(var(--ink))",
     colorPrimaryForeground: "hsl(var(--parchment))",
     borderRadius: "var(--radius-control)",
   },
@@ -60,7 +60,7 @@ export const clerkAppearance = {
       padding: "8px 16px",
       fontSize: "0.875rem",
       fontWeight: "500",
-      background: "hsl(var(--citron))",
+      background: "hsl(var(--primary))",
       backgroundImage: "none",
       color: "hsl(var(--primary-foreground))",
       border: "1px solid hsl(var(--button-border))",
@@ -78,7 +78,7 @@ export const clerkAppearance = {
       '&[data-variant="solid"]:not(:disabled)': {
         boxShadow: "none",
         "&:hover, &:active": {
-          background: "hsl(var(--citron) / 0.9)",
+          background: "hsl(var(--primary-hover))",
           boxShadow: "none",
         },
       },

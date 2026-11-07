@@ -6,7 +6,7 @@
   align-items: flex-start;
   gap: 16px;
   padding-block: 16px 0;
-  --divider-top-color: hsl(var(--border) / 0.65);
+  --divider-top-color: hsl(var(--separator));
   border-top: 1px solid transparent;
   font: var(--text-meta)/1.6 var(--font-body);
   color: hsl(var(--muted-foreground));
@@ -23,9 +23,6 @@
 }
 .margin-app-footer nav ul {
   list-style: none;
-}
-.margin-app-footer [data-footer-group="Legal"] {
-  grid-column: 1 / -1;
 }
 .margin-app-footer a {
   display: inline-flex;
@@ -58,16 +55,6 @@
     display: none;
   }
   .margin-settings-page .margin-app-footer nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .margin-settings-page .margin-app-footer [data-footer-group="Legal"] {
-    grid-column: auto;
-  }
-  .margin-settings-page .margin-app-footer [data-footer-group="Legal"] ul {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(3, auto);
-    grid-auto-flow: column;
-    column-gap: 24px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

@@ -14,6 +14,7 @@
   --accent: var(--header-accent);
   --accent-foreground: var(--header-foreground);
   --primary: var(--ink);
+  --primary-hover: var(--header-accent);
   --primary-foreground: var(--header-foreground);
   --ring: var(--header-foreground);
   --avatar-paper: var(--header-accent);
@@ -21,9 +22,32 @@
   --avatar-sand: var(--header-accent);
   --avatar-border: hsl(
     var(--ink)
-  ); /* darker than Citron, including selected states */
+  ); /* dark outline, including selected states */
   background: hsl(var(--header));
   color: hsl(var(--header-foreground));
+}
+@media (max-width: 1023px) {
+  .margin-scroll-header {
+    position: sticky;
+    top: 0;
+    z-index: 35;
+    transition: top 160ms ease-out;
+  }
+  .margin-scroll-header[data-scroll-hidden="true"] {
+    top: calc(-1 * var(--scroll-header-height, var(--margin-header-height)));
+  }
+  .margin-scroll-header:has(:focus-visible) {
+    top: 0;
+    transition: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .margin-scroll-header {
+    transition: none;
+  }
+}
+html[data-motion="reduced"] .margin-scroll-header {
+  transition: none;
 }
 .margin-topbar::after {
   content: "";
@@ -95,7 +119,7 @@
   border-radius: 50%;
 }
 .margin-avatar-link:hover .margin-avatar {
-  box-shadow: 0 0 0 2px hsl(var(--citron));
+  box-shadow: 0 0 0 2px hsl(var(--highlight));
 }
 [data-photo-open] > img {
   cursor:
@@ -150,7 +174,7 @@
   flex: none;
   width: 20px;
   height: 20px;
-  color: hsl(var(--citron));
+  color: hsl(var(--olive));
   pointer-events: none;
 }
 .margin-section-heading h2 {

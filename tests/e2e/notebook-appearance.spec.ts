@@ -9,15 +9,15 @@ test("Notebook uses an animated outlined book and the shared light conversation 
   await expect(row).toBeVisible();
   await expect(row).toHaveCSS(
     "background-color",
-    isMobile ? "rgb(255, 255, 255)" : "rgba(185, 198, 90, 0.35)",
+    isMobile ? "rgb(252, 251, 250)" : "rgba(201, 155, 97, 0.28)",
   );
   await expect(row.locator(".margin-notebook-icon")).toHaveCSS(
     "background-color",
-    "rgba(0, 0, 0, 0)",
+    "rgba(201, 155, 97, 0.2)",
   );
   await expect(row.locator(".margin-notebook-icon")).toHaveCSS(
     "border-top-color",
-    "rgb(48, 56, 61)",
+    "rgb(40, 40, 32)",
   );
   await expect(row.locator(".margin-notebook-icon svg")).toHaveAttribute(
     "data-animate",
@@ -25,24 +25,24 @@ test("Notebook uses an animated outlined book and the shared light conversation 
   );
   await expect(row.locator(".margin-notebook-icon svg")).toHaveCSS(
     "color",
-    "rgb(48, 56, 61)",
+    "rgb(40, 40, 32)",
   );
   await row.getByRole("button", { name: "Open notebook" }).click();
   const notebook = page.getByRole("region", { name: "Notebook", exact: true });
   await expect(notebook).toBeVisible();
   const header = notebook.locator(".margin-thread-header");
-  await expect(header).toHaveCSS("background-color", "rgb(243, 242, 240)");
+  await expect(header).toHaveCSS("background-color", "rgb(252, 251, 250)");
   await expect(header.locator(".margin-notebook-icon")).toHaveCSS(
     "background-color",
-    "rgba(0, 0, 0, 0)",
+    "rgba(201, 155, 97, 0.2)",
   );
   await expect(header.locator(".margin-notebook-icon")).toHaveCSS(
     "border-top-color",
-    "rgb(48, 56, 61)",
+    "rgb(40, 40, 32)",
   );
   await expect(header.locator(".margin-notebook-icon svg")).toHaveCSS(
     "color",
-    "rgb(48, 56, 61)",
+    "rgb(40, 40, 32)",
   );
   await expect(header.locator(".margin-page")).toHaveCSS(
     "animation-name",

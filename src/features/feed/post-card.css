@@ -159,7 +159,7 @@
   background: color-mix(in srgb, hsl(var(--background)) 94%, black);
 }
 .margin-conversation-trigger[aria-expanded="true"] {
-  background: hsl(var(--citron) / 0.2);
+  background: hsl(var(--highlight) / 0.2);
   color: hsl(var(--foreground));
 }
 .margin-post-card-preview {

@@ -88,7 +88,7 @@
   background: hsl(var(--card));
 }
 .margin-file-picker:hover {
-  border-color: hsl(var(--blackened-olive) / 0.65);
+  border-color: hsl(var(--ink) / 0.65);
 }
 .margin-file-picker:focus-within {
   outline: 2px solid hsl(var(--ring));
@@ -103,7 +103,7 @@
 .margin-file-picker-mark {
   display: grid;
   place-items: center;
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-file-picker-mark svg {
   width: 24px;
@@ -132,7 +132,7 @@
   border-radius: var(--radius-control);
   border: 1px solid hsl(var(--button-border));
   background: transparent;
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
   font: 400 var(--text-control)/1.5 var(--font-body);
 }
 .margin-upload-choose svg {
@@ -186,7 +186,7 @@
 }
 
 .margin-photo-library button[aria-pressed="true"] {
-  border-color: hsl(var(--blackened-olive));
+  border-color: hsl(var(--ink));
 }
 .margin-photo-selected-mark {
   position: absolute;
@@ -197,8 +197,8 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: hsl(var(--citron));
-  color: hsl(var(--blackened-olive));
+  background: hsl(var(--highlight));
+  color: hsl(var(--ink));
   box-shadow: 0 1px 4px hsl(var(--ink) / 0.2);
 }
 .margin-photo-selected-mark svg {

@@ -170,6 +170,7 @@ try {
                         "tests/retention-db.integration.test.ts",
                         "tests/account-erasure-db.integration.test.ts",
                         "tests/review-remediation-db.integration.test.ts",
+                        "tests/waitlist-db.integration.test.ts",
                       ]),
     ],
     { cwd: root, env: { ...env, RUN_PRIVATE_DB_TESTS: "1" }, stdio: "inherit" },

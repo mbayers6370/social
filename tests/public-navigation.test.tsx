@@ -93,6 +93,9 @@ it("makes no member requests for signed-out visitors and keeps public sign in", 
     "href",
     "/sign-in",
   );
+  expect(
+    screen.getByRole("link", { name: "Have an invitation?" }),
+  ).toHaveAttribute("href", "/how-it-works#joining");
   expect(screen.getByRole("link", { name: "margin home" })).toHaveAttribute(
     "href",
     "/",
@@ -147,6 +150,21 @@ it("routes signed-in accounts needing activation to setup without granting membe
     screen.queryByRole("link", { name: "Sign in" }),
   ).not.toBeInTheDocument();
 });
+it.each([null, { ...sampleIdentity, preferences: null }])(
+  "keeps account recovery available for an invalid successful identity response: %j",
+  async (identity) => {
+    request.mockImplementation(async () => Response.json(identity));
+    await act(async () => render(page()));
+    expect(
+      screen.getByRole("link", { name: "Back to Margin" }),
+    ).toHaveAttribute("href", "/app/feed");
+    expect(
+      screen.queryByRole("navigation", { name: "Primary" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Public help remains readable.")).toBeVisible();
+    expect(session.leave).not.toHaveBeenCalled();
+  },
+);
 it("discards stale identity responses when the session changes and removes member UI after sign out", async () => {
   let finish: (response: Response) => void = () => {};
   request.mockImplementationOnce(

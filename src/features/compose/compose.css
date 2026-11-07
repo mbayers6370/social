@@ -12,7 +12,7 @@
   border-radius: var(--radius-card);
   background: hsl(var(--card));
   color: hsl(var(--ink));
-  --ring: var(--blackened-olive);
+  --ring: var(--ink);
 }
 .margin-feed-composer .margin-avatar {
   --margin-avatar-size: 36px;
@@ -40,7 +40,7 @@
   color: hsl(var(--ink));
 }
 .margin-feed-compose-photo {
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
   background: transparent;
   border-radius: var(--radius-control);
 }
@@ -57,7 +57,7 @@
   }
 }
 .margin-feed-composer[data-dragging="true"] {
-  outline: 2px solid hsl(var(--blackened-olive));
+  outline: 2px solid hsl(var(--ink));
   outline-offset: 3px;
 }
 .margin-feed-drop-notice {
@@ -74,12 +74,12 @@
   display: inline-flex;
   height: 44px;
   border-color: hsl(var(--button-border));
-  background: hsl(var(--citron));
-  color: hsl(var(--blackened-olive));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 .margin-new-post-button:hover {
-  background: hsl(var(--citron) / 0.85);
-  color: hsl(var(--blackened-olive));
+  background: hsl(var(--primary-hover));
+  color: hsl(var(--primary-foreground));
 }
 .margin-compose-dialog {
   display: flex;
@@ -208,7 +208,7 @@ html[data-motion="reduced"] .margin-compose-inline {
   inset-block: 8px;
   inset-inline-start: 2px;
   width: calc(50% - 2px);
-  background: hsl(var(--blackened-olive));
+  background: hsl(var(--ink));
   transition: inset-inline-start 160ms ease;
 }
 .margin-compose-modes[data-mode="link"]::after {
@@ -260,7 +260,7 @@ html[data-motion="reduced"] .margin-compose-modes::after {
 .margin-post-photo-delete-option input {
   width: 18px;
   height: 18px;
-  accent-color: hsl(var(--blackened-olive));
+  accent-color: hsl(var(--ink));
 }
 .margin-compose-writing > :last-child {
   min-width: 0;
@@ -281,7 +281,7 @@ html[data-motion="reduced"] .margin-compose-modes::after {
   color: hsl(var(--header-foreground));
 }
 .margin-compose-modes button:focus-visible {
-  outline: 2px solid hsl(var(--blackened-olive));
+  outline: 2px solid hsl(var(--ink));
   outline-offset: -2px;
 }
 .margin-compose-modes button:disabled {

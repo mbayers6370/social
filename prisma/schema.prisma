@@ -7,6 +7,13 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Private invitation-news interest only; no membership or verified-email claim.
+model WaitlistEntry {
+  email          String   @id @db.VarChar(254)
+  createdAt      DateTime @default(now())
+  consentVersion String   @db.VarChar(40)
+}
+
 /// Internal application identity. Authentication is handled by Clerk; never store credentials here.
 model User {
   id              String         @id @default(cuid())

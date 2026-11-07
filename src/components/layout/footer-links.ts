@@ -22,6 +22,11 @@ export const publicFooterGroups = [
       ["Privacy", "/privacy"],
       ["Terms", "/terms"],
       ["Copyright", "/copyright"],
+    ],
+  },
+  {
+    title: "Your information",
+    links: [
       ["Your data", "/your-data"],
       ["Retention", "/retention"],
       ["Cookies", "/cookies"],

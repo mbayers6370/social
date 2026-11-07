@@ -59,6 +59,8 @@ The [repository review](repository-review.md) documents founder-only report revi
 
 ## Server integrations
 
+The public invitation-news waitlist uses an exact anonymous `POST /api/waitlist` boundary with same-origin JSON validation, consent, shared Redis abuse limits and canonical email deduplication in `WaitlistEntry`. There is no public list, lookup, account creation or email-send endpoint. Only the email, first submission timestamp and consent version are stored; rate-limit keys contain an address digest. The waitlist migration is additive and does not depend on pending account-erasure changes. `/join` accepts Margin invitation links and forwards only validated invitation paths and the existing claim-ticket parameter to the server-owned invitation flow.
+
 Clerk supplies account sessions. Prisma/PostgreSQL owns persistent data. The candidate private-social migration adds separate account activation, canonical friendship pairs, directional blocks, posts, canonical photos and gallery/post references while preserving the existing identity/music tables. Local music access uses a restricted development adapter; see [music setup](music-search.md).
 
 The shared `src/server/auth.ts` boundary verifies Clerk's signed request identity, then reads the current provider session and user after a distributed per-subject rate gate. It checks session ownership, active status, expiration/abandonment, user availability and verified primary email. React caching is request/render-scoped; no cross-request revocation cache is used. Provider or Redis failures deny access with sanitized recovery. Proxy protection is an early boundary; APIs and server actions still authenticate independently and domain services retain their ACTIVE-account authorization checks.

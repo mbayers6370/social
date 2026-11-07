@@ -1,4 +1,5 @@
 import { publicSiteDetails } from "./site-details";
+import matthewHeadshot from "@/assets/public-site/matthew-headshot.png";
 import {
   MINIMUM_AGE,
   POSTING_RULE_SUMMARY,
@@ -55,7 +56,21 @@ export const publicDocuments = {
       },
       {
         id: "about",
-        title: "About Margin",
+        title: "Why I made Margin",
+        portrait: {
+          image: matthewHeadshot,
+          alt: "Matthew wearing glasses and an apron.",
+          caption: "Matthew, creator of Margin",
+        },
+        paragraphs: [
+          "I developed Margin to get back to social media that isn’t hyperfocused on everyone else, but centered on the people you care about. A way to catch up without being bombarded by a trillion ads.",
+          "I really enjoy minimalism and try to practice it in my everyday life. After a long shift, on my drive home, I thought to myself: how would that look in social media form?",
+          "Could it be better? Is this what people want?",
+        ],
+      },
+      {
+        id: "project",
+        title: "An independent project",
         paragraphs: [
           "Margin is an individual’s independent project, based in California. Our planned launch is for adults in the United States, joining by invitation. An invitation doesn’t make you friends automatically; you both choose that separately.",
           "Questions or feedback? Email " +
@@ -461,6 +476,16 @@ export const publicDocuments = {
           "Content and activity: posts, links, comments, likes, photographs, Gallery arrangement, On Repeat, Top 4, messages and Notebook notes.",
           "Connections: friend requests, friendships, blocks, Space memberships, invitations, plans and RSVPs.",
           "Settings and requests: time zone, reading, motion, messaging and notification choices, reports, review requests and support correspondence.",
+        ],
+      },
+      {
+        id: "waitlist",
+        title: "Invitation waitlist",
+        paragraphs: [
+          "If you join the waitlist, we store your email address, submission time and the invitation-news consent version privately in Margin’s database. Joining does not create an account, verify ownership of the email address or guarantee an invitation. We use the address for invitation availability, not advertising.",
+          "There is no public list or email lookup. To have your waitlist address removed, contact " +
+            publicSiteDetails.supportEmail +
+            " from that address. The waitlist has no automated email campaign or automatic account registration.",
         ],
       },
       {

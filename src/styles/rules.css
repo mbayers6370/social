@@ -17,7 +17,7 @@
   .margin-public-contents,
   .margin-public-sections section + section,
   .margin-public-document-related,
-  .margin-welcome-conversation,
+  .margin-message-retention,
   .margin-welcome-differences,
   .margin-event-results > li,
   .margin-space-directory > li + li,
@@ -31,7 +31,6 @@
   .margin-photo-picker-header,
   .margin-profile-section-card > .margin-section-heading,
   .margin-public-contents,
-  .margin-public-footer-groups,
   .margin-welcome-differences,
   .margin-welcome-message-thread > header,
   .margin-space-rows > li
@@ -61,7 +60,7 @@
   .margin-public-contents,
   .margin-public-sections section + section,
   .margin-public-document-related,
-  .margin-welcome-conversation,
+  .margin-message-retention,
   .margin-welcome-differences,
   .margin-event-results > li,
   .margin-space-directory > li + li,
@@ -78,7 +77,6 @@
   .margin-photo-picker-header,
   .margin-profile-section-card > .margin-section-heading,
   .margin-public-contents,
-  .margin-public-footer-groups,
   .margin-welcome-differences,
   .margin-welcome-message-thread > header,
   .margin-space-rows > li

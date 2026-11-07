@@ -43,17 +43,16 @@
   font-weight: 400;
 }
 .margin-gallery-arrange {
-  color: hsl(var(--blackened-olive));
-  border-color: hsl(var(--blackened-olive) / 0.55);
+  color: hsl(var(--ink));
+  border-color: hsl(var(--ink) / 0.55);
   background: hsl(var(--surface-heading));
 }
 .margin-gallery-arrange:hover {
-  color: hsl(var(--blackened-olive));
-  background: hsl(var(--blackened-olive) / 0.08);
+  color: hsl(var(--ink));
+  background: hsl(var(--ink) / 0.08);
 }
 .margin-gallery-add {
-  border: 1px solid hsl(var(--blackened-olive));
-  color: hsl(var(--blackened-olive));
+  border: 1px solid hsl(var(--ink));
 }
 .margin-gallery-meta {
   margin: 0;
@@ -149,7 +148,7 @@
   border-radius: inherit;
 }
 .margin-gallery-tile[aria-pressed="true"] {
-  outline: 2px solid hsl(var(--blackened-olive));
+  outline: 2px solid hsl(var(--ink));
   outline-offset: 3px;
 }
 .margin-gallery-stage[data-dragging="true"] .margin-gallery-cell {
@@ -238,7 +237,7 @@ html[data-motion="reduced"] .margin-gallery-floating img {
   place-items: center;
   border-radius: 50%;
   background: hsl(var(--background) / 0.94);
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
 }
 .margin-photo-selected svg {
   width: 14px;
@@ -394,19 +393,19 @@ html[data-motion="reduced"] .margin-gallery-floating img {
 .margin-editor-empty-slot {
   min-height: 44px;
   aspect-ratio: 1;
-  border: 1px dashed hsl(var(--blackened-olive) / 0.4);
+  border: 1px dashed hsl(var(--ink) / 0.4);
   border-radius: var(--radius-control);
   background: hsl(var(--surface-heading));
-  color: hsl(var(--blackened-olive));
+  color: hsl(var(--ink));
   font: 400 var(--text-title)/1.5 var(--font-body);
 }
 .margin-editor-empty-slot:not(:disabled):hover {
-  background: hsl(var(--citron) / 0.2);
+  background: hsl(var(--highlight) / 0.2);
 }
 .margin-editor-empty-slot[data-drop-target="true"] {
-  outline: 2px solid hsl(var(--blackened-olive));
+  outline: 2px solid hsl(var(--ink));
   outline-offset: 2px;
-  background: hsl(var(--citron) / 0.2);
+  background: hsl(var(--highlight) / 0.2);
 }
 .margin-gallery-editor-footer {
   position: relative;

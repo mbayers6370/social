@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Home, Spaces, Message } from "@/components/margin-icons";
 import { BrandLink } from "@/components/shared/brand-link";
 import { cn } from "@/lib/utils";
+import { ScrollHeader } from "./scroll-header";
 export type ApplicationView = "feed" | "spaces" | "messages" | "profile";
 /** Shared presentation. Identity, search and notifications belong to each caller's data boundary. */
 export function ApplicationNavigation({
@@ -37,7 +38,10 @@ export function ApplicationNavigation({
   );
   return (
     <>
-      <header className="margin-header margin-topbar margin-navigation-theme">
+      <ScrollHeader
+        className="margin-header margin-topbar margin-navigation-theme"
+        resetKey={active}
+      >
         <div className="margin-header-inner">
           <BrandLink
             href={live ? "/app/feed" : "/"}
@@ -62,7 +66,7 @@ export function ApplicationNavigation({
           </nav>
           <div className="margin-header-actions">{headerActions}</div>
         </div>
-      </header>
+      </ScrollHeader>
       <nav
         aria-label="Mobile navigation"
         className="margin-mobile-nav margin-navigation-theme"

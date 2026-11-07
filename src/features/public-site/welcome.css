@@ -1,49 +1,66 @@
-/* A single feed leads; photography and conversations unfold as editorial spreads. */
-.margin-public-hero,
+/* A compact editorial grid connects each promise to a real product example. */
+.margin-public-site:has(.margin-public-hero) {
+  --welcome-content-width: 1120px;
+  --welcome-section-space: clamp(48px, 5vw, 72px);
+}
+.margin-welcome-friends {
+  background: hsl(var(--background));
+}
 .margin-welcome-connection,
+.margin-welcome-how-content,
 .margin-welcome-gallery-section {
   width: calc(100% - 2 * var(--site-gutter));
-  max-width: 1600px;
+  max-width: var(--welcome-content-width);
   margin-inline: auto;
 }
 .margin-public-hero {
-  display: grid;
-  gap: 40px;
-  padding-block: 56px 64px;
+  --ring: var(--parchment);
+  padding: clamp(64px, 7vw, 96px) var(--site-gutter);
+  background: hsl(var(--header));
+  color: hsl(var(--parchment));
 }
 .margin-welcome-opening {
-  align-self: center;
   min-width: 0;
+  width: 100%;
+  max-width: 840px;
+  margin-inline: auto;
+  text-align: center;
 }
 .margin-public-hero h1 {
   margin: 0;
-  color: hsl(var(--header));
+  color: inherit;
   font: calc(
-      clamp(2.75rem, 7.2vw, 7.25rem) + var(--reading-size-adjustment)
+      clamp(2.25rem, 5.5vw, 4.5rem) + var(--reading-size-adjustment)
     )/1.04
     var(--font-serif);
   letter-spacing: -0.055em;
+  overflow-wrap: anywhere;
 }
 .margin-public-hero h1 > span {
   display: block;
 }
-.margin-welcome-copy {
-  margin-top: 28px;
-}
-.margin-welcome-copy .margin-public-intro {
-  max-width: 33ch;
-  font-size: var(--text-body);
-  line-height: 1.75;
+.margin-welcome-opening .margin-public-intro {
+  max-width: 44ch;
+  margin-top: 24px;
+  margin-inline: auto;
+  color: hsl(var(--parchment));
+  font-size: var(--text-subtitle);
+  line-height: 1.65;
 }
 .margin-welcome-actions {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 24px;
+  justify-content: center;
+  gap: 8px;
   margin-top: 28px;
 }
 .margin-welcome-actions .margin-public-text-link {
   margin-top: 0;
+  color: inherit;
+}
+.margin-welcome-actions .margin-public-text-link svg {
+  color: inherit;
 }
 .margin-welcome-cta {
   min-height: 48px;
@@ -51,278 +68,60 @@
   border-radius: var(--radius-control);
   font-size: var(--text-body);
   font-weight: 400;
-  color: hsl(var(--header));
+  color: hsl(var(--primary-foreground));
 }
-.margin-welcome-story {
-  min-width: 0;
-  scroll-margin-top: 120px;
-}
-.margin-welcome-story:focus {
-  outline: none;
-  box-shadow: none;
-}
-.margin-welcome-preview {
-  min-width: 0;
-  padding: clamp(16px, 3vw, 40px);
-  border-radius: 8px;
-  background: hsl(var(--surface-heading));
-}
-.margin-welcome-example {
-  --welcome-card-inset: 16px;
-  overflow: hidden;
-  border: 1px solid hsl(var(--header) / 0.18);
-  border-radius: var(--radius-card);
-  background: hsl(var(--background));
-  box-shadow: 0 16px 40px -24px hsl(var(--header) / 0.35);
-}
-.margin-welcome-feed-chrome {
-  display: flex;
-  align-items: center;
-  padding: 20px;
-  background: hsl(var(--header));
-  color: hsl(var(--parchment));
-}
-.margin-welcome-feed-chrome .margin-brand-brackets {
-  --brand-corner-size: 9px;
-  --brand-corner-gap: 5px;
-  --brand-corner-color: hsl(var(--citron));
-}
-.margin-welcome-feed-chrome .margin-brand-name {
-  font-size: 1.5rem;
-}
-.margin-welcome-feed-content {
-  padding: 20px 16px 28px;
-}
-.margin-welcome-example-label {
-  display: grid;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-.margin-welcome-example-label > span:first-child {
-  font: var(--text-heading-sm)/1.2 var(--font-serif);
-}
-.margin-welcome-example-label > span:last-child {
-  color: hsl(var(--note-foreground));
-  font-size: var(--text-note);
-}
-.margin-welcome-post {
-  perspective: 1200px;
-}
-.margin-welcome-post-turn {
-  display: grid;
-  transform-style: preserve-3d;
-  transition: transform 520ms cubic-bezier(0.22, 0.68, 0.18, 1);
-}
-.margin-welcome-post-turn[data-open="true"] {
-  transform: rotateY(-180deg);
-}
-.margin-welcome-post-front,
-.margin-welcome-post-back {
-  position: relative;
-  grid-area: 1 / 1;
-  min-width: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  padding: var(--welcome-card-inset);
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius-card);
-  background: hsl(var(--card));
-}
-.margin-welcome-post-back {
-  transform: rotateY(180deg);
-}
-.margin-welcome-post-front > .margin-welcome-author {
-  padding-right: 56px;
-  margin-bottom: 18px;
-}
-.margin-welcome-author,
-.margin-welcome-comment {
-  display: flex;
-}
-.margin-welcome-author {
-  align-items: center;
-  gap: 12px;
-}
-.margin-welcome-author > div,
-.margin-welcome-comment > div {
-  min-width: 0;
-}
-.margin-welcome-author strong,
-.margin-welcome-comment strong,
-.margin-welcome-reply strong {
-  display: block;
-  font-size: var(--text-body);
-  font-weight: 500;
-  overflow-wrap: anywhere;
-}
-.margin-welcome-author > div > span {
-  display: block;
-  margin-top: 2px;
-  font-size: var(--text-note);
-  color: hsl(var(--note-foreground));
-}
-.margin-welcome-post-action {
-  position: absolute;
-  top: 14px;
-  right: var(--welcome-card-inset);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  border-radius: var(--radius-control);
-  color: hsl(var(--header));
-  font: var(--text-control)/1.5 var(--font-body);
-}
-.margin-welcome-post-action span {
-  display: none;
-}
-.margin-welcome-post-action:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-.margin-welcome-conversation-back:hover {
-  background: hsl(var(--citron) / 0.25);
-}
-.margin-welcome-post-action svg {
-  width: 16px;
-  height: 16px;
-}
-.margin-welcome-photo {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
-  object-position: center 30%;
-  border-radius: 12px;
-}
-.margin-welcome-post-text {
-  margin-top: 16px;
-  font: 500 var(--text-body)/1.6 var(--font-post);
-  font-kerning: normal;
-  font-synthesis: none;
-}
-.margin-welcome-conversation {
-  position: relative;
-  margin: 0 calc(-1 * var(--welcome-card-inset));
-  padding: 24px var(--welcome-card-inset) 0;
-  --divider-top-color: hsl(var(--border));
-  border-top: 1px solid transparent;
-}
-.margin-welcome-conversation-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  margin-bottom: 16px;
-  color: hsl(var(--header));
-  font: var(--text-body)/1.5 var(--font-body);
-}
-.margin-welcome-conversation-back {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: var(--radius-control);
-}
-.margin-welcome-conversation-back svg {
-  width: 18px;
-  height: 18px;
-}
-.margin-welcome-comment {
-  align-items: flex-start;
-  gap: 10px;
-}
-.margin-welcome-conversation p {
-  margin-top: 4px;
-  font: var(--text-body)/1.6 var(--font-body);
-  overflow-wrap: anywhere;
-}
-.margin-welcome-reply {
-  margin: 16px 0 0 39px;
-}
-.margin-welcome-caught-up {
-  display: grid;
-  justify-items: center;
-  padding-top: 24px;
-  text-align: center;
-  color: hsl(var(--header));
-  font: var(--text-body)/1.5 var(--font-serif);
-}
-.margin-welcome-interlude {
-  display: grid;
-  gap: 40px;
-  padding: 56px var(--site-gutter);
-  background: hsl(var(--header));
-  color: hsl(var(--parchment));
-}
-.margin-welcome-interlude-copy {
-  align-self: center;
-  container-type: inline-size;
-}
-.margin-welcome-interlude h2,
 .margin-welcome-section-copy h2,
 .margin-welcome-gallery-heading h2,
 .margin-welcome-joining h2 {
-  font: calc(clamp(2.5rem, 4.6vw, 5.5rem) + var(--reading-size-adjustment))/1.1
+  font: calc(clamp(2rem, 3.2vw, 3.5rem) + var(--reading-size-adjustment))/1.15
     var(--font-serif);
-  letter-spacing: -0.045em;
+  letter-spacing: -0.035em;
   text-wrap: balance;
+  overflow-wrap: anywhere;
 }
-.margin-welcome-section-copy h2,
-.margin-welcome-gallery-heading h2 {
-  color: hsl(var(--header));
-}
-.margin-welcome-interlude h2 {
-  color: hsl(var(--parchment));
-  font-size: calc(
-    clamp(1.75rem, 12cqi, 5.5rem) + var(--reading-size-adjustment)
-  );
-}
-.margin-welcome-interlude h2 > span {
-  display: block;
-  white-space: nowrap;
-}
-.margin-welcome-interlude-copy > p,
-.margin-welcome-section-copy > p,
-.margin-welcome-gallery-heading > p {
-  max-width: 31ch;
+.margin-welcome-section-copy > p {
+  max-width: 36ch;
+  margin-top: 20px;
   font: var(--text-body)/1.75 var(--font-body);
 }
-.margin-welcome-interlude-copy > p,
-.margin-welcome-section-copy > p {
-  margin-top: 24px;
-}
-.margin-welcome-interlude .margin-public-text-link {
-  --ring: var(--parchment);
-  font-size: var(--text-body);
-  text-decoration: underline;
-  text-underline-offset: 6px;
-  text-decoration-color: hsl(var(--citron));
-}
-.margin-welcome-interlude .margin-public-text-link svg {
-  color: hsl(var(--citron));
-}
 .margin-welcome-outside {
+  display: grid;
   min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 .margin-welcome-outside img {
+  grid-area: 1 / 1;
+  display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 5 / 4;
+  aspect-ratio: 8 / 5;
   object-fit: cover;
-  border-radius: 12px;
+  object-position: center bottom;
 }
 .margin-welcome-outside figcaption {
-  margin-top: 16px;
-  font: 300 var(--text-title)/1.5 var(--font-serif);
+  grid-area: 1 / 1;
+  align-self: center;
+  padding-block: 32px;
+  padding-inline: max(
+    var(--site-gutter),
+    calc((100% - var(--welcome-content-width)) / 2)
+  );
+  color: hsl(var(--feed-surface));
+  font: 500
+    calc(clamp(1.5rem, 2.4vw, 2.5rem) + var(--reading-size-adjustment))/1.3
+    var(--font-serif);
 }
-.margin-welcome-friends {
-  background: hsl(var(--parchment));
+.margin-welcome-outside figcaption > span {
+  display: block;
+}
+.margin-welcome-commitments {
+  --ring: var(--parchment);
+  background: hsl(var(--ink));
+  color: hsl(var(--parchment));
+}
+.margin-welcome-commitments-viewport {
+  min-width: 0;
 }
 .margin-welcome-differences {
   position: relative;
@@ -331,53 +130,81 @@
   justify-content: center;
   gap: 12px 16px;
   padding: 28px var(--site-gutter);
-  --divider-top-color: hsl(var(--header) / 0.3);
-  --divider-bottom-color: hsl(var(--header) / 0.3);
-  border-block: 1px solid transparent;
-  color: hsl(var(--header));
   font: 300 var(--text-title)/1.6 var(--font-serif);
   list-style: none;
 }
-.margin-welcome-differences li:not(:last-child)::after {
-  content: "·";
-  margin-inline-start: 16px;
+.margin-welcome-differences-copy {
+  display: none;
+}
+.margin-welcome-how {
+  display: grid;
+  gap: var(--welcome-section-space);
+  padding-bottom: var(--welcome-section-space);
+}
+.margin-welcome-how-content {
+  display: grid;
+  gap: 32px;
+}
+.margin-welcome-how h2 {
+  font: var(--text-display-md)/1.2 var(--font-serif);
+}
+.margin-welcome-basics {
+  display: grid;
+  gap: 24px;
+  list-style: none;
+}
+.margin-welcome-basics > li {
+  --muted-foreground: var(--ink);
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-card);
+  background: hsl(var(--card));
+  color: hsl(var(--ink));
+}
+.margin-welcome-basics h3 {
+  color: hsl(var(--olive));
+  font: var(--text-heading-sm)/1.3 var(--font-serif);
+  margin-bottom: 12px;
+}
+.margin-welcome-basics p {
+  max-width: 48ch;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.75;
+}
+.margin-welcome-basics .margin-public-text-link {
+  margin-top: 16px;
+}
+.margin-welcome-connection-band {
+  --ring: var(--ink);
+  background: hsl(var(--background));
+  color: hsl(var(--ink));
 }
 .margin-welcome-connection {
   display: grid;
   gap: 40px;
-  padding-block: 72px;
+  padding-block: var(--welcome-section-space);
 }
 .margin-welcome-section-copy {
   align-self: center;
 }
-.margin-welcome-section-copy > p,
-.margin-welcome-gallery-heading > p {
-  color: hsl(var(--muted-foreground));
-}
-.margin-welcome-section-copy .margin-public-text-link {
-  font-size: var(--text-body);
+.margin-welcome-section-copy .margin-public-text-link svg {
+  color: inherit;
 }
 .margin-welcome-message-stage {
   min-width: 0;
-  padding: 24px;
-  border-radius: 8px;
-  background: hsl(var(--muted));
+  width: 100%;
+  max-width: 480px;
+  margin-inline: auto;
 }
-.margin-welcome-message-preface,
-.margin-welcome-message-afterword {
-  color: hsl(var(--muted-foreground));
-  font: var(--text-title)/1.5 var(--font-serif);
-}
-.margin-welcome-message-preface {
-  margin-bottom: 24px;
-}
-.margin-welcome-message-afterword {
-  max-width: 22ch;
-  margin: 24px 0 0 auto;
-  text-align: right;
-  text-wrap: balance;
+.margin-welcome-messages {
+  scroll-margin-top: calc(var(--margin-header-height) + 16px);
 }
 .margin-welcome-message-thread {
+  --ring: var(--ink);
+  color: hsl(var(--ink));
   overflow: hidden;
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius-card);
@@ -413,12 +240,6 @@
   gap: 16px;
   padding: 24px 20px;
 }
-.margin-welcome-message-date {
-  align-self: center;
-  margin-bottom: 8px;
-  color: hsl(var(--note-foreground));
-  font-size: var(--text-note);
-}
 .margin-welcome-message-bubble {
   align-self: flex-start;
   max-width: 90%;
@@ -433,26 +254,82 @@
   border-radius: 17px 17px 3px 17px;
   background: hsl(var(--surface-heading));
 }
-.margin-welcome-message-time {
-  color: hsl(var(--note-foreground));
-  font-size: var(--text-note);
+.margin-welcome-message-arrival {
+  display: grid;
+  align-self: flex-start;
+  max-width: 90%;
+}
+.margin-welcome-message-arrival > .margin-welcome-message-bubble {
+  grid-area: 1 / 1;
+  max-width: 100%;
+}
+.margin-welcome-message-typing {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+}
+.margin-welcome-message-arrival[data-arrival="typing"]
+  .margin-welcome-message-typing {
+  display: flex;
+}
+.margin-welcome-message-typing span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: margin-welcome-typing 900ms ease-in-out infinite;
+}
+.margin-welcome-message-typing span:nth-child(2) {
+  animation-delay: 120ms;
+}
+.margin-welcome-message-typing span:nth-child(3) {
+  animation-delay: 240ms;
+}
+.margin-welcome-message-arrival:is(
+    [data-arrival="waiting"],
+    [data-arrival="typing"]
+  )
+  .margin-welcome-message-final {
+  opacity: 0;
+}
+.margin-welcome-message-arrival[data-arrival="delivered"]
+  .margin-welcome-message-final {
+  animation: margin-welcome-message-enter 320ms ease-out both;
+}
+@keyframes margin-welcome-typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+@keyframes margin-welcome-message-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .margin-welcome-gallery-section {
-  padding-block: 72px;
+  padding-block: var(--welcome-section-space);
 }
 .margin-welcome-gallery-heading {
-  display: grid;
-  gap: 24px;
-  margin-bottom: 40px;
-}
-.margin-welcome-gallery-heading > p {
-  margin-top: 0;
+  margin-bottom: 32px;
 }
 .margin-welcome-gallery {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: 12px;
+  gap: 32px;
 }
 .margin-welcome-gallery-photo {
   position: relative;
@@ -465,133 +342,189 @@
 .margin-welcome-gallery-photo img {
   width: 100%;
   height: auto;
-  aspect-ratio: 1;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
 }
-.margin-welcome-gallery > figure:nth-child(2) img {
-  aspect-ratio: 1;
+.margin-welcome-gallery-photo[data-crop="face"] img {
+  object-position: center top;
 }
-.margin-welcome-gallery figcaption {
-  margin-top: 12px;
-  color: hsl(var(--muted-foreground));
-  font: var(--text-body)/1.5 var(--font-serif);
+.margin-welcome-waitlist a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.margin-welcome-waitlist {
+  width: 100%;
+  max-width: 520px;
+  margin-top: 0;
+  line-height: 1.6;
+}
+.margin-welcome-waitlist form {
+  display: grid;
+  gap: 12px;
+}
+.margin-welcome-waitlist label {
+  font-weight: 500;
+}
+.margin-welcome-waitlist-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.margin-welcome-waitlist-fields input {
+  flex: 1 1 220px;
+  min-width: 0;
+  background: hsl(var(--feed-surface));
+}
+.margin-welcome-waitlist-fields button {
+  flex: 1 1 auto;
+}
+.margin-welcome-waitlist #waitlist-purpose {
+  font-size: var(--text-note);
 }
 .margin-welcome-joining {
   --muted-foreground: var(--header);
-  padding: 48px var(--site-gutter);
-  background: hsl(var(--citron));
+  padding: 64px var(--site-gutter);
+  background: hsl(var(--warm-accent));
   color: hsl(var(--header));
 }
 .margin-welcome-joining-layout {
   display: grid;
-  gap: 32px;
+  gap: 20px;
+  justify-items: center;
+  text-align: center;
   width: 100%;
-  max-width: 1280px;
+  max-width: 960px;
   margin-inline: auto;
 }
 .margin-welcome-invitation {
-  max-width: 36ch;
+  max-width: 44ch;
   font: var(--text-body)/1.75 var(--font-body);
 }
-.margin-welcome-invitation-label {
-  margin-bottom: 12px;
-  font-weight: 600;
+.margin-welcome-invitation-action {
+  background: hsl(var(--ink));
+  border-color: hsl(var(--ink));
+  color: hsl(var(--parchment));
 }
-.margin-welcome-invitation .margin-public-text-link {
-  margin-top: 16px;
-  font-size: var(--text-body);
-  text-decoration: underline;
-  text-underline-offset: 5px;
-  text-decoration-thickness: 1px;
+.margin-welcome-invitation-action:hover {
+  background: hsl(var(--header-accent));
+  color: hsl(var(--parchment));
 }
 .margin-welcome-joining h2 {
   min-width: 0;
-  font-size: calc(clamp(2rem, 4.2vw, 4.75rem) + var(--reading-size-adjustment));
+  font-size: calc(clamp(2rem, 3.8vw, 3.5rem) + var(--reading-size-adjustment));
   color: hsl(var(--header));
 }
 .margin-welcome-joining h2 > span {
   display: block;
 }
-/* One restrained entrance, confined to the lead product demonstration. */
-.margin-welcome-preview[data-reveal="active"] .margin-welcome-example {
-  animation: margin-welcome-enter 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes margin-welcome-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+@media (max-width: 767px) {
+  .margin-welcome-opening .margin-public-intro {
+    font-size: var(--text-body);
+    line-height: 1.6;
   }
+  .margin-welcome-commitments {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+  }
+  .margin-welcome-commitments-viewport {
+    flex: 1;
+    overflow: hidden;
+  }
+  .margin-welcome-commitments-track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    min-height: 64px;
+    animation: margin-welcome-banner-scroll 36s linear infinite;
+  }
+  .margin-welcome-differences {
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    min-height: 64px;
+    padding: 0;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .margin-welcome-differences li {
+    padding-inline-start: 16px;
+  }
+  .margin-welcome-differences li::after {
+    content: "·";
+    margin-inline-start: 16px;
+  }
+  .margin-welcome-differences-copy {
+    display: flex;
+  }
+}
+.margin-welcome-commitments-viewport:focus-within
+  .margin-welcome-commitments-track,
+.margin-welcome-commitments-viewport:active .margin-welcome-commitments-track {
+  animation-play-state: paused;
+}
+@media (hover: hover) {
+  .margin-welcome-commitments-viewport:hover .margin-welcome-commitments-track {
+    animation-play-state: paused;
+  }
+}
+@keyframes margin-welcome-banner-scroll {
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%);
   }
 }
-html[data-motion="reduced"] .margin-welcome-preview .margin-welcome-example {
+html[data-motion="reduced"] .margin-welcome-commitments-track {
+  animation: none;
+}
+html[data-motion="reduced"] .margin-welcome-commitments-viewport {
+  overflow-x: auto;
+}
+html[data-motion="reduced"] .margin-welcome-differences-copy {
+  display: none;
+}
+html[data-motion="reduced"]
+  .margin-welcome-message-arrival
+  .margin-welcome-message-typing {
+  display: none;
+}
+html[data-motion="reduced"]
+  .margin-welcome-message-arrival
+  .margin-welcome-message-final {
+  opacity: 1;
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .margin-welcome-preview[data-reveal="active"] .margin-welcome-example {
+  .margin-welcome-commitments-track {
+    animation: none;
+  }
+  .margin-welcome-commitments-viewport {
+    overflow-x: auto;
+  }
+  .margin-welcome-differences-copy {
+    display: none;
+  }
+  .margin-welcome-message-arrival[data-arrival] .margin-welcome-message-typing {
+    display: none;
+  }
+  .margin-welcome-message-arrival[data-arrival] .margin-welcome-message-final {
+    opacity: 1;
     animation: none;
   }
 }
-@media (max-width: 767px) {
-  .margin-welcome-outside figcaption {
-    font-size: min(var(--text-caption), 2.8vw);
-  }
-}
-@media (max-width: 1023px) {
-  .margin-welcome-opening {
-    width: fit-content;
-    max-width: 100%;
-    justify-self: center;
-    text-align: left;
-  }
-}
-@media (min-width: 640px) {
-  .margin-welcome-post-front > .margin-welcome-author {
-    padding-right: 136px;
-  }
-  .margin-welcome-post-action span {
-    display: inline;
-  }
-  .margin-public-hero {
-    padding-block: 64px 80px;
-    gap: 56px;
-  }
-  .margin-welcome-story {
-    max-width: 640px;
-    width: 100%;
-    justify-self: center;
-  }
-  .margin-welcome-feed-content {
-    padding: 24px;
-  }
-  .margin-welcome-example {
-    --welcome-card-inset: 20px;
-  }
-  .margin-welcome-message-stage {
-    padding: 40px;
-  }
-}
 @media (min-width: 768px) {
-  .margin-welcome-gallery-photo img {
-    aspect-ratio: 4 / 5;
-  }
-  .margin-welcome-interlude {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    gap: 8%;
-    padding-block: 80px;
-  }
-  .margin-welcome-outside {
-    padding-top: 56px;
+  .margin-welcome-basics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .margin-welcome-outside img {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 5;
   }
   .margin-welcome-connection {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8%;
-    padding-block: 112px;
+    align-items: center;
+    gap: 64px;
   }
   .margin-welcome-section-copy {
     grid-column: 2;
@@ -601,99 +534,12 @@ html[data-motion="reduced"] .margin-welcome-preview .margin-welcome-example {
     grid-column: 1;
     grid-row: 1;
   }
-  .margin-welcome-gallery-heading {
-    margin-bottom: 56px;
-  }
   .margin-welcome-gallery {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 0.8fr);
-    gap: 32px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
   }
-  .margin-welcome-gallery > figure:first-child {
-    grid-column: auto;
-    margin: 0;
-  }
-  .margin-welcome-gallery > figure:nth-child(2) {
-    margin-top: 96px;
-  }
-  .margin-welcome-gallery > figure:last-child {
-    margin-top: 24px;
-  }
-  .margin-welcome-gallery-section {
-    padding-block: 112px;
-  }
-  .margin-welcome-joining {
-    padding-block: 80px;
-  }
-}
-@media (min-width: 1024px) {
-  .margin-welcome-joining-layout {
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-    align-items: center;
-    gap: 8%;
-  }
-  .margin-welcome-outside {
-    position: relative;
-    padding-inline-end: calc(var(--text-title) * 3 + 5px);
-  }
-  .margin-welcome-outside figcaption {
-    position: absolute;
-    top: 56px;
-    left: calc(100% - var(--text-title) * 3);
-    bottom: 0;
-    max-width: calc(var(--text-title) * 3);
-    margin-top: 0;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    text-align: center;
-  }
-  .margin-public-hero {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    align-items: start;
-    gap: 4%;
-    padding-block: 56px 96px;
-  }
-  .margin-welcome-opening {
-    width: fit-content;
-    max-width: 100%;
-    justify-self: center;
-    padding-bottom: 48px;
-  }
-  .margin-welcome-copy {
-    margin-top: 36px;
-  }
-  .margin-welcome-copy .margin-public-intro {
-    max-width: 38ch;
-  }
-  .margin-welcome-story {
-    padding-top: 40px;
-  }
-  .margin-public-hero h1 {
-    font-size: calc(clamp(4rem, 6.2vw, 7rem) + var(--reading-size-adjustment));
-  }
-  .margin-welcome-interlude {
-    padding-inline: max(var(--site-gutter), calc((100vw - 1600px) / 2));
-  }
-  .margin-welcome-interlude-copy {
-    padding-left: 8%;
-  }
-}
-@media (min-width: 1440px) {
-  .margin-public-hero {
-    gap: 6%;
-    padding-block: 64px 112px;
-  }
-  .margin-welcome-copy {
-    margin-top: 40px;
-  }
-  .margin-welcome-copy .margin-public-intro {
-    font-size: var(--text-title);
-  }
-  .margin-welcome-connection {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    gap: 12%;
-    padding-inline: 6%;
-  }
-  .margin-welcome-gallery-heading {
-    padding-left: 6%;
+  .margin-welcome-differences li:not(:last-child)::after {
+    content: "·";
+    margin-inline-start: 16px;
   }
 }
