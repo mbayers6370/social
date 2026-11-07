@@ -5,42 +5,51 @@
   --font-serif: var(--font-aside, Arial), sans-serif;
   /* HSL channels preserve exact brand colors and support existing alpha variants. */
   --parchment: 45 28.571429% 97.254902%; /* lighter warm white #FAF9F6 */
-  --ink: 203.076923 11.926606% 21.372549%; /* smoky blue-black #30383D */
-  --citron: 67.222222 48.648649% 56.470588%; /* #B9C65A */
-  --blackened-olive: 71.707317 36.283186% 22.156863%; /* #454D24 */
-  --olive-hs: 63.157895 26.760563%;
-  --profile-card-header: var(--olive-hs) 72.156863%; /* #C9CBA5 */
-  /* Navigation and profile card headers share one olive hue and saturation. */
-  --header: var(--olive-hs) 17%;
-  --header-accent: var(--olive-hs) 13%; /* darker interactive surface */
+  --olive: 58.153846 37.572254% 33.921569%; /* #777536 */
+  --cinnamon-hs: 33.461538 49.056604%;
+  --pinkish-cinnamon: var(--cinnamon-hs) 58.431373%; /* #C99B61 */
+  --deep-slate-olive: 60 11.111111% 14.117647%; /* #282820 */
+  --sulphur-yellow: 52.173913 38.983051% 88.431373%; /* #EDEAD6 */
+  --ink: var(--deep-slate-olive);
+  --highlight: var(--sulphur-yellow);
+  --warm-accent: var(--pinkish-cinnamon);
+  --profile-card-header: var(--olive);
+  --header: var(--deep-slate-olive);
+  --header-accent: 60 11.111111% 20%; /* lifted dark navigation hover */
   --header-foreground: var(--parchment);
-  --background: 45 23.529412% 93.333333%; /* warm cream #F2F0EA */
+  --background: var(--sulphur-yellow);
   --foreground: var(--ink);
   --card: 30 25% 98.431373%; /* parchment lifted with white: #FCFBFA */
   --card-foreground: var(--foreground);
   --feed-surface: 0 0% 100%;
-  --surface-heading: 52.941176 24.637681% 86.470588%; /* warm olive paper #E5E3D4 */
+  --surface-heading: var(--warm-accent);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
-  --primary: var(--citron);
-  --primary-foreground: var(--blackened-olive);
-  --button-border: 72 13.72549% 50%; /* muted olive #8A916E */
+  --primary: var(--olive);
+  --primary-hover: 58.153846 37.572254% 29.921569%; /* darkens to retain light-text contrast */
+  --primary-foreground: var(--parchment);
+  --button-border: var(--olive);
   --secondary: var(--card);
   --secondary-foreground: var(--foreground);
   --secondary-border: var(--border);
   --muted: 40 11.111111% 94.705882%; /* parchment with a little ink: #F3F2F0 */
-  --muted-foreground: 200 5.142857% 34.313725%; /* #53595C, >=6.3:1 on parchment */
-  --note-foreground: 202.5 3.669725% 42.745098%; /* #696E71, >=4.6:1 on note surfaces */
-  --accent: 40 7.317073% 91.960784%; /* parchment/ink hover: #ECEBE9 */
+  --muted-foreground: 60 4% 34%; /* warm secondary ink */
+  --note-foreground: var(
+    --muted-foreground
+  ); /* readable on sulphur and white */
+  --accent: var(--cinnamon-hs) 85%; /* cinnamon tint keeps secondary labels readable */
   --accent-foreground: var(--foreground);
   --destructive: 0 72% 40%;
   --destructive-foreground: 0 0% 100%;
-  --border: 60 2.631579% 85.098039%; /* parchment/ink rule: #DADAD8 */
+  --border: 60 2.631579% 85.098039%; /* quiet neutral control/card borders */
+  --separator: var(
+    --olive
+  ); /* clear rules against sulphur and dark navigation */
   --divider-mask: url("../components/ui/ink-rule/dry-rule.svg");
   --divider-art-height: 16px;
-  --input: 180 1.6% 49.019608%; /* #7B7F7F; stronger than rules */
+  --input: var(--olive); /* stronger than decorative rules */
   --input-focus: var(--ring);
-  --ring: 197.142857 3.286385% 41.764706%; /* #676C6E, >=4.7:1 on parchment */
+  --ring: var(--ink);
   /* Standard = original size minus 2px; each reading level adds 2px. */
   --reading-size-adjustment: -0.125rem;
   --text-control: calc(0.8125rem + var(--reading-size-adjustment));
@@ -77,8 +86,8 @@
   --conversation-surface: var(--card);
   --placeholder: var(--muted);
   --avatar-paper: var(--muted);
-  --avatar-sage: 66.428571 43.75% 87.45098%; /* citron/parchment tint: #EAEDD1 */
-  --avatar-sand: var(--card);
+  --avatar-sage: var(--highlight);
+  --avatar-sand: var(--warm-accent);
   --avatar-border: hsl(
     var(--input)
   ); /* opaque darker outline on light surfaces */

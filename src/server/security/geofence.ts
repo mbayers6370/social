@@ -2,7 +2,11 @@ import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isLocalReviewConfiguration } from "@/lib/local-review";
-import { isPublicPage, isPublicAsset } from "@/lib/public-routes";
+import {
+  isPublicPage,
+  isPublicAsset,
+  isPublicSubmission,
+} from "@/lib/public-routes";
 
 export const EDGE_TOKEN_HEADER = "x-margin-edge-token";
 export const EDGE_COUNTRY_HEADER = "x-margin-country";
@@ -20,6 +24,7 @@ export function isRegionRestrictedPath(path: string) {
   return !(
     path === "/" ||
     isPublicPage(path) ||
+    isPublicSubmission(path) ||
     isPublicAsset(path) ||
     path === "/api/health" ||
     path === "/api/webhooks/clerk" ||

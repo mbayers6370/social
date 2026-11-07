@@ -2,7 +2,7 @@
 .margin-brand-link {
   --brand-corner-size: 12px;
   --brand-corner-gap: 5px;
-  --brand-corner-color: hsl(var(--foreground));
+  --brand-corner-color: hsl(var(--olive));
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -30,7 +30,7 @@
   display: block;
   width: var(--brand-corner-size, 14px);
   height: var(--brand-corner-size, 14px);
-  color: var(--brand-corner-color, hsl(var(--citron)));
+  color: var(--brand-corner-color, hsl(var(--highlight)));
 }
 .margin-brand-corner-start {
   align-self: start;

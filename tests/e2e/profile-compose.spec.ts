@@ -20,6 +20,19 @@ for (const profile of ["local", "member"] as const) {
         : "/?view=profile",
     );
     const trigger = page.getByRole("button", { name: "New Post", exact: true });
+    const content = await trigger.evaluate((button) => {
+      const bounds = button.getBoundingClientRect();
+      const surface = getComputedStyle(button, "::before");
+      const label = document.createRange();
+      label.selectNodeContents(button);
+      const text = label.getBoundingClientRect();
+      return {
+        left: text.left - bounds.left - parseFloat(surface.left),
+        right: bounds.right - parseFloat(surface.right) - text.right,
+      };
+    });
+    expect(content.left).toBeGreaterThanOrEqual(1);
+    expect(content.right).toBeGreaterThanOrEqual(1);
     await trigger.click();
     const dialog = page.getByRole("dialog", { name: "New Post", exact: true });
     const input = dialog.getByRole("textbox", { name: "Your post" });

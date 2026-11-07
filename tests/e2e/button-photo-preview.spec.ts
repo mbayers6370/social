@@ -9,7 +9,7 @@ test.beforeEach(() =>
   ),
 );
 
-test("borders lime action buttons consistently without boxing quiet controls", async ({
+test("borders olive action buttons consistently without boxing quiet controls", async ({
   page,
 }, info) => {
   await page.goto("/design-system");
@@ -26,13 +26,13 @@ test("borders lime action buttons consistently without boxing quiet controls", a
     name: "Primary action",
     exact: true,
   });
-  await expect(primary).toHaveCSS("border-top-color", "rgb(138, 145, 110)");
-  await expect(primary).toHaveCSS("color", "rgb(69, 77, 36)");
+  await expect(primary).toHaveCSS("border-top-color", "rgb(119, 117, 54)");
+  await expect(primary).toHaveCSS("color", "rgb(250, 249, 246)");
   await expect(page.locator("html")).toHaveAttribute("data-reading-size", /.+/);
   await primary.focus();
   await expect(primary).toBeFocused();
   await primary.hover();
-  await expect(primary).toHaveCSS("border-top-color", "rgb(138, 145, 110)");
+  await expect(primary).toHaveCSS("border-top-color", "rgb(119, 117, 54)");
   await captureScreenshot(page, {
     path: info.outputPath("button-borders.png"),
     fullPage: true,
@@ -58,14 +58,14 @@ test("borders lime action buttons consistently without boxing quiet controls", a
   });
   expect(surface).toEqual({
     border: "1px",
-    color: "rgba(138, 145, 110, 0.55)",
-    background: "rgb(185, 198, 90)",
+    color: "rgba(119, 117, 54, 0.55)",
+    background: "rgb(119, 117, 54)",
     height: "32px",
   });
   await newPost.click();
   const publish = page.getByRole("button", { name: "Publish", exact: true });
-  await expect(publish).toHaveCSS("border-top-color", "rgb(138, 145, 110)");
-  await expect(publish).toHaveCSS("background-color", "rgb(185, 198, 90)");
+  await expect(publish).toHaveCSS("border-top-color", "rgb(119, 117, 54)");
+  await expect(publish).toHaveCSS("background-color", "rgb(119, 117, 54)");
   await expect(
     page.getByRole("button", { name: "Cancel", exact: true }),
   ).toHaveCSS("border-top-width", "0px");

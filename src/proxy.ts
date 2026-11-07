@@ -6,7 +6,11 @@ import {
   type NextRequest,
   type NextFetchEvent,
 } from "next/server";
-import { isPublicPage, isPublicAsset } from "@/lib/public-routes";
+import {
+  isPublicPage,
+  isPublicAsset,
+  isPublicSubmission,
+} from "@/lib/public-routes";
 import { createContentSecurityPolicy } from "@/server/security/csp";
 import {
   isRegionRestrictedPath,
@@ -18,6 +22,7 @@ function isPublic(pathname: string) {
   return (
     pathname === "/" ||
     isPublicPage(pathname) ||
+    isPublicSubmission(pathname) ||
     pathname === "/api/health" ||
     pathname === "/api/webhooks/clerk" ||
     isPublicAsset(pathname) ||

@@ -19,7 +19,7 @@
     line-height: 1.6;
   }
   ::selection {
-    background: hsl(var(--citron) / 0.6);
+    background: hsl(var(--warm-accent) / 0.6);
     color: hsl(var(--ink));
   }
   :focus-visible {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image, { type StaticImageData } from "next/image";
 import { publicSiteDetails } from "./site-details";
 export type PublicDocumentData = {
   category: "Explore" | "Support" | "Legal";
@@ -13,8 +14,61 @@ export type PublicDocumentData = {
     paragraphs?: string[];
     points?: string[];
     links?: { label: string; href: string }[];
+    portrait?: {
+      image: StaticImageData;
+      alt: string;
+      caption: string;
+    };
   }[];
 };
+function DocumentSectionContent({
+  section,
+}: {
+  section: PublicDocumentData["sections"][number];
+}) {
+  const copy = (
+    <>
+      <h2>{section.title}</h2>
+      {section.paragraphs?.map((paragraph) => (
+        <p key={paragraph}>{paragraph}</p>
+      ))}
+      {section.points && (
+        <ul>
+          {section.points.map((point) => (
+            <li key={point}>{point}</li>
+          ))}
+        </ul>
+      )}
+      {section.portrait && (
+        <p className="margin-public-portrait-caption">
+          {section.portrait.caption}
+        </p>
+      )}
+      {section.links?.map((link) => (
+        <Link
+          className="margin-public-inline-link"
+          href={link.href}
+          key={link.href}
+        >
+          {link.label}
+        </Link>
+      ))}
+    </>
+  );
+  if (!section.portrait) return copy;
+  return (
+    <div className="margin-public-portrait-card">
+      <div className="margin-public-portrait-copy">{copy}</div>
+      <figure className="margin-public-portrait-photo">
+        <Image
+          src={section.portrait.image}
+          alt={section.portrait.alt}
+          sizes="(min-width: 640px) 208px, (max-width: 367px) calc(100vw - 48px), 280px"
+        />
+      </figure>
+    </div>
+  );
+}
 export function PublicDocument({ document }: { document: PublicDocumentData }) {
   return (
     <article
@@ -60,26 +114,7 @@ export function PublicDocument({ document }: { document: PublicDocumentData }) {
         <div className="margin-public-sections">
           {document.sections.map((section) => (
             <section key={section.id} id={section.id}>
-              <h2>{section.title}</h2>
-              {section.paragraphs?.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-              {section.points && (
-                <ul>
-                  {section.points.map((point) => (
-                    <li key={point}>{point}</li>
-                  ))}
-                </ul>
-              )}
-              {section.links?.map((link) => (
-                <Link
-                  className="margin-public-inline-link"
-                  href={link.href}
-                  key={link.href}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              <DocumentSectionContent section={section} />
             </section>
           ))}
         </div>

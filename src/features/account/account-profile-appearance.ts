@@ -1,7 +1,7 @@
 import type { Appearance } from "@clerk/ui";
 
 const focusRing = {
-  outline: "2px solid hsl(var(--blackened-olive))",
+  outline: "2px solid hsl(var(--ink))",
   outlineOffset: "2px",
 };
 
@@ -15,10 +15,10 @@ export const accountProfileAppearance = {
       lg: "var(--text-title)",
       xl: "var(--text-subtitle)",
     },
-    colorNeutral: "hsl(var(--blackened-olive))",
+    colorNeutral: "hsl(var(--ink))",
     colorMuted: "hsl(var(--background))",
     colorBorder: "hsl(var(--profile-card-header))",
-    colorRing: "hsl(var(--blackened-olive))",
+    colorRing: "hsl(var(--ink))",
     colorShadow: "hsl(var(--ink))",
     colorDanger: "hsl(var(--destructive))",
     colorModalBackdrop: "hsl(var(--ink) / 0.4)",
@@ -39,7 +39,7 @@ export const accountProfileAppearance = {
         fontWeight: "500",
         lineHeight: "1.2",
         letterSpacing: "-0.025em",
-        color: "hsl(var(--blackened-olive))",
+        color: "hsl(var(--ink))",
       },
     },
     navbarButton: {
@@ -53,17 +53,17 @@ export const accountProfileAppearance = {
       '&[data-active="true"]': {
         background: "hsl(var(--profile-card-header) / 0.3)",
         borderColor: "hsl(var(--profile-card-header))",
-        color: "hsl(var(--blackened-olive))",
+        color: "hsl(var(--ink))",
         fontWeight: "500",
       },
       "&:focus-visible": focusRing,
     },
-    navbarButtonIcon: { color: "hsl(var(--blackened-olive))", opacity: "1" },
+    navbarButtonIcon: { color: "hsl(var(--ink))", opacity: "1" },
     navbarMobileMenuRow: { background: "hsl(var(--background))" },
     navbarMobileMenuButton: {
       minHeight: "44px",
       fontFamily: "var(--font-serif)",
-      color: "hsl(var(--blackened-olive))",
+      color: "hsl(var(--ink))",
     },
     scrollBox: {
       background: "hsl(var(--card))",
@@ -77,7 +77,7 @@ export const accountProfileAppearance = {
       fontWeight: "500",
       lineHeight: "1.25",
       letterSpacing: "-0.025em",
-      color: "hsl(var(--blackened-olive))",
+      color: "hsl(var(--ink))",
     },
     profileSection: { borderTopColor: "hsl(var(--profile-card-header) / 0.6)" },
     profileSectionTitleText: {
@@ -90,7 +90,7 @@ export const accountProfileAppearance = {
       padding: "8px 12px",
       fontSize: "var(--text-body)",
       borderRadius: "var(--radius-control)",
-      color: "hsl(var(--blackened-olive))",
+      color: "hsl(var(--ink))",
       "&:hover": { background: "hsl(var(--profile-card-header) / 0.2)" },
       '&[data-color="danger"]': {
         color: "hsl(var(--destructive))",
@@ -106,7 +106,7 @@ export const accountProfileAppearance = {
     },
     badge: {
       background: "hsl(var(--muted))",
-      color: "hsl(var(--blackened-olive))",
+      color: "hsl(var(--ink))",
       border: "1px solid hsl(var(--profile-card-header) / 0.6)",
       fontSize: "var(--text-caption)",
       boxShadow: "none",
@@ -123,7 +123,7 @@ export const accountProfileAppearance = {
     modalCloseButton: {
       minWidth: "44px",
       minHeight: "44px",
-      color: "hsl(var(--blackened-olive))",
+      color: "hsl(var(--ink))",
       borderRadius: "var(--radius-control)",
       "&:hover": { background: "hsl(var(--profile-card-header) / 0.2)" },
       "&:focus-visible": focusRing,

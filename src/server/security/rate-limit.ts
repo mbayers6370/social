@@ -19,6 +19,8 @@ const policies = {
   invitationEmailGlobal: { requests: 60, window: "1 h" },
   invitationEmailLink: { requests: 5, window: "1 m" },
   invitationEmailAddress: { requests: 3, window: "1 d" },
+  waitlistGlobal: { requests: 60, window: "1 h" },
+  waitlistAddress: { requests: 3, window: "1 d" },
 } as const;
 const limiters = new Map<keyof typeof policies, Ratelimit>();
 

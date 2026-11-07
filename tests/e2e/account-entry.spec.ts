@@ -136,8 +136,8 @@ test("account exit is visible in the menu and reporting lives in post options", 
   await menu.getByRole("button", { name: "Exit preview", exact: true }).click();
   await expect(page).toHaveURL(/\/welcome$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "A little less.A little closer.",
+    "A feed that ends. Imagine.",
   );
   await page.goto("/join");
-  await expect(page).toHaveURL(/\/how-it-works$/);
+  await expect(page.getByLabel("Your invitation link")).toBeVisible();
 });
