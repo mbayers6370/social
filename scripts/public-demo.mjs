@@ -323,7 +323,7 @@ try {
           const html = readFileSync(file, "utf8");
           documents.set(file, html);
           for (const match of html.matchAll(
-            /<script\b[^>]*>([\s\S]*?)<\/script>/g,
+            /<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/gi,
           ))
             if (match[1])
               hashes.add(
