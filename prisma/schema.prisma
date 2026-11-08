@@ -52,6 +52,7 @@ model Account {
   postingTimeZone String @default("America/Los_Angeles") @db.VarChar(100)
   postingUsageCarryFrom DateTime?
   postingUsageCarryUntil DateTime?
+  portraitCrop Json @default("{\"x\":0.5,\"y\":0.5,\"zoom\":1}")
   portraitPhotoId String?
   portrait Photo? @relation(fields: [portraitPhotoId], references: [id], onDelete: SetNull)
   usernameChangedAt DateTime?

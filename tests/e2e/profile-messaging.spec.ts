@@ -19,7 +19,8 @@ test("desktop messages and footer fit without page scrolling, including a growin
       name: "Note to self",
     });
     await input.fill("A draft that wraps over several lines. ".repeat(10));
-    await expect(input).toBeInViewport({ ratio: 1 });
+    // Fractional pixel clipping at the panel border must not fail an otherwise visible textarea.
+    await expect(input).toBeInViewport({ ratio: 0.99 });
     const footer = page.getByRole("navigation", {
       name: "Footer",
       exact: true,

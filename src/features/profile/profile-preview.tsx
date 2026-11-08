@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { Notebook } from "@/components/margin-icons";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { ProfileFrame } from "./profile-frame";
@@ -11,7 +12,13 @@ import { usePreview } from "@/features/local-preview/provider";
 import { canReadFriendsPost } from "@/lib/friend-audience";
 import { FeedExperience } from "@/features/feed/feed-experience";
 
-export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
+export function ProfilePreview({
+  profile,
+  topFriends,
+}: {
+  profile: ProfilePreviewData;
+  topFriends?: ReactNode;
+}) {
   const preview = usePreview();
   const current =
     preview.state.profiles.find(
@@ -75,6 +82,7 @@ export function ProfilePreview({ profile }: { profile: ProfilePreviewData }) {
             visible={visible}
             own={own}
           />
+          {topFriends}
           <OnRepeat
             key={`on-repeat-${current.person.id}`}
             own={own}

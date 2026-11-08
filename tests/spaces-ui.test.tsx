@@ -73,6 +73,7 @@ it("keeps private Space dates while hiding joined Event Spaces and discovery", (
     location: "Los Angeles",
     archivedAt: null,
     memberCount: 2,
+    memberPreview: [],
   };
   render(
     <SpacesList
@@ -126,6 +127,82 @@ it("keeps private Space dates while hiding joined Event Spaces and discovery", (
   expect(screen.getByRole("link", { name: /Friends/ })).not.toHaveTextContent(
     /Event|Gathering|Disappears/,
   );
+});
+it("gives one Space a complete card with real members and no invented activity", () => {
+  render(
+    <SpacesList
+      data={{
+        spaces: [
+          {
+            id: "reading-room",
+            name: "Reading room",
+            kind: "PRIVATE",
+            startsAt: null,
+            timeZone: null,
+            location: null,
+            archivedAt: null,
+            memberCount: 2,
+            memberPreview: [
+              {
+                id: "inez",
+                name: "Inez",
+                initials: "I",
+                tone: "paper",
+                photo: {
+                  src: "/api/profiles/inez/portrait?v=portrait",
+                  width: 208,
+                  height: 208,
+                },
+              },
+              { id: "theo", name: "Theo", initials: "T", tone: "sage" },
+            ],
+          },
+        ],
+        invitations: [],
+        nextCursor: null,
+      }}
+    />,
+  );
+  const directory = screen.getByRole("list", { name: "Your Spaces" });
+  expect(within(directory).getAllByRole("link")).toHaveLength(1);
+  const card = within(directory).getByRole("link", { name: /Reading room/ });
+  expect(card).toHaveAttribute("href", "/app/spaces/reading-room");
+  expect(
+    within(card).getByRole("heading", { name: "Reading room" }),
+  ).toBeInTheDocument();
+  expect(
+    within(card).getByRole("img", { name: "Members: Inez, Theo" }),
+  ).toBeInTheDocument();
+  expect(card.querySelector("img")?.getAttribute("src")).toContain(
+    "/api/profiles/inez/portrait?v=portrait",
+  );
+  expect(card).toHaveTextContent("2 members");
+  expect(card).not.toHaveTextContent("Open Space");
+  expect(card.querySelector("time")).toBeNull();
+  expect(
+    screen.queryByText(/shared thoughts, photographs, and plans/),
+  ).not.toBeInTheDocument();
+});
+it("welcomes a member with no Spaces and keeps creation available without a duplicate heading", async () => {
+  const user = userEvent.setup();
+  render(
+    <SpacesList data={{ spaces: [], invitations: [], nextCursor: null }} />,
+  );
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+    "Your spaces",
+  );
+  expect(
+    screen.getByRole("heading", { name: "A little room for your people." }),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/There’s no rush/)).toBeInTheDocument();
+  expect(
+    screen.queryByRole("list", { name: "Your Spaces" }),
+  ).not.toBeInTheDocument();
+  const create = screen.getByRole("button", { name: "New Space" });
+  await user.click(create);
+  expect(screen.getByRole("dialog", { name: "Create a Space" })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(create).toHaveFocus());
 });
 it("creates a Space with optional plans using the selected local time zone", async () => {
   const user = userEvent.setup();

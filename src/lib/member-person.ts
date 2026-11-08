@@ -1,7 +1,12 @@
+import { portraitCropVersion } from "./portrait-crop";
 import type { Person } from "@/features/feed/schema";
 export function memberPerson(
   id: string,
-  account: { displayName: string; portraitPhotoId?: string | null },
+  account: {
+    displayName: string;
+    portraitPhotoId?: string | null;
+    portraitCrop?: unknown;
+  },
 ): Person {
   return {
     id,
@@ -16,7 +21,7 @@ export function memberPerson(
     ...(account.portraitPhotoId
       ? {
           photo: {
-            src: `/api/profiles/${encodeURIComponent(id)}/portrait?v=${encodeURIComponent(account.portraitPhotoId)}`,
+            src: `/api/profiles/${encodeURIComponent(id)}/portrait?v=${encodeURIComponent(account.portraitPhotoId + portraitCropVersion(account.portraitCrop))}`,
             width: 208,
             height: 208,
           },

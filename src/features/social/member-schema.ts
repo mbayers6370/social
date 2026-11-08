@@ -1,3 +1,4 @@
+import { portraitCropSchema } from "@/lib/portrait-crop";
 import { z } from "zod";
 import { profileInputSchema } from "@/features/profile/schema";
 import { usernameSchema } from "@/features/profile/username";
@@ -11,6 +12,7 @@ export const memberProfileInput = profileInputSchema;
 export const memberUsernameInput = z.strictObject({ username: usernameSchema });
 export const memberPortraitInput = z.strictObject({
   photoId: memberId.nullable(),
+  crop: portraitCropSchema.optional(),
 });
 export const memberPreferencesInput = z
   .strictObject({

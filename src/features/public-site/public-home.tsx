@@ -2,13 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import lifeHappens from "@/assets/fixtures/life-happens.jpg";
 import { buttonVariants } from "@/components/ui/button";
-import { PublicTextLink } from "./public-shell";
+import { PublicTextLink } from "./public-shell-content";
 import { WelcomeMessages } from "./welcome-preview";
 import { WelcomeGallery } from "./welcome-gallery";
 import { WaitlistForm } from "./waitlist-form";
 import { WelcomeCommitments } from "./welcome-commitments";
 
-export function PublicHome() {
+export function PublicHome({ portfolio = false }: { portfolio?: boolean }) {
   return (
     <>
       <section className="margin-public-hero" aria-labelledby="public-title">
@@ -17,17 +17,18 @@ export function PublicHome() {
             <span>A feed that ends.</span> <span>Imagine.</span>
           </h1>
           <p className="margin-public-intro">
-            A private social space for the people you actually know.
-            Invite-only. Three posts a day. No ads, no algorithm.
+            {portfolio
+              ? "An interactive social concept, built around the people you actually know. Explore the interface with fictional accounts. No registration required."
+              : "A private social space for the people you actually know. Invite-only. Three posts a day. No ads, no algorithm."}
           </p>
           <div className="margin-welcome-actions">
             <Link
-              href="/how-it-works"
+              href={portfolio ? "/demo/" : "/how-it-works"}
               className={buttonVariants({
                 className: "margin-welcome-cta",
               })}
             >
-              Membership by invitation
+              {portfolio ? "Explore Demo" : "Membership by invitation"}
             </Link>
             <PublicTextLink href="#welcome-preview">
               See how it feels
@@ -81,8 +82,9 @@ export function PublicHome() {
               <li>
                 <h3>You’re invited.</h3>
                 <p>
-                  Open a friend’s invitation link, verify your email and make
-                  your profile.
+                  {portfolio
+                    ? "Enter as Ines, a fictional member. Your changes stay in your browser tab."
+                    : "Open a friend’s invitation link, verify your email and make your profile."}
                 </p>
                 <PublicTextLink href="/how-it-works#joining">
                   Invitation details
@@ -135,11 +137,18 @@ export function PublicHome() {
           </h2>
           <div className="margin-welcome-invitation">
             <p>
-              A friend sends you a personal invitation link. Open it to create
-              your account and join them on Margin.
+              {portfolio
+                ? "Margin is a portfolio demonstration of front-end engineering and interaction design, with a preserved full-stack implementation in the source repository."
+                : "A friend sends you a personal invitation link. Open it to create your account and join them on Margin."}
             </p>
           </div>
-          <WaitlistForm />
+          {portfolio ? (
+            <Link href="/demo/" className={buttonVariants()}>
+              Explore Demo
+            </Link>
+          ) : (
+            <WaitlistForm />
+          )}
         </div>
       </section>
     </>

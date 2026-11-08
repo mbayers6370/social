@@ -1,6 +1,7 @@
 "use client";
+import type { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import { MarginShell } from "@/components/layout/margin-shell";
 import { Avatar } from "@/features/feed/post-content";
 import { SpaceClientProvider } from "./client";
@@ -10,7 +11,11 @@ import { SpaceDetails } from "./space-details";
 import { isSpaceExpired } from "./lifecycle";
 import { SpaceTimeline } from "./space-timeline";
 import { spaceIsVisible } from "./availability";
-export function SpacesPreview() {
+export function SpacesPreview({
+  beforeNavigation,
+}: {
+  beforeNavigation?: ReactNode;
+}) {
   const { data, client, postsFor, detailsFor, now } = useSpacesPreview();
   const query = useSearchParams();
   const candidate = detailsFor(query.get("space") ?? "");
@@ -19,6 +24,7 @@ export function SpacesPreview() {
   return (
     <SpaceClientProvider client={client}>
       <MarginShell
+        beforeNavigation={beforeNavigation}
         active="spaces"
         profileAvatar={<Avatar person={data.viewer} />}
       >
@@ -43,13 +49,25 @@ export function SpacesPreview() {
         ) : (
           <SpacesList
             data={{
-              spaces: data.spaces.filter(
-                (space) =>
-                  !isSpaceExpired(space, now) &&
-                  space.members.some(
-                    (member) => member.userId === data.viewer.id,
-                  ),
-              ),
+              spaces: data.spaces
+                .filter(
+                  (space) =>
+                    !isSpaceExpired(space, now) &&
+                    space.members.some(
+                      (member) => member.userId === data.viewer.id,
+                    ),
+                )
+                .map((space) => ({
+                  ...space,
+                  memberPreview: (detailsFor(space.id)?.members ?? [])
+                    .slice(0, 4)
+                    .flatMap((member) => {
+                      const person = [data.viewer, ...data.people].find(
+                        (p) => p.id === member.userId,
+                      );
+                      return person ? [person] : [];
+                    }),
+                })),
               invitations: [],
               nextCursor: null,
             }}

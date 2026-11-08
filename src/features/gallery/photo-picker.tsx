@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { DevicePhotoPreview } from "@/components/shared/device-photo-preview";
-import { Check, Image as ImageIcon, Upload } from "@/components/margin-icons";
+import { Check } from "@/components/margin-icons";
 import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
@@ -20,7 +20,7 @@ import {
   galleryPhotoEligibility,
   type Photo,
 } from "@/features/local-preview/model";
-import { PHOTO_ACCEPT } from "@/lib/media-policy";
+import { PhotoFileInput } from "@/components/shared/photo-file-input";
 
 type PickerProps = {
   open: boolean;
@@ -211,41 +211,18 @@ function PhotoSelection({
           {selectedFile && <DevicePhotoPreview file={selectedFile} />}
           <Field>
             <Label htmlFor="local-photo">Or upload a new one</Label>
-            <div
-              className="margin-file-picker"
-              data-disabled={isSubmitting || !uploadAllowed || undefined}
-            >
-              <span className="margin-file-picker-mark" aria-hidden="true">
-                <ImageIcon />
-              </span>
-              <div className="margin-file-summary">
-                <span className="margin-file-name" role="status">
-                  {selectedFile?.name ?? "Upload from your device"}
-                </span>
-                <span id="photo-file-hint" className="margin-field-hint">
-                  JPEG, PNG or WebP · Up to 8 MB
-                </span>
-              </div>
-              <span className="margin-upload-choose" aria-hidden="true">
-                <Upload />
-                {selectedFile ? "Change photograph" : "Choose photograph"}
-              </span>
-              <input
-                ref={input}
-                className="margin-upload-native"
-                id="local-photo"
-                type="file"
-                accept={PHOTO_ACCEPT}
-                aria-describedby="photo-file-hint"
-                disabled={isSubmitting || !uploadAllowed}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (!file) return;
-                  setSelection({ kind: "device", file });
-                  setError("");
-                }}
-              />
-            </div>
+            <PhotoFileInput
+              ref={input}
+              id="local-photo"
+              file={selectedFile}
+              disabled={isSubmitting || !uploadAllowed}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                setSelection({ kind: "device", file });
+                setError("");
+              }}
+            />
           </Field>
           {error && <FieldError>{error}</FieldError>}
           {!uploadAllowed && (

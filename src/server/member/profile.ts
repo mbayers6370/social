@@ -1,4 +1,11 @@
 import "server-only";
+import {
+  DEFAULT_PORTRAIT_CROP,
+  readPortraitCrop,
+  portraitCropSchema,
+  portraitCropBounds,
+  type PortraitCrop,
+} from "@/lib/portrait-crop";
 import { topFriendCandidates, saveTopFriends } from "./top-friends";
 import sharp from "sharp";
 import { SocialError } from "@/server/social/errors";
@@ -35,6 +42,7 @@ export class MemberProfileService extends SocialService {
         username: account.username ?? "",
         bio: account.bio,
         portraitPhotoId: account.portraitPhotoId,
+        portraitCrop: readPortraitCrop(account.portraitCrop),
         usernameChangedAt: account.usernameChangedAt?.toISOString() ?? null,
         galleryVersion: account.galleryVersion,
         preferences: {
@@ -146,25 +154,41 @@ export class MemberProfileService extends SocialService {
     return this.identity(subject);
   }
 
-  async setPortrait(subject: string, photoId: string | null) {
+  async setPortrait(
+    subject: string,
+    photoId: string | null,
+    framing: PortraitCrop = DEFAULT_PORTRAIT_CROP,
+  ) {
+    const crop = portraitCropSchema.parse(framing);
     await this.transaction(async (tx) => {
       const id = await this.actor(tx, subject);
       await this.lock(tx, [id]);
-      if (
-        photoId &&
-        !(await tx.galleryEntry.findFirst({
-          where: { ownerId: id, photoId, photo: { state: "READY" } },
-          select: { photoId: true },
-        }))
-      )
-        throw unavailable();
       const previous = await tx.account.findUniqueOrThrow({
         where: { userId: id },
         select: { portraitPhotoId: true },
       });
+      if (
+        photoId &&
+        !(await tx.photo.findFirst({
+          where: {
+            id: photoId,
+            ownerId: id,
+            state: "READY",
+            OR: [
+              { gallery: { is: { ownerId: id } } },
+              { portraits: { some: { userId: id } } },
+            ],
+          },
+          select: { id: true },
+        }))
+      )
+        throw unavailable();
       await tx.account.update({
         where: { userId: id },
-        data: { portraitPhotoId: photoId },
+        data: {
+          portraitPhotoId: photoId,
+          portraitCrop: photoId ? crop : DEFAULT_PORTRAIT_CROP,
+        },
       });
       if (previous.portraitPhotoId && previous.portraitPhotoId !== photoId)
         await retireUnreferencedPhotos(
@@ -187,13 +211,23 @@ export class MemberProfileService extends SocialService {
           status: "ACTIVE",
           portrait: { is: { ownerId, state: "READY" } },
         },
-        select: { portrait: { select: { objectKey: true } } },
+        select: {
+          portraitCrop: true,
+          portrait: { select: { objectKey: true, width: true, height: true } },
+        },
       });
       if (!account?.portrait) throw unavailable();
       // Only the profile-sized crop is visible with a profile introduction. The
       // original remains behind its existing friends/Space media authorization.
       return sharp(await this.store.get(account.portrait.objectKey))
-        .resize(208, 208, { fit: "cover" })
+        .extract(
+          portraitCropBounds(
+            account.portrait.width,
+            account.portrait.height,
+            readPortraitCrop(account.portraitCrop),
+          ),
+        )
+        .resize(208, 208)
         .webp({ quality: 85 })
         .toBuffer();
     });
@@ -292,6 +326,7 @@ export class MemberProfileService extends SocialService {
               displayName: true,
               username: true,
               portraitPhotoId: true,
+              portraitCrop: true,
             },
           },
         },

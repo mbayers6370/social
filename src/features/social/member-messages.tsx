@@ -427,62 +427,66 @@ export function MemberMessages({
             >
               <ChevronLeft aria-hidden="true" />
             </Button>
-            {active.notebook ? (
-              <span className="margin-notebook-icon" aria-hidden="true">
-                <NotebookAnimated animate />
-              </span>
-            ) : (
-              <Avatar live linked person={active.contact} />
-            )}
-            <div className="margin-thread-person">
-              <h2>
-                {active.notebook ? (
-                  "Notebook"
-                ) : (
-                  <PersonLink live person={active.contact}>
-                    {active.contact.name}
-                  </PersonLink>
-                )}
-              </h2>
-              <div className="margin-thread-links">
-                {active.notebook ? (
-                  <span>Notes to self</span>
-                ) : (
-                  <Link
-                    href={`/app?person=${encodeURIComponent(active.contact.id)}`}
-                  >
-                    View profile
-                  </Link>
-                )}
+            <div className="margin-thread-identity">
+              {active.notebook ? (
+                <span className="margin-notebook-icon" aria-hidden="true">
+                  <NotebookAnimated animate />
+                </span>
+              ) : (
+                <Avatar live linked person={active.contact} />
+              )}
+              <div className="margin-thread-person">
+                <h2>
+                  {active.notebook ? (
+                    "Notebook"
+                  ) : (
+                    <PersonLink live person={active.contact}>
+                      {active.contact.name}
+                    </PersonLink>
+                  )}
+                </h2>
+                <div className="margin-thread-links">
+                  {active.notebook ? (
+                    <span>Notes to self</span>
+                  ) : (
+                    <Link
+                      href={`/app?person=${encodeURIComponent(active.contact.id)}`}
+                    >
+                      View profile
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
             {!active.notebook && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="margin-thread-refresh"
-                aria-label="Refresh conversation"
-                title={
-                  refreshing
-                    ? "Refreshing conversation…"
-                    : "Refresh conversation"
-                }
-                aria-busy={refreshing}
-                disabled={refreshing}
-                onClick={() => void refreshConversation()}
-              >
-                <Refresh aria-hidden="true" />
-              </Button>
-            )}
-            {data && !active.notebook && (
-              <MemberConversationMenu
-                data={data}
-                onCleared={async () => {
-                  paginated.current = false;
-                  setLoaded(await read(active.id));
-                  router.refresh();
-                }}
-              />
+              <div className="margin-thread-actions">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="margin-thread-refresh"
+                  aria-label="Refresh conversation"
+                  title={
+                    refreshing
+                      ? "Refreshing conversation…"
+                      : "Refresh conversation"
+                  }
+                  aria-busy={refreshing}
+                  disabled={refreshing}
+                  onClick={() => void refreshConversation()}
+                >
+                  <Refresh aria-hidden="true" />
+                </Button>
+                {data && (
+                  <MemberConversationMenu
+                    data={data}
+                    onCleared={async () => {
+                      paginated.current = false;
+                      setLoaded(await read(active.id));
+                      router.refresh();
+                    }}
+                  />
+                )}
+              </div>
             )}
           </header>
           <MessageRetention

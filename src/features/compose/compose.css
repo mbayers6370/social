@@ -8,11 +8,10 @@
   width: 100%;
   min-width: 0;
   padding: 10px 16px;
-  border: 1px solid hsl(var(--border) / 0.65);
+  border: 1px solid hsl(var(--border));
   border-radius: var(--radius-card);
   background: hsl(var(--card));
   color: hsl(var(--ink));
-  --ring: var(--ink);
 }
 .margin-feed-composer .margin-avatar {
   --margin-avatar-size: 36px;
@@ -27,8 +26,8 @@
   min-width: 0;
   min-height: 44px;
   height: auto;
-  padding: 10px 0 10px 12px;
-  border: 0;
+  padding: 10px 12px;
+  border: 1px solid hsl(var(--border));
   border-radius: var(--radius-control);
   background: transparent;
   text-align: left;
@@ -57,7 +56,7 @@
   }
 }
 .margin-feed-composer[data-dragging="true"] {
-  outline: 2px solid hsl(var(--ink));
+  outline: 2px solid hsl(var(--ring));
   outline-offset: 3px;
 }
 .margin-feed-drop-notice {
@@ -208,7 +207,7 @@ html[data-motion="reduced"] .margin-compose-inline {
   inset-block: 8px;
   inset-inline-start: 2px;
   width: calc(50% - 2px);
-  background: hsl(var(--ink));
+  background: hsl(var(--olive));
   transition: inset-inline-start 160ms ease;
 }
 .margin-compose-modes[data-mode="link"]::after {
@@ -281,7 +280,7 @@ html[data-motion="reduced"] .margin-compose-modes::after {
   color: hsl(var(--header-foreground));
 }
 .margin-compose-modes button:focus-visible {
-  outline: 2px solid hsl(var(--ink));
+  outline: 2px solid hsl(var(--ring));
   outline-offset: -2px;
 }
 .margin-compose-modes button:disabled {

@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/__ink-rule-check", (route) =>
     route.fulfill({
       contentType: "text/html",
-      body: `<!doctype html><meta charset="utf-8"><style>${tokens}${source("src/styles/rules.css")}${source("src/features/compose/compose.css")}${source("src/components/layout/margin-shell.css")}*{box-sizing:border-box}body{margin:24px;background:transparent}.sample{height:16px;background:#454D24;mask:var(--divider-mask) left center/100% 16px no-repeat}.small{width:200px}.wide{width:800px}.edges{width:240px;height:40px;min-height:0;margin-top:24px;padding:0}.margin-compose-header{background:white}.margin-mobile-nav{position:relative;inset:auto;display:block;padding:0;background:#454D24}</style><div class="sample small"></div><div class="sample wide"></div><div class="margin-compose-header edges"></div><div class="margin-mobile-nav edges"></div>`,
+      body: `<!doctype html><meta charset="utf-8"><style>${tokens}${source("src/styles/rules.css")}${source("src/features/compose/compose.css")}${source("src/components/layout/margin-shell.css")}${source("src/components/layout/app-footer.css")}*{box-sizing:border-box}body{margin:24px;background:transparent}.sample{height:16px;background:#454D24;mask:var(--divider-mask) left center/100% 16px no-repeat}.small{width:200px}.wide{width:800px}.edges{width:240px;height:40px;min-height:0;margin-top:24px;padding:0}.margin-compose-header{background:white}.margin-mobile-nav{position:relative;inset:auto;display:block;padding:0;background:#454D24}</style><div class="sample small"></div><div class="sample wide"></div><div class="margin-compose-header edges"></div><div class="margin-mobile-nav edges"></div><footer class="margin-app-footer edges"></footer>`,
     }),
   );
   await page.goto("/__ink-rule-check");
@@ -45,7 +45,7 @@ test("keeps dry ink grain and straight caps at different widths", async ({
   expect(pixel(100, 15)).toEqual([255, 255, 255]);
 });
 
-test("retains separator layout and shared gray/olive colors", async ({
+test("keeps the shared gray separator and the mobile navigation without a divider", async ({
   page,
 }) => {
   const geometry = await page.locator(".edges").evaluateAll((elements) =>
@@ -76,10 +76,18 @@ test("retains separator layout and shared gray/olive colors", async ({
   expect(geometry[1]).toMatchObject({
     width: 240,
     height: 40,
-    border: "1px",
-    color: "rgb(119, 117, 54)",
-    ruleHeight: "16px",
+    border: "0px",
+    color: "rgba(0, 0, 0, 0)",
+    mask: "none",
   });
-  for (const divider of geometry)
-    expect(divider.mask).toContain("data:image/svg+xml");
+  expect(geometry[0].mask).toContain("data:image/svg+xml");
+});
+
+test("leaves the copyright footer without a separator", async ({ page }) => {
+  const footer = page.locator(".margin-app-footer");
+  await expect(footer).toHaveCSS("border-top-width", "0px");
+  expect(
+    await footer.evaluate((node) => getComputedStyle(node, "::before").content),
+  ).toBe("none");
+  await expect(footer).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 });

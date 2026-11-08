@@ -1,3 +1,4 @@
+import { memberPerson } from "@/lib/member-person";
 // @vitest-environment node
 // HTTP guards use doubles; member-db.integration tests exercise the real DAL.
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -10,6 +11,7 @@ const methods = vi.hoisted(() => ({
   topFriends: vi.fn(),
   updateTopFriends: vi.fn(),
   identity: vi.fn(),
+  portrait: vi.fn(),
   preferences: vi.fn(),
   publish: vi.fn(),
   account: vi.fn(),
@@ -41,6 +43,7 @@ vi.mock("@/server/member/service", () => ({
     topFriends = methods.topFriends;
     updateTopFriends = methods.updateTopFriends;
     identity = methods.identity;
+    portrait = methods.portrait;
     updatePreferences = methods.preferences;
     publishPersonal = methods.publish;
     account = methods.account;
@@ -347,3 +350,38 @@ it("protects Top 4 reads and writes with verified identity, origin, private cach
     ).status,
   ).toBe(400);
 });
+
+it("serves the exact versioned portrait URL generated after repositioning the same photograph", async () => {
+  const photo = memberPerson("portrait-owner", {
+    displayName: "Sample Member",
+    portraitPhotoId: "saved-photo",
+    portraitCrop: { x: 0.375682451, y: 0.123456789, zoom: 1.47 },
+  }).photo!;
+  methods.portrait.mockResolvedValue(new Uint8Array([82, 73, 70, 70]));
+  const response = await memberRequest(
+    request(photo.src),
+    "portrait",
+    "portrait-owner",
+  );
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toBe("image/webp");
+  expect(response.headers.get("cache-control")).toContain("no-store");
+  expect(methods.portrait).toHaveBeenCalledWith(
+    "verified-subject",
+    "portrait-owner",
+  );
+  expect(enforceRateLimit).toHaveBeenCalledWith("media", expect.anything());
+});
+
+it.each(["v=bad%3Cversion", `v=${"a".repeat(257)}`, "v=a&v=b"])(
+  "rejects invalid portrait cache versions: %s",
+  async (query) => {
+    const response = await memberRequest(
+      request(`/api/profiles/portrait-owner/portrait?${query}`),
+      "portrait",
+      "portrait-owner",
+    );
+    expect(response.status).toBe(400);
+    expect(methods.portrait).not.toHaveBeenCalled();
+  },
+);

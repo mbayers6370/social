@@ -9,7 +9,7 @@ const { refresh, manage, leave } = vi.hoisted(() => ({
   leave: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
-vi.mock("@/components/auth/account-session", () => ({
+vi.mock("@/components/auth/account-session-context", () => ({
   useAccountSession: () => ({
     ready: true,
     available: true,

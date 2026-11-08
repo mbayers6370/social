@@ -70,3 +70,7 @@ CLAUDE.md
 .cursor/
 .DS_Store
 Thumbs.db
+
+# Public demo generated assets (source stays shared in src and public).
+/portfolio/public/
+/portfolio/.demo-owner.json

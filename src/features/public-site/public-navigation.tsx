@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useAccountSession } from "@/components/auth/account-session";
+import { useAccountSession } from "@/components/auth/account-session-context";
 import { LiveAppNavigation } from "@/components/layout/live-app-shell";
 import { ScrollHeader } from "@/components/layout/scroll-header";
 import { MemberProvider } from "@/features/social/member-provider";

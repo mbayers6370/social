@@ -33,7 +33,8 @@ try {
     if (result.status !== 0) process.exitCode = result.status ?? 1;
     else recordBuild(root, join(root, ".next"), fingerprint);
   } else {
-    if (mode === "start") assertFreshBuild(root, join(root, ".next"));
+    if (mode === "start")
+      assertFreshBuild(root, join(root, ".next"), "npm run app:build");
     const release = await claimServerPort(serverPort(args));
     process.once("exit", release);
     const child = spawn(process.execPath, [cli, mode, ...args], {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Shield } from "@/components/margin-icons";
 import { LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAccountSession } from "@/components/auth/account-session";
+import { useAccountSession } from "@/components/auth/account-session-context";
 export function AccountControls({ compact = false }: { compact?: boolean }) {
   const session = useAccountSession();
   const [error, setError] = useState("");

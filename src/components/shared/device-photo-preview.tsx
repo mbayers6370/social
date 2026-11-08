@@ -1,21 +1,33 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 /** Device previews stay in this tab; each URL lives as long as its selected file. */
 export function DevicePhotoPreview({ file }: { file: File }) {
-  const image = useRef<HTMLImageElement>(null);
+  const [preview, setPreview] = useState<{ file: File; src: string }>();
   const [failed, setFailed] = useState<File>();
-  useEffect(() => {
-    const src = URL.createObjectURL(file);
-    if (image.current) image.current.src = src;
-    return () => URL.revokeObjectURL(src);
-  }, [file]);
+  const attachPreview = useCallback(
+    (node: HTMLImageElement | null) => {
+      if (!node) return;
+      // Acquire the browser resource only when the image mounts. Accept only a
+      // tab-local blob URL without HTML metacharacters before rendering it.
+      const src = URL.createObjectURL(file);
+      if (!src.startsWith("blob:") || /["'&<>]/.test(src)) {
+        URL.revokeObjectURL(src);
+        setFailed(file);
+        return;
+      }
+      setPreview({ file, src });
+      return () => URL.revokeObjectURL(src);
+    },
+    [file],
+  );
   return (
     <>
       {/* Tab-local blobs cannot use the server image optimizer. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        ref={image}
+        ref={attachPreview}
+        src={preview?.file === file ? preview.src : undefined}
         className="margin-dropped-photo"
         alt="Selected photograph"
         width={320}

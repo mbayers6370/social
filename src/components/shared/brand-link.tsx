@@ -1,7 +1,7 @@
 "use client";
 import { useLayoutEffect, useRef } from "react";
 import Link from "next/link";
-import { useAccountSession } from "@/components/auth/account-session";
+import { useAccountSession } from "@/components/auth/account-session-context";
 import { claimBrandEntrance } from "@/components/auth/login-session";
 import { BrandBrackets } from "./brand-brackets";
 

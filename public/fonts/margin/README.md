@@ -3,7 +3,7 @@
 **Margin Hinge** and **Margin Loose Mono**, each in Light (300), Medium (500), and Bold (700).
 TTF files can be installed on desktop systems. WOFF2 files are the matching web faces.
 `fonts.css` is an optional, self-hosted `@font-face` stylesheet, scoped by the explicit family names.
-The application loads the three Hinge WOFF2 faces through `next/font/local` for headings and the wordmark; body copy and forms retain Inter.
+These families are retained design studies. The current demo and full-stack interface load Margin Aside through `next/font/local`; body copy and forms use Inter. The browser monogram retains an outlined Hinge-derived m without loading the Hinge font files.
 
 The editable masters and rebuild instructions are in `design/fonts/margin/` at the repository root.
 `manifest.json` lists character coverage, weights and file checksums. The standalone `specimen.html` compares all six faces with real text and download links.

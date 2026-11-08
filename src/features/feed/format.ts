@@ -53,5 +53,7 @@ export function relativeTime(value: string, referenceTime: string) {
     ? "Just now"
     : minutes < 60
       ? `${minutes}m`
-      : `${Math.floor(minutes / 60)}h`;
+      : minutes < 24 * 60
+        ? `${Math.floor(minutes / 60)}h`
+        : `${Math.floor(minutes / (24 * 60))}d`;
 }

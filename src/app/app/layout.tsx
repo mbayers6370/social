@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { notFound, redirect } from "next/navigation";
 import {
   requireAccountSession,
@@ -46,8 +47,14 @@ export default async function MemberLayout({
         title="Account access is unavailable."
         intro="We couldn’t verify your session. Please try again in a moment."
       >
-        <Link href="/app">Try again</Link>
-        <Link href="/sign-in">Return to sign in</Link>
+        <div className="margin-account-recovery-actions">
+          <Button asChild>
+            <Link href="/app">Try again</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/sign-in">Return to sign in</Link>
+          </Button>
+        </div>
       </AuthShell>
     );
   }

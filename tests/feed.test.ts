@@ -6,6 +6,7 @@ import {
   chronologicalPosts,
   dayKey,
   postTime,
+  relativeTime,
 } from "@/features/feed/format";
 import { commentInputSchema, postSchema } from "@/features/feed/schema";
 import { previewPostState, previewReducer } from "@/features/feed/state";
@@ -32,6 +33,30 @@ describe("chronological feed and isolated fixtures", () => {
     expect(calendarDayLabel("2026-10-27T04:30:00Z")).toBe("Monday, 26 October");
     expect(postTime("2026-10-27T16:42:00Z")).toBe("9:42 am");
   });
+  it.each([
+    [-60, "Just now"],
+    [0, "Just now"],
+    [59, "Just now"],
+    [60, "1m"],
+    [3599, "59m"],
+    [3600, "1h"],
+    [86399, "23h"],
+    [86400, "1d"],
+    [172799, "1d"],
+    [172800, "2d"],
+    [59 * 3600, "2d"],
+    [86 * 3600, "3d"],
+    [30 * 86400, "30d"],
+  ])(
+    "formats elapsed notification/comment age after %i seconds as %s",
+    (seconds, label) => {
+      const now = new Date("2026-11-07T20:00:00Z");
+      const created = new Date(now.getTime() - seconds * 1000);
+      expect(relativeTime(created.toISOString(), now.toISOString())).toBe(
+        label,
+      );
+    },
+  );
   it("refuses to serve development fixtures in production or test runtimes", () => {
     for (const environment of ["production", "test"] as const) {
       vi.stubEnv("NODE_ENV", environment);

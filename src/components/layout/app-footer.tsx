@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { publicDemo } from "@/lib/public-demo";
 import { publicFooterGroups } from "./footer-links";
 
 /** Mobile utilities live in Settings; desktop retains a page footer. */
@@ -12,8 +13,21 @@ export function AppFooter({ desktop = false }: { desktop?: boolean }) {
       }
     >
       {desktop && <span>© 2026 margin</span>}
-      <nav aria-label={desktop ? "Footer" : "Help and legal"}>
-        {desktop ? (
+      <nav
+        aria-label={
+          desktop
+            ? "Footer"
+            : publicDemo
+              ? "Demo information"
+              : "Help and legal"
+        }
+      >
+        {desktop && publicDemo ? (
+          <>
+            <Link href="/your-data/">Your data</Link>
+            <Link href="/retention/">Retention</Link>
+          </>
+        ) : desktop ? (
           <>
             <Link href="/help">Help & safety</Link>
             <Link href="/privacy">Privacy</Link>

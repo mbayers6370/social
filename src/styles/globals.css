@@ -23,7 +23,7 @@
     color: hsl(var(--ink));
   }
   :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-0;
+    @apply outline-none ring-1 ring-ring ring-offset-0;
   }
 }
 

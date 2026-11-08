@@ -15,6 +15,10 @@
 }
 .margin-public-hero {
   --ring: var(--parchment);
+  --primary: var(--olive-on-dark);
+  --primary-hover: var(--olive-on-dark-hover);
+  --primary-foreground: var(--ink);
+  --button-border: var(--primary);
   padding: clamp(64px, 7vw, 96px) var(--site-gutter);
   background: hsl(var(--header));
   color: hsl(var(--parchment));
@@ -133,9 +137,6 @@
   font: 300 var(--text-title)/1.6 var(--font-serif);
   list-style: none;
 }
-.margin-welcome-differences-copy {
-  display: none;
-}
 .margin-welcome-how {
   display: grid;
   gap: var(--welcome-section-space);
@@ -178,7 +179,6 @@
   margin-top: 16px;
 }
 .margin-welcome-connection-band {
-  --ring: var(--ink);
   background: hsl(var(--background));
   color: hsl(var(--ink));
 }
@@ -203,7 +203,6 @@
   scroll-margin-top: calc(var(--margin-header-height) + 16px);
 }
 .margin-welcome-message-thread {
-  --ring: var(--ink);
   color: hsl(var(--ink));
   overflow: hidden;
   border: 1px solid hsl(var(--border));
@@ -429,14 +428,14 @@
   }
   .margin-welcome-commitments-viewport {
     flex: 1;
-    overflow: hidden;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
   }
   .margin-welcome-commitments-track {
     display: flex;
     align-items: center;
     width: max-content;
     min-height: 64px;
-    animation: margin-welcome-banner-scroll 36s linear infinite;
   }
   .margin-welcome-differences {
     flex: 0 0 auto;
@@ -446,44 +445,17 @@
     justify-content: flex-start;
     gap: 0;
     min-height: 64px;
-    padding: 0;
+    padding: 0 16px 0 0;
     line-height: 1;
     white-space: nowrap;
   }
   .margin-welcome-differences li {
     padding-inline-start: 16px;
   }
-  .margin-welcome-differences li::after {
+  .margin-welcome-differences li:not(:last-child)::after {
     content: "·";
     margin-inline-start: 16px;
   }
-  .margin-welcome-differences-copy {
-    display: flex;
-  }
-}
-.margin-welcome-commitments-viewport:focus-within
-  .margin-welcome-commitments-track,
-.margin-welcome-commitments-viewport:active .margin-welcome-commitments-track {
-  animation-play-state: paused;
-}
-@media (hover: hover) {
-  .margin-welcome-commitments-viewport:hover .margin-welcome-commitments-track {
-    animation-play-state: paused;
-  }
-}
-@keyframes margin-welcome-banner-scroll {
-  to {
-    transform: translateX(-50%);
-  }
-}
-html[data-motion="reduced"] .margin-welcome-commitments-track {
-  animation: none;
-}
-html[data-motion="reduced"] .margin-welcome-commitments-viewport {
-  overflow-x: auto;
-}
-html[data-motion="reduced"] .margin-welcome-differences-copy {
-  display: none;
 }
 html[data-motion="reduced"]
   .margin-welcome-message-arrival
@@ -497,15 +469,6 @@ html[data-motion="reduced"]
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .margin-welcome-commitments-track {
-    animation: none;
-  }
-  .margin-welcome-commitments-viewport {
-    overflow-x: auto;
-  }
-  .margin-welcome-differences-copy {
-    display: none;
-  }
   .margin-welcome-message-arrival[data-arrival] .margin-welcome-message-typing {
     display: none;
   }

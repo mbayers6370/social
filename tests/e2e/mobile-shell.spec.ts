@@ -1,4 +1,5 @@
 import { captureScreenshot, expect, test } from "./fixtures";
+import { memberFixture } from "./helpers/member-fixture";
 
 test.beforeEach(async ({ page, isMobile }) => {
   test.skip(
@@ -15,6 +16,12 @@ test("keeps the mobile bars compact, preserves tap targets, and accounts for saf
   const navigation = page.getByRole("navigation", {
     name: "Mobile navigation",
   });
+  await expect(navigation).toHaveCSS("border-top-width", "0px");
+  expect(
+    await navigation.evaluate(
+      (node) => getComputedStyle(node, "::before").content,
+    ),
+  ).toBe("none");
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
     expect((await header.boundingBox())!.height).toBe(48);
@@ -125,4 +132,26 @@ test("keeps enlarged navigation readable and puts utility links under Settings",
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("uses light olive for the active mobile label and icon across member destinations", async ({
+  page,
+}) => {
+  await memberFixture(page);
+  for (const [area, label] of [
+    ["feed", "Feed"],
+    ["spaces", "Spaces"],
+    ["messages", "Messages"],
+    ["profile", "Profile"],
+  ]) {
+    await page.goto(`/preview/auth?view=member&area=${area}`);
+    const nav = page.getByRole("navigation", { name: "Mobile navigation" });
+    const current = nav.getByRole("link", { name: label, exact: true });
+    await expect(current).toHaveAttribute("aria-current", "page");
+    await expect(current).toHaveCSS("color", "rgb(153, 150, 78)");
+    await expect(
+      current.locator(".margin-bottom-icon > :first-child"),
+    ).toHaveCSS("color", "rgb(153, 150, 78)");
+    await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
+  }
 });

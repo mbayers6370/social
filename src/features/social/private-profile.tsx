@@ -44,6 +44,7 @@ export function PrivateProfile({
   const person = memberPerson(data.profile.id, {
     displayName: data.profile.name,
     portraitPhotoId: data.profile.portraitPhotoId,
+    portraitCrop: data.profile.portraitCrop,
   });
   const [editing, setEditing] = useState(editRequested);
   const [photoPicker, setPhotoPicker] = useState(false);
@@ -231,14 +232,17 @@ export function PrivateProfile({
       {own && (
         <MemberPhotoPicker
           portrait
+          currentPortraitId={data.profile.portraitPhotoId}
+          currentPhoto={data.profile.portraitPhoto}
+          currentCrop={data.profile.portraitCrop}
           open={photoPicker}
           onOpenChange={setPhotoPicker}
           photos={data.gallery}
-          onChoose={async (photo) => {
+          onChoose={async (photo, crop) => {
             await requestMember(
               client,
               "/api/profiles/me/portrait",
-              memberJson("PUT", { photoId: photo.id }),
+              memberJson("PUT", { photoId: photo.id, crop }),
             );
             memberChanged();
             router.refresh();

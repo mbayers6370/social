@@ -1,3 +1,4 @@
+import { publicDemo } from "@/lib/public-demo";
 import { PreviewError } from "./model";
 import {
   assertStillPhoto,
@@ -7,6 +8,10 @@ import {
   PHOTO_MAX_PIXELS,
 } from "@/lib/media-policy";
 export async function validateLocalPhoto(file: File) {
+  if (publicDemo)
+    throw new PreviewError(
+      "Device uploads are disabled in the demo. Choose a bundled photograph.",
+    );
   if (!file.size || file.size > PHOTO_MAX_BYTES)
     throw new PreviewError("Choose a photograph smaller than 8 MB.");
   try {

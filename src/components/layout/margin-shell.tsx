@@ -7,13 +7,16 @@ export function MarginShell({
   children,
   active = "feed",
   profileAvatar,
+  beforeNavigation,
 }: {
   children: ReactNode;
   active?: MarginView;
   profileAvatar: ReactNode;
+  beforeNavigation?: ReactNode;
 }) {
   return (
     <div className="margin-app">
+      {beforeNavigation}
       <MarginNavigation active={active} profileAvatar={profileAvatar} />
       <main id="main-content" tabIndex={-1} className="margin-main">
         {children}

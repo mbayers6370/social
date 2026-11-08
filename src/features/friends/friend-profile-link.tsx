@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import { ChevronRight } from "@/components/margin-icons";
 import { Avatar } from "@/features/feed/post-content";
 import type { Person } from "@/features/feed/schema";

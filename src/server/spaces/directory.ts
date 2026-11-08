@@ -1,4 +1,5 @@
 import "server-only";
+import { memberPerson } from "@/lib/member-person";
 import type { SpaceListData, SpaceDetails } from "@/features/spaces/contracts";
 import {
   eventExpiry,
@@ -67,6 +68,25 @@ export class SpaceDirectoryService extends SocialService {
           imageUrl: true,
           sourceUrl: true,
           ticketmasterId: true,
+          memberships: {
+            where: { user: unblockedAuthor(actor) },
+            orderBy: [{ joinedAt: "asc" }, { userId: "asc" }],
+            take: 4,
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  account: {
+                    select: {
+                      displayName: true,
+                      portraitPhotoId: true,
+                      portraitCrop: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
           _count: { select: { memberships: true } },
         },
       });
@@ -87,13 +107,16 @@ export class SpaceDirectoryService extends SocialService {
         select: { id: true, space: { select: { name: true } } },
       });
       return {
-        spaces: rows.slice(0, 20).map(({ _count, ...s }) => ({
+        spaces: rows.slice(0, 20).map(({ _count, memberships, ...s }) => ({
           ...s,
           startsAt: s.startsAt?.toISOString() ?? null,
           endsAt: s.endsAt?.toISOString() ?? null,
           expiresAt: s.expiresAt?.toISOString() ?? null,
           archivedAt: s.archivedAt?.toISOString() ?? null,
           memberCount: _count.memberships,
+          memberPreview: memberships.map(({ user }) =>
+            memberPerson(user.id, user.account!),
+          ),
         })),
         nextCursor: rows.length > 20 ? rows[19].id : null,
         invitations,
@@ -125,7 +148,13 @@ export class SpaceDirectoryService extends SocialService {
           blocked: {
             select: {
               id: true,
-              account: { select: { displayName: true, portraitPhotoId: true } },
+              account: {
+                select: {
+                  displayName: true,
+                  portraitPhotoId: true,
+                  portraitCrop: true,
+                },
+              },
             },
           },
         },

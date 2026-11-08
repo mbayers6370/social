@@ -13,3 +13,8 @@ public/brands/*.svg
 .local
 experiments/openmls/pkg
 experiments/openmls/target
+
+portfolio/.next
+portfolio/out
+portfolio/public
+portfolio/next-env.d.ts

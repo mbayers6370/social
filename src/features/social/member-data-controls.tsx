@@ -21,7 +21,7 @@ import {
 } from "@/features/settings/account-export";
 import { requestMember } from "./member-client";
 import { SettingsHelp } from "@/features/settings/settings-help";
-import { useAccountSession } from "@/components/auth/account-session";
+import { useAccountSession } from "@/components/auth/account-session-context";
 import { AccountErasureControl } from "@/features/account/account-erasure-control";
 
 type SavedExport = {
@@ -73,6 +73,7 @@ export function MemberDataControls() {
           username: saved.profile.username,
           bio: saved.profile.bio,
           portraitPhotoId: saved.profile.portraitPhotoId,
+          portraitCrop: saved.profile.portraitCrop,
           music: saved.music,
         };
       if (selected.includes("preferences"))

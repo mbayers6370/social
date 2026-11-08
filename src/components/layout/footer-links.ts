@@ -1,4 +1,6 @@
-export const publicFooterGroups = [
+import { publicDemo } from "@/lib/public-demo";
+
+const applicationFooterGroups = [
   {
     title: "Explore",
     links: [
@@ -33,3 +35,22 @@ export const publicFooterGroups = [
     ],
   },
 ];
+
+export const publicFooterGroups = publicDemo
+  ? [
+      {
+        ...applicationFooterGroups[0],
+        links: [
+          ...applicationFooterGroups[0].links,
+          ["Explore Demo", "/demo/"],
+        ],
+      },
+      {
+        title: "Your information",
+        links: [
+          ["Your data", "/your-data"],
+          ["Retention", "/retention"],
+        ],
+      },
+    ]
+  : applicationFooterGroups;

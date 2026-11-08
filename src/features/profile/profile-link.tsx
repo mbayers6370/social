@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link as LinkIcon } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { previewHref } from "@/lib/public-demo";
 import { sharedProfilePath } from "@/lib/profile-links";
 export function ProfileLink({ username }: { username: string }) {
   const [copied, setCopied] = useState(false);
@@ -18,7 +19,7 @@ export function ProfileLink({ username }: { username: string }) {
         title="Copy profile link"
         onClick={async () => {
           const link = new URL(
-            sharedProfilePath(username),
+            previewHref(sharedProfilePath(username)),
             window.location.origin,
           ).href;
           setCopied(false);

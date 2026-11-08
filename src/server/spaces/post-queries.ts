@@ -63,7 +63,13 @@ export class SpacePostQueryService extends SocialService {
         owner: {
           select: {
             id: true,
-            account: { select: { displayName: true, portraitPhotoId: true } },
+            account: {
+              select: {
+                displayName: true,
+                portraitPhotoId: true,
+                portraitCrop: true,
+              },
+            },
           },
         },
         space: { select: { id: true, name: true, archivedAt: true } },

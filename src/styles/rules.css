@@ -1,9 +1,7 @@
 /* Paint separators over their original transparent 1px layout borders.
    Each owner retains its exact former color in --divider-top/bottom-color. */
 :where(
-  .margin-app-footer,
   .margin-profile-menu-utilities,
-  .margin-mobile-nav,
   .margin-invitation-history,
   .margin-invitation-list > li + li,
   .margin-account-download-footer,
@@ -20,7 +18,6 @@
   .margin-message-retention,
   .margin-welcome-differences,
   .margin-event-results > li,
-  .margin-space-directory > li + li,
   .margin-space-panel-content
 )::before,
 :where(
@@ -44,9 +41,7 @@
   pointer-events: none;
 }
 :where(
-  .margin-app-footer,
   .margin-profile-menu-utilities,
-  .margin-mobile-nav,
   .margin-invitation-history,
   .margin-invitation-list > li + li,
   .margin-account-download-footer,
@@ -63,7 +58,6 @@
   .margin-message-retention,
   .margin-welcome-differences,
   .margin-event-results > li,
-  .margin-space-directory > li + li,
   .margin-space-panel-content
 )::before {
   top: calc((var(--divider-art-height) + 1px) / -2);

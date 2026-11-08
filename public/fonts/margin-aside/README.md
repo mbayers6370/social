@@ -1,5 +1,7 @@
 # Margin Aside
 
+The public demo and preserved application load these local WOFF2 faces with `next/font/local` for headings, the wordmark and post text; body copy and controls use Inter. The demo has no runtime font-provider dependency. See the [shared stylesheet conventions](../../../src/styles/README.md).
+
 Original proportional lettering with rounded terminals and porous, worn-print ink in Light 300, Medium 500, and Bold 700. Each weight is provided as an installable TTF and matching WOFF2 webfont. `fonts.css` is optional and is not imported by the application.
 
 Open `proof.html` for the Medium direction, or `specimen.html` to compare all three weights, change the reading size, and type your own sample. The font outlines include the ink wear; no CSS texture or simulated weight is needed.

@@ -154,8 +154,13 @@ try {
     `--outputFile.json=${path.join(report, "unit.json")}`,
     ...testFiles,
   ]);
-  if (!quick) run("build", ["run", "build"]);
+  if (!quick) {
+    run("full-stack build", ["run", "app:build"]);
+    run("static demo export", ["run", "demo:build"]);
+  }
   if (!codeOnly && !quick) {
+    run("static demo browsers", ["run", "demo:test"]);
+    run("demo development browsers", ["run", "demo:test:dev"]);
     run("development browsers", ["run", "test:e2e"]);
     run("production browsers", ["run", "test:e2e"], {
       PLAYWRIGHT_PRODUCTION: "1",

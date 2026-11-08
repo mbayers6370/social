@@ -91,7 +91,7 @@ test("keeps Friends, Gallery, Settings and Spaces consistent with member navigat
     ["friends", "Friends"],
     ["gallery", "Your Gallery"],
     ["settings", "Settings"],
-    ["spaces", "Spaces"],
+    ["spaces", "Your spaces"],
   ]) {
     await page.goto(`/preview/auth?view=member&area=${area}`);
     await expect(

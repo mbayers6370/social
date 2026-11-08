@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import { Friends, Search } from "@/components/margin-icons";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";
 import { Button } from "@/components/ui/button";

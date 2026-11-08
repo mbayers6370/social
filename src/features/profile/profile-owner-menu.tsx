@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import { useRef, useState, type Ref } from "react";
 import { Edit, MoreHorizontal, Settings } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";

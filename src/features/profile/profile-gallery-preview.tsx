@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import Image from "next/image";
 import { Gallery, ChevronRight } from "@/components/margin-icons";
 import { SectionMotif, SectionTitle } from "@/components/shared/section-motif";

@@ -91,6 +91,12 @@ it("fails safely on provider or database outages without leaking errors or subst
     screen.getByRole("heading", { name: "Account access is unavailable." }),
   ).toBeVisible();
   expect(document.body).not.toHaveTextContent(/CANARY|Private member content/);
+  const retry = screen.getByRole("link", { name: "Try again" });
+  const signIn = screen.getByRole("link", { name: "Return to sign in" });
+  expect(retry).toHaveAttribute("data-slot", "button");
+  expect(signIn).toHaveAttribute("data-slot", "button");
+  expect(retry.parentElement).toBe(signIn.parentElement);
+  expect(retry.parentElement).toHaveClass("margin-account-recovery-actions");
 });
 it("does no authentication or database work when the member backend is disabled", async () => {
   vi.stubEnv("MARGIN_PRIVATE_BACKEND_ENABLED", "");

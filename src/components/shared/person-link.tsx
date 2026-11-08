@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import type { ComponentProps } from "react";
 import type { Person } from "@/features/feed/schema";
+import { previewHref } from "@/lib/public-demo";
 import { cn } from "@/lib/utils";
 
 export function profileHref(personId: string) {
-  return `/?view=profile&person=${encodeURIComponent(personId)}`;
+  return previewHref(`/?view=profile&person=${encodeURIComponent(personId)}`);
 }
 
 /** A person's identity always opens that person's profile. */

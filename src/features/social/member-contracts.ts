@@ -1,3 +1,4 @@
+import { portraitCropSchema, type PortraitCrop } from "@/lib/portrait-crop";
 import { z } from "zod";
 import { imageSchema, personSchema, type Person } from "@/features/feed/schema";
 import type { ProfileTrack } from "@/features/profile/schema";
@@ -22,6 +23,7 @@ export const memberIdentitySchema = z.object({
   username: z.string(),
   bio: z.string(),
   portraitPhotoId: z.string().nullable(),
+  portraitCrop: portraitCropSchema.optional(),
   usernameChangedAt: z.string().nullable(),
   galleryVersion: z.number().int().nonnegative(),
   preferences: memberPreferencesSchema,
@@ -80,6 +82,7 @@ export type MemberProfileDetails = {
   username: string;
   bio: string;
   portraitPhotoId: string | null;
+  portraitCrop?: PortraitCrop;
   galleryVersion: number;
   onRepeat: ProfileTrack[];
 };

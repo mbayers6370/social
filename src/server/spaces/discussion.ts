@@ -50,7 +50,13 @@ export class SpaceDiscussionService extends SocialService {
         author: {
           select: {
             id: true,
-            account: { select: { displayName: true, portraitPhotoId: true } },
+            account: {
+              select: {
+                displayName: true,
+                portraitPhotoId: true,
+                portraitCrop: true,
+              },
+            },
           },
         },
       } as const;
@@ -97,7 +103,11 @@ export class SpaceDiscussionService extends SocialService {
       );
       const viewer = await tx.account.findUniqueOrThrow({
         where: { userId: actor },
-        select: { displayName: true, portraitPhotoId: true },
+        select: {
+          displayName: true,
+          portraitPhotoId: true,
+          portraitCrop: true,
+        },
       });
       return {
         comments: comments.map((c) => ({

@@ -941,6 +941,74 @@ describe.skipIf(!enabled)(
         service.profile(actors[2].clerkId, actors[0].id),
       ).rejects.toMatchObject({ status: 404 });
     });
+    it("Space directory previews only current, active, unblocked members and bounds portraits to four", async () => {
+      const spaces = new SpaceService(db, store, () => now);
+      const room = await spaces.createSpace(actors[0].clerkId, {
+        kind: "PRIVATE",
+        name: "Reading room",
+      });
+      expect((await spaces.listSpaces(actors[1].clerkId)).spaces).toEqual([]);
+      const uploaded = await service.createPhotoPost(
+        actors[0].clerkId,
+        photo,
+        "image/jpeg",
+        "Portrait",
+      );
+      const portraitId = uploaded.photos[0].photo.id;
+      await db.account.update({
+        where: { userId: actors[0].id },
+        data: { portraitPhotoId: portraitId },
+      });
+      for (let index = 0; index < 3; index++) {
+        actors.push(
+          await db.user.create({
+            data: {
+              clerkId: `directory-${crypto.randomUUID()}`,
+              account: {
+                create: { status: "ACTIVE", displayName: `Member ${index}` },
+              },
+            },
+            select: { id: true, clerkId: true },
+          }),
+        );
+      }
+      await db.spaceMembership.update({
+        where: { spaceId_userId: { spaceId: room.id, userId: actors[0].id } },
+        data: { joinedAt: now },
+      });
+      await db.spaceMembership.createMany({
+        data: actors.slice(1).map((actor, index) => ({
+          spaceId: room.id,
+          userId: actor.id,
+          joinedAt: new Date(now.getTime() + (index + 1) * 1000),
+        })),
+      });
+      const directory = (await spaces.listSpaces(actors[0].clerkId)).spaces;
+      expect(directory).toHaveLength(1);
+      expect(directory[0].memberCount).toBe(6);
+      expect(directory[0].memberPreview).toHaveLength(4);
+      expect(directory[0].memberPreview[0]).toMatchObject({
+        id: actors[0].id,
+        name: "alice",
+        photo: {
+          src: `/api/profiles/${actors[0].id}/portrait?v=${portraitId}`,
+        },
+      });
+      await service.relationship(actors[0].clerkId, actors[1].id, "block");
+      await db.account.update({
+        where: { userId: actors[2].id },
+        data: { status: "DEACTIVATED" },
+      });
+      const filtered = (await spaces.listSpaces(actors[0].clerkId)).spaces[0];
+      expect(filtered.memberPreview).toHaveLength(4);
+      expect(filtered.memberPreview.map((member) => member.id)).not.toContain(
+        actors[1].id,
+      );
+      expect(filtered.memberPreview.map((member) => member.id)).not.toContain(
+        actors[2].id,
+      );
+      expect(filtered.memberCount).toBe(6);
+    });
     it("Spaces enforce targeted invitations, membership, independent preferences and revocation", async () => {
       const spaces = new SpaceService(db, store, () => now);
       const room = await spaces.createSpace(actors[0].clerkId, {
