@@ -135,7 +135,7 @@ test("opens sample photographs, edits profile and selects local music with bundl
   await expect(page.getByRole("dialog")).toContainText("Bill Withers");
   await expect(
     page.getByRole("link", { name: /Find on Spotify/ }),
-  ).toHaveAttribute("href", /^https:\/\/open.spotify.com\/search\//);
+  ).toHaveAttribute("href", /^https:\/\/open\.spotify\.com\/search\//);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Profile menu", exact: true }).click();
   await page
