@@ -8,9 +8,14 @@ export function DevicePhotoPreview({ file }: { file: File }) {
   const attachPreview = useCallback(
     (node: HTMLImageElement | null) => {
       if (!node) return;
-      // Acquire the browser resource only when the image mounts. React owns the
-      // src attribute; file-derived values are never written through a DOM sink.
+      // Acquire the browser resource only when the image mounts. Accept only a
+      // tab-local blob URL without HTML metacharacters before rendering it.
       const src = URL.createObjectURL(file);
+      if (!src.startsWith("blob:") || /["'&<>]/.test(src)) {
+        URL.revokeObjectURL(src);
+        setFailed(file);
+        return;
+      }
       setPreview({ file, src });
       return () => URL.revokeObjectURL(src);
     },

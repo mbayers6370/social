@@ -72,6 +72,26 @@ it("renders only the generated blob URL when the filename contains HTML", () => 
   expect(container.querySelector("script")).toBeNull();
 });
 
+it.each([
+  "javascript:alert(1)",
+  "data:text/html,<script>alert(1)</script>",
+  "https://service.invalid/leak",
+  'blob:opaque" onerror="alert(1)',
+  "blob:opaque'",
+  "blob:<script>",
+  "blob:opaque&other=value",
+])("rejects an unexpected object URL without assigning it: %s", (src) => {
+  vi.spyOn(URL, "createObjectURL").mockReturnValue(src);
+  const revoke = vi.spyOn(URL, "revokeObjectURL");
+  const file = new File(["photo"], "photo.jpg", { type: "image/jpeg" });
+  const { container, unmount } = render(<DevicePhotoPreview file={file} />);
+  expect(container.querySelector("img")).not.toHaveAttribute("src");
+  expect(screen.getByRole("alert")).toHaveTextContent("couldn’t be previewed");
+  expect(revoke).toHaveBeenCalledExactlyOnceWith(src);
+  unmount();
+  expect(revoke).toHaveBeenCalledTimes(1);
+});
+
 it("releases every acquired URL during Strict Mode mounting and final unmount", () => {
   let sequence = 0;
   const create = vi
