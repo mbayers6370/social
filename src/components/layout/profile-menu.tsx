@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { usePreviewRouter as useRouter } from "@/hooks/use-preview-router";
 import {
   useEffect,
   useId,
@@ -23,7 +23,9 @@ import {
   Profile,
   Friends,
 } from "@/components/margin-icons";
-import { Copyright } from "lucide-react";
+import { Copyright, LogOut } from "lucide-react";
+import { publicDemo } from "@/lib/public-demo";
+import { useDemoExit } from "@/features/public-demo/session";
 import { Button } from "@/components/ui/button";
 import { usePreview } from "@/features/local-preview/provider";
 import { useMember } from "@/features/social/member-provider";
@@ -76,6 +78,7 @@ function AccountMenu({
   live?: boolean;
 }) {
   const member = useMember();
+  const exitDemo = useDemoExit();
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -226,24 +229,45 @@ function AccountMenu({
                 Settings
               </Link>
             }
-            <div className="margin-profile-menu-utilities">
-              <Link href="/help" onClick={close}>
-                <Info aria-hidden="true" />
-                Help &amp; safety
-              </Link>
-              <Link href="/privacy" onClick={close}>
-                <Shield aria-hidden="true" />
-                Privacy
-              </Link>
-              <Link href="/terms" onClick={close}>
-                <Reading aria-hidden="true" />
-                Terms
-              </Link>
-              <Link href="/copyright" onClick={close}>
-                <Copyright aria-hidden="true" />
-                Copyright
-              </Link>
-            </div>
+            {publicDemo ? (
+              <>
+                <div className="margin-profile-menu-utilities">
+                  <Link href="/your-data/" onClick={close}>
+                    <Shield aria-hidden="true" />
+                    Your data
+                  </Link>
+                  <Link href="/retention/" onClick={close}>
+                    <Reading aria-hidden="true" />
+                    Retention
+                  </Link>
+                </div>
+                {exitDemo && (
+                  <button type="button" onClick={exitDemo}>
+                    <LogOut aria-hidden="true" />
+                    Exit demo
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="margin-profile-menu-utilities">
+                <Link href="/help" onClick={close}>
+                  <Info aria-hidden="true" />
+                  Help &amp; safety
+                </Link>
+                <Link href="/privacy" onClick={close}>
+                  <Shield aria-hidden="true" />
+                  Privacy
+                </Link>
+                <Link href="/terms" onClick={close}>
+                  <Reading aria-hidden="true" />
+                  Terms
+                </Link>
+                <Link href="/copyright" onClick={close}>
+                  <Copyright aria-hidden="true" />
+                  Copyright
+                </Link>
+              </div>
+            )}
             <AccountControls compact />
           </nav>,
           document.body,

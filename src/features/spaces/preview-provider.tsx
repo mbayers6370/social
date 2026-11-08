@@ -95,7 +95,11 @@ export function useSpacesPreview() {
 export function SpacesPreviewProvider({
   bootstrap,
   children,
+  catalogRequest = fetch,
+  mapHref,
 }: {
+  catalogRequest?: typeof fetch;
+  mapHref?: (href: string) => string;
   bootstrap: SpacesPreviewData;
   children: ReactNode;
 }) {
@@ -146,7 +150,7 @@ export function SpacesPreviewProvider({
           let nextPage: number | null = null;
           let notice: string | undefined;
           try {
-            const fetched = await fetch(
+            const fetched = await catalogRequest(
               `/api/development/events?${new URLSearchParams({ q: search, page: String(providerPage) })}`,
               {
                 headers: { "x-margin-preview": "1" },
@@ -228,7 +232,7 @@ export function SpacesPreviewProvider({
           );
           if (existing) result = joinPreviewEvent(next, existing);
           else {
-            const fetched = await fetch(
+            const fetched = await catalogRequest(
               `/api/development/events?id=${encodeURIComponent(providerId)}`,
               { headers: { "x-margin-preview": "1" } },
             );
@@ -704,7 +708,7 @@ export function SpacesPreviewProvider({
         if (mutation) writing.current = false;
       }
     },
-    [preview],
+    [preview, catalogRequest],
   );
   useEffect(
     () => () => {
@@ -719,6 +723,7 @@ export function SpacesPreviewProvider({
       photoSrc: (id) =>
         current.current.photos.find((p) => p.id === id)?.src ?? "",
       href: (href) => {
+        if (mapHref) return mapHref(href);
         const url = new URL(href, "https://preview.invalid");
         if (url.pathname === "/app" && url.searchParams.has("person"))
           return `/?view=profile&person=${encodeURIComponent(url.searchParams.get("person")!)}`;
@@ -729,7 +734,7 @@ export function SpacesPreviewProvider({
           : "/preview/spaces";
       },
     }),
-    [request],
+    [request, mapHref],
   );
   const friendships = preview?.state.friendships ?? [];
   const now = preview?.now ?? bootstrap.now;

@@ -1,5 +1,6 @@
 "use client";
-import Link from "next/link";
+import { publicDemo } from "@/lib/public-demo";
+import Link from "@/components/shared/preview-link";
 import { useEffect } from "react";
 import {
   ChevronRight,
@@ -108,11 +109,16 @@ export function SettingsPage() {
           >
             <h2 id="privacy-settings-title">Privacy & safety</h2>
             <p className="margin-settings-sharing">
-              Your posts and photographs are shared with accepted friends.
+              {publicDemo
+                ? "Demo changes stay in this browser tab."
+                : "Your posts and photographs are shared with accepted friends."}
             </p>
             <SafetySettings />
-            <Link href="/privacy" className="margin-settings-inline-link">
-              How sharing works
+            <Link
+              href={publicDemo ? "/your-data/" : "/privacy"}
+              className="margin-settings-inline-link"
+            >
+              {publicDemo ? "How demo data works" : "How sharing works"}
               <ChevronRight aria-hidden="true" />
             </Link>
           </section>

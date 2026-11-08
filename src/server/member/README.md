@@ -1,5 +1,7 @@
 # Top 4
 
+This documents the preserved authenticated Top 4 backend. The default public demo reuses its interface with fictional friends and a tab-local adapter; it never calls these APIs or runs this migration. See the [main README](../../../README.md#full-stack-capabilities-retained-in-the-source) for the distinction between demo behavior and retained capabilities. The delivery evidence below is historical, not a current hosted-release claim.
+
 Top 4 is a private, ordered profile detail, with zero to four active accepted
 friends. It is visible only to the owner and their accepted friends, and excludes
 blocks in either direction (including a selected person's block with the viewer).

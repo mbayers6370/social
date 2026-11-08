@@ -57,6 +57,7 @@ export class MemberAccountDataService extends SocialService {
           motion: true,
           usernameChangedAt: true,
           portraitPhotoId: true,
+          portraitCrop: true,
           notifyComments: true,
           notifyFriends: true,
           notifyLikes: true,

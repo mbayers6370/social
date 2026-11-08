@@ -107,7 +107,7 @@ export default defineConfig({
     : {
         command: production
           ? "node scripts/testing/production-server.mjs"
-          : `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+          : `npm run app:dev -- --hostname 127.0.0.1 --port ${port}`,
         url: `${production ? "https" : "http"}://127.0.0.1:${port}/api/health`,
         ignoreHTTPSErrors: production,
         reuseExistingServer: false,

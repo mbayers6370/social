@@ -7,6 +7,10 @@ export default defineConfig([
   ...nextTypescript,
   globalIgnores([
     ".next/**",
+    "portfolio/.next/**",
+    "portfolio/out/**",
+    "portfolio/public/**",
+    "portfolio/next-env.d.ts",
     ".local/**",
     "src/generated/**",
     "coverage/**",

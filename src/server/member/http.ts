@@ -1,3 +1,4 @@
+import { portraitVersionSchema } from "@/lib/portrait-crop";
 import "server-only";
 import { eventSpacesEnabled } from "@/features/spaces/availability";
 import { z } from "zod";
@@ -113,7 +114,7 @@ export async function memberRequest(
       )
     )
       throw new SocialError(400, "Unexpected query parameters");
-    if (query.has("v")) memberId.parse(query.get("v"));
+    if (query.has("v")) portraitVersionSchema.parse(query.get("v"));
     const before = query.has("before")
       ? memberId.parse(query.get("before"))
       : undefined;
@@ -212,12 +213,13 @@ export async function memberRequest(
       case "username":
         result = await service.updateUsername(subject, await json(request));
         break;
-      case "portraitUpdate":
-        result = await service.setPortrait(
-          subject,
-          memberPortraitInput.parse(await json(request)).photoId,
+      case "portraitUpdate": {
+        const { photoId, crop } = memberPortraitInput.parse(
+          await json(request),
         );
+        result = await service.setPortrait(subject, photoId, crop);
         break;
+      }
       case "portrait":
         return new Response(
           new Uint8Array(await service.portrait(subject, id!)),

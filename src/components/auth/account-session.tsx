@@ -1,31 +1,13 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useClerk, useSession } from "@clerk/nextjs";
 import { previewLoginId, endPreviewLogin } from "./login-session";
 
-type Session = {
-  loginSessionId: string | null;
-  ready: boolean;
-  available: boolean;
-  signedIn: boolean;
-  managed: boolean;
-  enterPreview: () => void;
-  leave: () => Promise<void>;
-  manage: () => void | Promise<void>;
-};
-const Context = createContext<Session | null>(null);
-export function useAccountSession() {
-  return useContext(Context);
-}
+import { AccountSessionContext as Context } from "./account-session-context";
+export { useAccountSession } from "./account-session-context";
+
 export function AccountSession({
   enabled,
   children,

@@ -1,0 +1,58 @@
+/* A quiet disclosure leaves the existing application geometry and visual system intact. */
+.margin-demo-notice {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 24px;
+  padding: 8px 24px;
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  font: var(--text-meta)/1.5 var(--font-body);
+}
+.margin-demo-notice a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+}
+.margin-demo-error {
+  padding: 16px 24px;
+  color: hsl(var(--destructive));
+}
+
+/* Missing demo routes share the public shell and the existing typographic hierarchy. */
+.margin-demo-unavailable {
+  width: calc(100% - 2 * var(--site-gutter));
+  max-width: 48rem;
+  margin-inline: auto;
+  padding-block: clamp(64px, 10svh, 128px);
+}
+.margin-demo-unavailable h1 {
+  max-width: 16ch;
+  color: hsl(var(--ink));
+  font: calc(clamp(2.25rem, 5vw, 4rem) + var(--reading-size-adjustment))/1.12
+    var(--font-serif);
+  text-wrap: balance;
+}
+.margin-demo-unavailable p {
+  max-width: 44ch;
+  margin-top: var(--space-group);
+  color: hsl(var(--muted-foreground));
+  font: var(--text-title)/1.7 var(--font-body);
+  text-wrap: pretty;
+}
+.margin-demo-unavailable-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: var(--space-section);
+}
+@media (max-width: 639px) {
+  .margin-demo-unavailable-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

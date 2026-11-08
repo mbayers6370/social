@@ -69,6 +69,13 @@ test("welcome primary labels retain AA contrast in default, hover and keyboard f
   page,
 }) => {
   await page.goto("/welcome");
+  for (const target of [
+    page.locator(".margin-welcome-cta"),
+    page.locator(".margin-public-join"),
+  ]) {
+    await expect(target).toHaveCSS("background-color", "rgb(153, 150, 78)");
+    await expect(target).toHaveCSS("color", "rgb(40, 40, 32)");
+  }
   await checkStates(page, page.locator(".margin-welcome-cta"));
   await checkStates(page, page.locator(".margin-public-join"));
   await checkStates(

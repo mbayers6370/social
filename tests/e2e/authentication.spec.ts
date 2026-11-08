@@ -25,6 +25,21 @@ test("keeps registration closed and fails closed on protected requests without a
   await expect(
     page.getByRole("link", { name: "Return to sign in" }),
   ).toBeVisible();
+  const recovery = page.locator(".margin-account-recovery-actions");
+  const retry = recovery.getByRole("link", { name: "Try again", exact: true });
+  const signIn = recovery.getByRole("link", {
+    name: "Return to sign in",
+    exact: true,
+  });
+  await expect(retry).toHaveCSS("border-top-width", "1px");
+  await expect(signIn).toHaveCSS("border-top-width", "1px");
+  const a = (await retry.boundingBox())!;
+  const b = (await signIn.boundingBox())!;
+  expect(a.height).toBeGreaterThanOrEqual(44);
+  expect(b.height).toBeGreaterThanOrEqual(44);
+  expect(
+    Math.max(b.x - (a.x + a.width), b.y - (a.y + a.height)),
+  ).toBeGreaterThanOrEqual(11);
   if (process.env.PLAYWRIGHT_PRODUCTION === "1") {
     const fixture = await page.request.get("/preview/auth");
     expect(fixture.status()).toBe(404);

@@ -526,7 +526,7 @@ test("comment field expands in place on focus, preserves drafts, and collapses o
   );
 });
 
-test("conversation controls have padded hover targets and a distinct comment focus border", async ({
+test("conversation controls have padded hover targets and a distinct comment focus ring", async ({
   page,
 }, testInfo) => {
   const dialog = await openPost(page, "post-porch");
@@ -555,9 +555,9 @@ test("conversation controls have padded hover targets and a distinct comment foc
     caret: "initial",
     path: testInfo.outputPath("inline-comment.png"),
   });
-  const restingBorder = await dialog
+  const restingShadow = await dialog
     .locator(".margin-comment-input")
-    .evaluate((node) => getComputedStyle(node).borderColor);
+    .evaluate((node) => getComputedStyle(node).boxShadow);
   await input.focus();
   const focus = await dialog
     .locator(".margin-comment-input")
@@ -571,8 +571,7 @@ test("conversation controls have padded hover targets and a distinct comment foc
         outline: field.outlineStyle,
       };
     });
-  expect(focus.border).not.toBe(restingBorder);
-  expect(focus.border).toBe("rgb(40, 40, 32)");
+  expect(focus.shadow).not.toBe(restingShadow);
   expect(focus.shadow).not.toBe("none");
   expect(focus.outline).toBe("none");
   await captureScreenshot(page, {

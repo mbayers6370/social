@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/application.mjs dev",
-    "build": "node scripts/application.mjs build",
-    "start": "node scripts/application.mjs start",
+    "dev": "node scripts/public-demo.mjs dev",
+    "build": "node scripts/public-demo.mjs build",
+    "start": "node scripts/public-demo.mjs serve",
     "review": "node --experimental-strip-types scripts/local-review.mjs",
     "review:build": "node --experimental-strip-types scripts/local-review.mjs --build-only",
     "clean:local": "node scripts/clean-local-artifacts.mjs",
@@ -45,7 +45,14 @@
     "account:bootstrap-founder": "node --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types --env-file-if-exists=.env scripts/bootstrap-founder.mjs",
     "test:invitations:live": "RUN_LIVE_INVITATION_TESTS=1 node --env-file-if-exists=.env --import ./scripts/register-typescript.mjs --conditions=react-server --experimental-strip-types scripts/test-invitations-live.mjs",
     "verify:extended": "node scripts/verify.mjs --extended",
-    "test:inventory": "node scripts/testing/inventory.mjs"
+    "test:inventory": "node scripts/testing/inventory.mjs",
+    "demo:build": "node scripts/public-demo.mjs build",
+    "demo:serve": "node scripts/public-demo.mjs serve",
+    "demo:test": "node scripts/public-demo.mjs test",
+    "app:dev": "node scripts/application.mjs dev",
+    "app:build": "node scripts/application.mjs build",
+    "app:start": "node scripts/application.mjs start",
+    "demo:test:dev": "playwright test --config portfolio/playwright.dev.config.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",

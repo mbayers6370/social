@@ -160,28 +160,34 @@ function SessionVerification({
             ? "Check your verified email and account status before continuing."
             : "Account services may be unavailable. Check your connection and try again."}
       </p>
-      {state === "unavailable" && (
-        <Button
-          variant="outline"
-          onClick={
-            provider.available
-              ? () => {
-                  setAccess("checking");
-                  check();
-                }
-              : () => window.location.reload()
-          }
-        >
-          Try again
+      <div className="margin-account-recovery-actions">
+        {state === "unavailable" && (
+          <Button
+            variant="outline"
+            onClick={
+              provider.available
+                ? () => {
+                    setAccess("checking");
+                    check();
+                  }
+                : () => window.location.reload()
+            }
+          >
+            Try again
+          </Button>
+        )}
+        <Button asChild variant="outline">
+          <Link
+            href={
+              state === "blocked"
+                ? "/onboarding"
+                : "/sign-in?reason=session-ended"
+            }
+          >
+            {state === "blocked" ? "Review account setup" : "Return to sign in"}
+          </Link>
         </Button>
-      )}
-      <Link
-        href={
-          state === "blocked" ? "/onboarding" : "/sign-in?reason=session-ended"
-        }
-      >
-        {state === "blocked" ? "Review account setup" : "Return to sign in"}
-      </Link>
+      </div>
     </section>
   );
 }

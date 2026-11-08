@@ -7,48 +7,19 @@
   gap: var(--space-group);
   padding: var(--directory-page-padding);
 }
-/* A compact introduction shares the directory width; signature corners frame it with air. */
-.margin-spaces-banner {
-  --muted-foreground: var(--ink);
-  --ring: var(--ink);
-  position: relative;
+.margin-spaces-intro {
   display: grid;
-  gap: 8px;
-  padding: 16px;
-  border: 1px solid hsl(var(--ink) / 0.25);
-  border-radius: var(--radius-control);
-  background: hsl(var(--warm-accent));
-  color: hsl(var(--ink));
-}
-.margin-spaces-corner-start,
-.margin-spaces-corner-end {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  color: hsl(var(--ink));
-  pointer-events: none;
-}
-.margin-spaces-corner-start {
-  top: -8px;
-  inset-inline-start: -8px;
-}
-.margin-spaces-corner-end {
-  bottom: -8px;
-  inset-inline-end: -8px;
-  transform: rotate(180deg);
-}
-.margin-spaces-banner .margin-section-motif {
-  color: inherit;
+  gap: 12px;
 }
 .margin-spaces-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
 }
 .margin-spaces-heading h1 {
-  font: var(--text-heading-md)/1.2 var(--font-serif);
+  font: var(--directory-heading-size)/1.2 var(--font-serif);
   overflow-wrap: anywhere;
 }
 .margin-space-identity h1 {
@@ -63,6 +34,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.margin-space-privacy {
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-caption);
+}
+.margin-space-eyebrow {
   color: hsl(var(--ink));
   font-size: var(--text-meta);
 }
@@ -172,46 +149,68 @@
   overflow-wrap: anywhere;
 }
 .margin-space-directory {
+  display: grid;
+  gap: 16px;
   list-style: none;
   padding: 0;
   margin: 0;
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius-card);
-  background: hsl(var(--card));
-}
-.margin-space-directory > li + li {
-  position: relative;
-  --divider-top-color: hsl(var(--border));
-  border-top: 1px solid transparent;
 }
 .margin-space-directory a {
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 88px;
-  padding: 16px;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid hsl(var(--border));
   border-radius: var(--radius-card);
+  background: hsl(var(--card));
 }
 .margin-space-directory a:hover {
-  background: hsl(var(--accent) / 0.5);
+  border-color: hsl(var(--olive));
+}
+.margin-space-row-copy {
+  display: grid;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.margin-space-card-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
 }
 .margin-space-row-icon {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  color: hsl(var(--ink));
+  color: hsl(var(--olive));
 }
-.margin-space-row-copy {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.margin-space-row-copy strong {
-  display: block;
-  font-size: var(--text-title);
+.margin-space-card-title :is(h2, h3) {
+  font-size: var(--text-subtitle);
   font-weight: 500;
+  line-height: 1.4;
+}
+.margin-space-card-title .margin-space-date {
+  margin: 0;
+  font-size: var(--text-caption);
+}
+.margin-space-card-location {
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-caption);
+}
+.margin-space-card-members {
+  color: hsl(var(--muted-foreground));
+  font-size: var(--text-caption);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.margin-space-member-portraits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .margin-space-date {
   display: block;
@@ -226,7 +225,7 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  color: hsl(var(--muted-foreground));
+  color: hsl(var(--olive));
 }
 .margin-space-invitations {
   display: grid;
@@ -309,7 +308,7 @@
 .margin-space-empty p {
   max-width: 48ch;
   color: hsl(var(--muted-foreground));
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 .margin-space-more,
 .margin-space-back {

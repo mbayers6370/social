@@ -189,7 +189,7 @@ html:has(.margin-conversation-frame[aria-modal="true"]) {
     width: var(--margin-panel-width);
     height: calc(var(--panel-height) - var(--panel-inset) * 2);
     min-height: 0;
-    border: 1px solid hsl(var(--border) / 0.65);
+    border: 1px solid hsl(var(--border));
     border-radius: 14px;
     background: hsl(var(--conversation-surface));
     transform: none;

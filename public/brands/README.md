@@ -1,5 +1,9 @@
 # Music service marks
 
+The default portfolio demo uses bundled artwork and ordinary external music links. It does not call Apple/iTunes or Spotify APIs, load an embedded player, or show the iTunes attribution badge. Its asset acknowledgements are on `/your-data/#demo-assets`; see [demo music provenance](../../src/assets/fixtures/music-sources.md).
+
+The provider-specific iTunes notes below apply to the **preserved full-stack music integration**. Its badge, catalogue behavior and `/copyright#music-credits` page remain intact even though that route is not exported by the public demo.
+
 Original, unmodified black icons downloaded from the providers' official asset packs for links to their song pages. Marks belong to their respective owners.
 
 - `apple-music.svg`: Apple Music 2020 icon pack, `Apple_Music_Icon_blk_sm_073120.svg`. [Apple Music identity guidelines and icon downloads](https://marketing.services.apple/apple-music-identity-guidelines).

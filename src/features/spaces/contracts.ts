@@ -15,7 +15,9 @@ export type SpaceSummary = {
   sourceUrl?: string | null;
 };
 export type SpaceListData = {
-  spaces: SpaceSummary[];
+  spaces: (SpaceSummary & {
+    memberPreview: import("@/features/feed/schema").Person[];
+  })[];
   nextCursor: string | null;
   invitations: { id: string; space: { name: string } }[];
 };

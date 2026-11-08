@@ -8,7 +8,8 @@ import {
   useSyncExternalStore,
   type KeyboardEvent,
 } from "react";
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
+import { publicDemo } from "@/lib/public-demo";
 import {
   Block,
   Info,
@@ -196,14 +197,14 @@ export function ProfileContactActions({ person }: { person: Person }) {
       <Link
         role={asMenu ? "menuitem" : undefined}
         tabIndex={asMenu ? -1 : undefined}
-        href="/help"
+        href={publicDemo ? "/your-data/" : "/help"}
         onClick={() => {
           setMenuOpen(false);
           setStep(null);
         }}
       >
         <Info aria-hidden="true" />
-        Help &amp; safety
+        {publicDemo ? "Your demo data" : "Help & safety"}
       </Link>
     </div>
   );

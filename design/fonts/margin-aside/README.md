@@ -4,7 +4,7 @@ Original typewriter lettering selected from the Common/Aside studies, with porou
 
 `master.cjs` draws the proportional worn-print master, with compact letter proportions, bracketed slabs and stroke contrast. Narrow letters, broad m/w, and compact punctuation use their own advances. It feeds `build.py`. The build expands strokes, composes supported Latin accents using the existing Margin font utilities, then adds stable, character-specific clusters of porous ink loss and edge nicks. No Hinge font binaries or third-party font outlines are used.
 
-`public/fonts/margin-aside/` contains the three TTF faces, matching WOFF2 files, optional family CSS, specimen, and a file/coverage manifest. The application has not adopted this family. This is a development font release; the current supported character set is recorded in the manifest. Italics and wider script coverage are not supplied.
+`public/fonts/margin-aside/` contains the three TTF faces, matching WOFF2 files, optional family CSS, specimen, and a file/coverage manifest. The demo and preserved application use its WOFF2 faces through `next/font/local` for headings and branding, with Medium for post text. This is a development font release; the current supported character set is recorded in the manifest. Italics and wider script coverage are not supplied.
 
 ## Build
 

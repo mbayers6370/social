@@ -13,7 +13,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useAccountSession } from "@/components/auth/account-session";
+import { useAccountSession } from "@/components/auth/account-session-context";
 import { POSTING_TIME_ZONE } from "@/lib/platform-rules";
 
 type Invitation = {

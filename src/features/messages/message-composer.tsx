@@ -40,7 +40,10 @@ export function MessageComposer({
   });
 
   useLayoutEffect(() => {
-    if (textarea.current) fitMessageInput(textarea.current);
+    if (textarea.current) {
+      fitMessageInput(textarea.current);
+      revealFocusedInput(textarea.current);
+    }
   }, [draft]);
 
   useLayoutEffect(() => {
@@ -55,11 +58,18 @@ export function MessageComposer({
     // Ignore height changes from fitting the field itself.
     let width = input.clientWidth;
     const observer = new ResizeObserver(() => {
-      if (input.clientWidth === width) return;
-      width = input.clientWidth;
-      fitMessageInput(input);
+      if (input.clientWidth !== width) {
+        width = input.clientWidth;
+        fitMessageInput(input);
+      }
+      revealFocusedInput(input);
     });
     observer.observe(input);
+    // Short windows and enlarged text can make the thread itself scroll. Keep
+    // its active composer reachable when that container shrinks without moving
+    // a reader who is viewing history with the field unfocused.
+    const thread = input.closest(".margin-thread");
+    if (thread) observer.observe(thread);
     return () => observer.disconnect();
   }, []);
 
@@ -174,4 +184,9 @@ function fitMessageInput(input: HTMLTextAreaElement) {
   input.style.height = "auto";
   input.style.height = `${input.scrollHeight}px`;
   input.scrollTop = scrollTop;
+}
+
+function revealFocusedInput(input: HTMLTextAreaElement) {
+  if (document.activeElement === input)
+    input.scrollIntoView?.({ block: "nearest", inline: "nearest" });
 }

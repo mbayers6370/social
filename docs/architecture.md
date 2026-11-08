@@ -12,6 +12,8 @@ Routes pass explicit data objects to feature components. Keep secrets and databa
 
 ## Development and production
 
+The default `npm run dev` opens the separate portfolio welcome page and anonymous `/demo/` experience. `npm run build` and `npm start` build and serve its static export. The preserved full-stack target uses `app:dev`, `app:build` and `app:start`; the application architecture below refers to that target.
+
 The root layout owns fonts, Clerk and session access. Only the `(development)` route-group layout installs fictional social/Spaces providers, and only in development. Production `/` renders the public website; development fixture routes and music APIs reject production requests. The separately gated `/app` layout installs an actual `MemberIdentity` behind the verified session monitor. No fictional provider is mounted above member pages.
 
 `npm run review` creates a production-optimized build directly from the current
@@ -19,7 +21,7 @@ working tree and exposes it over one private-network HTTPS origin for desktop an
 phone review. `npm run review -- --localhost` instead binds only to
 `http://localhost:3000` for account review on the Mac. Its generated output is
 isolated under `.local/local-review/next`,
-so it cannot replace the standard `.next` build served by `npm start`; both are
+so it cannot replace the standard `.next` build served by `npm run app:start`; both are
 compiled from this same working tree, with no second source checkout. Test Clerk
 keys and filesystem media are accepted only when the explicit review flag,
 private HTTPS origin (or exact HTTP localhost), loopback `margin_local` runtime database, non-CI process,
@@ -100,3 +102,13 @@ The authoritative [onboarding and activation rules](account-flows.md#invitation-
 `20261104000000_member_experience` adds these account fields, Gallery positions/versioning, messages, notifications and likes. It was applied only to the backed-up local development database. `MARGIN_LOCAL_PHOTO_STORE=1` enables private filesystem bytes under ignored `.local/private-photos` **only in development**; production rejects that flag and retains the existing private R2 adapter. No cloud service was provisioned. Hosted storage, cleanup scheduling, production activation and real-device verification remain rollout work.
 
 Production account access is restricted to a trusted US connection-country signal. The Cloudflare route overwrites country/credential headers and the origin gate checks its server-only secret before Clerk; verified-session reads recheck the gate for Server Actions. Unknown/untrusted/direct-origin requests fail closed. Exact public information/assets and the signature-verified Clerk webhook are exempt. The guarded local review retains its existing narrow exception. This estimates connection location, not residency or VPN exclusion. See [edge deployment](../ops/cloudflare/README.md).
+
+### Profile photograph framing
+
+`Account.portraitCrop` stores bounded horizontal/vertical travel (0–1) and zoom (1–3). The authenticated portrait mutation validates this metadata and accepts only an owned ready gallery photograph or the account’s retained current portrait. A shared crop geometry helper keeps the circular editor preview and server-side square extract consistent. Portrait reads keep existing active-account and block checks, returning only a 208px derivative. The gallery original and upload allowance remain unchanged. Framing participates in avatar URL versions across member read models so editing the same photograph refreshes its displayed crop.
+
+Migration `20261111010000_portrait_framing` adds only this JSONB field with centered defaults for existing accounts. Apply it before deploying the updated client/server.
+
+### Public portfolio target
+
+`portfolio/app` is a separate Next.js static-export application. It imports canonical shared UI/styles and pure fictional definitions from `src/fixtures`; the original `src/server/fixtures` functions retain their development-only guards. `src/app`, Prisma, authenticated APIs and backend integrations remain the full-stack target. Presentation consumes the provider-neutral account-session context, so the portfolio does not import Clerk. Demo-specific navigation is compiled only by the portfolio config and never changes server authorization. The local personal/Spaces providers retain their data ownership; the portfolio composes local music/Top Four adapters and a fixed sample clock. Its pre-hydration browser boundary rejects backend/external requests, and its build rejects infrastructure imports. `npm run demo:build` emits only `portfolio/out`; no runtime application services or credentials are required. Full verification exercises the exported artifact independently of the existing full-stack browser suites.

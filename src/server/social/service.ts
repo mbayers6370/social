@@ -1,3 +1,4 @@
+import { readPortraitCrop } from "@/lib/portrait-crop";
 import "server-only";
 import { readTopFriends, pruneTopFriends } from "@/server/member/top-friends";
 import { memberPerson } from "@/lib/member-person";
@@ -375,6 +376,16 @@ export class SocialService {
               username: true,
               bio: true,
               portraitPhotoId: true,
+              portraitCrop: true,
+              portrait: {
+                select: {
+                  id: true,
+                  state: true,
+                  description: true,
+                  width: true,
+                  height: true,
+                },
+              },
               showTopFriends: true,
               galleryVersion: true,
               messagingEnabled: true,
@@ -503,7 +514,11 @@ export class SocialService {
               select: {
                 id: true,
                 account: {
-                  select: { displayName: true, portraitPhotoId: true },
+                  select: {
+                    displayName: true,
+                    portraitPhotoId: true,
+                    portraitCrop: true,
+                  },
                 },
               },
             });
@@ -524,6 +539,18 @@ export class SocialService {
           username: owner.account!.username ?? "",
           bio: owner.account!.bio,
           portraitPhotoId: owner.account!.portraitPhotoId,
+          portraitCrop: readPortraitCrop(owner.account!.portraitCrop),
+          ...(relationship === "self" &&
+          owner.account!.portrait?.state === "READY"
+            ? {
+                portraitPhoto: {
+                  id: owner.account!.portrait.id,
+                  description: owner.account!.portrait.description,
+                  width: owner.account!.portrait.width,
+                  height: owner.account!.portrait.height,
+                },
+              }
+            : {}),
           galleryVersion:
             relationship === "self" ? owner.account!.galleryVersion : 0,
           onRepeat: songs.map(profileTrackFromRow),

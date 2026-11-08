@@ -1,8 +1,9 @@
 "use client";
 import Image from "next/image";
+import { PhotoFileInput } from "@/components/shared/photo-file-input";
 import { DevicePhotoPreview } from "@/components/shared/device-photo-preview";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Check, Image as ImageIcon, Upload } from "@/components/margin-icons";
+import { Check } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -256,41 +257,19 @@ function SpacePhotoSelection({
         >
           {file && <DevicePhotoPreview file={file} />}
           <Label htmlFor={`${id}-file`}>Or upload a new one</Label>
-          <div
-            className="margin-file-picker"
-            data-disabled={checking || undefined}
-          >
-            <span className="margin-file-picker-mark" aria-hidden="true">
-              <ImageIcon />
-            </span>
-            <div className="margin-file-summary">
-              <span className="margin-file-name" role="status">
-                {file?.name ?? "Upload from your device"}
-              </span>
-              <span className="margin-field-hint">
-                JPEG, PNG or WebP · Up to 8 MB
-              </span>
-            </div>
-            <span className="margin-upload-choose" aria-hidden="true">
-              <Upload />
-              {file ? "Change photograph" : "Choose photograph"}
-            </span>
-            <input
-              ref={input}
-              id={`${id}-file`}
-              className="margin-upload-native"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              disabled={checking}
-              onChange={(event) => {
-                const next = event.target.files?.[0];
-                if (!next) return;
-                setFile(next);
-                setSaved(undefined);
-                setError("");
-              }}
-            />
-          </div>
+          <PhotoFileInput
+            ref={input}
+            id={`${id}-file`}
+            file={file}
+            disabled={checking}
+            onChange={(event) => {
+              const next = event.target.files?.[0];
+              if (!next) return;
+              setFile(next);
+              setSaved(undefined);
+              setError("");
+            }}
+          />
           {error && <p role="alert">{error}</p>}
         </form>
       </div>

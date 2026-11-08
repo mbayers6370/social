@@ -1,5 +1,7 @@
 # Margin Hinge and Margin Loose Mono
 
+These are retained design studies. The current public demo and preserved application use [Margin Aside](../margin-aside/README.md) for headings and post text, with Inter for other UI text. The Hinge-derived browser monogram is an outline, not a runtime Hinge font dependency.
+
 Original editable outline masters for the two selected Margin lettering concepts.
 These are working font families, developed from the visual studies rather than extracted from an existing typeface.
 No Caudex, Neurath, Amigável, system-font outlines, or third-party font binaries are used in the build.

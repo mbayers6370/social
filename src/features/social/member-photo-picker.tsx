@@ -9,7 +9,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PhotoFileInput } from "@/components/shared/photo-file-input";
+import { PortraitCropEditor } from "@/components/shared/portrait-crop-editor";
+import { DEFAULT_PORTRAIT_CROP, type PortraitCrop } from "@/lib/portrait-crop";
 import { Label } from "@/components/ui/label";
 import { useSpaceClient } from "@/features/spaces/client";
 import { PHOTO_MAX_BYTES } from "@/lib/media-policy";
@@ -25,22 +27,47 @@ export function MemberPhotoPicker({
   onOpenChange,
   photos,
   portrait = false,
+  currentPortraitId,
+  currentPhoto,
+  currentCrop = DEFAULT_PORTRAIT_CROP,
   onChoose,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   photos: PrivatePhoto[];
   portrait?: boolean;
-  onChoose: (photo: PrivatePhoto) => void | Promise<void>;
+  currentPortraitId?: string | null;
+  currentPhoto?: PrivatePhoto;
+  currentCrop?: PortraitCrop;
+  onChoose: (photo: PrivatePhoto, crop?: PortraitCrop) => void | Promise<void>;
 }) {
   const client = useSpaceClient();
   const id = useId();
   const [file, setFile] = useState<File>();
   const [selected, setSelected] = useState<PrivatePhoto | null>(null);
+  const [crop, setCrop] = useState<PortraitCrop>(DEFAULT_PORTRAIT_CROP);
+  const [cropReady, setCropReady] = useState(false);
   const [replacement, setReplacement] = useState("");
   const [working, setWorking] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [error, setError] = useState("");
+  const [wasOpen, setWasOpen] = useState(false);
+  // A new editing session starts from the saved framing, including after Cancel.
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setSelected(
+        portrait
+          ? (currentPhoto ??
+              photos.find((photo) => photo.id === currentPortraitId) ??
+              null)
+          : null,
+      );
+      setCrop(currentCrop);
+      setCropReady(false);
+      setError("");
+    }
+  }
   const lock = useRef(false);
   async function choose(photo: PrivatePhoto) {
     if (lock.current) return;
@@ -48,7 +75,7 @@ export function MemberPhotoPicker({
     setWorking(true);
     setError("");
     try {
-      await onChoose(photo);
+      await onChoose(photo, portrait ? crop : undefined);
       onOpenChange(false);
       setSelected(null);
       setFile(undefined);
@@ -92,6 +119,8 @@ export function MemberPhotoPicker({
         },
       );
       setSelected(saved);
+      setCrop({ ...DEFAULT_PORTRAIT_CROP });
+      setCropReady(false);
       setFile(undefined);
       memberChanged();
       if (!portrait) {
@@ -133,17 +162,16 @@ export function MemberPhotoPicker({
         <div className="margin-photo-picker-body">
           {portrait && selected ? (
             <>
-              <Image
-                unoptimized
+              <PortraitCropEditor
+                key={selected.id}
                 src={client.photoSrc(selected.id)}
-                alt={selected.description}
-                width={208}
-                height={208}
-                className="margin-profile-photo-preview"
+                width={selected.width}
+                height={selected.height}
+                value={crop}
+                onChange={setCrop}
+                onReady={setCropReady}
+                disabled={working}
               />
-              <Button disabled={working} onClick={() => void choose(selected)}>
-                Use photograph
-              </Button>
               <Button
                 variant="ghost"
                 disabled={working}
@@ -164,7 +192,15 @@ export function MemberPhotoPicker({
                         key={photo.id}
                         disabled={working}
                         aria-label={`Use ${photo.description === "Photograph" ? `photograph ${index + 1}` : photo.description}`}
-                        onClick={() => setSelected(photo)}
+                        onClick={() => {
+                          setSelected(photo);
+                          setCrop(
+                            photo.id === currentPortraitId
+                              ? currentCrop
+                              : { ...DEFAULT_PORTRAIT_CROP },
+                          );
+                          setCropReady(false);
+                        }}
                       >
                         <Image
                           unoptimized
@@ -178,13 +214,16 @@ export function MemberPhotoPicker({
                   </div>
                 </section>
               )}
-              <form className="margin-upload-form" onSubmit={upload}>
+              <form
+                id={`${id}-upload`}
+                className="margin-upload-form"
+                onSubmit={upload}
+              >
                 {file && <DevicePhotoPreview file={file} />}
                 <Label htmlFor={`${id}-file`}>Photograph</Label>
-                <Input
+                <PhotoFileInput
+                  file={file}
                   id={`${id}-file`}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
                   disabled={working || uncertain}
                   onChange={(event) => setFile(event.target.files?.[0])}
                 />
@@ -216,12 +255,8 @@ export function MemberPhotoPicker({
                   </>
                 )}
                 <p className="margin-field-hint">
-                  JPEG, PNG or WebP, up to 8 MB. Uploads share your daily
-                  allowance of three photographs.
+                  Uploads share your daily allowance of three photographs.
                 </p>
-                <Button type="submit" disabled={working || uncertain || !file}>
-                  {working ? "Uploading…" : "Upload photograph"}
-                </Button>
               </form>
             </>
           )}
@@ -238,6 +273,26 @@ export function MemberPhotoPicker({
           >
             Cancel
           </Button>
+          {portrait && selected ? (
+            <Button
+              disabled={working || !cropReady}
+              onClick={() => void choose(selected)}
+            >
+              {working ? "Saving…" : "Use photograph"}
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              form={`${id}-upload`}
+              disabled={working || uncertain || !file}
+            >
+              {working
+                ? "Uploading…"
+                : portrait
+                  ? "Upload and adjust"
+                  : "Upload photograph"}
+            </Button>
+          )}
         </footer>
       </DialogContent>
     </Dialog>

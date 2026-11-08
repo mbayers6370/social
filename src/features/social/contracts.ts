@@ -14,6 +14,8 @@ export type PrivateProfileData = {
     username?: string;
     bio?: string;
     portraitPhotoId?: string | null;
+    portraitPhoto?: PrivatePhoto;
+    portraitCrop?: import("@/lib/portrait-crop").PortraitCrop;
     galleryVersion?: number;
     onRepeat?: import("@/features/profile/schema").ProfileTrack[];
     id: string;

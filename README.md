@@ -1,58 +1,12 @@
 # Margin
 
-A small social space for friends, with a feed that ends and room for everything else. Margin is invitation-only, built around mutual friendship and a chronological feed—without ads, recommended strangers, or like counts in the feed.
+Margin is an interactive portfolio demo of a small social space for friends: a chronological feed with an ending, personal profiles, photographs, conversations and Spaces. Enter as Ines, a fictional member, and explore without registering.
 
-[Website](https://margin.social) · [Help](https://margin.social/help) · [Privacy](https://margin.social/privacy) · [Contact](mailto:support@margin.social)
+The public demo is the default application in this repository. The original full-stack implementation remains alongside it as engineering work, including authentication, PostgreSQL/Prisma, private media, authorization and scheduled maintenance. Those services are excluded from the public demo.
 
-## Preview
+## Run the demo
 
-Welcome, news feed, profile, and messages. App screenshots use fictional sample data.
-
-|                                    Welcome                                     |                           News feed                            |
-| :----------------------------------------------------------------------------: | :------------------------------------------------------------: |
-|               ![Margin welcome page](assets/readme/welcome.png)                |   ![Margin chronological news feed](assets/readme/feed.png)    |
-|                                  **Profile**                                   |                          **Messages**                          |
-| ![Margin profile with photographs and recent posts](assets/readme/profile.png) | ![Margin private messages preview](assets/readme/messages.png) |
-
-## Features
-
-- **A finite feed.** Chronological posts from friends and selected Spaces, with a clear end to catching up.
-- **A little each day.** Up to three regular posts, or one link-containing post as the day's only post. Posting follows each member's saved time zone.
-- **Personal profiles.** A Gallery of up to 20 photographs, three featured photos, Top 4 friends, and an On Repeat song.
-- **Messages and Notebook.** Private conversations expire after 30 days; personal Notebook notes expire after 90 days.
-- **Spaces.** Invitation-only groups for shared thoughts, photographs, and plans.
-- **Member controls.** Reading and motion preferences, messaging settings, reporting, account downloads, and account-erasure requests.
-
-## Privacy and access
-
-Personal posts and Gallery content are shared with accepted friends. Profile introductions are discoverable by signed-in members; Spaces have their own membership boundaries. Member APIs enforce identity, account eligibility, ownership, and audience permissions on the server.
-
-Messages are stored on the server and are **not end-to-end encrypted**. Expiry restricts reads and exports; scheduled maintenance removes expired content and retries private-media cleanup. Reported content can be available for restricted moderation review. Retention and deletion boundaries are documented in [Privacy](https://margin.social/privacy) and [Retention](https://margin.social/retention).
-
-## Technology stack
-
-| Layer          | Technologies                          |
-| -------------- | ------------------------------------- |
-| Application    | Next.js App Router, React, TypeScript |
-| Interface      | Radix UI, CSS design tokens           |
-| Persistence    | PostgreSQL, Prisma                    |
-| Authentication | Clerk                                 |
-| Rate limiting  | Upstash Redis                         |
-| Private media  | Cloudflare R2                         |
-| Observability  | Sentry                                |
-| Testing        | Vitest, Testing Library, Playwright   |
-
-## Development
-
-### Requirements
-
-- Node.js 22.12 or later within the Node 22 release line; see `.nvmrc`.
-- npm and PostgreSQL.
-- Clerk, Redis, and private photo-storage configuration for authenticated development.
-
-### Setup
-
-Configure local environment variables using [`.env.example`](.env.example), then run:
+Use Node 22, matching `.nvmrc`:
 
 ```sh
 nvm use
@@ -60,94 +14,148 @@ npm ci
 npm run dev
 ```
 
-The development server runs at [localhost:3000](http://localhost:3000). `/welcome` serves the public website, and `/app` opens the authenticated member application. Development-only previews use fictional data and separate local state. Production `/` serves the public website; development preview routes are unavailable in production.
+Open [localhost:3000](http://localhost:3000), then choose **Explore Demo**. There is no sign-in step. Source changes hot-reload; refreshing starts a fresh demo session. Installation generates the preserved Prisma client without connecting to or migrating a database. No `.env` file, service credentials or provider accounts are needed for the demo.
 
-`npm run db:local` manages the local PostgreSQL cluster. Database migrations are applied separately; dependency installation does not modify the application database. Authentication and invitation setup are covered in [Account flows](docs/account-flows.md).
-
-### Configuration
-
-| Integration   | Configuration                                                                              |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| Clerk         | Matching instance keys, canonical origin, invitation-only registration, and verified email |
-| PostgreSQL    | Runtime `DATABASE_URL`; separate `MIGRATION_DATABASE_URL` for migrations                   |
-| Upstash Redis | REST URL and read/write token                                                              |
-| Photo storage | Private R2 bucket and scoped credentials; filesystem storage for local development         |
-| Ticketmaster  | Server-only Discovery API key for event-search integration                                 |
-| Music catalog | Catalog search and authenticated persistence for On Repeat selections                      |
-| Sentry        | Optional DSN and trusted build-time source-map upload configuration                        |
-
-Development and production credentials remain separate. Environment files, credentials, local databases, and private working files are excluded from Git. Invitation URLs are credentials and must not appear in committed logs or reports.
-
-### Builds and local review
+To review the actual static export, stop the development server first:
 
 ```sh
 npm run build
 npm start
 ```
 
-Development hot-reloads source changes. Production commands serve compiled builds and reject stale output or occupied ports. For an isolated production-style local review with development Clerk credentials:
+The guarded commands keep one server on the requested port, prevent rebuilding assets used by a running demo server, and reject stale static output. If you already have `npm run dev` running in a terminal, leave it running during ordinary source edits; stop it yourself before an in-place export build.
+
+## What visitors can try
+
+| Area                  | Demo interactions                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| Feed                  | Browse fictional posts, compose and edit posts, comment, react and reach the end of the feed     |
+| Profiles and friends  | Visit fictional accounts, edit Ines’s profile, change Top 4 and accept a sample friend request   |
+| Gallery               | View photographs and arrange the bundled photo library                                           |
+| On Repeat             | Expand song details, choose from a predefined catalogue and open ordinary external Spotify links |
+| Messages and Notebook | Write local messages and notes, with separate drafts and conversations                           |
+| Spaces                | Explore fictional groups and plans, change local settings and join discussions                   |
+| Preferences           | Try reading sizes, motion preferences, notification controls and responsive navigation           |
+
+Ines, Theo, June, Samuel, Mara and Nadia use the existing fictional content and shared application components. The sample day stays on 28 October 2026 so content remains populated as the portfolio ages. Ines’s On Repeat is “Je veux” by Greg Gontier, with the supplied Grégoire cover bundled locally and a direct Spotify link. Other sample covers are original illustrations. No audio is streamed or embedded.
+
+Changes live in React memory within one tab, survive navigation inside `/demo/`, and reset on refresh or **Exit demo** in the profile menu. Exiting clears the session before returning to the welcome page; browser-history restoration starts with fresh sample data. Visitors do not share state. Optional downloads stay on the visitor’s device until they delete those files.
+
+The public information pages are **Why Margin**, **How it works**, **Your data** and **Retention**. Asset acknowledgements remain in Your data, and font licenses are bundled.
+
+## What was excluded from the public demo
+
+| Excluded from the public build                                  | Demo behavior                                                           |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Clerk registration, authentication and real accounts            | Anonymous entry through Explore Demo                                    |
+| PostgreSQL, Redis and production APIs                           | Fictional definitions and in-memory interactions                        |
+| R2 and private media delivery                                   | Bundled sample photographs; device uploads are unavailable              |
+| iTunes/Apple Music catalogue requests and attribution badge     | Predefined song information, bundled artwork and ordinary music links   |
+| Ticketmaster and live event discovery                           | Fictional Spaces and plans                                              |
+| Sentry, analytics and background workers                        | No runtime telemetry or scheduled service integration                   |
+| Real message delivery, invitation emails and account operations | Local simulations or explicit unavailable-operation notices             |
+| Support forms and legal-policy routes                           | A smaller portfolio navigation with demo data and retention information |
+
+These exclusions apply to the public target. Backend code, authentication, Prisma models and migrations, production music integration, support/legal documents and application features remain in the repository. The demo does not grant access to them.
+
+## Isolation and privacy
+
+The separate `portfolio/` Next.js application exports `/`, `/demo/` and the retained information pages. It does not export `/app`, authentication, administrative or API routes.
+
+Its build strips service credentials, rejects backend/integration imports, copies an explicit public-asset allowlist, and checks the export for credential-shaped content, private files and source maps. Before hydration, the browser boundary permits only known static pages/assets and blocks unexpected paths, network mutations, external requests, XHR, EventSource and beacons. WebSockets are blocked in the export; development permits only Next.js’s same-origin hot-reload channel. Allowed fetches omit cookies, authorization and referrers.
+
+This is application isolation, not a promise of zero network metadata. A static host receives ordinary page and asset requests and may keep operational logs. Music links contact external services when a visitor opens them. Use a separate demo origin without production cookies, API forwarding or injected analytics, and avoid entering sensitive information during a portfolio session. Live host configuration still needs verification before release.
+
+## Deploy the static demo
+
+The deployable output is **`portfolio/out/`**. It contains static HTML, JavaScript, CSS, images, font licenses, robots/sitemap files, a real `404.html` and generated `_headers`. Build output and local ZIP packages are generated artifacts, not source files to commit. Deploy only the export, never the repository root, `portfolio/.next`, `.env`, local databases or private media.
+
+### Render Static Site
+
+Render supports Next.js static exports as [Static Sites](https://render.com/docs/deploy-nextjs-app#deploy-as-a-static-site). Use these settings after reviewing and pushing the demo source to the intended Git branch:
+
+| Setting                     | Value                                           |
+| --------------------------- | ----------------------------------------------- |
+| Service type                | Static Site                                     |
+| Branch                      | The reviewed branch containing the demo changes |
+| Root directory              | Leave blank: repository root                    |
+| Build command               | `npm ci && npm run demo:build`                  |
+| Publish directory           | `portfolio/out`                                 |
+| Node version                | 22, as specified in `.nvmrc`                    |
+| Start command               | None                                            |
+| Runtime service credentials | None                                            |
+
+**Render response headers still require configuration before release.** The exported `_headers` file is for Cloudflare Pages. Configure equivalent [Render response headers](https://render.com/docs/static-site-headers), including the CSP with hashes from the exact export and the `/demo/*` noindex policy. Inline-script hashes can change with a build; keep the hosting configuration synchronized with each release. Do not add a catch-all SPA rewrite: missing `/api`, `/app` and removed information routes must remain 404 responses.
+
+Review the separate `onrender.com` preview before any domain cutover: welcome → demo → Exit demo, desktop/mobile layouts, isolated visitor sessions, no API/external calls during normal use, response headers and genuine 404s. A Render-hosted release has not yet been verified. Static hosting still has provider bandwidth/build quotas; see [Render’s static-site documentation](https://render.com/docs/static-sites).
+
+### Cloudflare Pages alternative
+
+The same export is prepared for Cloudflare Pages: repository root, build command `npm ci && npm run demo:build`, output `portfolio/out`, Node 22, and no Functions, Workers, bindings or service credentials. Pages can apply the generated `_headers` directly. Review a separate `pages.dev` preview before any domain change.
+
+Deployment, DNS changes, provisioning and charges require separate approval. If an existing `margin.social/*` Worker forwards to a full-stack origin, review that route before a domain cutover; the [preserved application edge runbook](ops/cloudflare/README.md) documents that separate architecture. No hosting or DNS change is made by building the demo.
+
+## Full-stack capabilities retained in the source
+
+The original application supplies the backend engineering behind the shared interface. These capabilities are implemented in the preserved target and are not connected to public demo sessions. Hosted-provider verification and operational deployment remain separate release work.
+
+| Capability                  | Preserved implementation                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Identity and membership     | Clerk session verification, invitation-based onboarding, account eligibility and server-side authorization     |
+| Relational data             | PostgreSQL/Prisma schema, migrations, constraints, transactions and concurrency controls                       |
+| Social features             | Friendship/block boundaries, posting allowances, comments, reactions, profiles, Top 4 and notifications        |
+| Private media               | Canonical photo references, private R2 storage, authorized delivery, upload validation and cleanup             |
+| Spaces                      | Membership, invitations, discussions, photograph references, plans and lifecycle rules                         |
+| Messaging                   | Server-stored conversations, Notebook and authorization; messages are not end-to-end encrypted                 |
+| Data lifecycle              | Expiry enforcement, a separate scheduled-maintenance worker, account exports and erasure workflows             |
+| Integrations and operations | Production music catalogue, live event adapter, Redis abuse controls, optional Sentry and guarded local review |
+| Verification                | Unit/component tests, disposable PostgreSQL integration tests, browser regressions and dependency audits       |
+
+These are retained source capabilities, not claims that live providers have been provisioned, all release checks have passed on a public host, or the demo delivers real messages.
+
+To work on the preserved application explicitly, configure its own environment using [`.env.example`](.env.example), then use:
 
 ```sh
-npm run review -- --localhost
+npm run app:dev
+# Or, after stopping that server:
+npm run app:build
+npm run app:start
 ```
 
-Local review uses `.local/local-review/next` and preserves the standard development output. Generated-artifact cleanup and storage checks are available through:
-
-```sh
-npm run local:check
-npm run clean:local -- --apply
-```
+For production-optimized account review on this Mac with local Clerk test credentials, use `npm run review -- --localhost`. Keep hosted authentication safeguards intact. Database setup and migrations are separate operator actions; the static demo needs neither. See [account flows](docs/account-flows.md), [private backend](docs/private-backend-slice.md), [Spaces architecture](docs/architecture.md#durable-spaces), [account erasure](docs/account-erasure.md) and [scheduled maintenance](src/server/jobs/README.md).
 
 ## Verification
 
 ```sh
-# Formatting, types, lint, stylesheet checks, and unit/component tests
+# Formatting, types, lint, stylesheet ownership and unit/component tests
 npm run check
 
-# Focused checks
-npm run check -- tests/profile-posts-ui.test.tsx
+# Actual static-export journeys on desktop and mobile; build first, with dev stopped
+npm run demo:test
 
-# Full verification required before pushing
+# Default hot-reloading welcome → demo entry on desktop and mobile
+npm run demo:test:dev
+
+# Full project gate required before pushing
 npm run verify
-
-# Additional presentation and cross-browser checks
-npm run verify:extended
 ```
 
-Full verification includes disposable PostgreSQL integration tests, a production build, desktop/mobile browser journeys in development and production, and dependency audits. Verification runs in credential-free temporary source snapshots and leaves the development server unchanged.
+Install Chromium with `npm run test:e2e:install`. The full gate checks the preserved application and demo independently: isolated PostgreSQL, both builds, static-export browser journeys, demo startup, full-stack development/production browser suites and dependency audits. It uses credential-free temporary source snapshots and leaves the user’s development server running. Extended browser coverage is available through `npm run verify:extended`.
 
-Install the browser dependency and Git hook with:
+Local demo checks do not prove Render/Cloudflare response headers, DNS, provider configuration or an authenticated production account. See [Testing Margin](tests/README.md) for test scope and exclusions. Generated-artifact policy checks are `npm run local:check` and the supported `npm run clean:local -- --apply` cleanup.
 
-```sh
-npm run test:e2e:install
-npm run hooks:install
-```
+## Repository guide
 
-The pre-push hook requires a clean working tree and full verification of the commit being pushed. GitHub Actions runs the same workflow. Test reports, traces, and failure screenshots remain in ignored artifact directories; the curated README images are versioned in `assets/readme/`.
+| Path                                              | Responsibility                                                                 |
+| ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `portfolio/`                                      | Default public demo routes and isolated static-export configuration            |
+| `src/features/public-demo/`                       | Demo composition, exit/reset, information pages and browser network boundary   |
+| `src/fixtures/`                                   | Fictional content shared with the existing development previews                |
+| `src/features/`, `src/components/`, `src/styles/` | Shared interfaces, local state, controls and visual system                     |
+| `src/app/`, `src/server/`                         | Preserved full-stack routes, APIs, authorization, persistence and integrations |
+| `prisma/`                                         | Preserved database schema and migrations                                       |
+| `tests/`, `scripts/`                              | Verification, guarded application commands and operator tools                  |
+| `public/fonts/`, `src/assets/`, `design/`         | Bundled assets, licenses and original design sources                           |
+| `ops/`                                            | Preserved full-stack deployment examples; not required by the demo             |
 
-See [Testing Margin](tests/README.md) for test levels, fixture boundaries, and additional commands.
-
-## Repository layout
-
-| Path              | Responsibility                                                    |
-| ----------------- | ----------------------------------------------------------------- |
-| `src/app/`        | Public, member, development, and API routes                       |
-| `src/features/`   | Feature components, client state, and client-safe schemas         |
-| `src/components/` | Shared controls, layout, branding, and icons                      |
-| `src/server/`     | Authorization, business rules, persistence, and provider adapters |
-| `src/styles/`     | Design tokens and stylesheet ownership                            |
-| `prisma/`         | Database schema and migrations                                    |
-| `tests/`          | Unit, integration, and browser tests                              |
-| `scripts/`        | Verification, local database management, and operator tools       |
-| `assets/readme/`  | Curated public and fictional-data application screenshots         |
-
-## Documentation
-
-- [Architecture](docs/architecture.md)
-- [Account flows and invitations](docs/account-flows.md)
-- [Private backend](docs/private-backend-slice.md)
-- [Spaces](docs/spaces.md)
-- [Account erasure](docs/account-erasure.md)
-- [Stylesheet conventions](src/styles/README.md)
-- [Scheduled maintenance](src/server/jobs/README.md)
-- [Edge configuration](ops/cloudflare/README.md)
+Start with the [demo target](portfolio/README.md), [architecture](docs/architecture.md), [feature boundaries](src/features/README.md) and [shared style conventions](src/styles/README.md). Backend and integration documentation is retained as technical reference for the original application.

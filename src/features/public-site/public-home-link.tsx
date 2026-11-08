@@ -1,6 +1,6 @@
 "use client";
 import { BrandLink } from "@/components/shared/brand-link";
-import { useAccountSession } from "@/components/auth/account-session";
+import { useAccountSession } from "@/components/auth/account-session-context";
 export function PublicHomeLink({ signedOutHref }: { signedOutHref: string }) {
   const session = useAccountSession();
   return (

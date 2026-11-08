@@ -1,5 +1,7 @@
 # U.S. product access: Cloudflare → Render
 
+This runbook belongs to the **preserved full-stack application**. The public portfolio demo does not use this Worker, country gate, Render Web Service, edge secret or backend origin. For the current Render **Static Site** and Cloudflare Pages options, use the [main deployment instructions](../../README.md#deploy-the-static-demo). Keep this architecture as engineering reference; do not apply it to the demo or change existing DNS/routes without separate approval.
+
 The production gate permits only a trusted `US` connection country. It covers
 sign-in/sign-up and their callbacks, invitations, onboarding, member/shareable
 profile routes and private APIs. Exact public information pages, public assets

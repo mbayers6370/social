@@ -144,9 +144,11 @@ export function PreviewProvider({
   bootstrap,
   children,
   loadFriendProfileAction,
+  fixedClock = false,
 }: {
   bootstrap: Bootstrap;
   children: ReactNode;
+  fixedClock?: boolean;
   loadFriendProfileAction?: (
     personId: string,
   ) => Promise<FriendProfileContent | null>;
@@ -232,9 +234,10 @@ export function PreviewProvider({
   const urls = useRef(new Set<string>());
   const mounted = useRef(false);
   useEffect(() => {
+    if (fixedClock) return;
     const timer = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(timer);
-  }, []);
+  }, [fixedClock]);
   useEffect(() => {
     mounted.current = true;
     const currentUrls = urls.current;
@@ -529,7 +532,7 @@ export function PreviewProvider({
         id: createLocalId(),
         body: input.body,
         direction: "outgoing",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(fixedClock ? now : Date.now()).toISOString(),
       };
       setMessageAdditions((current) => ({
         ...current,
@@ -589,7 +592,7 @@ export function PreviewProvider({
         {
           ...parsed,
           id,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(fixedClock ? now : Date.now()).toISOString(),
           status: "saved-locally",
         },
       ]);
@@ -663,7 +666,7 @@ export function PreviewProvider({
         id: createLocalId(),
         body: input.body,
         direction: "outgoing",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(fixedClock ? now : Date.now()).toISOString(),
       };
       setNotebookNotes((current) => [...current, note]);
     },

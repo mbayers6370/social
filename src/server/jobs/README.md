@@ -1,5 +1,7 @@
 # Retention and scheduled maintenance
 
+This worker is part of the **preserved full-stack implementation**, not the public demo. Demo expiry labels use a fixed fictional date; Exit demo and refresh reset the in-memory session. A static deployment needs no maintenance process, database, Clerk account or R2 bucket. The [main README](../../../README.md) describes the demo and the retained engineering capabilities.
+
 The dedicated Node 22 worker runs immediately on startup and every 60 seconds. It is separate from Next.js request processes, so an idle website still gets cleanup. No public job URL or browser-controlled job payload exists. It reuses PostgreSQL, Clerk and the existing private photo store; no additional vendor is required.
 
 ## Policy and canonical data

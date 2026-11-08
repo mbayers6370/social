@@ -1,3 +1,4 @@
+import type { PortraitCrop } from "@/lib/portrait-crop";
 import "server-only";
 import { SpaceService } from "@/server/spaces/service";
 import { SocialError } from "@/server/social/errors";
@@ -126,8 +127,12 @@ export class MemberService extends SpaceService {
     return this.profiles.updateUsername(subject, raw);
   }
 
-  async setPortrait(subject: string, photoId: string | null) {
-    return this.profiles.setPortrait(subject, photoId);
+  async setPortrait(
+    subject: string,
+    photoId: string | null,
+    crop?: PortraitCrop,
+  ) {
+    return this.profiles.setPortrait(subject, photoId, crop);
   }
 
   async portrait(subject: string, ownerId: string) {

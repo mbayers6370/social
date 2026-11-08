@@ -1,6 +1,6 @@
 import { captureScreenshot, expect, test } from "./fixtures";
 
-test("mobile commitments stay centered on one line without controls", async ({
+test("mobile commitments stay still, centered on one line, and scroll without controls", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -8,18 +8,18 @@ test("mobile commitments stay centered on one line without controls", async ({
   await page.goto("/welcome");
   const banner = page.locator(".margin-welcome-commitments");
   const track = page.locator(".margin-welcome-commitments-track");
-  const copy = page.locator(".margin-welcome-differences-copy");
-  const viewport = page.locator(".margin-welcome-commitments-viewport");
-  await expect(copy).toHaveCount(1);
+  const viewport = page.getByRole("region", {
+    name: "Margin commitments",
+    exact: true,
+  });
+  const list = banner.getByRole("list", { name: "What’s different" });
+  await expect(list.getByRole("listitem")).toHaveCount(5);
+  await expect(track.locator("ul")).toHaveCount(1);
   await expect(track).toHaveCSS("animation-name", "none");
-  await expect(copy).toBeHidden();
   await expect(banner.getByRole("button")).toHaveCount(0);
   await page.setViewportSize({ width: 385, height: 850 });
-  await expect(track).toHaveCSS(
-    "animation-name",
-    "margin-welcome-banner-scroll",
-  );
-  await expect(copy).toBeVisible();
+  await expect(viewport).toHaveCSS("overflow-x", "auto");
+  await expect(track).toHaveCSS("animation-name", "none");
   const rows = await track.locator("ul").evaluateAll((nodes) =>
     nodes.map((node) => ({
       display: getComputedStyle(node).display,
@@ -27,48 +27,39 @@ test("mobile commitments stay centered on one line without controls", async ({
       count: node.children.length,
     })),
   );
-  expect(rows).toEqual([
-    { display: "flex", direction: "row", count: 5 },
-    { display: "flex", direction: "row", count: 5 },
-  ]);
-  const bounds = (await banner.boundingBox())!;
-  expect(bounds.height).toBe(64);
-  const items = await track.locator("li").evaluateAll((nodes) =>
-    nodes.map((node) => {
-      const box = node.getBoundingClientRect();
-      return { top: box.top, center: box.top + box.height / 2 };
-    }),
-  );
-  expect(
-    Math.max(...items.map((item) => item.top)) -
-      Math.min(...items.map((item) => item.top)),
-  ).toBeLessThan(1);
-  for (const item of items)
-    expect(Math.abs(item.center - bounds.y - bounds.height / 2)).toBeLessThan(
-      1,
-    );
+  expect(rows).toEqual([{ display: "flex", direction: "row", count: 5 }]);
+  const centers = await viewport.evaluate((node) => {
+    const bounds = node.getBoundingClientRect();
+    return Array.from(node.querySelectorAll("li")).map((item) => {
+      const rect = item.getBoundingClientRect();
+      return Math.abs(
+        rect.top + rect.height / 2 - bounds.top - node.clientHeight / 2,
+      );
+    });
+  });
+  for (const distance of centers) expect(distance).toBeLessThan(1);
   await viewport.focus();
-  await expect(track).toHaveCSS("animation-play-state", "paused");
+  await page.keyboard.press("ArrowRight");
+  await expect
+    .poll(() => viewport.evaluate((node) => node.scrollLeft))
+    .toBeGreaterThan(0);
   await page.keyboard.press("Tab");
-  await expect(track).toHaveCSS("animation-play-state", "running");
-  await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(track).toHaveCSS("animation-name", "none");
-  await expect(copy).toBeHidden();
-  await expect(viewport).toHaveCSS("overflow-x", "auto");
-  await viewport.evaluate((node) => {
-    node.scrollLeft = 100;
-  });
-  expect(await viewport.evaluate((node) => node.scrollLeft)).toBeGreaterThan(0);
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.evaluate(() => {
-    document.documentElement.dataset.motion = "reduced";
-  });
+  const last = list.getByRole("listitem").last();
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport({ ratio: 1 });
+  for (const reducedMotion of ["reduce", "no-preference"] as const) {
+    await page.emulateMedia({ reducedMotion });
+    await expect(track).toHaveCSS("animation-name", "none");
+    await expect(list.getByRole("listitem")).toHaveCount(5);
+  }
+  await page.evaluate(
+    () => (document.documentElement.dataset.motion = "reduced"),
+  );
   await expect(track).toHaveCSS("animation-name", "none");
   expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(385);
 });
 
 test("visitors can explore, open an invitation and recover a waitlist submission", async ({
@@ -121,7 +112,7 @@ test("visitors can explore, open an invitation and recover a waitlist submission
   }
   await expect(
     page.locator(".margin-brand-link .margin-brand-corner-start"),
-  ).toHaveCSS("color", "rgb(119, 117, 54)");
+  ).toHaveCSS("color", "rgb(153, 150, 78)");
   await expect(page.locator('[data-crop="face"] img')).toHaveCSS(
     "object-position",
     "50% 0%",
@@ -142,7 +133,7 @@ test("visitors can explore, open an invitation and recover a waitlist submission
   }
   await expect(page.locator(".margin-welcome-connection-band")).toHaveCSS(
     "background-color",
-    "rgb(237, 234, 214)",
+    "rgb(238, 237, 231)",
   );
   await expect(page.locator(".margin-welcome-overview")).toHaveCount(0);
   const footer = page.getByRole("navigation", { name: "Footer", exact: true });

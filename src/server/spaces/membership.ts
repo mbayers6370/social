@@ -69,7 +69,12 @@ export class SpaceMembershipService extends SocialService {
       const select = {
         id: true,
         account: {
-          select: { displayName: true, username: true, portraitPhotoId: true },
+          select: {
+            displayName: true,
+            username: true,
+            portraitPhotoId: true,
+            portraitCrop: true,
+          },
         },
       } as const;
       const orderBy: Prisma.UserOrderByWithRelationInput[] = [

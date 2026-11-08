@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 const commitments = [
   "No like counts in the feed",
   "No ads",
@@ -7,23 +5,6 @@ const commitments = [
   "Posts disappear after 30 days",
   "Up to three posts a day",
 ];
-
-function CommitmentList({ repeated = false }: { repeated?: boolean }) {
-  return (
-    <ul
-      className={cn(
-        "margin-welcome-differences",
-        repeated && "margin-welcome-differences-copy",
-      )}
-      aria-label={repeated ? undefined : "What’s different"}
-      aria-hidden={repeated || undefined}
-    >
-      {commitments.map((commitment) => (
-        <li key={commitment}>{commitment}</li>
-      ))}
-    </ul>
-  );
-}
 
 export function WelcomeCommitments() {
   return (
@@ -35,8 +16,14 @@ export function WelcomeCommitments() {
         aria-label="Margin commitments"
       >
         <div className="margin-welcome-commitments-track">
-          <CommitmentList />
-          <CommitmentList repeated />
+          <ul
+            className="margin-welcome-differences"
+            aria-label="What’s different"
+          >
+            {commitments.map((commitment) => (
+              <li key={commitment}>{commitment}</li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

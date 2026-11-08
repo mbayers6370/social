@@ -62,3 +62,91 @@ for (const example of [
     expect(await page.pageErrors()).toEqual([]);
   });
 }
+
+for (const example of [
+  {
+    name: "member conversation",
+    url: "/preview/auth?view=member&area=messages&thread=fictional-friend",
+  },
+  {
+    name: "member Notebook",
+    url: "/preview/auth?view=member&area=messages&thread=fictional-member",
+  },
+  { name: "preview conversation", url: "/?view=messages&thread=theo" },
+  { name: "preview Notebook", url: "/?view=messages&thread=ines" },
+]) {
+  test(`reflows ${example.name} with every reading size and enlarged text`, async ({
+    page,
+    isMobile,
+  }, info) => {
+    await memberFixture(page);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width: isMobile ? 320 : 390, height: 844 });
+    await page.goto(example.url);
+    const header = page.locator(".margin-thread-header");
+    await expect(header).toBeVisible();
+    const contact = await header.getByRole("heading").innerText();
+    await expect(page.locator(".margin-message-retention")).toHaveCSS(
+      "font-size",
+      "10px",
+    );
+    await page.evaluate(() => document.fonts.ready);
+    for (const size of ["standard", "larger", "extra-large"]) {
+      for (const scale of [1, 2]) {
+        await page.evaluate(
+          ({ size, scale }) => {
+            document.documentElement.dataset.readingSize = size;
+            document.documentElement.style.fontSize = `${scale * 100}%`;
+            return new Promise((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve)),
+            );
+          },
+          { size, scale },
+        );
+        const heading = header.getByRole("heading");
+        const name = await heading.evaluate((node) => ({
+          height: node.getBoundingClientRect().height,
+          line: parseFloat(getComputedStyle(node).lineHeight),
+        }));
+        expect(name.height).toBeLessThanOrEqual(name.line * 2 + 1);
+        await header.scrollIntoViewIfNeeded();
+        await expect(header).toBeInViewport({ ratio: 1 });
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth),
+        ).toBeLessThanOrEqual(page.viewportSize()!.width);
+        const history = page.locator(".margin-thread-scroll");
+        expect((await history.boundingBox())!.height).toBeGreaterThan(80);
+        await history.scrollIntoViewIfNeeded();
+        await expect(history).toBeInViewport({ ratio: 1 });
+        const input = page.locator(".margin-message-input textarea");
+        await input.fill("A draft worth keeping.");
+        await expect(input).toBeInViewport({ ratio: 1 });
+        await expect(
+          page.locator(".margin-message-input button[type=submit]"),
+        ).toBeInViewport({ ratio: 1 });
+      }
+    }
+    await captureScreenshot(page, {
+      path: info.outputPath("enlarged-message-layout.png"),
+      caret: "initial",
+    });
+    await page.evaluate(() => {
+      document.documentElement.style.removeProperty("font-size");
+      document.documentElement.dataset.readingSize = "standard";
+    });
+    await header
+      .getByRole("button", { name: "Back to messages", exact: true })
+      .click();
+    await expect(page.locator(".margin-inbox")).toBeVisible();
+    const draft = example.name.includes("Notebook")
+      ? page.getByRole("button", { name: /Open notebook/ })
+      : page.getByRole("button", {
+          name: `Open conversation with ${contact}`,
+          exact: true,
+        });
+    await draft.click();
+    await expect(page.locator(".margin-message-input textarea")).toHaveValue(
+      "A draft worth keeping.",
+    );
+  });
+}

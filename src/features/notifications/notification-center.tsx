@@ -7,7 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePreviewRouter as useRouter } from "@/hooks/use-preview-router";
 import {
   ChevronLeft,
   ChevronRight,

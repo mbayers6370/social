@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useState, useEffect } from "react";
-import { useAccountSession } from "@/components/auth/account-session";
+import { useAccountSession } from "@/components/auth/account-session-context";
 import Image from "next/image";
 import {
   AvatarFrame,

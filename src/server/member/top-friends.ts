@@ -30,7 +30,13 @@ export async function readTopFriends(
       friend: {
         select: {
           id: true,
-          account: { select: { displayName: true, portraitPhotoId: true } },
+          account: {
+            select: {
+              displayName: true,
+              portraitPhotoId: true,
+              portraitCrop: true,
+            },
+          },
         },
       },
     },
@@ -140,6 +146,7 @@ export async function topFriendCandidates(
           displayName: true,
           username: true,
           portraitPhotoId: true,
+          portraitCrop: true,
         },
       },
     },

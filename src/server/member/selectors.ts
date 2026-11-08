@@ -7,6 +7,7 @@ export const accountSelect = {
   username: true,
   bio: true,
   portraitPhotoId: true,
+  portraitCrop: true,
   messagingEnabled: true,
 } as const;
 export const unavailable = () =>

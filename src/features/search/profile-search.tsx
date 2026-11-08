@@ -1,6 +1,6 @@
 "use client";
 import { useState, useSyncExternalStore } from "react";
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import { Search } from "@/components/margin-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

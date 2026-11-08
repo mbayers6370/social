@@ -6,8 +6,6 @@
   align-items: flex-start;
   gap: 16px;
   padding-block: 16px 0;
-  --divider-top-color: hsl(var(--separator));
-  border-top: 1px solid transparent;
   font: var(--text-meta)/1.6 var(--font-body);
   color: hsl(var(--muted-foreground));
 }

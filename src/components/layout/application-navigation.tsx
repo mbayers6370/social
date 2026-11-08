@@ -1,7 +1,8 @@
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import type { ReactNode } from "react";
 import { Home, Spaces, Message } from "@/components/margin-icons";
 import { BrandLink } from "@/components/shared/brand-link";
+import { previewHref } from "@/lib/public-demo";
 import { cn } from "@/lib/utils";
 import { ScrollHeader } from "./scroll-header";
 export type ApplicationView = "feed" | "spaces" | "messages" | "profile";
@@ -44,7 +45,7 @@ export function ApplicationNavigation({
       >
         <div className="margin-header-inner">
           <BrandLink
-            href={live ? "/app/feed" : "/"}
+            href={live ? "/app/feed" : previewHref("/")}
             label="margin feed"
             animate
           />

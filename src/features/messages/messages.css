@@ -1,8 +1,8 @@
 /* Inbox, message thread, composer and mobile full-screen shell state. */
 .margin-messages {
-  /* Sulphur canvas outside a white reading panel; cinnamon marks personal state. */
+  /* Warm paper outside a white reading panel; cinnamon marks personal content. */
   --conversation: var(--card);
-  --message-outgoing: var(--accent);
+  --message-outgoing: var(--cinnamon-hs) 85%;
   max-width: 1168px;
   margin: 0 auto;
 }
@@ -104,7 +104,9 @@
   display: none;
   min-width: 0;
   min-height: 0;
-  border: 1px solid hsl(var(--button-border));
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  border: 1px solid hsl(var(--border));
   background: hsl(var(--conversation));
 }
 .margin-messages[data-thread-open="true"] .margin-inbox {
@@ -126,21 +128,41 @@
   --message-header-padding: 8px;
   flex-shrink: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   padding: max(var(--message-header-padding), env(safe-area-inset-top))
     var(--message-panel-inset) var(--message-header-padding);
   min-height: calc(44px + 2 * var(--message-header-padding));
   background: hsl(var(--conversation));
   color: hsl(var(--ink));
 }
+.margin-thread-identity {
+  display: flex;
+  flex: 1 1 min(12rem, calc(100% - 56px));
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: 0;
+}
+.margin-thread-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+}
 .margin-thread-header :is(.margin-avatar, .margin-notebook-icon) {
+  --margin-avatar-size: 34px;
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
   font-size: var(--text-control);
 }
 .margin-thread-person {
-  flex: 1;
+  flex: 1 1 10rem;
   min-width: 0;
 }
 .margin-thread-person h2 {
@@ -222,9 +244,8 @@
 .margin-thread-scroll {
   --message-history-inset: var(--message-panel-inset);
   flex: 1;
-  min-height: 0;
+  min-height: calc(3lh + 48px);
   overflow-y: auto;
-  overscroll-behavior: contain;
   padding: 24px var(--message-history-inset);
   scrollbar-width: thin;
 }
@@ -409,7 +430,8 @@
 .margin-message-input .margin-send {
   border-radius: var(--radius-control);
   width: auto;
-  height: 44px;
+  min-height: 44px;
+  height: auto;
   padding-inline: 12px;
 }
 .margin-message-shortcut {
@@ -469,7 +491,7 @@
     height: calc(100% - 32px);
     margin-block: 16px;
     border-radius: 16px;
-    overflow: hidden;
+    overflow-x: hidden;
   }
   .margin-app:has(.margin-messages[data-thread-open="true"]) .margin-header {
     display: block;
@@ -480,7 +502,7 @@
   .margin-thread-choice[data-active="true"] {
     --muted-foreground: var(--ink);
     border-color: hsl(var(--button-border));
-    background: hsl(var(--warm-accent) / 0.28);
+    background: hsl(var(--accent));
     color: hsl(var(--ink));
   }
   .margin-thread-header {
@@ -490,6 +512,7 @@
     display: none;
   }
   .margin-thread-header :is(.margin-avatar, .margin-notebook-icon) {
+    --margin-avatar-size: 40px;
     height: 40px;
     width: 40px;
     font-size: var(--text-body);

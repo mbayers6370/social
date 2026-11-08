@@ -13,7 +13,7 @@ const session = vi.hoisted(() => ({
   manage: vi.fn(),
   enterPreview: vi.fn(),
 }));
-vi.mock("@/components/auth/account-session", () => ({
+vi.mock("@/components/auth/account-session-context", () => ({
   useAccountSession: () => session,
 }));
 vi.mock("next/navigation", () => ({

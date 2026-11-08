@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import { ProfileContactActions } from "./profile-contact-actions";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
 import { ProfileOwnerMenu } from "./profile-owner-menu";

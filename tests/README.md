@@ -1,7 +1,7 @@
-# Testing Margin
+# Testing the Margin demo and preserved application
 
 Run commands with the Node version in `.nvmrc`. Reports, traces, credentials,
-database state and screenshots stay ignored; test source and fixtures are versioned.
+database state and generated screenshots stay ignored; test source and fixtures are versioned. Default `npm run dev` serves the public demo. The production backend remains a separate verification target, not a dependency of a demo visitor session.
 
 | Level        | Command                                           | Purpose                                                                                                                                                                    |
 | ------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -10,6 +10,12 @@ database state and screenshots stay ignored; test source and fixtures are versio
 | Full         | `npm run verify`                                  | All fast checks, real isolated PostgreSQL integration, production build, essential desktop/mobile browser regressions in development and production, and dependency audits |
 | Extended     | `npm run verify:extended`                         | Full verification plus presentation exploration and Firefox/WebKit journeys                                                                                                |
 | Inventory    | `npm run test:inventory`                          | Collect every case and the browser execution matrix without running test bodies                                                                                            |
+
+The full-stack browser harness explicitly starts `npm run app:dev`. Default `npm run dev` is checked separately by `tests/demo-dev/`, including anonymous entry and the restricted same-origin hot-reload socket.
+
+The same full verification also builds `portfolio/out` and runs `npm run demo:test` against those actual exported files on an independent loopback static server. `tests/demo/` covers anonymous entry, local feature interactions, desktop/mobile navigation, isolated contexts, Exit demo and browser-Back resets, the bundled Greg Gontier cover/direct Spotify link, removed support/legal routes, and unavailable backend routes. It supplies no API response mocks or service credentials; unexpected browser mutations, external calls, blocked-request events and uncaught errors fail these journeys. The local static server applies the exported Cloudflare `_headers`, including CSP. `tests/public-demo.test.ts` checks request denials and preservation of full-stack navigation destinations. Adversarial browser checks cover unknown same-origin paths, API/external fetches, XHR, WebSocket, EventSource and beacon attempts, plus omission of cookies, authorization and referrers from permitted static fetches. These local checks do not prove Render header configuration, DNS or live provider behavior.
+
+For demo-only browser review, build first with the development server stopped, then run `npm run demo:test`. `npm run demo:test:dev` starts an independent guarded development server; when the same checkout is already serving the demo, attach with `DEMO_DEV_TEST_URL=http://127.0.0.1:3000 npm run demo:test:dev` rather than starting another dev process against its output. Full verification uses a temporary source snapshot and leaves the user’s server alone. Keep snapshots in the operating-system temporary directory, remove them in cleanup, and never retain a checkout under `.local/`.
 
 Full verification remains mandatory in `.githooks/pre-push` and GitHub Actions.
 `--code-only` is a diagnostic convenience and cannot satisfy that gate. The hook

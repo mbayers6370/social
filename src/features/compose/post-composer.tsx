@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePreviewRouter as useRouter } from "@/hooks/use-preview-router";
 import {
   useForm,
   useWatch,

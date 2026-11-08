@@ -9,6 +9,9 @@
    Feature-specific variants belong with their owning feature. */
 .margin-navigation-theme {
   /* Shared by top/bottom navigation; portalled dialogs retain the page palette. */
+  --olive: var(--olive-on-dark);
+  --button-border: var(--olive);
+  --separator: var(--olive);
   --foreground: var(--header-foreground);
   --muted-foreground: var(--header-foreground);
   --accent: var(--header-accent);

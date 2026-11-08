@@ -3,9 +3,10 @@
 import { usePreview } from "@/features/local-preview/provider";
 import { friendStatus } from "@/features/friends/model";
 
-import Link from "next/link";
+import Link from "@/components/shared/preview-link";
 import { PersonLink, profileHref } from "@/components/shared/person-link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { usePreviewRouter as useRouter } from "@/hooks/use-preview-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
@@ -287,33 +288,41 @@ export function MessagesPreview({
           >
             <ChevronLeft aria-hidden="true" />
           </Button>
-          {notebook ? (
-            <span className="margin-notebook-icon" aria-hidden="true">
-              <NotebookAnimated animate />
-            </span>
-          ) : (
-            <Avatar person={active.contact} linked />
-          )}
-          <div className="margin-thread-person">
-            <h2>
-              {notebook ? (
-                "Notebook"
-              ) : (
-                <PersonLink person={active.contact}>
-                  {active.contact.name}
-                </PersonLink>
-              )}
-            </h2>
-            <div className="margin-thread-links">
-              {notebook ? (
-                <span>Notes to self</span>
-              ) : (
-                <Link href={profileHref(active.contact.id)}>View profile</Link>
-              )}
-              {previewNotice("thread")}
+          <div className="margin-thread-identity">
+            {notebook ? (
+              <span className="margin-notebook-icon" aria-hidden="true">
+                <NotebookAnimated animate />
+              </span>
+            ) : (
+              <Avatar person={active.contact} linked />
+            )}
+            <div className="margin-thread-person">
+              <h2>
+                {notebook ? (
+                  "Notebook"
+                ) : (
+                  <PersonLink person={active.contact}>
+                    {active.contact.name}
+                  </PersonLink>
+                )}
+              </h2>
+              <div className="margin-thread-links">
+                {notebook ? (
+                  <span>Notes to self</span>
+                ) : (
+                  <Link href={profileHref(active.contact.id)}>
+                    View profile
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
-          {!notebook && <ConversationActions key={active.id} thread={active} />}
+          <div className="margin-thread-actions">
+            {previewNotice("thread")}
+            {!notebook && (
+              <ConversationActions key={active.id} thread={active} />
+            )}
+          </div>
         </header>
         <MessageRetention
           notebook={notebook}

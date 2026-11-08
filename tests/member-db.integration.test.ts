@@ -538,6 +538,87 @@ describe.skipIf(process.env.RUN_PRIVATE_DB_TESTS !== "1")(
         service.portrait(actors[1].clerkId, actors[0].id),
       ).rejects.toThrow();
     });
+    it("persists portrait framing without altering the original or consuming gallery allowance", async () => {
+      const source = await sharp({
+        create: { width: 640, height: 320, channels: 3, background: "#ff0000" },
+      })
+        .composite([
+          {
+            input: await sharp({
+              create: {
+                width: 320,
+                height: 320,
+                channels: 3,
+                background: "#0000ff",
+              },
+            })
+              .png()
+              .toBuffer(),
+            left: 320,
+            top: 0,
+          },
+        ])
+        .png()
+        .toBuffer();
+      const subject = actors[0].clerkId;
+      const photo = await service.uploadGallery(
+        subject,
+        source,
+        "image/png",
+        "Two colors",
+      );
+      const original = await service.readPhoto(subject, photo.id);
+      const first = await service.setPortrait(subject, photo.id, {
+        x: 0,
+        y: 0.5,
+        zoom: 1,
+      });
+      const red = await sharp(
+        await service.portrait(subject, actors[0].id),
+      ).stats();
+      expect(red.channels[0].mean).toBeGreaterThan(240);
+      expect(red.channels[2].mean).toBeLessThan(10);
+      const saved = await service.setPortrait(subject, photo.id, {
+        x: 1,
+        y: 0.5,
+        zoom: 2,
+      });
+      const blue = await sharp(
+        await service.portrait(subject, actors[0].id),
+      ).stats();
+      expect(blue.channels[2].mean).toBeGreaterThan(240);
+      expect(blue.channels[0].mean).toBeLessThan(10);
+      expect(saved.portraitCrop).toEqual({ x: 1, y: 0.5, zoom: 2 });
+      expect(saved.person.photo!.src).not.toBe(first.person.photo!.src);
+      expect(await service.readPhoto(subject, photo.id)).toEqual(original);
+      const profile = await service.profile(subject, actors[0].id);
+      expect(profile.gallery).toHaveLength(1);
+      expect(profile.profile.portraitPhoto?.id).toBe(photo.id);
+      expect(await db.photo.count({ where: { ownerId: actors[0].id } })).toBe(
+        1,
+      );
+      await expect(
+        service.setPortrait(actors[1].clerkId, photo.id, {
+          x: 1,
+          y: 1,
+          zoom: 2,
+        }),
+      ).rejects.toThrow();
+      await expect(
+        service.setPortrait(subject, photo.id, { x: 1, y: 1, zoom: 4 }),
+      ).rejects.toThrow();
+      // Removing a gallery reference does not stop editing the retained portrait.
+      await db.galleryEntry.deleteMany({ where: { ownerId: actors[0].id } });
+      await service.setPortrait(subject, photo.id, { x: 0, y: 0, zoom: 1 });
+      expect(
+        (await service.profile(subject, actors[0].id)).profile.portraitPhoto
+          ?.id,
+      ).toBe(photo.id);
+      expect(
+        (await service.profile(actors[1].clerkId, actors[0].id)).profile
+          .portraitPhoto,
+      ).toBeUndefined();
+    });
     it("serializes gallery arrangements, checks ownership and rejects a stale editor", async () => {
       const subject = actors[0].clerkId;
       const photo = await service.uploadGallery(
